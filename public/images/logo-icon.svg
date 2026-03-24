@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="brain-grad-icon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4603a"/>
+      <stop offset="100%" stop-color="#2a6b5a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Brain outline -->
+  <path d="M24 4 C16 4, 6 10, 6 22 C6 30, 10 36, 16 40 C18 42, 21 44, 24 44"
+        fill="none" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" opacity="0.2"/>
+  <path d="M24 4 C32 4, 42 10, 42 22 C42 30, 38 36, 32 40 C30 42, 27 44, 24 44"
+        fill="none" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" opacity="0.2"/>
+  <path d="M24 6 L24 42" fill="none" stroke="#1a1a2e" stroke-width="1" stroke-linecap="round" opacity="0.08"/>
+
+  <!-- EEG waveform -->
+  <path d="M4 24 L10 24 L14 16 L18 32 L22 10 L26 36 L30 14 L34 30 L38 24 L44 24"
+        fill="none" stroke="url(#brain-grad-icon)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Neural dots -->
+  <circle cx="14" cy="14" r="2" fill="#d4603a" opacity="0.35"/>
+  <circle cx="34" cy="14" r="2" fill="#2a6b5a" opacity="0.35"/>
+  <circle cx="14" cy="34" r="2" fill="#f4a261" opacity="0.3"/>
+  <circle cx="34" cy="34" r="2" fill="#d4603a" opacity="0.3"/>
+</svg>
