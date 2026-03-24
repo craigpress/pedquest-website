@@ -110,7 +110,7 @@ export default function Navbar() {
             onClick={() => setMobileOpen(false)}
           >
             <Image
-              src="/images/pedquest-logo-transparent.png"
+              src="/images/pedquest-logo-navbar.png"
               alt="PedQuEST — Pediatric qEEG Strategic Taskforce"
               width={182}
               height={52}
