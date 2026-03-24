@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "pedquest-dev",
-      "runtimeExecutable": "C:/Windows/System32/cmd.exe",
-      "runtimeArgs": ["/c", "npm run dev"],
+      "runtimeExecutable": "npm.cmd",
+      "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "autoPort": true
     }

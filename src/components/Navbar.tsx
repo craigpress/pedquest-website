@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
@@ -109,15 +108,22 @@ export default function Navbar() {
             className="flex items-center no-underline shrink-0 group"
             onClick={() => setMobileOpen(false)}
           >
-            <Image
-              src="/images/pedquest-logo-navbar.png"
-              alt="PedQuEST — Pediatric qEEG Strategic Taskforce"
-              width={182}
-              height={52}
-              priority
-              className="transition-transform duration-300 group-hover:scale-105"
-              style={{ objectFit: "contain" }}
-            />
+            <span
+              className="transition-all duration-300 group-hover:opacity-80"
+              style={{
+                fontFamily: "var(--heading-font)",
+                fontWeight: 800,
+                fontSize: "1.6rem",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+                color: "var(--text)",
+              }}
+            >
+              Ped<span style={{
+                color: "var(--accent-primary)",
+                fontStyle: "italic",
+              }}>QuEST</span>
+            </span>
           </Link>
 
           {/* Desktop nav links */}
@@ -172,8 +178,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {/* Join CTA - desktop only */}
             <Link
-              href="https://forms.office.com/r/0SdngdpiPt"
-              target="_blank"
+              href="/join"
               className="hidden lg:flex items-center gap-2 px-7 py-3.5 rounded-xl no-underline transition-all duration-200"
               style={{
                 fontSize: "0.95rem",
@@ -286,8 +291,7 @@ export default function Navbar() {
               {/* Mobile Join CTA */}
               <li className="mt-3">
                 <Link
-                  href="https://forms.office.com/r/0SdngdpiPt"
-                  target="_blank"
+                  href="/join"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
                   style={{
