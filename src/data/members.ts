@@ -289,8 +289,8 @@ export const members: Member[] = [
     sortOrder: 16,
   },
   {
-    id: "arnold-ostendorf",
-    name: "Arnold Ostendorf",
+    id: "adam-ostendorf",
+    name: "Adam Ostendorf",
     title: "MD",
     institution: "Nationwide Children's Hospital",
     country: "USA",

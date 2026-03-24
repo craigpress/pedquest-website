@@ -124,6 +124,11 @@ export default function AboutPage() {
       <section className="about-hero">
         <div className="about-hero-bg" aria-hidden="true" />
         <div className="about-hero-content">
+          <img
+            src="/images/pedquest-logo-original.png"
+            alt="PedQuEST Logo"
+            style={{ height: 80, width: "auto", marginBottom: "1.5rem" }}
+          />
           <h1 className="about-hero-heading">About PedQuEST</h1>
           <p className="about-hero-subtitle">
             The Pediatric Quantitative EEG Strategic Taskforce

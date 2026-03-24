@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 const quickLinks = [
   { href: "/about", label: "About" },
@@ -28,17 +29,13 @@ export default function Footer() {
           {/* Column 1: Branding */}
           <div className="flex flex-col gap-4">
             <Link href="/" className="no-underline">
-              <span
-                className="text-xl font-bold tracking-tight"
-                style={{
-                  fontFamily: "var(--heading-font)",
-                  color: "var(--text)",
-                }}
-              >
-                Ped
-                <span style={{ color: "var(--accent-primary)" }}>Qu</span>
-                EST
-              </span>
+              <Image
+                src="/images/pedquest-logo-original.png"
+                alt="PedQuEST"
+                width={200}
+                height={60}
+                style={{ height: 50, width: "auto", objectFit: "contain" }}
+              />
             </Link>
             <p
               className="text-sm leading-relaxed"
