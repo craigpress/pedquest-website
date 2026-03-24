@@ -154,12 +154,12 @@ export default function Navbar() {
                     {active && (
                       <span style={{
                         position: "absolute",
-                        bottom: 4,
-                        left: "20%",
-                        right: "20%",
+                        bottom: 0,
+                        left: 8,
+                        right: 8,
                         height: 3,
-                        borderRadius: 3,
-                        background: "var(--accent-primary)",
+                        borderRadius: 99,
+                        background: "linear-gradient(90deg, var(--accent-primary), var(--accent-secondary, var(--accent-primary)))",
                       }} />
                     )}
                   </Link>
@@ -174,7 +174,7 @@ export default function Navbar() {
             <Link
               href="https://forms.office.com/r/0SdngdpiPt"
               target="_blank"
-              className="hidden lg:flex items-center gap-2 px-6 py-3 rounded-full no-underline transition-all duration-200"
+              className="hidden lg:flex items-center gap-2 px-7 py-3.5 rounded-xl no-underline transition-all duration-200"
               style={{
                 fontSize: "0.95rem",
                 fontWeight: 600,
