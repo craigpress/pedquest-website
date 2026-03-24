@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
@@ -57,18 +58,6 @@ function CloseIcon() {
   );
 }
 
-function BrainWaveIcon({ className }: { className?: string }) {
-  return (
-    <svg width="44" height="44" viewBox="0 0 40 40" fill="none" className={className}>
-      {/* Brain outline */}
-      <path d="M20 6C14 6 10 10 10 15c0 3 1.5 5.5 4 7.5V32h12V22.5c2.5-2 4-4.5 4-7.5 0-5-4-9-10-9z"
-        stroke="var(--accent-primary)" strokeWidth="1.8" fill="none" opacity="0.25"/>
-      {/* EEG wave across the brain */}
-      <path d="M8 20h3l2-5 2 8 2-6 2 4 2-3 2 5 2-4 2 3h3"
-        stroke="var(--accent-primary)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    </svg>
-  );
-}
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
@@ -117,32 +106,18 @@ export default function Navbar() {
           {/* Logo / Brand */}
           <Link
             href="/"
-            className="flex items-center gap-3 no-underline shrink-0 group"
+            className="flex items-center no-underline shrink-0 group"
             onClick={() => setMobileOpen(false)}
           >
-            <BrainWaveIcon className="transition-transform duration-300 group-hover:scale-110" />
-            <div className="flex flex-col leading-none">
-              <span style={{
-                fontSize: "2rem",
-                fontWeight: 800,
-                fontFamily: "var(--heading-font)",
-                color: "var(--text)",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-              }}>
-                Ped<span style={{ color: "var(--accent-primary)" }}>Qu</span>EST
-              </span>
-              <span style={{
-                fontSize: "0.7rem",
-                fontWeight: 600,
-                color: "var(--text-muted)",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                marginTop: 3,
-              }}>
-                Pediatric qEEG Taskforce
-              </span>
-            </div>
+            <Image
+              src="/images/pedquest-logo-transparent.png"
+              alt="PedQuEST — Pediatric qEEG Strategic Taskforce"
+              width={182}
+              height={52}
+              priority
+              className="transition-transform duration-300 group-hover:scale-105"
+              style={{ objectFit: "contain" }}
+            />
           </Link>
 
           {/* Desktop nav links */}
