@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase";
 
 // In-memory rate limiting (resets on server restart)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -76,21 +77,29 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Log submission (email integration can be added here)
-  console.log("=== New PedQuEST Sponsor Inquiry ===");
-  console.log(`Company:       ${companyName}`);
-  console.log(`Contact Name:  ${contactName}`);
-  console.log(`Contact Email: ${contactEmail}`);
-  console.log(`Phone:         ${phone || "(none)"}`);
-  console.log(`Website:       ${website || "(none)"}`);
-  console.log(`Tier:          ${tier || "(none)"}`);
-  console.log(`Areas:         ${areas || "(none)"}`);
-  console.log(`Description:   ${description || "(none)"}`);
-  console.log(`Budget Range:  ${budgetRange || "(none)"}`);
-  console.log(`How Heard:     ${howHeard || "(none)"}`);
-  console.log(`IP:            ${ip}`);
-  console.log(`Time:          ${new Date().toISOString()}`);
-  console.log("====================================");
+  // Store in Supabase
+  const supabase = createServerClient();
+  if (supabase) {
+    const { error } = await supabase.from("sponsor_inquiries").insert({
+      company_name: companyName.trim(),
+      contact_name: contactName.trim(),
+      contact_email: contactEmail.trim(),
+      contact_phone: phone?.trim() || null,
+      website: website?.trim() || null,
+      sponsorship_tier: tier?.trim() || null,
+      areas_of_interest: areas?.trim() || null,
+      collaboration_description: description?.trim() || null,
+      budget_range: budgetRange?.trim() || null,
+      how_heard: howHeard?.trim() || null,
+      ip_address: ip,
+    });
+    if (error) {
+      console.error("[Sponsor] Supabase insert failed:", error.message);
+    }
+  } else {
+    console.log("[Sponsor] Supabase not configured — logging submission only");
+    console.log(`Company: ${companyName} | Contact: ${contactEmail} | IP: ${ip}`);
+  }
 
   return NextResponse.json({ success: true });
 }

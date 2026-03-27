@@ -182,6 +182,86 @@ CREATE POLICY "Members can delete their own documents"
   );
 
 -- ============================================================
+-- Membership Applications (from /join form)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS membership_applications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  hospital TEXT NOT NULL,
+  affiliated_university TEXT,
+  pi_name TEXT,
+  pi_email TEXT NOT NULL,
+  pi_phone TEXT NOT NULL,
+  role_title TEXT,
+  research_interests TEXT,
+  how_heard TEXT,
+  statement_of_interest TEXT,
+  ip_address TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE membership_applications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Only service role can read membership applications"
+  ON membership_applications FOR SELECT
+  USING (false); -- admins access via service role key, bypassing RLS
+
+CREATE POLICY "Anyone can submit a membership application"
+  ON membership_applications FOR INSERT
+  WITH CHECK (true);
+
+-- ============================================================
+-- Sponsor Inquiries (from /sponsor form)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS sponsor_inquiries (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  company_name TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  contact_email TEXT NOT NULL,
+  contact_phone TEXT,
+  website TEXT,
+  sponsorship_tier TEXT,
+  areas_of_interest TEXT,
+  collaboration_description TEXT,
+  budget_range TEXT,
+  how_heard TEXT,
+  ip_address TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE sponsor_inquiries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Only service role can read sponsor inquiries"
+  ON sponsor_inquiries FOR SELECT
+  USING (false);
+
+CREATE POLICY "Anyone can submit a sponsor inquiry"
+  ON sponsor_inquiries FOR INSERT
+  WITH CHECK (true);
+
+-- ============================================================
+-- Contact Messages (from /contact form)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  ip_address TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Only service role can read contact messages"
+  ON contact_messages FOR SELECT
+  USING (false);
+
+CREATE POLICY "Anyone can submit a contact message"
+  ON contact_messages FOR INSERT
+  WITH CHECK (true);
+
+-- ============================================================
 -- Storage bucket for member photos and files
 -- ============================================================
 INSERT INTO storage.buckets (id, name, public)

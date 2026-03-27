@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase";
 
 // In-memory rate limiting (resets on server restart)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -83,20 +84,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Log submission (backend/email integration can be added here)
-  console.log("=== New PedQuEST Membership Application ===");
-  console.log(`Hospital:              ${hospital}`);
-  console.log(`Affiliated University: ${affiliatedUniversity || "(none)"}`);
-  console.log(`Site PI Name:          ${piName || "(none)"}`);
-  console.log(`Site PI Email:         ${piEmail}`);
-  console.log(`Site PI Phone:         ${piPhone}`);
-  console.log(`Role/Title:            ${roleTitle || "(none)"}`);
-  console.log(`Research Interests:    ${researchInterests || "(none)"}`);
-  console.log(`How Heard:             ${howHeard || "(none)"}`);
-  console.log(`Statement of Interest: ${statementOfInterest || "(none)"}`);
-  console.log(`IP:                    ${ip}`);
-  console.log(`Time:                  ${new Date().toISOString()}`);
-  console.log("===========================================");
+  // Store in Supabase
+  const supabase = createServerClient();
+  if (supabase) {
+    const { error } = await supabase.from("membership_applications").insert({
+      hospital: hospital.trim(),
+      affiliated_university: affiliatedUniversity?.trim() || null,
+      pi_name: piName?.trim() || null,
+      pi_email: piEmail.trim(),
+      pi_phone: piPhone.trim(),
+      role_title: roleTitle?.trim() || null,
+      research_interests: researchInterests?.trim() || null,
+      how_heard: howHeard?.trim() || null,
+      statement_of_interest: statementOfInterest?.trim() || null,
+      ip_address: ip,
+    });
+    if (error) {
+      console.error("[Join] Supabase insert failed:", error.message);
+    }
+  } else {
+    console.log("[Join] Supabase not configured — logging submission only");
+    console.log(`Hospital: ${hospital} | PI: ${piEmail} | IP: ${ip}`);
+  }
 
   return NextResponse.json({ success: true });
 }

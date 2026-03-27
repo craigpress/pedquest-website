@@ -67,27 +67,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Try to store in Supabase
+  // Store in Supabase
   const supabase = createServerClient();
   if (supabase) {
-    try {
-      // Create table if it doesn't exist — Supabase will reject if table missing,
-      // so we fall back to console logging
-      const { error } = await supabase.from("contact_submissions").insert({
-        name: name.trim(),
-        email: email.trim(),
-        subject: subject.trim(),
-        message: message.trim(),
-        ip_address: ip,
-        created_at: new Date().toISOString(),
-      });
-
-      if (error) {
-        // Table might not exist yet — log and continue
-        console.log("Supabase insert failed (table may not exist yet):", error.message);
-      }
-    } catch (e) {
-      console.log("Supabase connection error:", e);
+    const { error } = await supabase.from("contact_messages").insert({
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject.trim(),
+      message: message.trim(),
+      ip_address: ip,
+    });
+    if (error) {
+      console.error("[Contact] Supabase insert failed:", error.message);
     }
   }
 
