@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { signInWithMagicLink } from "@/lib/auth";
-import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
