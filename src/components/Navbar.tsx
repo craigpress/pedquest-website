@@ -13,6 +13,7 @@ const navLinks = [
   { href: "/publications", label: "Publications" },
   { href: "/education", label: "Education" },
   { href: "/contact", label: "Contact" },
+  { href: "/sponsor", label: "Sponsor" },
 ];
 
 function SunIcon() {

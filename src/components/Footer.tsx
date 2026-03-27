@@ -141,6 +141,23 @@ export default function Footer() {
             >
               Apply to Join
             </Link>
+            <Link
+              href="/sponsor"
+              className="text-sm no-underline transition-colors duration-150"
+              style={{
+                color: "var(--text-secondary)",
+                fontFamily: "var(--body-font)",
+                fontWeight: 500,
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                e.currentTarget.style.color = "var(--accent-primary)";
+              }}
+              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                e.currentTarget.style.color = "var(--text-secondary)";
+              }}
+            >
+              Become a Sponsor
+            </Link>
             <p
               className="text-xs"
               style={{
