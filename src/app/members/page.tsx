@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { members, institutions } from "@/data/members";
@@ -17,6 +17,8 @@ export default function MembersPage() {
   const [search, setSearch] = useState("");
   const [filterInstitution, setFilterInstitution] = useState("");
   const [filterCountry, setFilterCountry] = useState("");
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const toggleMap = useCallback(() => setMapExpanded((v) => !v), []);
 
   const uniqueInstitutions = useMemo(
     () => [...new Set(members.map((m) => m.institution))].sort(),
@@ -117,9 +119,71 @@ export default function MembersPage() {
         </select>
       </div>
 
-      {/* Map */}
-      <section style={{ marginBottom: "3rem" }}>
-        <MemberMap />
+      {/* Collapsible Map */}
+      <section style={{ marginBottom: "2rem" }}>
+        <button
+          onClick={toggleMap}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: mapExpanded ? "0.75rem 1.25rem" : "1rem 1.25rem",
+            borderRadius: mapExpanded ? "12px 12px 0 0" : "12px",
+            border: "1px solid var(--border)",
+            background: mapExpanded
+              ? "var(--bg-card)"
+              : "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary, var(--accent-primary)))",
+            color: mapExpanded ? "var(--text)" : "#fff",
+            fontFamily: "var(--body-font)",
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+          }}
+        >
+          <span style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+              <line x1="8" y1="2" x2="8" y2="18" />
+              <line x1="16" y1="6" x2="16" y2="22" />
+            </svg>
+            <span>
+              {mapExpanded ? "Hide Member Map" : "Explore Our Global Network"}
+              <span style={{
+                fontSize: "0.8rem",
+                fontWeight: 400,
+                opacity: 0.85,
+                marginLeft: "0.5rem",
+              }}>
+                {institutions.length} institutions across {uniqueCountries.length} countries
+              </span>
+            </span>
+          </span>
+          <svg
+            width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{
+              transform: mapExpanded ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.3s ease",
+              flexShrink: 0,
+            }}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div
+          style={{
+            maxHeight: mapExpanded ? "500px" : "0",
+            overflow: "hidden",
+            transition: "max-height 0.45s ease-in-out",
+            borderRadius: "0 0 12px 12px",
+            border: mapExpanded ? "1px solid var(--border)" : "1px solid transparent",
+            borderTop: "none",
+          }}
+        >
+          {mapExpanded && <MemberMap />}
+        </div>
       </section>
 
       {/* Member Grid */}

@@ -51,14 +51,9 @@ export default function HomePage() {
                 <path d="M3 8h10M9 4l4 4-4 4" />
               </svg>
             </Link>
-            <a
-              href="https://forms.office.com/r/0SdngdpiPt"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary"
-            >
+            <Link href="/join" className="btn-secondary">
               Join PedQuEST
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -226,17 +221,12 @@ export default function HomePage() {
             scientists, and other professionals passionate about improving
             brain-directed care for critically ill children.
           </p>
-          <a
-            href="https://forms.office.com/r/0SdngdpiPt"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary"
-          >
+          <Link href="/join" className="btn-primary">
             Apply to Join
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 3h8v8M13 3L3 13" />
+              <path d="M3 8h10M9 4l4 4-4 4" />
             </svg>
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -665,15 +655,29 @@ export default function HomePage() {
             min-height: 65vh;
             padding: 3rem 1.25rem 2rem;
           }
+          .stats-bar {
+            padding: 0 1.25rem;
+            margin-top: -1.5rem;
+          }
           .stats-container {
-            gap: 1.5rem;
-            padding: 1.5rem 1.25rem;
+            gap: 1rem;
+            padding: 1.25rem 1rem;
           }
           .stat-number {
             font-size: 2rem;
           }
           .stat-divider {
             height: 36px;
+          }
+        }
+        @media (max-width: 480px) {
+          .stats-container {
+            gap: 0;
+            padding: 1.25rem 0.75rem;
+            justify-content: space-around;
+          }
+          .stat-divider {
+            display: none;
           }
           .features-section {
             padding: 4rem 1.25rem;

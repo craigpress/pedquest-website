@@ -22,7 +22,7 @@ export default function Footer() {
       }}
     >
       <div
-        className="mx-auto px-6 py-16"
+        className="mx-auto px-6 pt-20 pb-16"
         style={{ maxWidth: 1200 }}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <Link href="/" className="no-underline">
               <Image
-                src="/images/pedquest-logo-original.png"
+                src="/images/pedquest-wordmark.png"
                 alt="PedQuEST"
                 width={200}
                 height={60}
@@ -134,16 +134,13 @@ export default function Footer() {
             >
               Get Involved
             </h4>
-            <a
-              href="https://forms.office.com/r/0SdngdpiPt"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/join"
               className="btn-primary inline-flex items-center gap-2 text-sm no-underline"
               style={{ width: "fit-content" }}
             >
-              Join PedQuEST
-              <span aria-hidden="true">&#8599;</span>
-            </a>
+              Apply to Join
+            </Link>
             <p
               className="text-xs"
               style={{
@@ -155,6 +152,24 @@ export default function Footer() {
               Open to pediatric neurologists, neurophysiologists, and
               researchers interested in quantitative EEG.
             </p>
+            <a
+              href="https://discord.gg/t6aXyfuHsW"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm no-underline"
+              style={{
+                color: "var(--text-secondary)",
+                fontFamily: "var(--body-font)",
+                transition: "color 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#5865F2"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; }}
+            >
+              <svg width="18" height="14" viewBox="0 0 71 55" fill="currentColor">
+                <path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.2a.2.2 0 0 0-.2.1 40.7 40.7 0 0 0-1.8 3.7 54 54 0 0 0-16.2 0A37.4 37.4 0 0 0 25.4.3a.2.2 0 0 0-.2-.1A58.4 58.4 0 0 0 10.5 4.9a.2.2 0 0 0-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0 0 17.7 9 .2.2 0 0 0 .3-.1 42.1 42.1 0 0 0 3.6-5.9.2.2 0 0 0-.1-.3 38.8 38.8 0 0 1-5.5-2.6.2.2 0 0 1 0-.4l1.1-.9a.2.2 0 0 1 .2 0 42 42 0 0 0 35.6 0 .2.2 0 0 1 .2 0l1.1.9a.2.2 0 0 1 0 .4 36.4 36.4 0 0 1-5.5 2.6.2.2 0 0 0-.1.3 47.2 47.2 0 0 0 3.6 5.9.2.2 0 0 0 .3.1 58.7 58.7 0 0 0 17.7-9 .2.2 0 0 0 .1-.2c1.4-14.8-2.4-27.7-10.2-39.1a.2.2 0 0 0-.1-.1zM23.7 37.3c-3.4 0-6.2-3.1-6.2-6.9s2.7-6.9 6.2-6.9 6.3 3.1 6.2 6.9c0 3.8-2.8 6.9-6.2 6.9zm22.9 0c-3.4 0-6.2-3.1-6.2-6.9s2.7-6.9 6.2-6.9 6.3 3.1 6.2 6.9c0 3.8-2.7 6.9-6.2 6.9z"/>
+              </svg>
+              Join our Discord
+            </a>
           </div>
         </div>
 
@@ -172,15 +187,28 @@ export default function Footer() {
           >
             &copy; {year} PedQuEST. All rights reserved.
           </p>
-          <p
-            className="text-xs"
-            style={{
-              color: "var(--text-muted)",
-              fontFamily: "var(--body-font)",
-            }}
-          >
-            Pediatric Quantitative EEG Strategic Taskforce
-          </p>
+          <div className="flex items-center gap-3">
+            <p
+              className="text-xs"
+              style={{
+                color: "var(--text-muted)",
+                fontFamily: "var(--body-font)",
+              }}
+            >
+              Pediatric Quantitative EEG Strategic Taskforce
+            </p>
+            <Link
+              href="/admin"
+              className="text-xs no-underline"
+              style={{
+                color: "var(--text-muted)",
+                fontFamily: "var(--body-font)",
+                opacity: 0.5,
+              }}
+            >
+              Admin
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

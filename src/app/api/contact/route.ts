@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase";
 
 // In-memory rate limiting (resets on server restart)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -24,11 +25,9 @@ function isRateLimited(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  // Get client IP
   const forwarded = request.headers.get("x-forwarded-for");
   const ip = forwarded?.split(",")[0]?.trim() || "unknown";
 
-  // Rate limit check
   if (isRateLimited(ip)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
@@ -48,13 +47,11 @@ export async function POST(request: NextRequest) {
 
   const { name, email, subject, message, honeypot } = body;
 
-  // Honeypot check — reject if filled (bot submission)
+  // Honeypot check
   if (honeypot) {
-    // Silently accept to not tip off bots
     return NextResponse.json({ success: true });
   }
 
-  // Validate required fields
   if (!name?.trim() || !email?.trim() || !subject?.trim() || !message?.trim()) {
     return NextResponse.json(
       { error: "All fields are required." },
@@ -62,7 +59,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return NextResponse.json(
@@ -71,15 +67,78 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Log to console (Supabase integration later)
-  console.log("=== New Contact Form Submission ===");
-  console.log(`Name:    ${name}`);
-  console.log(`Email:   ${email}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Message: ${message}`);
-  console.log(`IP:      ${ip}`);
-  console.log(`Time:    ${new Date().toISOString()}`);
-  console.log("===================================");
+  // Try to store in Supabase
+  const supabase = createServerClient();
+  if (supabase) {
+    try {
+      // Create table if it doesn't exist — Supabase will reject if table missing,
+      // so we fall back to console logging
+      const { error } = await supabase.from("contact_submissions").insert({
+        name: name.trim(),
+        email: email.trim(),
+        subject: subject.trim(),
+        message: message.trim(),
+        ip_address: ip,
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        // Table might not exist yet — log and continue
+        console.log("Supabase insert failed (table may not exist yet):", error.message);
+      }
+    } catch (e) {
+      console.log("Supabase connection error:", e);
+    }
+  }
+
+  // Send Discord notification
+  const discordWebhook = process.env.DISCORD_WEBHOOK_URL;
+  if (discordWebhook) {
+    try {
+      await fetch(discordWebhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          embeds: [{
+            title: `📬 New Contact: ${subject.trim()}`,
+            color: 0xd4603a,
+            fields: [
+              { name: "Name", value: name.trim(), inline: true },
+              { name: "Email", value: email.trim(), inline: true },
+              { name: "Message", value: message.trim().slice(0, 1024) },
+            ],
+            timestamp: new Date().toISOString(),
+            footer: { text: "PedQuEST Contact Form" },
+          }],
+        }),
+      });
+    } catch (e) {
+      console.log("Discord webhook failed:", e);
+    }
+  }
+
+  // Send Telegram notification
+  const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+  const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+  if (telegramToken && telegramChatId) {
+    try {
+      const text = `📬 *New PedQuEST Contact*\n\n*From:* ${name.trim()}\n*Email:* ${email.trim()}\n*Subject:* ${subject.trim()}\n\n${message.trim()}`;
+      await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text,
+          parse_mode: "Markdown",
+        }),
+      });
+    } catch (e) {
+      console.log("Telegram notification failed:", e);
+    }
+  }
+
+  // Console backup
+  console.log(`[Contact] ${name} <${email}> — ${subject}`);
 
   return NextResponse.json({ success: true });
 }

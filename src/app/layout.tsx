@@ -7,7 +7,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
-import { ThemeProvider } from "@/lib/theme";
+import Providers from "./providers";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -65,13 +65,13 @@ export default function RootLayout({
       className={`${fraunces.variable} ${plusJakarta.variable} ${outfit.variable} ${dmSans.variable}`}
     >
       <body className="min-h-screen flex flex-col antialiased">
-        <ThemeProvider>
+        <Providers>
           <Navbar />
           <main className="flex-1">
             {children}
           </main>
           <Footer />
-        </ThemeProvider>
+        </Providers>
         <Analytics />
       </body>
     </html>

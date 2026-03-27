@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { members } from "@/data/members";
 
 export const metadata: Metadata = {
@@ -477,10 +478,8 @@ export default function AboutPage() {
             scientists, and other professionals passionate about improving
             brain-directed care for critically ill children.
           </p>
-          <a
-            href="https://forms.office.com/r/0SdngdpiPt"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/join"
             className="btn-primary"
           >
             Apply to Join
@@ -494,9 +493,9 @@ export default function AboutPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M5 3h8v8M13 3L3 13" />
+              <path d="M3 8h10M9 4l4 4-4 4" />
             </svg>
-          </a>
+          </Link>
         </div>
       </section>
 

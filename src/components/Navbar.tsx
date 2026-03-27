@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
+import { useUser, useMember } from "@/lib/auth";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -57,12 +58,33 @@ function CloseIcon() {
   );
 }
 
+function UserIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { user, loading: userLoading } = useUser();
+  const { member } = useMember();
+
+  const userInitials = member
+    ? member.name
+        .split(" ")
+        .filter(Boolean)
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : null;
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -105,25 +127,16 @@ export default function Navbar() {
           {/* Logo / Brand */}
           <Link
             href="/"
-            className="flex items-center no-underline shrink-0 group"
+            className="flex items-center gap-2.5 no-underline shrink-0 group"
             onClick={() => setMobileOpen(false)}
           >
-            <span
-              className="transition-all duration-300 group-hover:opacity-80"
-              style={{
-                fontFamily: "var(--heading-font)",
-                fontWeight: 800,
-                fontSize: "1.6rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1,
-                color: "var(--text)",
-              }}
-            >
-              Ped<span style={{
-                color: "var(--accent-primary)",
-                fontStyle: "italic",
-              }}>QuEST</span>
-            </span>
+            {/* Real PedQuEST wordmark with qEEG texture */}
+            <img
+              src="/images/pedquest-wordmark.png"
+              alt="PedQuEST"
+              className="transition-opacity duration-300 group-hover:opacity-85"
+              style={{ height: 40, width: "auto", objectFit: "contain" }}
+            />
           </Link>
 
           {/* Desktop nav links */}
@@ -176,33 +189,82 @@ export default function Navbar() {
 
           {/* Right side: CTA + theme toggle + hamburger */}
           <div className="flex items-center gap-3">
-            {/* Join CTA - desktop only */}
-            <Link
-              href="/join"
-              className="hidden lg:flex items-center gap-2 px-7 py-3.5 rounded-xl no-underline transition-all duration-200"
-              style={{
-                fontSize: "0.95rem",
-                fontWeight: 600,
-                fontFamily: "var(--body-font)",
-                color: "white",
-                background: "var(--accent-primary)",
-                letterSpacing: "0.02em",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              Join PedQuEST
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="7" y1="17" x2="17" y2="7" />
-                <polyline points="7 7 17 7 17 17" />
-              </svg>
-            </Link>
+            {/* Profile button — shown when logged in */}
+            {!userLoading && user && (
+              <Link
+                href="/profile"
+                className="hidden lg:flex items-center gap-2 no-underline transition-all duration-200"
+                title="My Profile"
+                style={{
+                  padding: member?.photoUrl ? "0" : "0.45rem 0.85rem",
+                  borderRadius: member?.photoUrl ? "50%" : 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-card-hover)",
+                  color: "var(--accent-primary)",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  fontFamily: "var(--body-font)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--accent-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                }}
+              >
+                {member?.photoUrl ? (
+                  <img
+                    src={member.photoUrl}
+                    alt={member.name}
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : userInitials ? (
+                  <span>{userInitials}</span>
+                ) : (
+                  <UserIcon />
+                )}
+              </Link>
+            )}
+
+            {/* Join CTA - desktop only, hidden when logged in */}
+            {!user && (
+              <Link
+                href="/join"
+                className="hidden lg:flex items-center gap-1.5 no-underline transition-all duration-200"
+                style={{
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  fontFamily: "var(--body-font)",
+                  color: "var(--accent-primary)",
+                  padding: "0.5rem 1.1rem",
+                  borderRadius: 999,
+                  border: "1.5px solid var(--accent-primary)",
+                  background: "transparent",
+                  letterSpacing: "0.02em",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--accent-primary)";
+                  e.currentTarget.style.color = "white";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "var(--accent-primary)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                Join Us
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="7" y1="17" x2="17" y2="7" />
+                  <polyline points="7 7 17 7 17 17" />
+                </svg>
+              </Link>
+            )}
 
             {/* Theme toggle */}
             <button
@@ -288,26 +350,47 @@ export default function Navbar() {
                   </li>
                 );
               })}
-              {/* Mobile Join CTA */}
-              <li className="mt-3">
-                <Link
-                  href="/join"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
-                  style={{
-                    fontSize: "1rem",
-                    fontWeight: 600,
-                    color: "white",
-                    background: "var(--accent-primary)",
-                  }}
-                >
-                  Join PedQuEST
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="7" y1="17" x2="17" y2="7" />
-                    <polyline points="7 7 17 7 17 17" />
-                  </svg>
-                </Link>
-              </li>
+              {/* Mobile profile link — when logged in */}
+              {!userLoading && user && (
+                <li className="mt-3">
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      color: "var(--accent-primary)",
+                      border: "1px solid var(--accent-primary)",
+                      background: "transparent",
+                    }}
+                  >
+                    <UserIcon /> My Profile
+                  </Link>
+                </li>
+              )}
+              {/* Mobile Join CTA — hidden when logged in */}
+              {!user && (
+                <li className="mt-3">
+                  <Link
+                    href="/join"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      color: "white",
+                      background: "var(--accent-primary)",
+                    }}
+                  >
+                    Join PedQuEST
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="7" y1="17" x2="17" y2="7" />
+                      <polyline points="7 7 17 7 17 17" />
+                    </svg>
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
         </div>
