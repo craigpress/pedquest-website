@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
 
 // Client-side Supabase client (uses anon key, respects RLS)
 // Returns null if env vars are not configured
@@ -22,7 +22,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 // Server-side Supabase client (uses service role key, bypasses RLS)
 export function createServerClient(): SupabaseClient | null {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || "";
   if (!supabaseUrl || !serviceRoleKey) return null;
   return createClient(supabaseUrl, serviceRoleKey);
 }

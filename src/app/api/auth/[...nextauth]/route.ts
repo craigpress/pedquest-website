@@ -8,7 +8,9 @@ export const authOptions: NextAuthOptions = {
       name: "Authentik",
       type: "oauth",
       wellKnown:
-        "https://auth.presshome.net/application/o/pedquest/.well-known/openid-configuration",
+        process.env.AUTHENTIK_ISSUER
+          ? `${process.env.AUTHENTIK_ISSUER.replace(/\/$/, "")}/.well-known/openid-configuration`
+          : "https://auth.presshome.net/application/o/pedquest/.well-known/openid-configuration",
       clientId: process.env.AUTHENTIK_CLIENT_ID,
       clientSecret: process.env.AUTHENTIK_CLIENT_SECRET,
       authorization: { params: { scope: "openid email profile" } },
