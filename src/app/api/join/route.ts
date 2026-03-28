@@ -101,6 +101,10 @@ export async function POST(request: NextRequest) {
     });
     if (error) {
       console.error("[Join] Supabase insert failed:", error.message);
+      return NextResponse.json(
+        { error: "Submission failed. Please try again later." },
+        { status: 500 }
+      );
     }
   } else {
     console.log("[Join] Supabase not configured — logging submission only");

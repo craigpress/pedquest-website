@@ -180,24 +180,6 @@ export default function SponsorPage() {
         </div>
       </section>
 
-      {/* Tier Cards */}
-      <section style={{ padding: "3rem 2rem", maxWidth: 1000, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-          {[
-            { tier: "Platinum", amount: "$100,000+", color: "#e5e7eb", desc: "Premier naming rights, keynote invitation, dedicated research collaboration" },
-            { tier: "Gold", amount: "$50,000+", color: "#f59e0b", desc: "Featured sponsorship, annual symposium presence, co-branded content" },
-            { tier: "Silver", amount: "$25,000+", color: "#94a3b8", desc: "Recognition on materials, conference presence, newsletter feature" },
-            { tier: "Bronze", amount: "$10,000+", color: "#cd7c54", desc: "Website recognition, annual report listing, event acknowledgment" },
-          ].map(({ tier: t, amount, color, desc }) => (
-            <div key={t} className="card" style={{ padding: "1.5rem", borderTop: `3px solid ${color}` }}>
-              <div style={{ fontFamily: "var(--heading-font)", fontWeight: 700, fontSize: "1.1rem", color: "var(--text)", marginBottom: "0.25rem" }}>{t}</div>
-              <div style={{ color, fontWeight: 700, fontSize: "0.9rem", marginBottom: "0.75rem" }}>{amount}</div>
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", lineHeight: 1.5 }}>{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Form */}
       <section style={{ padding: "1rem 2rem 5rem", maxWidth: 780, margin: "0 auto" }}>
         <div className="card" style={{ padding: "2.5rem" }}>

@@ -25,6 +25,7 @@ const ADMIN_EMAILS = [
 ];
 
 const MEMBER_NAME_MAP: Record<string, string[]> = {
+  // Leadership
   "craig-press": ["Press CA", "Press C"],
   "giulia-benedetti": ["Benedetti GM", "Benedetti G"],
   "dana-harrar": ["Harrar DB", "Harrar D"],
@@ -44,6 +45,55 @@ const MEMBER_NAME_MAP: Record<string, string[]> = {
   "tobias-loddenkemper": ["Loddenkemper T"],
   "kerri-larovere": ["LaRovere KL"],
   "conall-francoeur": ["Francoeur C"],
+  // Members
+  "riley-kessler": ["Kessler R"],
+  "mark-wainwright": ["Wainwright M", "Wainwright MS"],
+  "agnes-kielian": ["Kielian A"],
+  "chelsey-ortman": ["Ortman C"],
+  "christopher-ruzas": ["Ruzas C"],
+  "caroline-conley": ["Conley CR", "Conley C"],
+  "daniel-davila-williams": ["Davila-Williams D", "Williams DD"],
+  "dennis-leung": ["Leung D", "Leung DS"],
+  "grace-gombolay": ["Gombolay G", "Gombolay GY"],
+  "jessica-rogerson": ["Rogerson J"],
+  "juan-ruzas-navarro": ["Ruzas-Navarro J", "Navarro JR"],
+  "kara-hildebrandt": ["Hildebrandt K"],
+  "katherine-knapp": ["Knapp K"],
+  "korosh-talebian": ["Talebian K"],
+  "lisa-ortiz-bautista": ["Ortiz-Bautista L"],
+  "meena-garg": ["Garg M"],
+  "michelle-mignard": ["Mignard M"],
+  "mona-jacobson": ["Jacobson M"],
+  "nathan-reynolds": ["Reynolds N"],
+  "natasha-shukla": ["Shukla N"],
+  "rachel-skelton": ["Skelton R"],
+  "ross-zafonte": ["Zafonte R"],
+  "samuel-lapalme-remis": ["Lapalme-Remis S"],
+  "sarah-becker": ["Becker S"],
+  "saul-flores": ["Flores S"],
+  "sophia-bhalla": ["Bhalla S"],
+  "stuart-friess": ["Friess S", "Friess SH"],
+  "tracy-glauser": ["Glauser T", "Glauser TA"],
+  "troy-loepke": ["Loepke T", "Loepke AW"],
+  "xiaonan-meng": ["Meng X"],
+  "jennifer-pineda-soto": ["Pineda-Soto J", "Soto JP"],
+  "joy-goldstein": ["Goldstein J", "Goldstein JL"],
+  "julie-wilson": ["Wilson J", "Wilson JL"],
+  "courtney-wusthoff": ["Wusthoff C", "Wusthoff CJ"],
+  "zachary-threlkeld": ["Threlkeld Z", "Threlkeld ZD"],
+  "robert-fisher": ["Fisher R", "Fisher RS"],
+  "hannah-glass": ["Glass H", "Glass HC"],
+  "sarah-pinto": ["Pinto S"],
+  "tiffani-mcdonough": ["McDonough T", "McDonough TL"],
+  "mark-scher": ["Scher M", "Scher MS"],
+  "lidia-moura": ["Moura LM", "Moura L"],
+  "lisa-rath": ["Rath L"],
+  "hunmin-kim": ["Kim H"],
+  "kapil-arya": ["Arya K", "Arya KN"],
+  "kevin-chapman": ["Chapman K", "Chapman KE"],
+  "lindsey-gudeman": ["Gudeman L"],
+  "mark-fitzgerald": ["Fitzgerald M", "Fitzgerald MP"],
+  "michael-wolf": ["Wolf M", "Wolf MJ"],
 };
 
 const MEMBER_DISPLAY_NAMES: Record<string, string> = {
@@ -83,6 +133,67 @@ function matchMemberAuthors(authors: string[]): string[] {
     }
   }
   return matched;
+}
+
+// Parse a pasted medical citation into structured fields.
+// Handles Vancouver/NLM format: "Smith J, Jones AB. Title. Journal. 2025;vol:pages. doi:xxx. PMID: xxx."
+// Also handles semicolon-separated "Last, First; Last, First" author formats.
+function parseCitationString(text: string): {
+  authors: string[];
+  title: string;
+  journal: string;
+  year: number | undefined;
+  doi: string;
+  pmid: string;
+} {
+  const clean = text.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+
+  const pmidMatch = clean.match(/PMID[:\s]+(\d{5,9})/i);
+  const pmid = pmidMatch?.[1] ?? "";
+
+  const doiMatch = clean.match(/(?:doi[:\s]+|https?:\/\/doi\.org\/)(10\.[^\s,;]+)/i);
+  const doi = doiMatch?.[1]?.replace(/[.,;]+$/, "") ?? "";
+
+  const yearMatch = clean.match(/\b(19[5-9]\d|20[0-4]\d)\b/);
+  const year = yearMatch ? parseInt(yearMatch[1]) : undefined;
+
+  let authors: string[] = [];
+  let title = "";
+  let journal = "";
+
+  // Split on ". " that precedes a capital letter — separates "Authors. Title. Journal."
+  const segments = clean.split(/\. (?=[A-Z])/);
+
+  if (segments.length >= 2) {
+    const seg0 = segments[0].trim();
+
+    // Detect "Last, First; Last, First" format
+    const isSemicolonFormat = /^[A-Z][a-z\-]+,\s+[A-Z]/.test(seg0) && seg0.includes(";");
+    // Detect "LastName AB, LastName CD" format (Vancouver)
+    const isVancouver = /^[A-Z][a-záàéèíìóòúùñ\-]+\s+[A-Z]{1,4}(?:,\s*[A-Z][a-záàéèíìóòúùñ \-]+\s+[A-Z]{1,4})*(?:,?\s*et al\.?)?$/.test(seg0);
+
+    if (isSemicolonFormat) {
+      authors = seg0.split(/;\s*/).map((s) => {
+        const m = s.trim().match(/^([A-Z][a-z\-]+),\s+([A-Z])[a-z]*\s*([A-Z])?/);
+        return m ? `${m[1]} ${m[2]}${m[3] ?? ""}` : s.trim();
+      }).filter(Boolean);
+      title = segments[1];
+      journal = segments[2]?.split(/\s*[\d;(]/)[0]?.trim() ?? "";
+    } else if (isVancouver) {
+      authors = seg0
+        .replace(/,?\s*et al\.?/, "")
+        .split(/,\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      title = segments[1];
+      journal = segments[2]?.split(/\s*[\d;(]/)[0]?.trim() ?? "";
+    } else {
+      // Fallback: treat first segment as title if it looks long
+      title = seg0.length > 30 ? seg0 : segments[1] ?? "";
+    }
+  }
+
+  return { authors, title, journal, year, doi, pmid };
 }
 
 const inputStyle: React.CSSProperties = {
@@ -185,6 +296,17 @@ function AdminPageInner() {
   const [absCategories, setAbsCategories] = useState<string[]>([]);
   const [absMemberAuthorIds, setAbsMemberAuthorIds] = useState<string[]>([]);
   const [absIsMemberPaper, setAbsIsMemberPaper] = useState(false);
+  const [absNotes, setAbsNotes] = useState("");
+  // Abstract online link search
+  const [absLinkLoading, setAbsLinkLoading] = useState(false);
+  const [absLinkResults, setAbsLinkResults] = useState<null | {
+    found: boolean;
+    pubmed_results: { pmid: string; title: string; journal: string; year: string }[];
+    links: { label: string; url: string; description: string }[];
+  }>(null);
+  // Citation paste parsers
+  const [citationPaste, setCitationPaste] = useState("");
+  const [absCitationPaste, setAbsCitationPaste] = useState("");
 
   // Lookup state
   const [lookupValue, setLookupValue] = useState("");
@@ -322,6 +444,64 @@ function AdminPageInner() {
     setAbsPresentationType("poster"); setAbsDate(""); setAbsLocation("");
     setAbsYear(new Date().getFullYear()); setAbsCategories([]);
     setAbsMemberAuthorIds([]); setAbsIsMemberPaper(false);
+    setAbsNotes(""); setAbsLinkResults(null); setAbsCitationPaste("");
+  };
+
+  // Parse a pasted citation and pre-fill the publication form.
+  // If a PMID or DOI is detected, also sets lookupValue so the user can
+  // click "Fetch from PubMed" to get the full record.
+  const parsePubCitation = () => {
+    if (!citationPaste.trim()) return;
+    const parsed = parseCitationString(citationPaste);
+    if (parsed.authors.length > 0) {
+      setAuthors(parsed.authors);
+      const matched = matchMemberAuthors(parsed.authors);
+      setMemberAuthorIds(matched);
+      setIsMemberPaper(matched.length > 0);
+    }
+    if (parsed.title) setTitle(parsed.title);
+    if (parsed.journal) setJournal(parsed.journal);
+    if (parsed.year) setYear(parsed.year);
+    if (parsed.doi) setDoi(parsed.doi);
+    if (parsed.pmid) setPmid(parsed.pmid);
+    // If PMID or DOI found, pre-fill the lookup box for one-click PubMed fetch
+    if (parsed.pmid) setLookupValue(parsed.pmid);
+    else if (parsed.doi) setLookupValue(parsed.doi);
+    setCitationPaste("");
+  };
+
+  // Parse a pasted author/citation string and pre-fill the abstract form.
+  const parseAbsCitation = () => {
+    if (!absCitationPaste.trim()) return;
+    const parsed = parseCitationString(absCitationPaste);
+    if (parsed.authors.length > 0) {
+      setAbsAuthors(parsed.authors);
+      const matched = matchMemberAuthors(parsed.authors);
+      setAbsMemberAuthorIds(matched);
+      setAbsIsMemberPaper(matched.length > 0);
+    }
+    if (parsed.title && !absTitle) setAbsTitle(parsed.title);
+    if (parsed.year) setAbsYear(parsed.year);
+    setAbsCitationPaste("");
+  };
+
+  // Search for an abstract online via PubMed + generated links.
+  const searchAbstractOnline = async () => {
+    if (!absTitle.trim()) return;
+    setAbsLinkLoading(true);
+    setAbsLinkResults(null);
+    try {
+      const params = new URLSearchParams({ title: absTitle.trim() });
+      if (absConference) params.set("conference", absConference);
+      if (absYear) params.set("year", String(absYear));
+      const res = await fetch(`/api/abstract-search?${params}`);
+      if (res.ok) {
+        setAbsLinkResults(await res.json());
+      }
+    } catch {
+      /* silently fail — links still available */
+    }
+    setAbsLinkLoading(false);
   };
 
   const savePublication = () => {
@@ -363,6 +543,7 @@ function AdminPageInner() {
       memberAuthorIds: absMemberAuthorIds,
       isMemberPaper: absIsMemberPaper,
       categories: absCategories,
+      notes: absNotes || undefined,
     };
     const updated = [...savedAbstracts, abs];
     saveAbstracts(updated);

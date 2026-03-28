@@ -22,8 +22,8 @@ export default function Footer() {
       }}
     >
       <div
-        className="mx-auto px-6 pt-20 pb-16"
-        style={{ maxWidth: 1200 }}
+        className="mx-auto"
+        style={{ maxWidth: 1200, padding: "3.5rem 1.5rem 2rem" }}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Column 1: Branding */}
@@ -99,7 +99,7 @@ export default function Footer() {
               Supported By
             </h4>
             <a
-              href="https://pediatricepilepsyresearchfoundation.org"
+              href="https://www.pediatricepilepsyresearchfoundation.org"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm no-underline transition-colors duration-150"
@@ -192,8 +192,8 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div
-          className="mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
-          style={{ borderTop: "1px solid var(--border)" }}
+          className="flex flex-col sm:flex-row items-center justify-between gap-3"
+          style={{ borderTop: "1px solid var(--border)", marginTop: "2.5rem", paddingTop: "1.25rem", paddingBottom: "0.5rem" }}
         >
           <p
             className="text-xs"

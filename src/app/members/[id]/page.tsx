@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { members } from "@/data/members";
 import { publications } from "@/data/publications";
+import { abstracts } from "@/data/abstracts";
 import MemberAvatar from "@/components/MemberAvatar";
 
 export function generateStaticParams() {
@@ -14,6 +15,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   if (!member) notFound();
 
   const memberPubs = publications.filter((p) => p.memberAuthorIds.includes(id));
+  const memberAbstracts = abstracts.filter((a) => a.memberAuthorIds.includes(id));
 
   return (
     <main style={{ maxWidth: "800px", margin: "0 auto", padding: "3rem 1.5rem" }}>
@@ -140,6 +142,44 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                       </a>
                     </>
                   )}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Conference Abstracts */}
+      {memberAbstracts.length > 0 && (
+        <section style={{ marginTop: "2.5rem" }}>
+          <h2 style={{
+            fontFamily: "var(--heading-font)",
+            fontSize: "1.4rem",
+            fontWeight: 700,
+            color: "var(--text)",
+            marginBottom: "1.25rem",
+          }}>
+            Conference Abstracts
+            <span style={{ fontSize: "0.9rem", fontWeight: 400, color: "var(--text-muted)", marginLeft: "0.5rem" }}>
+              ({memberAbstracts.length})
+            </span>
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {memberAbstracts.map((abs) => (
+              <div key={abs.id} className="card" style={{ padding: "1.25rem" }}>
+                <p style={{
+                  fontFamily: "var(--heading-font)",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  color: "var(--text)",
+                  lineHeight: 1.4,
+                  marginBottom: "0.4rem",
+                }}>
+                  {abs.title}
+                </p>
+                <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                  <em>{abs.conference}</em> ({abs.year})
+                  {" "}&middot; {abs.presentationType}
                 </p>
               </div>
             ))}

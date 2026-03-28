@@ -238,29 +238,41 @@ export default function Navbar() {
                 href="/join"
                 className="hidden lg:flex items-center gap-1.5 no-underline transition-all duration-200"
                 style={{
+                  position: "relative",
                   fontSize: "0.82rem",
                   fontWeight: 600,
                   fontFamily: "var(--body-font)",
-                  color: "var(--accent-primary)",
+                  color: "white",
                   padding: "0.5rem 1.1rem",
                   borderRadius: 999,
-                  border: "1.5px solid var(--accent-primary)",
-                  background: "transparent",
+                  border: "none",
+                  background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary, var(--accent-primary)))",
                   letterSpacing: "0.02em",
+                  overflow: "hidden",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--accent-primary)";
-                  e.currentTarget.style.color = "white";
                   e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 212, 170, 0.3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "var(--accent-primary)";
                   e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                Join Us
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {/* Spectrogram micro-texture */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: 0.15,
+                    background: "repeating-linear-gradient(90deg, transparent 0px, rgba(255,255,255,0.3) 2px, transparent 4px, rgba(255,255,255,0.15) 6px, transparent 8px)",
+                    backgroundSize: "40px 100%",
+                    animation: "spectrogram-flow 8s linear infinite",
+                  }}
+                />
+                <span style={{ position: "relative", zIndex: 1 }}>Join Us</span>
+                <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="7" y1="17" x2="17" y2="7" />
                   <polyline points="7 7 17 7 17 17" />
                 </svg>

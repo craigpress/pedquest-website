@@ -51,6 +51,8 @@ export default function PublicationsPage() {
   const [filterYear, setFilterYear] = useState("");
   const [filterJournal, setFilterJournal] = useState("");
   const [filterConference, setFilterConference] = useState("");
+  const [memberOnly, setMemberOnly] = useState(false);
+  const [filterPopulation, setFilterPopulation] = useState("");
   const [expandedAbstract, setExpandedAbstract] = useState<string | null>(null);
   const [localPubs, setLocalPubs] = useState<Publication[]>([]);
 
@@ -110,6 +112,11 @@ export default function PublicationsPage() {
     []
   );
 
+  const uniquePopulations = useMemo(
+    () => [...new Set(tabPubs.map((p) => p.patientPopulation).filter(Boolean))].sort() as string[],
+    [tabPubs]
+  );
+
   const filteredPubs = useMemo(() => {
     if (tab === "abstracts") return [];
     const q = search.toLowerCase();
@@ -119,10 +126,12 @@ export default function PublicationsPage() {
         if (filterCategory && !p.categories.includes(filterCategory)) return false;
         if (filterYear && p.year !== Number(filterYear)) return false;
         if (filterJournal && p.journal !== filterJournal) return false;
+        if (memberOnly && !p.isMemberPaper) return false;
+        if (filterPopulation && p.patientPopulation !== filterPopulation) return false;
         return true;
       })
       .sort((a, b) => b.year - a.year || (b.month ?? 0) - (a.month ?? 0));
-  }, [tabPubs, search, filterCategory, filterYear, filterJournal, tab]);
+  }, [tabPubs, search, filterCategory, filterYear, filterJournal, memberOnly, filterPopulation, tab]);
 
   const activeCategories = tab === "abstracts" ? abstractCategories : publicationCategories;
   const resultCount = tab === "abstracts" ? filteredAbstracts.length : filteredPubs.length;
@@ -255,6 +264,50 @@ export default function PublicationsPage() {
           </select>
         )}
       </div>
+
+      {/* Advanced filters row — articles tab only */}
+      {tab === "articles" && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1rem", alignItems: "center" }}>
+          <button
+            onClick={() => setMemberOnly(!memberOnly)}
+            style={{
+              padding: "0.45rem 0.9rem",
+              borderRadius: 999,
+              border: "1.5px solid",
+              borderColor: memberOnly ? "var(--accent-primary)" : "var(--border-strong)",
+              background: memberOnly ? "color-mix(in srgb, var(--accent-primary) 12%, transparent)" : "transparent",
+              color: memberOnly ? "var(--accent-primary)" : "var(--text-secondary)",
+              fontSize: "0.82rem",
+              fontWeight: 500,
+              fontFamily: "var(--body-font)",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {memberOnly ? "✓ " : ""}Member Papers Only
+          </button>
+          {uniquePopulations.length > 0 && (
+            <select
+              value={filterPopulation}
+              onChange={(e) => setFilterPopulation(e.target.value)}
+              style={{
+                padding: "0.45rem 0.9rem",
+                borderRadius: "8px",
+                border: "1px solid var(--border-strong)",
+                background: "var(--bg-card)",
+                color: "var(--text)",
+                fontFamily: "var(--body-font)",
+                fontSize: "0.82rem",
+              }}
+            >
+              <option value="">All Populations</option>
+              {uniquePopulations.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {/* Results count */}
       <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1rem" }}>

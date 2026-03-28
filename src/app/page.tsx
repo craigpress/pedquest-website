@@ -1,10 +1,15 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { publications } from "@/data/publications";
 import { members } from "@/data/members";
+import { useScrollReveal } from "@/lib/useScrollReveal";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
 
 const recentPubs = [...publications]
   .sort((a, b) => b.year - a.year || (b.month ?? 0) - (a.month ?? 0))
-  .slice(0, 4);
+  .slice(0, 5);
 
 function getMemberBadge(pub: (typeof publications)[0]) {
   if (!pub.isMemberPaper || pub.memberAuthorIds.length === 0) return null;
@@ -13,8 +18,20 @@ function getMemberBadge(pub: (typeof publications)[0]) {
 }
 
 export default function HomePage() {
+  const mainRef = useScrollReveal();
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const featuredPub = recentPubs[0];
+  const sidebarPubs = recentPubs.slice(1, 4);
+
   return (
-    <main>
+    <main ref={mainRef}>
       {/* ── Hero Section ── */}
       <section className="hero-section">
         <div className="hero-bg" aria-hidden="true" />
@@ -26,8 +43,14 @@ export default function HomePage() {
           <div className="spectrogram-band band-beta" />
           <div className="spectrogram-band band-gamma" />
         </div>
-        {/* EEG waveform traces */}
-        <div className="eeg-wave-container" aria-hidden="true">
+        {/* EEG waveform traces — parallax on scroll */}
+        <div
+          className="eeg-wave-container"
+          aria-hidden="true"
+          style={{
+            transform: `translateY(${scrollY * 0.3}px)`,
+            opacity: Math.max(0, 1 - scrollY / 600),
+          }}>
           <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="eeg-wave">
             <path className="eeg-trace eeg-trace-1" d="M0 60 L50 60 L70 45 L80 75 L90 30 L100 90 L110 40 L120 70 L130 55 L150 60 L200 60 L220 50 L230 70 L240 35 L250 85 L260 42 L270 68 L280 55 L300 60 L400 60 L420 48 L430 72 L440 32 L450 88 L460 38 L470 65 L480 58 L500 60 L600 60 L620 52 L630 68 L640 38 L650 82 L660 44 L670 62 L680 56 L700 60 L800 60 L820 46 L830 74 L840 34 L850 86 L860 40 L870 66 L880 54 L900 60 L1000 60 L1020 50 L1030 70 L1040 36 L1050 84 L1060 42 L1070 64 L1080 58 L1100 60 L1200 60" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             <path className="eeg-trace eeg-trace-2" d="M0 60 L80 60 L100 48 L110 72 L120 35 L130 85 L140 42 L150 68 L160 55 L180 60 L280 60 L300 52 L310 68 L320 38 L330 82 L340 44 L350 62 L360 56 L380 60 L480 60 L500 46 L510 74 L520 34 L530 86 L540 40 L550 66 L560 54 L580 60 L680 60 L700 50 L710 70 L720 36 L730 84 L740 42 L750 64 L760 58 L780 60 L880 60 L900 48 L910 72 L920 35 L930 85 L940 42 L950 68 L960 55 L980 60 L1200 60" fill="none" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
@@ -59,29 +82,29 @@ export default function HomePage() {
       </section>
 
       {/* ── Stats Bar ── */}
-      <section className="stats-bar">
+      <section className="stats-bar reveal">
         <div className="stats-container">
           <div className="stat-item">
-            <span className="stat-number">66+</span>
+            <span className="stat-number"><AnimatedCounter target={66} suffix="+" /></span>
             <span className="stat-label">Members</span>
           </div>
           <div className="stat-divider" />
           <div className="stat-item">
-            <span className="stat-number">24</span>
+            <span className="stat-number"><AnimatedCounter target={24} /></span>
             <span className="stat-label">Institutions</span>
           </div>
           <div className="stat-divider" />
           <div className="stat-item">
-            <span className="stat-number">4</span>
+            <span className="stat-number"><AnimatedCounter target={4} /></span>
             <span className="stat-label">Countries</span>
           </div>
         </div>
       </section>
 
       {/* ── Feature Cards ── */}
-      <section className="features-section">
+      <section className="features-section reveal">
         <div className="features-grid">
-          <Link href="/about" className="card feature-card">
+          <Link href="/about" className="card feature-card reveal reveal-delay-1">
             <div className="feature-icon research-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
@@ -101,7 +124,7 @@ export default function HomePage() {
             </span>
           </Link>
 
-          <Link href="/education" className="card feature-card">
+          <Link href="/education" className="card feature-card reveal reveal-delay-2">
             <div className="feature-icon education-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -123,7 +146,7 @@ export default function HomePage() {
             </span>
           </Link>
 
-          <Link href="/publications" className="card feature-card">
+          <Link href="/publications" className="card feature-card reveal reveal-delay-3">
             <div className="feature-icon publications-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
@@ -147,40 +170,99 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Latest Publications ── */}
-      <section className="publications-section">
+      {/* ── Latest Research & Findings ── */}
+      <section className="publications-section reveal">
         <div className="publications-container">
           <div className="publications-header">
-            <h2 className="section-heading">Latest Publications</h2>
+            <h2 className="section-heading">Latest Research &amp; Findings</h2>
             <p className="section-subheading">
               Recent contributions from PedQuEST members and the broader
               pediatric neurocritical care community.
             </p>
           </div>
-          <div className="publications-grid">
-            {recentPubs.map((pub) => {
-              const memberName = getMemberBadge(pub);
-              return (
-                <article key={pub.id} className="card pub-card">
+
+          {/* Featured layout: large card + sidebar */}
+          <div className="featured-research-grid">
+            {/* Featured study — large card */}
+            {featuredPub && (
+              <article className="card featured-pub-card reveal reveal-delay-1">
+                {/* EEG waveform decorative header */}
+                <div className="featured-pub-wave" aria-hidden="true">
+                  <svg viewBox="0 0 600 80" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
+                    <path d="M0 40 L30 40 L40 25 L50 55 L60 20 L70 60 L80 30 L90 50 L100 38 L120 40 L180 40 L190 28 L200 52 L210 22 L220 58 L230 32 L240 48 L250 40 L280 40 L340 40 L350 30 L360 50 L370 24 L380 56 L390 34 L400 46 L410 40 L440 40 L500 40 L510 32 L520 48 L530 26 L540 54 L550 36 L560 44 L570 40 L600 40" fill="none" stroke="var(--accent-primary)" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+                    <path d="M0 40 L60 40 L70 30 L80 50 L90 22 L100 58 L110 34 L120 46 L130 40 L160 40 L250 40 L260 32 L270 48 L280 24 L290 56 L300 35 L310 45 L320 40 L350 40 L420 40 L430 28 L440 52 L450 20 L460 60 L470 32 L480 48 L490 40 L520 40 L600 40" fill="none" stroke="var(--accent-secondary)" strokeWidth="1" strokeLinecap="round" opacity="0.3" />
+                  </svg>
+                  <span className="featured-badge">Featured Study</span>
+                </div>
+                <div className="featured-pub-body">
                   <div className="pub-meta">
-                    <span className="pub-journal">{pub.journal}</span>
-                    <span className="pub-year">{pub.year}</span>
+                    <span className="pub-journal">{featuredPub.journal}</span>
+                    <span className="pub-year">{featuredPub.year}</span>
                   </div>
-                  <h3 className="pub-title">{pub.title}</h3>
-                  <p className="pub-authors">
-                    {pub.authors.slice(0, 3).join(", ")}
-                    {pub.authors.length > 3 && " et al."}
+                  <h3 className="featured-pub-title">{featuredPub.title}</h3>
+                  <p className="pub-authors" style={{ marginBottom: "1rem" }}>
+                    {featuredPub.authors.slice(0, 5).join(", ")}
+                    {featuredPub.authors.length > 5 && " et al."}
                   </p>
-                  {memberName && (
-                    <span className="badge badge-member">
-                      PedQuEST Member
-                    </span>
+                  {featuredPub.abstract && (
+                    <p className="featured-pub-abstract">
+                      {featuredPub.abstract.slice(0, 450)}
+                      {featuredPub.abstract.length > 450 && "..."}
+                    </p>
                   )}
-                </article>
-              );
-            })}
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginTop: "auto" }}>
+                    <Link href="/publications" className="btn-primary" style={{ fontSize: "0.85rem", padding: "0.6rem 1.25rem" }}>
+                      View Full Abstract
+                    </Link>
+                    {getMemberBadge(featuredPub) && (
+                      <span className="badge badge-member">PedQuEST Member</span>
+                    )}
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {/* Sidebar — recent studies */}
+            <div className="sidebar-pubs">
+              {sidebarPubs.map((pub, i) => {
+                const memberName = getMemberBadge(pub);
+                return (
+                  <article key={pub.id} className={`card pub-card sidebar-pub-card reveal reveal-delay-${i + 2}`}>
+                    <div className="pub-meta">
+                      <span className="pub-journal">{pub.journal}</span>
+                      <span className="pub-year">
+                        {pub.month ? `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][pub.month - 1]} ${pub.year}` : pub.year}
+                      </span>
+                    </div>
+                    <h3 className="pub-title">{pub.title}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "auto" }}>
+                      <Link
+                        href="/publications"
+                        style={{
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          color: "var(--accent-primary)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.3rem",
+                        }}
+                      >
+                        View Abstract
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 3h8v8M13 3L3 13" />
+                        </svg>
+                      </Link>
+                      {memberName && (
+                        <span className="badge badge-member" style={{ fontSize: "0.7rem" }}>PedQuEST</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </div>
-          <div className="publications-cta">
+
+          <div className="publications-cta reveal reveal-delay-4">
             <Link href="/publications" className="btn-secondary">
               View All Publications
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -192,7 +274,7 @@ export default function HomePage() {
       </section>
 
       {/* ── PERF Acknowledgment ── */}
-      <section className="perf-section">
+      <section className="perf-section reveal">
         <div className="perf-container">
           <p className="perf-label">Proudly Supported By</p>
           <h3 className="perf-name">
@@ -213,7 +295,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Join CTA ── */}
-      <section className="join-section">
+      <section className="join-section reveal">
         <div className="join-container">
           <h2 className="join-heading">Interested in Joining PedQuEST?</h2>
           <p className="join-description">
@@ -255,6 +337,11 @@ export default function HomePage() {
           overflow: hidden;
           padding: 4rem 2rem 2rem;
         }
+        @keyframes gradient-drift {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
         .hero-bg {
           position: absolute;
           inset: 0;
@@ -262,6 +349,8 @@ export default function HomePage() {
             radial-gradient(ellipse 80% 60% at 15% 30%, color-mix(in srgb, var(--accent-primary) 10%, transparent) 0%, transparent 60%),
             radial-gradient(ellipse 60% 50% at 85% 25%, color-mix(in srgb, var(--accent-tertiary) 8%, transparent) 0%, transparent 55%),
             radial-gradient(ellipse 70% 50% at 50% 70%, color-mix(in srgb, var(--accent-secondary) 8%, transparent) 0%, transparent 50%);
+          background-size: 200% 200%;
+          animation: gradient-drift 20s ease infinite;
           z-index: 0;
         }
 
@@ -532,10 +621,69 @@ export default function HomePage() {
         .publications-header {
           margin-bottom: 3rem;
         }
-        .publications-grid {
+        /* Featured research layout */
+        .featured-research-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: 1.4fr 1fr;
           gap: 1.25rem;
+          align-items: start;
+        }
+        .featured-pub-card {
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+        .featured-pub-wave {
+          position: relative;
+          height: 100px;
+          background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 8%, var(--bg-card)) 0%, color-mix(in srgb, var(--accent-secondary) 6%, var(--bg-card)) 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-bottom: 1px solid var(--border);
+        }
+        .featured-badge {
+          position: absolute;
+          top: 12px;
+          left: 14px;
+          font-size: 0.65rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: var(--bg);
+          background: var(--accent-primary);
+          padding: 0.2rem 0.6rem;
+          border-radius: 4px;
+        }
+        .featured-pub-body {
+          padding: 1.75rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          flex: 1;
+        }
+        .featured-pub-title {
+          font-family: var(--heading-font);
+          font-size: 1.25rem;
+          font-weight: 700;
+          line-height: 1.35;
+          color: var(--text);
+        }
+        .featured-pub-abstract {
+          font-size: 0.88rem;
+          color: var(--text-secondary);
+          line-height: 1.65;
+        }
+        .sidebar-pubs {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+        .sidebar-pub-card {
+          padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
         }
         .pub-card {
           padding: 1.75rem;
@@ -646,7 +794,7 @@ export default function HomePage() {
             max-width: 500px;
             margin: 0 auto;
           }
-          .publications-grid {
+          .featured-research-grid {
             grid-template-columns: 1fr;
           }
         }

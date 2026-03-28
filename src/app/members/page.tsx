@@ -178,7 +178,9 @@ export default function MembersPage() {
             overflow: "hidden",
             transition: "max-height 0.45s ease-in-out",
             borderRadius: "0 0 12px 12px",
-            border: mapExpanded ? "1px solid var(--border)" : "1px solid transparent",
+            borderLeft: mapExpanded ? "1px solid var(--border)" : "1px solid transparent",
+            borderRight: mapExpanded ? "1px solid var(--border)" : "1px solid transparent",
+            borderBottom: mapExpanded ? "1px solid var(--border)" : "1px solid transparent",
             borderTop: "none",
           }}
         >

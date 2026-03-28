@@ -95,6 +95,10 @@ export async function POST(request: NextRequest) {
     });
     if (error) {
       console.error("[Sponsor] Supabase insert failed:", error.message);
+      return NextResponse.json(
+        { error: "Submission failed. Please try again later." },
+        { status: 500 }
+      );
     }
   } else {
     console.log("[Sponsor] Supabase not configured — logging submission only");
