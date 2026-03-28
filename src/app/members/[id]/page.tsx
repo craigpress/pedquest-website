@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { members } from "@/data/members";
 import { publications } from "@/data/publications";
-import { abstracts } from "@/data/abstracts";
+import { conferenceAbstracts } from "@/data/abstracts";
 import MemberAvatar from "@/components/MemberAvatar";
 
 export function generateStaticParams() {
@@ -15,7 +15,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   if (!member) notFound();
 
   const memberPubs = publications.filter((p) => p.memberAuthorIds.includes(id));
-  const memberAbstracts = abstracts.filter((a) => a.memberAuthorIds.includes(id));
+  const memberAbstracts = conferenceAbstracts.filter((a) => a.memberAuthorIds.includes(id));
 
   return (
     <main style={{ maxWidth: "800px", margin: "0 auto", padding: "3rem 1.5rem" }}>
