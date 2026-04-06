@@ -981,6 +981,36 @@ export const members: Member[] = [
     isLeadership: false,
     sortOrder: 65,
   },
+  {
+    id: "amanda-sandoval-karamian",
+    name: "Amanda Sandoval Karamian",
+    title: "MD",
+    institution: "University of Utah / Primary Children's Hospital",
+    department: "Pediatric Neurology",
+    country: "USA",
+    city: "Salt Lake City, UT",
+    lat: 40.7608,
+    lng: -111.8910,
+    bio: "",
+    interests: [],
+    isLeadership: false,
+    sortOrder: 66,
+  },
+  {
+    id: "jennifer-keene",
+    name: "Jennifer C. Keene",
+    title: "MD, MBA, MS",
+    institution: "University of Utah / Primary Children's Hospital",
+    department: "Pediatric Neurology",
+    country: "USA",
+    city: "Salt Lake City, UT",
+    lat: 40.7608,
+    lng: -111.8910,
+    bio: "",
+    interests: [],
+    isLeadership: false,
+    sortOrder: 67,
+  },
 ];
 
 export const institutions = [
@@ -1024,4 +1054,5 @@ export const institutions = [
   { name: "Lurie Children's Hospital", city: "Chicago, IL", country: "USA", lat: 41.8747, lng: -87.6194 },
   { name: "University of Michigan / Mott Children's", city: "Ann Arbor, MI", country: "USA", lat: 42.2808, lng: -83.7430 },
   { name: "Boston Children's Hospital / Harvard", city: "Boston, MA", country: "USA", lat: 42.3370, lng: -71.1050 },
+  { name: "University of Utah / Primary Children's Hospital", city: "Salt Lake City, UT", country: "USA", lat: 40.7608, lng: -111.8910 },
 ];

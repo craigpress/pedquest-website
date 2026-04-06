@@ -94,6 +94,8 @@ const MEMBER_NAME_MAP: Record<string, string[]> = {
   "lindsey-gudeman": ["Gudeman L"],
   "mark-fitzgerald": ["Fitzgerald M", "Fitzgerald MP"],
   "michael-wolf": ["Wolf M", "Wolf MJ"],
+  "amanda-sandoval-karamian": ["Sandoval Karamian A", "Sandoval-Karamian A", "Karamian AS"],
+  "jennifer-keene": ["Keene JC", "Keene J"],
 };
 
 const MEMBER_DISPLAY_NAMES: Record<string, string> = {
@@ -166,6 +168,8 @@ const MEMBER_DISPLAY_NAMES: Record<string, string> = {
   "lindsey-gudeman": "Lindsey Gudeman",
   "mark-fitzgerald": "Mark Fitzgerald",
   "michael-wolf": "Michael Wolf",
+  "amanda-sandoval-karamian": "Amanda Sandoval Karamian",
+  "jennifer-keene": "Jennifer C. Keene",
 };
 
 const STORAGE_KEY = "pedquest-new-publications";
