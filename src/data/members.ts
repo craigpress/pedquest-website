@@ -1137,4 +1137,5 @@ export const institutions = [
   { name: "Washington University / St. Louis Children's Hospital", city: "St. Louis, MO", country: "USA", lat: 38.6329, lng: -90.2743 },
   { name: "McGill University / Montreal Children's Hospital", city: "Montreal, QC", country: "Canada", lat: 45.5017, lng: -73.5673 },
   { name: "Mayo Clinic", city: "Rochester, MN", country: "USA", lat: 44.0225, lng: -92.4631 },
+  { name: "Vanderbilt University Medical Center", city: "Nashville, TN", country: "USA", lat: 36.1427, lng: -86.8025 },
 ];
