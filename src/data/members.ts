@@ -14,6 +14,7 @@ export interface Member {
   orcidId?: string;
   interests: string[];
   email?: string;
+  authEmail?: string;
   websiteUrl?: string;
   isLeadership: boolean;
   leadershipRole?: "co_director" | "scientific_committee" | "senior_advisor" | "education_lead";
@@ -38,6 +39,7 @@ export const members: Member[] = [
     orcidId: "0000-0003-4435-206X",
     interests: ["qEEG", "Pediatric Neurocritical Care", "EEG Biomarkers", "Neurorecovery", "Cardiac Arrest Outcomes"],
     email: "pressca@chop.edu",
+    authEmail: "craigpress@gmail.com",
     isLeadership: true,
     leadershipRole: "co_director",
     sortOrder: 1,
@@ -176,7 +178,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Philadelphia, PA",
     lat: 39.9483,
-    lng: -75.1935,
+    lng: -75.1935,    photoUrl: "/images/nicholas-abend.jpg",
+  
     bio: "Senior Scientific Advisor to PedQuEST.",
     interests: ["Pediatric Neurocritical Care", "EEG Monitoring", "Neonatal Seizures"],
     isLeadership: true,
@@ -210,7 +213,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Philadelphia, PA",
     lat: 39.9483,
-    lng: -75.1935,
+    lng: -75.1935,    photoUrl: "/images/laura-caligiuri.jpg",
+  
     bio: "Education Initiative co-lead for PedQuEST. Developing standardized qEEG education curriculum.",
     email: "caligiuril@chop.edu",
     interests: ["qEEG Education", "Medical Education", "Curriculum Development"],
@@ -389,7 +393,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Houston, TX",
     lat: 29.7101,
-    lng: -95.4015,
+    lng: -95.4015,    photoUrl: "/images/daniel-davila-williams.jpg",
+  
     bio: "Assistant Professor of Pediatrics - Neurology at Baylor College of Medicine and Texas Children's Hospital. Completed child neurology residency at Boston Children's/Harvard, followed by clinical neurophysiology and neurocritical care fellowships.",
     interests: ["Pediatric Stroke","Neurovascular Disorders","Pediatric Neurocritical Care","Neuro ICU EEG Monitoring"],
     websiteUrl: "https://www.bcm.edu/people-search/daniel-davila-williams-52041",
@@ -657,7 +662,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Aurora, CO",
     lat: 39.7405,
-    lng: -104.8319,
+    lng: -104.8319,    photoUrl: "/images/ethan-rosenberg.jpg",
+  
     bio: "Pediatric neurologist at Children's Hospital Colorado, Anschutz Medical Campus in Aurora. Affiliated with the Neuroscience Institute. Rated 4.9/5 by patients.",
     interests: ["Pediatric Neurology"],
     email: "ethan.rosenberg@childrenscolorado.org",
