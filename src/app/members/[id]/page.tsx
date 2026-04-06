@@ -5,6 +5,24 @@ import { publications } from "@/data/publications";
 import { conferenceAbstracts } from "@/data/abstracts";
 import MemberAvatar from "@/components/MemberAvatar";
 
+function highlightOwnName(authors: string[], memberName: string) {
+  const lastName = memberName.split(" ").pop() || "";
+  return authors.map((author, i) => {
+    const authorLast = author.split(" ")[0]?.replace(/,?$/, "");
+    const isThisMember = authorLast === lastName;
+    return (
+      <span key={i}>
+        {i > 0 && ", "}
+        {isThisMember ? (
+          <strong style={{ color: "var(--accent-primary)" }}>{author}</strong>
+        ) : (
+          author
+        )}
+      </span>
+    );
+  });
+}
+
 export function generateStaticParams() {
   return members.map((m) => ({ id: m.id }));
 }
@@ -133,7 +151,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                   {pub.title}
                 </h3>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", lineHeight: 1.5 }}>
-                  {pub.authors.join(", ")}
+                  {highlightOwnName(pub.authors, member.name)}
                 </p>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
                   <em>{pub.journal}</em> ({pub.year})
@@ -185,7 +203,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                   {abs.title}
                 </h3>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", lineHeight: 1.5 }}>
-                  {abs.authors.join(", ")}
+                  {highlightOwnName(abs.authors, member.name)}
                 </p>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
                   <em>{abs.conference}</em> ({abs.year}) &middot; {abs.presentationType}
