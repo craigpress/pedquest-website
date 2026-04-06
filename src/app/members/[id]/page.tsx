@@ -121,29 +121,49 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
       {memberPubs.length > 0 && (
         <section>
           <h2 style={{ fontFamily: "var(--heading-font)", fontSize: "1.2rem", marginBottom: "1rem" }}>
-            Publications ({memberPubs.length})
+            Publications
+            <span style={{ fontSize: "0.9rem", fontWeight: 400, color: "var(--text-muted)", marginLeft: "0.5rem" }}>
+              ({memberPubs.length})
+            </span>
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {memberPubs.map((pub) => (
-              <div key={pub.id} className="card" style={{ padding: "1.25rem" }}>
-                <h3 style={{ fontSize: "0.95rem", fontFamily: "var(--heading-font)", marginBottom: "0.35rem", lineHeight: 1.4 }}>
+              <article key={pub.id} className="card" style={{ padding: "1.5rem" }}>
+                <h3 style={{ fontSize: "1rem", fontFamily: "var(--heading-font)", lineHeight: 1.4, marginBottom: "0.5rem" }}>
                   {pub.title}
                 </h3>
-                <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "0.35rem" }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", lineHeight: 1.5 }}>
                   {pub.authors.join(", ")}
                 </p>
-                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
                   <em>{pub.journal}</em> ({pub.year})
                   {pub.doi && (
                     <>
                       {" "}&middot;{" "}
-                      <a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener noreferrer">
-                        DOI
+                      <a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)" }}>
+                        DOI &rarr;
+                      </a>
+                    </>
+                  )}
+                  {pub.pmid && (
+                    <>
+                      {" "}&middot;{" "}
+                      <a href={`https://pubmed.ncbi.nlm.nih.gov/${pub.pmid}/`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)" }}>
+                        PubMed
                       </a>
                     </>
                   )}
                 </p>
-              </div>
+                {pub.categories.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                    {pub.categories.map((cat) => (
+                      <span key={cat} className="badge" style={{ background: "var(--border)", color: "var(--text-secondary)", fontSize: "0.7rem" }}>
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </article>
             ))}
           </div>
         </section>
@@ -152,13 +172,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
       {/* Conference Abstracts */}
       {memberAbstracts.length > 0 && (
         <section style={{ marginTop: "2.5rem" }}>
-          <h2 style={{
-            fontFamily: "var(--heading-font)",
-            fontSize: "1.4rem",
-            fontWeight: 700,
-            color: "var(--text)",
-            marginBottom: "1.25rem",
-          }}>
+          <h2 style={{ fontFamily: "var(--heading-font)", fontSize: "1.2rem", marginBottom: "1rem" }}>
             Conference Abstracts
             <span style={{ fontSize: "0.9rem", fontWeight: 400, color: "var(--text-muted)", marginLeft: "0.5rem" }}>
               ({memberAbstracts.length})
@@ -166,22 +180,26 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {memberAbstracts.map((abs) => (
-              <div key={abs.id} className="card" style={{ padding: "1.25rem" }}>
-                <p style={{
-                  fontFamily: "var(--heading-font)",
-                  fontWeight: 600,
-                  fontSize: "0.95rem",
-                  color: "var(--text)",
-                  lineHeight: 1.4,
-                  marginBottom: "0.4rem",
-                }}>
+              <article key={abs.id} className="card" style={{ padding: "1.5rem" }}>
+                <h3 style={{ fontFamily: "var(--heading-font)", fontWeight: 600, fontSize: "0.95rem", lineHeight: 1.4, marginBottom: "0.5rem" }}>
                   {abs.title}
+                </h3>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.5rem", lineHeight: 1.5 }}>
+                  {abs.authors.join(", ")}
                 </p>
-                <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-                  <em>{abs.conference}</em> ({abs.year})
-                  {" "}&middot; {abs.presentationType}
+                <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+                  <em>{abs.conference}</em> ({abs.year}) &middot; {abs.presentationType}
                 </p>
-              </div>
+                {abs.categories.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                    {abs.categories.map((cat) => (
+                      <span key={cat} className="badge" style={{ background: "var(--border)", color: "var(--text-secondary)", fontSize: "0.7rem" }}>
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </article>
             ))}
           </div>
         </section>

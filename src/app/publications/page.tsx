@@ -8,22 +8,18 @@ import { members } from "@/data/members";
 
 type Tab = "articles" | "abstracts";
 
-// Build a set of member last names for bolding
-const memberLastNames = new Set(members.map((m) => m.name.split(" ").pop()!));
-const memberNameSet = new Set(members.map((m) => m.name));
-
 function highlightMemberAuthors(authorList: string[], memberAuthorIds: string[]) {
-  // Build set of member last names for this paper
-  const paperMemberNames = new Set(
+  // Only highlight authors who are tagged as members on THIS paper
+  const paperMemberLastNames = new Set(
     memberAuthorIds.map((id) => {
       const m = members.find((mem) => mem.id === id);
       return m ? m.name.split(" ").pop() : "";
-    })
+    }).filter(Boolean)
   );
 
   return authorList.map((author, i) => {
     const lastName = author.split(" ")[0]?.replace(/,?$/, "");
-    const isMember = paperMemberNames.has(lastName) || memberLastNames.has(lastName.replace(",", ""));
+    const isMember = paperMemberLastNames.has(lastName);
     return (
       <span key={i}>
         {i > 0 && ", "}
