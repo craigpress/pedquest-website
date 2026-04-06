@@ -1,34 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-
-// In-memory rate limiting (resets on server restart)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-const RATE_LIMIT_MAX = 3;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return true;
-  }
-
-  entry.count++;
-  return false;
-}
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { isValidEmail, checkHoneypot, checkOrigin, truncate } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+  const originCheck = checkOrigin(request);
+  if (originCheck) return originCheck;
 
-  if (isRateLimited(ip)) {
+  const ip = getClientIp(request);
+
+  if (isRateLimited(ip, "sponsor", 3)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       { status: 429 }
@@ -56,12 +37,9 @@ export async function POST(request: NextRequest) {
     honeypot,
   } = body;
 
-  // Honeypot — silently accept to not tip off bots
-  if (honeypot) {
-    return NextResponse.json({ success: true });
-  }
+  const honeypotResponse = checkHoneypot(honeypot);
+  if (honeypotResponse) return honeypotResponse;
 
-  // Validate required fields
   if (!companyName?.trim() || !contactName?.trim() || !contactEmail?.trim()) {
     return NextResponse.json(
       { error: "Company name, contact name, and contact email are required." },
@@ -69,8 +47,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(contactEmail)) {
+  if (!isValidEmail(contactEmail)) {
     return NextResponse.json(
       { error: "Please provide a valid email address." },
       { status: 400 }
@@ -81,16 +58,16 @@ export async function POST(request: NextRequest) {
   const supabase = createServerClient();
   if (supabase) {
     const { error } = await supabase.from("sponsor_inquiries").insert({
-      company_name: companyName.trim(),
-      contact_name: contactName.trim(),
-      contact_email: contactEmail.trim(),
-      contact_phone: phone?.trim() || null,
-      website: website?.trim() || null,
-      sponsorship_tier: tier?.trim() || null,
-      areas_of_interest: areas?.trim() || null,
-      collaboration_description: description?.trim() || null,
-      budget_range: budgetRange?.trim() || null,
-      how_heard: howHeard?.trim() || null,
+      company_name: truncate(companyName.trim(), 300),
+      contact_name: truncate(contactName.trim(), 200),
+      contact_email: truncate(contactEmail.trim(), 254),
+      contact_phone: phone?.trim() ? truncate(phone.trim(), 30) : null,
+      website: website?.trim() ? truncate(website.trim(), 500) : null,
+      sponsorship_tier: tier?.trim() ? truncate(tier.trim(), 100) : null,
+      areas_of_interest: areas?.trim() ? truncate(areas.trim(), 1000) : null,
+      collaboration_description: description?.trim() ? truncate(description.trim(), 5000) : null,
+      budget_range: budgetRange?.trim() ? truncate(budgetRange.trim(), 100) : null,
+      how_heard: howHeard?.trim() ? truncate(howHeard.trim(), 500) : null,
       ip_address: ip,
     });
     if (error) {

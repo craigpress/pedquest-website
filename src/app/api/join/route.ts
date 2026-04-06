@@ -1,34 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-
-// In-memory rate limiting (resets on server restart)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-const RATE_LIMIT_MAX = 5;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return true;
-  }
-
-  entry.count++;
-  return false;
-}
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { isValidEmail, checkHoneypot, checkOrigin, truncate } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+  const originCheck = checkOrigin(request);
+  if (originCheck) return originCheck;
 
-  if (isRateLimited(ip)) {
+  const ip = getClientIp(request);
+
+  if (isRateLimited(ip, "join", 5)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       { status: 429 }
@@ -56,12 +37,9 @@ export async function POST(request: NextRequest) {
     honeypot,
   } = body;
 
-  // Honeypot — silently accept to not tip off bots
-  if (honeypot) {
-    return NextResponse.json({ success: true });
-  }
+  const honeypotResponse = checkHoneypot(honeypot);
+  if (honeypotResponse) return honeypotResponse;
 
-  // Validate required fields
   if (!hospital?.trim() || !piEmail?.trim() || !piPhone?.trim()) {
     return NextResponse.json(
       { error: "Hospital, PI email, and PI phone are required." },
@@ -69,8 +47,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(piEmail)) {
+  if (!isValidEmail(piEmail)) {
     return NextResponse.json(
       { error: "Please provide a valid PI email address." },
       { status: 400 }
@@ -88,15 +65,15 @@ export async function POST(request: NextRequest) {
   const supabase = createServerClient();
   if (supabase) {
     const { error } = await supabase.from("membership_applications").insert({
-      hospital: hospital.trim(),
-      affiliated_university: affiliatedUniversity?.trim() || null,
-      pi_name: piName?.trim() || null,
-      pi_email: piEmail.trim(),
-      pi_phone: piPhone.trim(),
-      role_title: roleTitle?.trim() || null,
-      research_interests: researchInterests?.trim() || null,
-      how_heard: howHeard?.trim() || null,
-      statement_of_interest: statementOfInterest?.trim() || null,
+      hospital: truncate(hospital.trim(), 300),
+      affiliated_university: affiliatedUniversity?.trim() ? truncate(affiliatedUniversity.trim(), 300) : null,
+      pi_name: piName?.trim() ? truncate(piName.trim(), 200) : null,
+      pi_email: truncate(piEmail.trim(), 254),
+      pi_phone: truncate(piPhone.trim(), 30),
+      role_title: roleTitle?.trim() ? truncate(roleTitle.trim(), 200) : null,
+      research_interests: researchInterests?.trim() ? truncate(researchInterests.trim(), 2000) : null,
+      how_heard: howHeard?.trim() ? truncate(howHeard.trim(), 500) : null,
+      statement_of_interest: statementOfInterest?.trim() ? truncate(statementOfInterest.trim(), 5000) : null,
       ip_address: ip,
     });
     if (error) {

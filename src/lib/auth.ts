@@ -67,7 +67,7 @@ export function useUser() {
 }
 
 // ─── Hook: useMember ────────────────────────────────────────────────────
-export function useMember() {
+export function useMember(overrideEmail?: string | null) {
   const { user, loading: userLoading } = useUser();
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,13 +75,14 @@ export function useMember() {
   useEffect(() => {
     if (userLoading) return;
 
-    if (!user?.email) {
+    const resolvedEmail = user?.email || overrideEmail;
+    if (!resolvedEmail) {
       setMember(null);
       setLoading(false);
       return;
     }
 
-    const email = user.email.toLowerCase();
+    const email = resolvedEmail.toLowerCase();
     const found = members.find(
       (m) => m.email?.toLowerCase() === email
     );
@@ -102,7 +103,7 @@ export function useMember() {
 
     setMember(found ?? null);
     setLoading(false);
-  }, [user, userLoading]);
+  }, [user, userLoading, overrideEmail]);
 
   return { member, user, loading: userLoading || loading };
 }

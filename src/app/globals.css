@@ -219,3 +219,50 @@ a:hover {
   border-radius: 16px;
   font-family: var(--body-font);
 }
+
+/* Dark mode map tiles */
+[data-theme="dark"] .leaflet-tile-pane {
+  filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+[data-theme="dark"] .leaflet-container {
+  background: #0a1628;
+}
+
+/* ─── Contact page responsive grid ─── */
+@media (min-width: 768px) {
+  .contact-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ─── Skip to content ─── */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+}
+.skip-to-content:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  width: auto;
+  height: auto;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-primary);
+  color: white;
+  font-weight: 600;
+  font-family: var(--body-font);
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Focus styles ─── */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { signInWithMagicLink } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -76,7 +75,7 @@ export default function LoginPage() {
         {/* Authentik SSO Button */}
         <button
           type="button"
-          onClick={() => signIn("authentik", { callbackUrl: "/profile" })}
+          onClick={() => window.location.href = "/api/auth/signin/authentik?callbackUrl=/profile"}
           style={{
             width: "100%",
             padding: "0.8rem",

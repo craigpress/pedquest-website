@@ -149,6 +149,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     className="relative px-5 py-3 rounded-lg no-underline transition-all duration-200"
+                    aria-current={active ? "page" : undefined}
                     style={{
                       fontSize: "1.05rem",
                       fontWeight: active ? 700 : 500,
@@ -304,7 +305,9 @@ export default function Navbar() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle navigation menu"
+              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav-menu"
               className="flex lg:hidden items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200"
               style={{
                 background: mobileOpen ? "var(--accent-primary)" : "var(--bg-card-hover)",
@@ -340,7 +343,7 @@ export default function Navbar() {
               boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
             }}
           >
-            <ul className="flex flex-col gap-1 list-none m-0 px-6 py-5">
+            <ul id="mobile-nav-menu" className="flex flex-col gap-1 list-none m-0 px-6 py-5" role="navigation" aria-label="Mobile navigation">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
                 return (

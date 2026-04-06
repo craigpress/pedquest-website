@@ -4,7 +4,7 @@
     {
       "name": "pedquest-dev",
       "runtimeExecutable": "C:/Program Files/nodejs/node.exe",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev", "--port", "3456"],
+      "runtimeArgs": ["--max-old-space-size=2048", "--max-semi-space-size=64", "node_modules/next/dist/bin/next", "dev", "--port", "3456"],
       "port": 3456
     }
   ]

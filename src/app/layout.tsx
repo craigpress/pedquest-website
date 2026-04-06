@@ -65,9 +65,12 @@ export default function RootLayout({
       className={`${fraunces.variable} ${plusJakarta.variable} ${outfit.variable} ${dmSans.variable}`}
     >
       <body className="min-h-screen flex flex-col antialiased">
+        <a href="#main-content" className="skip-to-content">
+          Skip to main content
+        </a>
         <Providers>
           <Navbar />
-          <main className="flex-1">
+          <main id="main-content" className="flex-1">
             {children}
           </main>
           <Footer />

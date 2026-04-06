@@ -87,10 +87,11 @@ export default function ContactPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "1fr",
           gap: "3rem",
           alignItems: "start",
         }}
+        className="contact-grid"
       >
         {/* Contact Form */}
         <form
@@ -287,6 +288,7 @@ export default function ContactPage() {
           {/* Feedback Messages */}
           {status === "success" && (
             <div
+              role="alert"
               style={{
                 padding: "0.875rem 1rem",
                 borderRadius: 8,
@@ -303,6 +305,7 @@ export default function ContactPage() {
 
           {status === "error" && (
             <div
+              role="alert"
               style={{
                 padding: "0.875rem 1rem",
                 borderRadius: 8,

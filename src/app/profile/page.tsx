@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSession, signOut as nextAuthSignOut } from "next-auth/react";
 import { useMember, signOut as supabaseSignOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
@@ -178,7 +177,6 @@ const inputStyle: React.CSSProperties = {
 export default function ProfilePage() {
   const router = useRouter();
   const { member, user, loading } = useMember();
-  const { data: nextAuthSession, status: nextAuthStatus } = useSession();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -186,19 +184,16 @@ export default function ProfilePage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
 
-  // Derive effective auth state from either Supabase or NextAuth
-  const isNextAuthLoading = nextAuthStatus === "loading";
-  const isAuthenticated = !!user || !!nextAuthSession?.user;
-  const effectiveEmail =
-    user?.email || nextAuthSession?.user?.email || null;
+  const isAuthenticated = !!user;
+  const effectiveEmail = user?.email || null;
   const isAdmin = !!effectiveEmail && ADMIN_EMAILS.includes(effectiveEmail.toLowerCase());
 
-  // Redirect if not authenticated (wait for both to finish loading)
+  // Redirect if not authenticated
   useEffect(() => {
-    if (!loading && !isNextAuthLoading && !isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, loading, isNextAuthLoading, router]);
+  }, [isAuthenticated, loading, router]);
 
   // Initialize profile from member data
   useEffect(() => {
@@ -355,16 +350,12 @@ export default function ProfilePage() {
 
   // ── Sign out ────────────────────────────────────────────────────
   async function handleSignOut() {
-    if (nextAuthSession) {
-      await nextAuthSignOut({ callbackUrl: "/" });
-    } else {
-      await supabaseSignOut();
-      router.push("/");
-    }
+    await supabaseSignOut();
+    router.push("/");
   }
 
   // ── Loading / redirect states ───────────────────────────────────
-  if (loading || isNextAuthLoading) {
+  if (loading) {
     return (
       <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "var(--text-secondary)" }}>Loading...</p>

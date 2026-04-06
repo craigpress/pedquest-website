@@ -26,6 +26,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setTheme("dark");
       document.documentElement.setAttribute("data-theme", "dark");
     }
+
+    // Sync theme across browser tabs
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "pedquest-theme" && e.newValue) {
+        const newTheme = e.newValue as Theme;
+        setTheme(newTheme);
+        document.documentElement.setAttribute("data-theme", newTheme);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const toggleTheme = () => {
