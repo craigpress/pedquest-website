@@ -90,7 +90,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Milwaukee, WI",
     lat: 43.0451,
-    lng: -87.9177,
+    lng: -87.9177,    photoUrl: "/images/raquel-farias-moeller.jpg",
+  
     bio: "Member of the PedQuEST Scientific Committee. Specializes in pediatric epilepsy and EEG.",
     interests: ["Pediatric Epilepsy", "NORSE/FIRES", "Status Epilepticus"],
     isLeadership: true,
@@ -161,7 +162,8 @@ export const members: Member[] = [
     country: "Canada",
     city: "Toronto, ON",
     lat: 43.6590,
-    lng: -79.3871,
+    lng: -79.3871,    photoUrl: "/images/cecil-hahn.png",
+  
     bio: "Senior Scientific Advisor to PedQuEST.",
     interests: ["Neonatal EEG", "Pediatric Neurocritical Care", "Clinical Neurophysiology"],
     isLeadership: true,
@@ -594,7 +596,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Seattle, WA",
     lat: 47.6625,
-    lng: -122.2876,
+    lng: -122.2876,    photoUrl: "/images/rusty-novotny.jpg",
+  
     bio: "Director of Seattle Children's Epilepsy Program, the only level 4 epilepsy center in the Pacific Northwest dedicated exclusively to pediatrics. Professor of Neurology and Pediatrics at the University of Washington. Received the 2025 Arthur A. Ward, Jr. Award for epilepsy research.",
     interests: ["Refractory Epilepsy Genetics","Epilepsy Program Direction"],
     email: "edward.novotny@seattlechildrens.org",
@@ -785,7 +788,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Austin, TX",
     lat: 30.3113,
-    lng: -97.7388,
+    lng: -97.7388,    photoUrl: "/images/leah-ferrante.jpg",
+  
     bio: "Leah Ferrante, MD, is a pediatric neurologist with UT Health Austin Pediatric Neurosciences at Dell Children's. She specializes in pediatric neurology, fetal and neonatal neurology, and diagnosis of neurodevelopmental disabilities, and is certified by the American Board of Psychiatry and Neurology in neurology with special qualifications in child neurology and neurodevelopmental disabilities.",
     interests: ["Pediatric neurology","Fetal and neonatal neurology","Neurodevelopmental disabilities"],
     email: "leah.ferrante@ascension-external.org",
@@ -802,7 +806,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Seattle, WA",
     lat: 47.6625,
-    lng: -122.2876,
+    lng: -122.2876,    photoUrl: "/images/lindsey-morgan.jpg",
+  
     bio: "Lindsey Anne Morgan, MD, is a child neurologist at Seattle Children's Hospital, where she joined in September 2016. She focuses her clinical care on the neurocritical care and general neurology services and received a quality improvement innovation award in 2022.",
     interests: ["Pediatric neurocritical care","General neurology","Quality improvement"],
     email: "lindsey.morgan@seattlechildrens.org",
@@ -905,7 +910,7 @@ export const members: Member[] = [
     country: "USA",
     city: "Nashville, TN",
     lat: 36.1427,
-    lng: -86.8025,
+    lng: -86.8025,  
     bio: "Miles Fisher, DO, is a child neurology resident at Vanderbilt University Medical Center. He attended Southern Methodist University for undergraduate studies and the University of North Texas Health Science Center for medical school, where he developed an interest in pediatric neurology at Cook Children's Medical Center.",
     interests: ["Pediatric neurology","Child development"],
     email: "milesf94@gmail.com",
@@ -937,7 +942,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Madison, WI",
     lat: 43.0766,
-    lng: -89.4125,
+    lng: -89.4125,    photoUrl: "/images/neil-munjal.jpg",
+  
     bio: "Neil Munjal, MD, MS, is a pediatric neurointensivist and assistant professor at the University of Wisconsin-Madison. He is interested in acute and chronic brain injury care, aiming to preserve the brain health of ICU patients. He completed his MD at Washington University School of Medicine and residencies in both pediatrics and child neurology at Children's Hospital of Pittsburgh.",
     interests: ["Machine learning in medicine","Multimodal monitoring","Predictive analytics","Causal inference","Brain injury care"],
     email: "nmunjal@wisc.edu",
@@ -1039,7 +1045,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Aurora, CO",
     lat: 39.7405,
-    lng: -104.8319,
+    lng: -104.8319,    photoUrl: "/images/rebecca-silverstein.jpg",
+  
     bio: "Rebecca Silverstein, DO, MBA is a pediatric neurologist at Children's Hospital Colorado. She completed a Clinical Neurophysiology Fellowship at Barrow Neurological Institute at Phoenix Children's (2024-2025) and is board certified in Pediatric Neurology. Her research includes approaches to neuroprotection in pediatric neurocritical care.",
     interests: ["Pediatric neurology","Clinical neurophysiology","Neuroprotection in neurocritical care"],
     email: "rsilverstein@phoenixchildrens.com",
