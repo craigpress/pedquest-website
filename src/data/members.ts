@@ -631,7 +631,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Chicago, IL",
     lat: 41.8747,
-    lng: -87.6194,
+    lng: -87.6194,    photoUrl: "/images/erica-prendergast.jpg",
+  
     bio: "Pediatric neurocritical care nurse practitioner at Lurie Children's Hospital. Research includes implementing quantitative EEG monitoring and targeted temperature management protocols in pediatric neurocritical care settings.",
     interests: ["Quantitative EEG Implementation","Targeted Temperature Management","Pediatric Neurocritical Care Nursing"],
     email: "enenni@luriechildrens.org",
@@ -1185,7 +1186,8 @@ export const members: Member[] = [
     country: "USA",
     city: "Evanston, IL",
     lat: 42.0565,
-    lng: -87.6753,
+    lng: -87.6753,    photoUrl: "/images/joshua-l-goldstein.jpg",
+  
     bio: "",
     interests: [],
     email: "j-goldstein4@northwestern.edu",
