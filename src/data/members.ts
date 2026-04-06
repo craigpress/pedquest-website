@@ -443,23 +443,6 @@ export const members: Member[] = [
     sortOrder: 49,
   },
   {
-    id: "mark-fitzgerald",
-    name: "Mark Fitzgerald",
-    title: "MD, PhD",
-    department: "Division of Neurology, Children's Hospital of Philadelphia",
-    institution: "Children's Hospital of Philadelphia",
-    country: "USA",
-    city: "Philadelphia, PA",
-    lat: 39.9483,
-    lng: -75.1935,
-    photoUrl: "/images/mark-fitzgerald.jpg",
-    bio: "Attending pediatric neurologist and Medical Director of the Epilepsy Neurogenetics Initiative (ENGIN) at CHOP. Associate Professor of Clinical Neurology at the Perelman School of Medicine at the University of Pennsylvania, with research focused on neurodevelopmental and epilepsy outcomes in children with neonatal brain injury.",
-    interests: ["Neonatal and early life epilepsies","Genetic epilepsy","Epilepsy neurogenetics","Precision therapies for genetic epilepsies"],
-    websiteUrl: "https://www.chop.edu/doctors/fitzgerald-mark-p",
-    isLeadership: false,
-    sortOrder: 64,
-  },
-  {
     id: "amanda-sandoval-karamian",
     name: "Amanda Sandoval Karamian",
     title: "MD",
@@ -1106,7 +1089,23 @@ export const members: Member[] = [
     email: "j-goldstein4@northwestern.edu",
     isLeadership: false,
     sortOrder: 108,
-  }
+  },
+  {
+    id: "michael-wolf",
+    name: "Michael S. Wolf",
+    title: "MD",
+    department: "Pediatrics - Neurology",
+    institution: "Vanderbilt University Medical Center",
+    country: "USA",
+    city: "Nashville, TN",
+    lat: 36.1427,
+    lng: -86.8025,
+    bio: "Pediatric neurologist at Vanderbilt University Medical Center, previously Director of Neurocritical Care at the University of Michigan / C.S. Mott Children's Hospital.",
+    interests: ["Neurocritical Care", "Pediatric Critical Care", "Resuscitation Research"],
+    websiteUrl: "https://pediatrics.vumc.org/person/michael-s-wolf-md",
+    isLeadership: false,
+    sortOrder: 65,
+  },
 ];
 
 export const institutions = [
