@@ -3,9 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { publications } from "@/data/publications";
-import { members } from "@/data/members";
+import { members, institutions } from "@/data/members";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
+
+const memberCount = members.length;
+const institutionCount = institutions.length;
+const countryCount = new Set(members.map((m) => m.country)).size;
 
 const recentPubs = [...publications]
   .sort((a, b) => b.year - a.year || (b.month ?? 0) - (a.month ?? 0))
@@ -85,17 +89,17 @@ export default function HomePage() {
       <section className="stats-bar reveal">
         <div className="stats-container">
           <div className="stat-item">
-            <span className="stat-number"><AnimatedCounter target={66} suffix="+" /></span>
+            <span className="stat-number"><AnimatedCounter target={memberCount} suffix="+" /></span>
             <span className="stat-label">Members</span>
           </div>
           <div className="stat-divider" />
           <div className="stat-item">
-            <span className="stat-number"><AnimatedCounter target={24} /></span>
+            <span className="stat-number"><AnimatedCounter target={institutionCount} /></span>
             <span className="stat-label">Institutions</span>
           </div>
           <div className="stat-divider" />
           <div className="stat-item">
-            <span className="stat-number"><AnimatedCounter target={4} /></span>
+            <span className="stat-number"><AnimatedCounter target={countryCount} /></span>
             <span className="stat-label">Countries</span>
           </div>
         </div>
