@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useMember, signOut as supabaseSignOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
-const ADMIN_EMAILS = ["pressca@chop.edu", "gbenedet@med.umich.edu", "ajay.thomas@bcm.edu"];
+const ADMIN_EMAILS = ["pressca@chop.edu", "craigpress@gmail.com", "gbenedet@med.umich.edu", "ajay.thomas@bcm.edu"];
 
 interface ProfileData {
   bio: string;

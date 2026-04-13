@@ -84,7 +84,7 @@ export function useMember(overrideEmail?: string | null) {
 
     const email = resolvedEmail.toLowerCase();
     const found = members.find(
-      (m) => m.email?.toLowerCase() === email
+      (m) => m.email?.toLowerCase() === email || m.authEmail?.toLowerCase() === email
     );
 
     if (found) {
@@ -129,7 +129,7 @@ export async function signInWithMagicLink(email: string): Promise<{ error: strin
 
   // Supabase not available — use localStorage fallback
   const emailLower = email.toLowerCase();
-  const found = members.find((m) => m.email?.toLowerCase() === emailLower);
+  const found = members.find((m) => m.email?.toLowerCase() === emailLower || m.authEmail?.toLowerCase() === emailLower);
   if (!found) {
     return { error: "This email is not associated with a PedQuEST member." };
   }

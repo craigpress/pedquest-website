@@ -75,7 +75,9 @@ export default function LoginPage() {
         {/* Authentik SSO Button */}
         <button
           type="button"
-          onClick={() => window.location.href = "/api/auth/signin/authentik?callbackUrl=/profile"}
+          onClick={() => {
+            window.location.href = "/api/auth/authentik";
+          }}
           style={{
             width: "100%",
             padding: "0.8rem",

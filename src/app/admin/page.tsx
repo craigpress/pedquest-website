@@ -20,6 +20,7 @@ type AdminTab = "publication" | "abstract" | "cv-importer" | "members";
 // Admin emails — only these users can access the admin page
 const ADMIN_EMAILS = [
   "pressca@chop.edu",
+  "craigpress@gmail.com",
   "gbenedet@med.umich.edu",
   "ajay.thomas@bcm.edu",
 ];
@@ -450,14 +451,18 @@ function AdminPageInner() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [memberForm, setMemberForm] = useState<{
     name: string; title: string; role: string; institution: string; department: string;
+    city: string; country: string;
     bio: string; interests: string; email: string; orcidId: string; websiteUrl: string;
     photoUrl: string; cvFilename: string;
   } | null>(null);
   const [memberPhotoPreview, setMemberPhotoPreview] = useState<string | null>(null);
   const [memberSaving, setMemberSaving] = useState(false);
   const [memberSaved, setMemberSaved] = useState(false);
+  const [addingMember, setAddingMember] = useState(false);
   // TODO: Supabase integration will persist member edits. For now, edits update display via localStorage.
   const [memberOverrides, setMemberOverrides] = useState<Record<string, Partial<Member>>>({});
+  const [addedMembers, setAddedMembers] = useState<Member[]>([]);
+  const [deletedMemberIds, setDeletedMemberIds] = useState<string[]>([]);
   const memberPhotoRef = useRef<HTMLInputElement>(null);
   const memberCvRef = useRef<HTMLInputElement>(null);
 
@@ -468,9 +473,13 @@ function AdminPageInner() {
       if (stored) setSavedPubs(JSON.parse(stored));
       const storedAbs = localStorage.getItem(STORAGE_KEY_ABSTRACTS);
       if (storedAbs) setSavedAbstracts(JSON.parse(storedAbs));
-      // Load member overrides
+      // Load member overrides, added members, deleted members
       const storedOverrides = localStorage.getItem("pedquest-admin-member-overrides");
       if (storedOverrides) setMemberOverrides(JSON.parse(storedOverrides));
+      const storedAdded = localStorage.getItem("pedquest-admin-added-members");
+      if (storedAdded) setAddedMembers(JSON.parse(storedAdded));
+      const storedDeleted = localStorage.getItem("pedquest-admin-deleted-members");
+      if (storedDeleted) setDeletedMemberIds(JSON.parse(storedDeleted));
     } catch { /* ignore */ }
   }, []);
 
@@ -1409,13 +1418,33 @@ function AdminPageInner() {
       {/* ─── Member Management Tab ─────────────────────────────────────── */}
       {tab === "members" && (
         <div>
-          {/* Search bar */}
+          {/* Search bar and Add button */}
           <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
-            <h2 style={{ fontSize: "1rem", fontFamily: "var(--heading-font)", marginBottom: "0.75rem" }}>
-              Member Management
-            </h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <h2 style={{ fontSize: "1rem", fontFamily: "var(--heading-font)", margin: 0 }}>
+                Member Management
+              </h2>
+              <button
+                onClick={() => {
+                  setEditingMember(null);
+                  setAddingMember(true);
+                  setMemberForm({
+                    name: "", title: "", role: "", institution: "", department: "",
+                    city: "", country: "USA",
+                    bio: "", interests: "", email: "", orcidId: "", websiteUrl: "",
+                    photoUrl: "", cvFilename: "",
+                  });
+                  setMemberPhotoPreview(null);
+                  setMemberSaved(false);
+                }}
+                className="btn-primary"
+                style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}
+              >
+                + Add Member
+              </button>
+            </div>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1rem", fontFamily: "var(--body-font)" }}>
-              Edit any member&apos;s profile, upload photos, and manage CVs. Changes are saved to localStorage.
+              Add, edit, or remove members. Changes are saved to localStorage — export to apply to codebase.
             </p>
             <input
               type="text"
@@ -1424,17 +1453,31 @@ function AdminPageInner() {
               placeholder="Search members by name, institution, or role..."
               style={inputStyle}
             />
+            {(addedMembers.length > 0 || deletedMemberIds.length > 0) && (
+              <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                {addedMembers.length > 0 && (
+                  <span style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", borderRadius: 4, background: "rgba(16,185,129,0.15)", color: "var(--accent-primary)", fontFamily: "var(--body-font)" }}>
+                    {addedMembers.length} pending addition{addedMembers.length > 1 ? "s" : ""}
+                  </span>
+                )}
+                {deletedMemberIds.length > 0 && (
+                  <span style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#ef4444", fontFamily: "var(--body-font)" }}>
+                    {deletedMemberIds.length} pending removal{deletedMemberIds.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Member list or edit form */}
-          {editingMember && memberForm ? (
+          {/* Member list or edit/add form */}
+          {(editingMember || addingMember) && memberForm ? (
             <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
                 <h2 style={{ fontSize: "1rem", fontFamily: "var(--heading-font)", margin: 0 }}>
-                  Editing: {editingMember.name}
+                  {addingMember ? "Add New Member" : `Editing: ${editingMember!.name}`}
                 </h2>
                 <button
-                  onClick={() => { setEditingMember(null); setMemberForm(null); setMemberPhotoPreview(null); setMemberSaved(false); }}
+                  onClick={() => { setEditingMember(null); setAddingMember(false); setMemberForm(null); setMemberPhotoPreview(null); setMemberSaved(false); }}
                   className="btn-secondary"
                   style={{ fontSize: "0.8rem", padding: "0.4rem 1rem" }}
                 >
@@ -1452,10 +1495,10 @@ function AdminPageInner() {
                   }}
                 >
                   {memberPhotoPreview ? (
-                    <img src={memberPhotoPreview} alt={editingMember.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={memberPhotoPreview} alt={memberForm.name || "New member"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <span style={{ color: "white", fontSize: "1.25rem", fontWeight: 700, fontFamily: "var(--heading-font)" }}>
-                      {editingMember.name.split(" ").filter(Boolean).map(p => p[0]).join("").toUpperCase().slice(0, 2)}
+                      {(memberForm.name || "?").split(" ").filter(Boolean).map(p => p[0]).join("").toUpperCase().slice(0, 2)}
                     </span>
                   )}
                 </div>
@@ -1477,14 +1520,15 @@ function AdminPageInner() {
                     accept="image/*"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
-                      if (!file || !editingMember) return;
+                      if (!file) return;
+                      const memberId = editingMember?.id || memberForm?.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "new";
                       const reader = new FileReader();
                       reader.onload = (ev) => setMemberPhotoPreview(ev.target?.result as string);
                       reader.readAsDataURL(file);
                       // Try Supabase upload
                       try {
                         const ext = file.name.split(".").pop();
-                        const path = `photos/${editingMember.id}.${ext}`;
+                        const path = `photos/${memberId}.${ext}`;
                         const { error } = await supabase.storage.from("member-files").upload(path, file, { upsert: true });
                         if (!error) {
                           const { data: urlData } = supabase.storage.from("member-files").getPublicUrl(path);
@@ -1565,6 +1609,17 @@ function AdminPageInner() {
                   </div>
                 </div>
 
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                  <div>
+                    <label style={labelStyle}>City</label>
+                    <input type="text" value={memberForm.city} onChange={(e) => setMemberForm(f => f ? { ...f, city: e.target.value } : f)} style={inputStyle} placeholder="Philadelphia, PA" />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Country</label>
+                    <input type="text" value={memberForm.country} onChange={(e) => setMemberForm(f => f ? { ...f, country: e.target.value } : f)} style={inputStyle} placeholder="USA" />
+                  </div>
+                </div>
+
                 <div>
                   <label style={labelStyle}>Website URL</label>
                   <input type="url" value={memberForm.websiteUrl} onChange={(e) => setMemberForm(f => f ? { ...f, websiteUrl: e.target.value } : f)} style={inputStyle} placeholder="https://..." />
@@ -1591,10 +1646,11 @@ function AdminPageInner() {
                       accept=".pdf,.docx,.doc"
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
-                        if (!file || !editingMember) return;
+                        if (!file) return;
+                        const memberId = editingMember?.id || memberForm?.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "new";
                         // Try Supabase upload
                         try {
-                          const path = `cvs/${editingMember.id}/${file.name}`;
+                          const path = `cvs/${memberId}/${file.name}`;
                           const { error } = await supabase.storage.from("member-files").upload(path, file, { upsert: true });
                           if (!error) {
                             setMemberForm(f => f ? { ...f, cvFilename: file.name } : f);
@@ -1613,54 +1669,122 @@ function AdminPageInner() {
                   </div>
                 </div>
 
-                {/* Save / Cancel */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border)" }}>
+                {/* Save / Delete / Cancel */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
                   <button
                     onClick={() => {
-                      if (!editingMember || !memberForm) return;
+                      if (!memberForm) return;
                       setMemberSaving(true);
-                      // TODO: Supabase integration will persist these changes to the database.
-                      // For now, store overrides in localStorage so they survive page reloads.
-                      const overrides: Partial<Member> = {
-                        name: memberForm.name,
-                        title: memberForm.title,
-                        role: memberForm.role,
-                        institution: memberForm.institution,
-                        department: memberForm.department,
-                        bio: memberForm.bio,
-                        interests: memberForm.interests.split(",").map(s => s.trim()).filter(Boolean),
-                        email: memberForm.email,
-                        orcidId: memberForm.orcidId,
-                        websiteUrl: memberForm.websiteUrl,
-                        photoUrl: memberForm.photoUrl,
-                      };
-                      const updated = { ...memberOverrides, [editingMember.id]: overrides };
-                      setMemberOverrides(updated);
-                      try {
-                        localStorage.setItem("pedquest-admin-member-overrides", JSON.stringify(updated));
-                        if (memberForm.cvFilename) {
-                          localStorage.setItem(`pedquest_cv_${editingMember.id}`, memberForm.cvFilename);
+
+                      if (addingMember) {
+                        // Add new member
+                        const id = memberForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+                        if (!id || !memberForm.name.trim()) {
+                          alert("Name is required.");
+                          setMemberSaving(false);
+                          return;
                         }
-                      } catch { /* ignore */ }
+                        const allMembers = [...members, ...addedMembers];
+                        if (allMembers.some(m => m.id === id)) {
+                          alert(`A member with ID "${id}" already exists.`);
+                          setMemberSaving(false);
+                          return;
+                        }
+                        const newMember: Member = {
+                          id,
+                          name: memberForm.name,
+                          title: memberForm.title,
+                          role: memberForm.role || undefined,
+                          institution: memberForm.institution,
+                          department: memberForm.department || undefined,
+                          country: memberForm.country || "USA",
+                          city: memberForm.city || "",
+                          lat: 0,
+                          lng: 0,
+                          bio: memberForm.bio,
+                          interests: memberForm.interests.split(",").map(s => s.trim()).filter(Boolean),
+                          email: memberForm.email || undefined,
+                          orcidId: memberForm.orcidId || undefined,
+                          websiteUrl: memberForm.websiteUrl || undefined,
+                          photoUrl: memberForm.photoUrl || undefined,
+                          isLeadership: false,
+                          sortOrder: allMembers.length + 1,
+                        };
+                        const updated = [...addedMembers, newMember];
+                        setAddedMembers(updated);
+                        try { localStorage.setItem("pedquest-admin-added-members", JSON.stringify(updated)); } catch { /* ignore */ }
+                        setAddingMember(false);
+                        setMemberForm(null);
+                        setMemberPhotoPreview(null);
+                      } else if (editingMember) {
+                        // Edit existing member
+                        const overrides: Partial<Member> = {
+                          name: memberForm.name,
+                          title: memberForm.title,
+                          role: memberForm.role,
+                          institution: memberForm.institution,
+                          department: memberForm.department,
+                          city: memberForm.city,
+                          country: memberForm.country,
+                          bio: memberForm.bio,
+                          interests: memberForm.interests.split(",").map(s => s.trim()).filter(Boolean),
+                          email: memberForm.email,
+                          orcidId: memberForm.orcidId,
+                          websiteUrl: memberForm.websiteUrl,
+                          photoUrl: memberForm.photoUrl,
+                        };
+                        const updated = { ...memberOverrides, [editingMember.id]: overrides };
+                        setMemberOverrides(updated);
+                        try {
+                          localStorage.setItem("pedquest-admin-member-overrides", JSON.stringify(updated));
+                          if (memberForm.cvFilename) {
+                            localStorage.setItem(`pedquest_cv_${editingMember.id}`, memberForm.cvFilename);
+                          }
+                        } catch { /* ignore */ }
+                      }
+
                       setMemberSaving(false);
                       setMemberSaved(true);
                     }}
-                    disabled={memberSaving}
+                    disabled={memberSaving || (!addingMember && !memberForm?.name.trim())}
                     className="btn-primary"
                     style={{ fontSize: "0.85rem", padding: "0.6rem 1.5rem", cursor: memberSaving ? "wait" : "pointer", opacity: memberSaving ? 0.7 : 1 }}
                   >
-                    {memberSaving ? "Saving..." : "Save Changes"}
+                    {memberSaving ? "Saving..." : addingMember ? "Add Member" : "Save Changes"}
                   </button>
                   <button
-                    onClick={() => { setEditingMember(null); setMemberForm(null); setMemberPhotoPreview(null); setMemberSaved(false); }}
+                    onClick={() => { setEditingMember(null); setAddingMember(false); setMemberForm(null); setMemberPhotoPreview(null); setMemberSaved(false); }}
                     className="btn-secondary"
                     style={{ fontSize: "0.85rem", padding: "0.6rem 1.5rem" }}
                   >
                     Cancel
                   </button>
+                  {/* Delete button — only for existing members, not while adding */}
+                  {editingMember && !addingMember && (
+                    <button
+                      onClick={() => {
+                        if (!editingMember) return;
+                        if (!confirm(`Remove ${editingMember.name} from the member list? They will be archived.`)) return;
+                        const updated = [...deletedMemberIds, editingMember.id];
+                        setDeletedMemberIds(updated);
+                        try { localStorage.setItem("pedquest-admin-deleted-members", JSON.stringify(updated)); } catch { /* ignore */ }
+                        setEditingMember(null);
+                        setMemberForm(null);
+                        setMemberPhotoPreview(null);
+                        setMemberSaved(false);
+                      }}
+                      style={{
+                        marginLeft: "auto", fontSize: "0.85rem", padding: "0.6rem 1.5rem",
+                        borderRadius: 8, border: "1px solid #ef4444", background: "transparent",
+                        color: "#ef4444", cursor: "pointer", fontWeight: 600, fontFamily: "var(--body-font)",
+                      }}
+                    >
+                      Remove Member
+                    </button>
+                  )}
                   {memberSaved && (
                     <span style={{ color: "var(--accent-primary)", fontSize: "0.85rem", fontWeight: 600, fontFamily: "var(--body-font)" }}>
-                      Changes saved!
+                      {addingMember ? "" : "Changes saved!"}
                     </span>
                   )}
                 </div>
@@ -1670,7 +1794,8 @@ function AdminPageInner() {
             /* Member list */
             <div className="card" style={{ padding: "1.5rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {members
+                {[...members, ...addedMembers]
+                  .filter((m) => !deletedMemberIds.includes(m.id))
                   .filter((m) => {
                     if (!memberSearch.trim()) return true;
                     const q = memberSearch.toLowerCase();
@@ -1696,6 +1821,8 @@ function AdminPageInner() {
                             role: dm.role || "",
                             institution: dm.institution,
                             department: dm.department || "",
+                            city: dm.city || "",
+                            country: dm.country || "",
                             bio: dm.bio || "",
                             interests: (dm.interests || []).join(", "),
                             email: dm.email || "",
@@ -1746,6 +1873,11 @@ function AdminPageInner() {
                           </div>
                         </div>
                         {/* Edit indicator */}
+                        {addedMembers.some(am => am.id === m.id) && (
+                          <span style={{ fontSize: "0.7rem", padding: "0.2rem 0.5rem", borderRadius: 4, background: "rgba(16,185,129,0.2)", color: "var(--accent-primary)", fontFamily: "var(--body-font)", flexShrink: 0 }}>
+                            new
+                          </span>
+                        )}
                         {overridden && (
                           <span style={{ fontSize: "0.7rem", padding: "0.2rem 0.5rem", borderRadius: 4, background: "var(--accent-primary)", color: "white", fontFamily: "var(--body-font)", flexShrink: 0 }}>
                             edited
@@ -1757,7 +1889,7 @@ function AdminPageInner() {
                       </div>
                     );
                   })}
-                {members.filter((m) => {
+                {[...members, ...addedMembers].filter((m) => !deletedMemberIds.includes(m.id)).filter((m) => {
                   if (!memberSearch.trim()) return true;
                   const q = memberSearch.toLowerCase();
                   return m.name.toLowerCase().includes(q) || m.institution.toLowerCase().includes(q) || (m.role && m.role.toLowerCase().includes(q)) || (m.department && m.department.toLowerCase().includes(q));
