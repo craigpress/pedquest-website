@@ -14,7 +14,7 @@ jobs:
         run: |
           RESPONSE=$(curl -sL -w "\n%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://pedquest-site-craigpress.vercel.app/api/scan-publications")
+            "https://pedquest.org/api/scan-publications")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | sed '$d')
           echo "HTTP Status: $HTTP_CODE"
