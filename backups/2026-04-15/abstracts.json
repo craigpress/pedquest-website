@@ -1,0 +1,2453 @@
+[
+  {
+    "id": "abs-1",
+    "title": "Safety and utility of stiripentol in the treatment of epilepsy in Dravet Syndrome",
+    "authors": [
+      "Press CA",
+      "Chapman KE",
+      "Knupp K"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "November 2013",
+    "location": "",
+    "year": 2013,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Epilepsy",
+      "Pharmacology"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-2",
+    "title": "Parental reporting of response to oral cannabis extracts for treatment of refractory epilepsy",
+    "authors": [
+      "Press CA",
+      "Knupp K",
+      "Chapman KE"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "November 2014",
+    "location": "",
+    "year": 2014,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Epilepsy",
+      "Cannabis/CBD"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-3",
+    "title": "Carotid Narrowing and Stroke in Childhood Cavernous Sinus Thrombosis",
+    "authors": [
+      "Press CA",
+      "Lindsay A",
+      "Fenton LZ",
+      "Stence NV",
+      "Bernard TJ",
+      "Mirsky DM"
+    ],
+    "conference": "AHA/ASA Stroke Conference",
+    "presentation_type": "poster",
+    "date": "2015",
+    "location": "",
+    "year": 2015,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Stroke"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-4",
+    "title": "Cavernous Sinus Thrombosis in Children: Imaging characteristics and clinical outcomes",
+    "authors": [
+      "Lindsay AJ",
+      "Press CA",
+      "Fenton LZ",
+      "Stence TB",
+      "Mirsky DM"
+    ],
+    "conference": "Society for Pediatric Radiology Annual Meeting",
+    "presentation_type": "poster",
+    "date": "April 2015",
+    "location": "Bellevue, WA",
+    "year": 2015,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Stroke"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-5",
+    "title": "Variation in Treatment and Outcomes of Children With Acute Disseminated Encephalomyelitis",
+    "authors": [
+      "Press CA",
+      "Kirschen M",
+      "LaRovere K",
+      "Risen S",
+      "Guilliams K",
+      "Chung M",
+      "Griffith J",
+      "Erklauer J",
+      "Peariso K",
+      "Ducharme-Crevier L",
+      "Shah S",
+      "Hall M",
+      "Wainwright M"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2018",
+    "location": "Los Angeles, CA",
+    "year": 2018,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "matthew-kirschen",
+      "kerri-larovere"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-6",
+    "title": "ASL Perfusion Abnormalities on Acute MR Imaging Following Focal Onset Pediatric Seizures",
+    "authors": [
+      "Stence N",
+      "Neuberger I",
+      "Mirsky D",
+      "Maloney J",
+      "Fenton L",
+      "Barry M",
+      "Press CA"
+    ],
+    "conference": "American Society of Neuroradiology",
+    "presentation_type": "poster",
+    "date": "May 2019",
+    "location": "Boston, MA",
+    "year": 2019,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Seizures",
+      "Neuromonitoring"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-7",
+    "title": "Clinical Features Distinguishing Enterovirus A71 and Enterovirus D68-Associated Acute Flaccid Myelitis in Colorado, 2013-2018",
+    "authors": [
+      "Messacar K",
+      "Spence-Davizon E",
+      "Osborne C",
+      "Press CA",
+      "Schreiner T",
+      "Martin J",
+      "Messer R",
+      "Maloney J",
+      "Burakoff A",
+      "Barnes M",
+      "Routh J",
+      "Gerber S",
+      "Oberste MS",
+      "Nix WA",
+      "Abzug MJ",
+      "Tyler K",
+      "Herlihy R",
+      "Dominguez S"
+    ],
+    "conference": "ID Week",
+    "presentation_type": "oral",
+    "date": "October 2019",
+    "location": "Washington, DC",
+    "year": 2019,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "AFM"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-8",
+    "title": "Development and Evaluation of a Child Neurology Residency Curriculum for Delivering Bad News",
+    "authors": [
+      "Martin J",
+      "Horgan F",
+      "Press CA",
+      "Messer R",
+      "Barry M",
+      "Feldman A",
+      "Kaul P"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2020",
+    "location": "",
+    "year": 2020,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Education"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-9",
+    "title": "Cranial Ultrasound in Pediatric ECMO - Yield of Clinically Significant Findings",
+    "authors": [
+      "Kilgallon K",
+      "Kim J",
+      "Press CA",
+      "Ruzas C"
+    ],
+    "conference": "ELSO Annual Conference",
+    "presentation_type": "poster",
+    "date": "September 2020",
+    "location": "Virtual",
+    "year": 2020,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "ECMO/ECLS",
+      "Neuromonitoring"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-10",
+    "title": "Neuroimaging for Non-Index Seizures in Pediatric Emergency Rooms",
+    "authors": [
+      "Mazzio E",
+      "Rosenthal S",
+      "Eileen S",
+      "Jewell J",
+      "Martin J",
+      "Messer R",
+      "Press CA"
+    ],
+    "conference": "International Child Neurology Congress / Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2020",
+    "location": "San Diego, CA",
+    "year": 2020,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Seizures",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-11",
+    "title": "Variability in the Neurologic Determination of Death in Pediatric Institutions in the United States",
+    "authors": [
+      "Francoeur C",
+      "Weiss M",
+      "MacDonald J",
+      "Press C",
+      "Berg R",
+      "Topjian A",
+      "Morrison W",
+      "Kirschen M"
+    ],
+    "conference": "Critical Care Congress",
+    "presentation_type": "poster",
+    "date": "February 2021",
+    "location": "Virtual",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-12",
+    "title": "Impacts of COVID-19 Related Shelter-in-Place Mandates on Hospital-Based Care for Pediatric Neurological Diagnoses",
+    "authors": [
+      "Hutchinson ML",
+      "Piantino J",
+      "Abend NS",
+      "Messer RD",
+      "Moharir M",
+      "Nash KB",
+      "Palaganas J",
+      "Wells E",
+      "Wietstock SO",
+      "Press CA"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2021",
+    "location": "",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Disparities"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-13",
+    "title": "Variability in Pediatric Brain Death Protocols in the United States",
+    "authors": [
+      "Kirschen M",
+      "Francoeur C",
+      "Weiss M",
+      "Macdonald J",
+      "Press C",
+      "Greer D",
+      "Berg R",
+      "Morrison W",
+      "Topjian A"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2021",
+    "location": "",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-14",
+    "title": "Multicenter Study of The Impact of Infections including COVID-19 on the Incidence of Acute Inflammatory Demyelinating Polyneuropathy in Children",
+    "authors": [
+      "Wellman H",
+      "Abend NS",
+      "Hutchinson M",
+      "Messer R",
+      "Moharir M",
+      "Nash N",
+      "Palaganas J",
+      "Piantino J",
+      "Shah SS",
+      "Hall M",
+      "Wells W",
+      "Press CA"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "September 2021",
+    "location": "Boston, MA",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-15",
+    "title": "Racial Differences in Hospital-Based Care in Children with Neurologic Conditions",
+    "authors": [
+      "Press CA",
+      "Nash K",
+      "Abend NS",
+      "Hutchinson M",
+      "Messer R",
+      "Moharir M",
+      "Palaganas J",
+      "Wells E",
+      "Piantino J"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "September 2021",
+    "location": "Boston, MA",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Disparities",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-16",
+    "title": "The Current Landscape of Inpatient Child Neurology: A Survey of North American Programs",
+    "authors": [
+      "Palaganas J",
+      "Wells E",
+      "Abend NS",
+      "Hutchinson M",
+      "Messer R",
+      "Moharir M",
+      "Piantino J",
+      "Press CA",
+      "Nash K"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "September 2021",
+    "location": "Boston, MA",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Education"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-17",
+    "title": "Treatment of Neonatal Seizures: Comparison of Treatment Pathways from 11 Newborn Intensive Care Units",
+    "authors": [
+      "Keene J",
+      "Morgan LA",
+      "Abend NS",
+      "Bates SV",
+      "Bauer Huang SL",
+      "Chang T",
+      "Glass HC",
+      "Massey SL",
+      "Ostrander B",
+      "Pardo AC",
+      "Press CA",
+      "Soul JS",
+      "Shellhaas RA",
+      "Thomas C",
+      "Natarajan N"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "September 2021",
+    "location": "Boston, MA",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Seizures"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-18",
+    "title": "Variability of Post-Cardiac Arrest Neuroimaging Practices in Pediatric Intensive Care Units",
+    "authors": [
+      "Ullman NL",
+      "Press CA",
+      "Palmer CA",
+      "Cooper KK",
+      "Berg RA",
+      "Friess SH",
+      "Graham K",
+      "Kilbaugh TJ",
+      "Morgan R",
+      "Mourani PM",
+      "Nadkarni VM",
+      "Naim MY",
+      "Qunibim DW",
+      "Reeder RW",
+      "Wolfe HA",
+      "Sutton RM",
+      "Kirschen MP"
+    ],
+    "conference": "Neurocritical Care Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2021",
+    "location": "Chicago, IL",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-19",
+    "title": "Neuromonitoring Practice is Highly Variable in Pediatric Extracorporeal Membrane Oxygenation",
+    "authors": [
+      "Ruzas C",
+      "Press CA",
+      "Benedetti G",
+      "Kim J",
+      "Kurz J",
+      "Smith CM",
+      "Wainwright MS"
+    ],
+    "conference": "Neurocritical Care Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2021",
+    "location": "Chicago, IL",
+    "year": 2021,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "ECMO/ECLS",
+      "Neuromonitoring"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-20",
+    "title": "Efficacy of Intravenous Valproic Acid and Oral Valproic Acid Tapers for Treatment of Pediatric Headaches in the Emergency Department",
+    "authors": [
+      "Rosenthal S",
+      "Mazzio E",
+      "Gilbert H",
+      "Marks J",
+      "Jewell J",
+      "Guistolisi S",
+      "Martin J",
+      "Silveira L",
+      "Messer R",
+      "Mistry R",
+      "Yonker M",
+      "Press CA"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2022",
+    "location": "Seattle, WA",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Pharmacology"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.383991+00:00",
+    "updated_at": "2026-03-25T01:30:40.383991+00:00"
+  },
+  {
+    "id": "abs-21",
+    "title": "Trends in Quantitative EEG use in Pediatric Critical Care Across North America",
+    "authors": [
+      "Benedetti G",
+      "Wainwright MS",
+      "Harrar DB",
+      "Guerriero RM",
+      "LaRovere K",
+      "Ganesan SL",
+      "Press CA"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2022",
+    "location": "Cincinnati, OH",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "dana-harrar",
+      "kerri-larovere"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "qEEG",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-22",
+    "title": "Predictive Value of Quantitative EEG 24-Hours After Pediatric Cardiac Arrest",
+    "authors": [
+      "Benedetti G",
+      "Straley M",
+      "Pardo AC",
+      "Sanchez-Pinto LN",
+      "Wainwright MS",
+      "Kurz JE",
+      "Press CA"
+    ],
+    "conference": "Neurocritical Care Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2022",
+    "location": "San Antonio, TX",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "qEEG",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-23",
+    "title": "Predictors of Actionable Neuroimaging in Non-Index Seizures for Patients With and Without CSF Shunts",
+    "authors": [
+      "Mazzio EL",
+      "Press CA"
+    ],
+    "conference": "Neurocritical Care Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2022",
+    "location": "San Antonio, TX",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Seizures",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-24",
+    "title": "Early Non-Dichotomous Quantitative EEG Variables Predict Long Term Outcomes After Pediatric Cardiac Arrest",
+    "authors": [
+      "Press CA",
+      "Benedetti G",
+      "Straley M",
+      "Pardo AC",
+      "Sanchez-Pinto LN",
+      "Wainwright MS",
+      "Kurz JE"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "November 2022",
+    "location": "Nashville, TN",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "qEEG",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-25",
+    "title": "Access to Pediatric Epilepsy Care by Telemedicine in a Spanish-Speaking Population",
+    "authors": [
+      "McDonnell PP",
+      "Ortiz Y",
+      "Kaufman MC",
+      "Molisani S",
+      "Fitzgerald M",
+      "Xian J",
+      "Ali R",
+      "Gonzalez AK",
+      "Press CA",
+      "Abend NS",
+      "Helbig I"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "November 2022",
+    "location": "Nashville, TN",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Epilepsy",
+      "Disparities"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-26",
+    "title": "Brain MRI And Spectroscopy Biomarkers Predict Outcome After Pediatric Cardiac Arrest In POCCA",
+    "authors": [
+      "Fink EL",
+      "Kochanek PM",
+      "Blumi S",
+      "Wisnowski J",
+      "Narayanan S",
+      "Subramanian S",
+      "Beers S",
+      "Berger R",
+      "Bayir H",
+      "Wang C",
+      "Pineda J",
+      "Topjian AA",
+      "Maddux A",
+      "Willyerd F",
+      "Hunt EA",
+      "Chung MG",
+      "Newth C",
+      "Smith L",
+      "Doughty L",
+      "Diddle JW",
+      "Piantino J",
+      "Walson KH",
+      "Balakrishnan B",
+      "Friess S",
+      "Siems A",
+      "Press CA",
+      "Patregani J",
+      "Meyer MT",
+      "Haller T",
+      "Treble-Barna A",
+      "Clark R",
+      "Fabio A",
+      "Panigrahy A"
+    ],
+    "conference": "AHA Resuscitation Science Symposium",
+    "presentation_type": "poster",
+    "date": "November 2022",
+    "location": "Chicago, IL",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "Biomarkers",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-27",
+    "title": "Social Determinants Of Health Impact Phenotype-based Outcome Prediction After Pediatric Arrest",
+    "authors": [
+      "Fink EL",
+      "Kochanek PM",
+      "Panigrahy A",
+      "Beers S",
+      "Park A",
+      "Berger R",
+      "Bayir H",
+      "Wang C",
+      "Pineda J",
+      "Topjian AA",
+      "Maddix A",
+      "Willyerd F",
+      "Hunt EA",
+      "Chung MG",
+      "Newth C",
+      "Smith L",
+      "Doughty L",
+      "Diddle JW",
+      "Piantino J",
+      "Walson KH",
+      "Balakrishnan B",
+      "Friess S",
+      "Siems A",
+      "Press CA",
+      "Patregnani J",
+      "Meyer MT",
+      "Haller T",
+      "Treble-Barna A",
+      "Clark R",
+      "Fabio A"
+    ],
+    "conference": "AHA Resuscitation Science Symposium",
+    "presentation_type": "poster",
+    "date": "November 2022",
+    "location": "Chicago, IL",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "Outcomes",
+      "Disparities"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-28",
+    "title": "Survey of Pediatric ICU EEG Monitoring - Reassessment After a Decade",
+    "authors": [
+      "Fung FW",
+      "Carpenter JL",
+      "Chapman KE",
+      "Gallentine W",
+      "Giza CC",
+      "Goldstein JL",
+      "Hahn CD",
+      "Loddenkemper T",
+      "Matsumoto JH",
+      "Press CA",
+      "Riviello JJ, Jr.",
+      "Abend NS"
+    ],
+    "conference": "ACNS Annual Meeting",
+    "presentation_type": "poster",
+    "date": "March 2023",
+    "location": "Austin, TX",
+    "year": 2023,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend",
+      "tobias-loddenkemper",
+      "cecil-hahn",
+      "james-riviello"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "EEG",
+      "Neuromonitoring",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-29",
+    "title": "Disparity in Pediatric Headache and Migraine Diagnosis and Treatment in the Emergency Department",
+    "authors": [
+      "Kellier M",
+      "Anto M",
+      "Wells E",
+      "Hall M",
+      "Nash K",
+      "Palaganas J",
+      "Piantino J",
+      "Messer RM",
+      "Hutchinson M",
+      "Moharir M",
+      "Szperka C",
+      "Press CA"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2023",
+    "location": "Boston, MA",
+    "year": 2023,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Disparities"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-30",
+    "title": "Reducing Underdosing of Rectal Diazepam on Discharge from an Inpatient Neurology Service",
+    "authors": [
+      "Silver M",
+      "Means M",
+      "Abend N",
+      "Caffee L",
+      "Fried L",
+      "Witzman S",
+      "Gonzalez A",
+      "Kaufman M",
+      "Ramos M",
+      "Zook J",
+      "Press CA",
+      "Molisani S"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2023",
+    "location": "Vancouver, BC",
+    "year": 2023,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Seizures",
+      "Pharmacology"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-31",
+    "title": "Disparities in pediatric outpatient neurology office visits after first time migraine-related emergency visit",
+    "authors": [
+      "Kellier D",
+      "Boland M",
+      "Hughes N",
+      "Farrar J",
+      "Anto M",
+      "Press CA",
+      "Ostanpenko S",
+      "Szperka C"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2024",
+    "location": "Denver, CO",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Disparities"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-32",
+    "title": "Disparities in the Evaluation and Treatment of Pediatric Migraine in the Emergency Department Using a Language-Learning Model",
+    "authors": [
+      "Kellier D",
+      "Boland M",
+      "Hughes N",
+      "Farrar J",
+      "Anto M",
+      "Press CA",
+      "Ostanpenko S",
+      "Szperka C"
+    ],
+    "conference": "Annual American Academy of Neurology Meeting",
+    "presentation_type": "poster",
+    "date": "April 2024",
+    "location": "Denver, CO",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Disparities",
+      "Machine Learning"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-33",
+    "title": "Hypertension and encephalopathy in a pediatric patient following red blood cell transfusion",
+    "authors": [
+      "Hussain S",
+      "Samelson-Jones B",
+      "Press CA",
+      "Vossough A",
+      "Linder G"
+    ],
+    "conference": "American Society of Pediatric Hematology/Oncology Conference",
+    "presentation_type": "poster",
+    "date": "April 2024",
+    "location": "Seattle, WA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-34",
+    "title": "EEG-based Machine Learning for Prediction of Neurological Outcome after Pediatric Cardiac Arrest",
+    "authors": [
+      "Silva L",
+      "Chen C",
+      "Shi L",
+      "Press CA",
+      "Abend NS",
+      "Graham K",
+      "Morgan R",
+      "Topjian A",
+      "Tsui R",
+      "Kirschen M"
+    ],
+    "conference": "Neurocritical Care Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "September 2024",
+    "location": "San Diego, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "Machine Learning",
+      "qEEG"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-35",
+    "title": "Characteristics and Outcomes of Pediatric Patients with Prolonged Convulsive Status Epilepticus",
+    "authors": [
+      "Gettings J",
+      "Eschbach K",
+      "Farias-Moeller R",
+      "Gaillard W",
+      "Glauser T",
+      "Goldstein J",
+      "Goodkin H",
+      "Grinspan Z",
+      "Guerriero R",
+      "Kahoud R",
+      "Loddenkemper T",
+      "Novotny E",
+      "Morgan L",
+      "Ostendorf A",
+      "Piantino J",
+      "Press CA",
+      "Sands T",
+      "Tasker R",
+      "Kielian A",
+      "LaRovere K"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "December 2024",
+    "location": "Los Angeles, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "adam-ostendorf",
+      "tobias-loddenkemper",
+      "raquel-farias-moeller",
+      "kerri-larovere"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Status Epilepticus",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-36",
+    "title": "Post-Anoxic Myoclonus After Pediatric Cardiac Arrest: Clinical Features, EEG Characteristics, and Outcomes",
+    "authors": [
+      "Bach AM",
+      "Walsh KE",
+      "Fung FW",
+      "Press CA",
+      "Kirschen MP",
+      "Topjian A",
+      "Abend NS"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "December 2024",
+    "location": "Los Angeles, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "Seizures",
+      "EEG"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-37",
+    "title": "Use of artificial intelligence for automated neonatal seizure detection: an external validation and comparison study",
+    "authors": [
+      "Keene J",
+      "Abend NS",
+      "Benedetti G",
+      "Fulmer Z",
+      "Keene M",
+      "Montazeri S",
+      "Press CA",
+      "Stevenson NJ",
+      "Vanhatalo S",
+      "Sandoval Karamian AG"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "December 2024",
+    "location": "Los Angeles, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Machine Learning",
+      "Neonatal",
+      "Seizures"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-38",
+    "title": "Pediatric Continuous EEG Monitoring Utilization: An 8 Year Cohort Study Using the Pediatric Health Information System Database",
+    "authors": [
+      "Fitts W",
+      "Press CA",
+      "Zaniletti I",
+      "Benedetti G",
+      "Nash K",
+      "Wells E",
+      "Messer R",
+      "Palaganas J",
+      "Moharir M",
+      "Piantino J",
+      "Kirschen M",
+      "Appavu B",
+      "Abend NS"
+    ],
+    "conference": "ACNS Annual Meeting",
+    "presentation_type": "poster",
+    "date": "February 2025",
+    "location": "Baltimore, MD",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "nicholas-abend",
+      "matthew-kirschen",
+      "brian-appavu"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "EEG",
+      "Neuromonitoring",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-39",
+    "title": "Prognostic Predictions after Pediatric Cardiac Arrest: A Single Center Prospective Study",
+    "authors": [
+      "McSherry M",
+      "Zhang B",
+      "Louderback L",
+      "Little A",
+      "Walsh KE",
+      "Graham K",
+      "Press CA",
+      "McGuire J",
+      "Ichord R",
+      "Douglas R",
+      "Morgan RW",
+      "Kirschen MP",
+      "Woods-Hill C",
+      "Topjian A"
+    ],
+    "conference": "AHA Resuscitation Science Symposium",
+    "presentation_type": "poster",
+    "date": "November 2024",
+    "location": "Chicago, IL",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-40",
+    "title": "Prognostic Predictions after Pediatric Cardiac Arrest: A Single Center Prospective Study",
+    "authors": [
+      "McSherry M",
+      "Zhang B",
+      "Louderback L",
+      "Little A",
+      "Walsh KE",
+      "Graham K",
+      "Press CA",
+      "McGuire J",
+      "Ichord R",
+      "Douglas R",
+      "Morgan RW",
+      "Kirschen MP",
+      "Woods-Hill C",
+      "Topjian A"
+    ],
+    "conference": "SCCM Critical Care Congress",
+    "presentation_type": "poster",
+    "date": "February 2025",
+    "location": "Orlando, FL",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.493142+00:00",
+    "updated_at": "2026-03-25T01:30:40.493142+00:00"
+  },
+  {
+    "id": "abs-41",
+    "title": "Severe Pediatric TBI and Transport to a Quaternary Pediatric Facility: An Outcome Analysis",
+    "authors": [
+      "Lacoul A",
+      "Gabriel E",
+      "Giannotti A",
+      "Kumar N",
+      "Kaur J",
+      "Senthil K",
+      "Mazandi V",
+      "Press C",
+      "Kirschen M",
+      "Topjian A",
+      "Kim CT",
+      "Kilbaugh T",
+      "Chen SS",
+      "Huh J"
+    ],
+    "conference": "SCCM Critical Care Congress",
+    "presentation_type": "poster",
+    "date": "February 2025",
+    "location": "Orlando, FL",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "matthew-kirschen"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "TBI",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-42",
+    "title": "Pediatric Continuous EEG Monitoring Utilization: An 8 Year Cohort Study Using the Pediatric Health Information System Database",
+    "authors": [
+      "Fitts W",
+      "Press CA",
+      "Zaniletti I",
+      "Benedetti G",
+      "Nash K",
+      "Wells E",
+      "Messer R",
+      "Palaganas J",
+      "Moharir M",
+      "Piantino J",
+      "Kirschen M",
+      "Appavu B",
+      "Abend NS"
+    ],
+    "conference": "Pediatric Neurocritical Care Research Group Spring Meeting",
+    "presentation_type": "poster",
+    "date": "March 2025",
+    "location": "Denver, CO",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "nicholas-abend",
+      "matthew-kirschen",
+      "brian-appavu"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "EEG",
+      "Neuromonitoring",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-43",
+    "title": "Use of artificial intelligence for automated neonatal seizure detection: an external validation and comparison study",
+    "authors": [
+      "Keene J",
+      "Abend NS",
+      "Benedetti G",
+      "Fulmer Z",
+      "Keene M",
+      "Montazeri S",
+      "Press CA",
+      "Stevenson NJ",
+      "Vanhatalo S",
+      "Sandoval Karamian AG"
+    ],
+    "conference": "Pediatric Academic Societies Meeting",
+    "presentation_type": "poster",
+    "date": "April 2025",
+    "location": "Honolulu, HI",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Machine Learning",
+      "Neonatal",
+      "Seizures"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-44",
+    "title": "Feasibility of implementation of an age-based guideline for PCPC scoring",
+    "authors": [
+      "Nelliot A",
+      "Thomas AX",
+      "Farias-Moeller R",
+      "Tomko S",
+      "Jayakar A",
+      "Appavu B",
+      "Harrar DB",
+      "Morgan LA",
+      "Castillo-Pinto C",
+      "Rau S",
+      "Fulton M",
+      "Press CA",
+      "Benedetti GM"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "December 2025",
+    "location": "Atlanta, GA",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "dana-harrar",
+      "anuj-jayakar",
+      "brian-appavu",
+      "raquel-farias-moeller",
+      "ajay-thomas"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "PedQuEST",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-45",
+    "title": "Development of a multicenter EEG research consortium and data platform to advance Pediatric Quantitative EEG Research",
+    "authors": [
+      "Press CA",
+      "Benedetti GM",
+      "Harrar DB",
+      "Farias-Moeller R",
+      "Tomko S",
+      "Jayakar A",
+      "Appavu B",
+      "Morgan LA",
+      "Castillo-Pinto C",
+      "Thomas AX",
+      "Rau S",
+      "Fulton F",
+      "Parikh D",
+      "Abend NS",
+      "Hahn C",
+      "Riviello J",
+      "Ganesan R",
+      "De Freitas D",
+      "Dare Y",
+      "Wagenaar J"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "December 2025",
+    "location": "Atlanta, GA",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "dana-harrar",
+      "nicholas-abend",
+      "anuj-jayakar",
+      "joost-wagenaar",
+      "brian-appavu",
+      "raquel-farias-moeller",
+      "cecil-hahn",
+      "james-riviello",
+      "ajay-thomas"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "PedQuEST",
+      "qEEG"
+    ],
+    "notes": "Co-first authors: Press CA and Benedetti GM",
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-46",
+    "title": "Nationwide Trends in Pediatric ICU Continuous EEG Use: An 8-Year Retrospective Multi-Center Study",
+    "authors": [
+      "Fitts W",
+      "Press CA",
+      "Zaniletti I",
+      "Benedetti G",
+      "Nash K",
+      "Wells E",
+      "Messer R",
+      "Palaganas J",
+      "Moharir M",
+      "Piantino J",
+      "Kirschen M",
+      "Appavu B",
+      "Abend NS"
+    ],
+    "conference": "ACNS Annual Meeting",
+    "presentation_type": "poster",
+    "date": "2025",
+    "location": "",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "nicholas-abend",
+      "matthew-kirschen",
+      "brian-appavu"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "EEG",
+      "Neuromonitoring",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-47",
+    "title": "Development of a multicenter EEG research consortium and data platform to advance Pediatric Quantitative EEG Research",
+    "authors": [
+      "Press CA",
+      "Benedetti GM",
+      "Harrar DB",
+      "Farias-Moeller R",
+      "Tomko S",
+      "Jayakar A",
+      "Appavu B",
+      "Morgan LA",
+      "Castillo-Pinto C",
+      "Thomas AX",
+      "Rau S",
+      "Fulton F",
+      "Parikh D",
+      "Abend NS",
+      "Hahn C",
+      "Riviello J",
+      "Ganesan R",
+      "De Freitas D",
+      "Dare Y",
+      "Wagenaar J"
+    ],
+    "conference": "ACNS Annual Meeting",
+    "presentation_type": "poster",
+    "date": "February 2026",
+    "location": "Atlanta, GA",
+    "year": 2026,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "dana-harrar",
+      "nicholas-abend",
+      "anuj-jayakar",
+      "joost-wagenaar",
+      "brian-appavu",
+      "raquel-farias-moeller",
+      "cecil-hahn",
+      "james-riviello",
+      "ajay-thomas"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "PedQuEST",
+      "qEEG"
+    ],
+    "notes": "Co-first authors: Press CA and Benedetti GM",
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-48",
+    "title": "Factors associated with rapid treatment for status epilepticus: Data from the Quality Improvement in Time to Treat Status Epilepticus (QuiTT-SE) baseline cohort",
+    "authors": [
+      "Brown-Mitchell G",
+      "Loddenkemper T",
+      "Morgan L",
+      "Appavu B",
+      "Farias-Moeller R",
+      "Harrar D",
+      "Press C",
+      "Abend N",
+      "Gaillard W",
+      "Bai S",
+      "Eisner M",
+      "McHenry L",
+      "Kroshus E",
+      "Vanmatta K",
+      "Goodkin H",
+      "Ostendorf A"
+    ],
+    "conference": "AES Annual Meeting",
+    "presentation_type": "poster",
+    "date": "December 2025",
+    "location": "Atlanta, GA",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "nicholas-abend",
+      "adam-ostendorf",
+      "tobias-loddenkemper",
+      "brian-appavu",
+      "raquel-farias-moeller"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Status Epilepticus",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-49",
+    "title": "Sedation and Anesthesia in Pediatric Neurocritical Care",
+    "authors": [
+      "Benedetti GM",
+      "Rau SM",
+      "Silverstein FS",
+      "Shellhaas RA"
+    ],
+    "conference": "University of Michigan Neuroscience Day",
+    "presentation_type": "poster",
+    "date": "June 2016",
+    "location": "Ann Arbor, MI",
+    "year": 2016,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Pharmacology"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-50",
+    "title": "Sedation and Anesthesia in Pediatric Neuro-Critical Care",
+    "authors": [
+      "Benedetti GM",
+      "Rau SM",
+      "Lester S",
+      "Silverstein FS",
+      "Shellhaas RA"
+    ],
+    "conference": "Pediatric Research Day, University of Michigan",
+    "presentation_type": "poster",
+    "date": "August 2016",
+    "location": "Ann Arbor, MI",
+    "year": 2016,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Pharmacology"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-51",
+    "title": "Pediatric Acute Ischemic Brain Injury: C.S. Mott Children's Hospital 2016 Clinical Experience",
+    "authors": [
+      "Benedetti GM",
+      "Silverstein FS",
+      "Rau SM",
+      "Lester SG",
+      "Shellhaas RA"
+    ],
+    "conference": "Michigan Medicine Neuroscience Day",
+    "presentation_type": "poster",
+    "date": "January 2017",
+    "location": "Ann Arbor, MI",
+    "year": 2017,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Stroke",
+      "Neurocritical Care"
+    ],
+    "notes": "Selected as Best Resident Poster",
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-52",
+    "title": "Sedation and Anesthesia in Pediatric Neuro-Critical Care",
+    "authors": [
+      "Benedetti GM",
+      "Rau S",
+      "Silverstein FS",
+      "Shellhaas RA"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2016",
+    "location": "Vancouver, BC, Canada",
+    "year": 2016,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Pharmacology"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-53",
+    "title": "Benzodiazepine and Opioid Exposure in Neonatal Neurocritical Care",
+    "authors": [
+      "Benedetti GM",
+      "Barks JE",
+      "Silverstein FS",
+      "Rau SM",
+      "Lester S",
+      "Shellhaas RA"
+    ],
+    "conference": "Pediatric Research Day, Wayne State University",
+    "presentation_type": "poster",
+    "date": "March 2017",
+    "location": "Detroit, MI",
+    "year": 2017,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Pharmacology",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-54",
+    "title": "Early Quantitative Electroencephalogram Measurements Correlate with Outcome in Pediatric Cardiac Arrest",
+    "authors": [
+      "Benedetti GM",
+      "Wainwright MS",
+      "Din F",
+      "Kurz JE"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2018",
+    "location": "Chicago, IL",
+    "year": 2018,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Cardiac Arrest",
+      "qEEG",
+      "Outcomes"
+    ],
+    "notes": "Selected for Guided Poster Tour, Oral Presentation",
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-55",
+    "title": "Early EEG Background Could Guide Tailored Duration of Monitoring for Neonatal Encephalopathy Treated with Therapeutic Hypothermia",
+    "authors": [
+      "Benedetti GM",
+      "Vartanian RJ",
+      "Pace RA",
+      "McCaffery H",
+      "Shellhaas RA"
+    ],
+    "conference": "University of Michigan Neuroscience Day",
+    "presentation_type": "poster",
+    "date": "March 2019",
+    "location": "Ann Arbor, MI",
+    "year": 2019,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "EEG",
+      "Neuromonitoring"
+    ],
+    "notes": "Selected as Best Fellow Poster",
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-56",
+    "title": "Early EEG Background Could Guide Tailored Duration of Monitoring for Neonatal Encephalopathy Treated with Therapeutic Hypothermia",
+    "authors": [
+      "Benedetti GM",
+      "Vartanian RJ",
+      "Pace RA",
+      "McCaffery H",
+      "Shellhaas RA"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "platform",
+    "date": "October 2019",
+    "location": "Charlotte, NC",
+    "year": 2019,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "EEG",
+      "Neuromonitoring"
+    ],
+    "notes": "Selected for Platform Presentation",
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-57",
+    "title": "Early EEG Background Pattern is Associated with Seizure Risk in Neonates with Mild Hypoxic-Ischemic Encephalopathy",
+    "authors": [
+      "Benedetti GM",
+      "Mietzsch U",
+      "Lockrow L",
+      "Natarajan N"
+    ],
+    "conference": "Pediatric Academic Societies Meeting",
+    "presentation_type": "poster",
+    "date": "2020",
+    "location": "",
+    "year": 2020,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "EEG",
+      "Seizures"
+    ],
+    "notes": "Cancelled due to COVID-19 pandemic",
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-58",
+    "title": "Heart Rate Variability and EEG Characteristics in Children with CAR T-Associated Neurotoxicity",
+    "authors": [
+      "Dervan LA",
+      "Doud A",
+      "Di Gennaro JL",
+      "Benedetti GM",
+      "Morgan LA",
+      "Amlie-Lefond C",
+      "Watson RS",
+      "Wainwright M"
+    ],
+    "conference": "Society of Critical Care Medicine",
+    "presentation_type": "poster",
+    "date": "2022",
+    "location": "Virtual",
+    "year": 2022,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neuromonitoring",
+      "EEG",
+      "Neurocritical Care"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-59",
+    "title": "Towards Equity in Research Participation: Association of Financial Impact with in Person Study Participation",
+    "authors": [
+      "Shellhaas RA",
+      "Lemmon ME",
+      "Gosselin B",
+      "Abend NS",
+      "Anwar T",
+      "Benedetti GM",
+      "Berl M",
+      "Chu CJ",
+      "Massey SL",
+      "McCulloch CE",
+      "Numis AL",
+      "Rogers EE",
+      "Soul JS",
+      "Sturza J",
+      "Thomas C",
+      "Wusthoff CJ",
+      "Franck LS",
+      "Glass HC"
+    ],
+    "conference": "Pediatric Academic Societies Meeting",
+    "presentation_type": "poster",
+    "date": "2023",
+    "location": "Washington, DC",
+    "year": 2023,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Disparities"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-60",
+    "title": "Sleep disorders among 5-year-old survivors of acute provoked neonatal seizures - a study of the Neonatal Seizure Registry",
+    "authors": [
+      "Glass HC",
+      "Sturza J",
+      "Lemmon ME",
+      "Numis AL",
+      "Soul JS",
+      "Berl MM",
+      "Wusthoff CJ",
+      "Chu CJ",
+      "Massey SL",
+      "Thomas C",
+      "Franck LS",
+      "McCulloch CE",
+      "Benedetti GM",
+      "Anwar T",
+      "Shellhaas RA"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "2024",
+    "location": "San Diego, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.729384+00:00",
+    "updated_at": "2026-03-25T01:30:40.729384+00:00"
+  },
+  {
+    "id": "abs-61",
+    "title": "School-Age Neurodevelopmental Outcome after Provoked Neonatal Seizures",
+    "authors": [
+      "Shellhaas RA",
+      "Pilon B",
+      "Wusthoff CJ",
+      "Massey SL",
+      "Chu CJ",
+      "Soul JS",
+      "Lemmon ME",
+      "Numis AL",
+      "Sturza J",
+      "Thomas C",
+      "Benedetti GM",
+      "Anwar T",
+      "Berl MM",
+      "McCulloch C",
+      "Franck LS",
+      "Glass HC"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "2024",
+    "location": "San Diego, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-62",
+    "title": "Life After Neonatal Seizures: Characterizing the Longitudinal Parent Experience",
+    "authors": [
+      "Field NK",
+      "Franck LS",
+      "Shellhaas RA",
+      "Glass HC",
+      "Young KA",
+      "Dhar S",
+      "Hamlett A",
+      "Pilon B",
+      "Means K",
+      "Soul JS",
+      "Massey SL",
+      "Wusthoff CJ",
+      "Chu CJ",
+      "Thomas C",
+      "Rogers E",
+      "Berl MM",
+      "Benedetti GM",
+      "Lemmon ME"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "2024",
+    "location": "San Diego, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Outcomes"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-63",
+    "title": "Developing a Question Prompt List for Parents of Neonates with Seizures",
+    "authors": [
+      "Field NK",
+      "Glass HC",
+      "Franck LS",
+      "Shellhaas RA",
+      "Means J",
+      "Soul JS",
+      "Massey SL",
+      "Wusthoff CJ",
+      "Chu CJ",
+      "Thomas C",
+      "Rogers E",
+      "Berl MM",
+      "Benedetti GM",
+      "Lemmon ME"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "2024",
+    "location": "San Diego, CA",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Education"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-64",
+    "title": "Use of artificial intelligence for automated neonatal seizure detection: an external validation and comparison study",
+    "authors": [
+      "Keene JC",
+      "Abend NS",
+      "Benedetti GM",
+      "Fulmer Z",
+      "Keene M",
+      "Montazeri S",
+      "Press CA",
+      "Stevenson NJ",
+      "Vanhatalo S",
+      "Sandoval Karamian A"
+    ],
+    "conference": "Newborn Brain Society Meeting",
+    "presentation_type": "poster",
+    "date": "February 2024",
+    "location": "Cork, Ireland",
+    "year": 2024,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "craig-press",
+      "giulia-benedetti",
+      "nicholas-abend"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Machine Learning",
+      "Neonatal",
+      "Seizures"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-65",
+    "title": "Clinical implications of non-traumatic subdural hematomas in infants with congenital heart disease",
+    "authors": [
+      "Agarwal N",
+      "Garton H",
+      "Benedetti GM"
+    ],
+    "conference": "Pediatric Research Symposium, C.S. Mott Children's Hospital",
+    "presentation_type": "poster",
+    "date": "May 2025",
+    "location": "Ann Arbor, MI",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Cardiac Arrest"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-66",
+    "title": "Clinical implications of non-traumatic subdural hematomas in infants with congenital heart disease",
+    "authors": [
+      "Agarwal N",
+      "Garton H",
+      "Benedetti GM"
+    ],
+    "conference": "University of Michigan Neuroscience Day",
+    "presentation_type": "platform",
+    "date": "June 2025",
+    "location": "Ann Arbor, MI",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Cardiac Arrest"
+    ],
+    "notes": "Selected as Platform Presentation",
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-67",
+    "title": "A single center experience adopting in-hospital antiseizure medication discontinuation for acute symptomatic neonatal seizures",
+    "authors": [
+      "Frankl S",
+      "Valdmanis K",
+      "Sturza J",
+      "Smith G",
+      "Benedetti GM"
+    ],
+    "conference": "University of Michigan Neuroscience Day",
+    "presentation_type": "poster",
+    "date": "June 2025",
+    "location": "Ann Arbor, MI",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Seizures",
+      "Pharmacology"
+    ],
+    "notes": "Awarded Best Child Neurology Poster",
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-68",
+    "title": "Clinical implications of non-traumatic subdural hematomas in infants with congenital heart disease",
+    "authors": [
+      "Agarwal N",
+      "Garton H",
+      "Benedetti GM"
+    ],
+    "conference": "Neurocritical Care Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "September 2025",
+    "location": "Montreal, CA",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neurocritical Care",
+      "Cardiac Arrest"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  },
+  {
+    "id": "abs-69",
+    "title": "A single center experience adopting in-hospital antiseizure medication discontinuation for acute symptomatic neonatal seizures",
+    "authors": [
+      "Frankl S",
+      "Valdmanis K",
+      "Sturza J",
+      "Smith G",
+      "Benedetti GM"
+    ],
+    "conference": "Child Neurology Society Annual Meeting",
+    "presentation_type": "poster",
+    "date": "October 2025",
+    "location": "Charlotte, NC",
+    "year": 2025,
+    "doi": null,
+    "pmid": null,
+    "member_author_ids": [
+      "giulia-benedetti"
+    ],
+    "is_member_paper": true,
+    "categories": [
+      "Neonatal",
+      "Seizures",
+      "Pharmacology"
+    ],
+    "notes": null,
+    "created_at": "2026-03-25T01:30:40.836503+00:00",
+    "updated_at": "2026-03-25T01:30:40.836503+00:00"
+  }
+]
