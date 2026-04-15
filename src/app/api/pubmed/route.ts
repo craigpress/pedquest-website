@@ -1,85 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  extractText,
+  parseAuthors,
+  parseMeshTerms,
+  parseKeywords,
+  parsePublicationType,
+  parseArticleIds,
+} from "@/lib/pubmed";
 
 const EUTILS_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
-
-function extractText(xml: string, tag: string): string {
-  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
-  const match = xml.match(regex);
-  return match ? match[1].trim() : "";
-}
-
-function extractAll(xml: string, tag: string): string[] {
-  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "gi");
-  const results: string[] = [];
-  let match;
-  while ((match = regex.exec(xml)) !== null) {
-    results.push(match[1].trim());
-  }
-  return results;
-}
-
-function parseAuthors(xml: string): { authors: string[]; affiliations: string[] } {
-  const authorListMatch = xml.match(/<AuthorList[^>]*>([\s\S]*?)<\/AuthorList>/i);
-  if (!authorListMatch) return { authors: [], affiliations: [] };
-
-  const authorBlocks = authorListMatch[1].match(/<Author[^>]*>[\s\S]*?<\/Author>/gi) || [];
-  const authors: string[] = [];
-  const affiliations: string[] = [];
-
-  for (const block of authorBlocks) {
-    const lastName = extractText(block, "LastName");
-    const initials = extractText(block, "Initials");
-    if (lastName && initials) {
-      authors.push(`${lastName} ${initials}`);
-    }
-    const affiliation = extractText(block, "Affiliation");
-    if (affiliation) {
-      affiliations.push(affiliation);
-    }
-  }
-
-  return { authors, affiliations };
-}
-
-function parseMeshTerms(xml: string): string[] {
-  const meshListMatch = xml.match(/<MeshHeadingList>([\s\S]*?)<\/MeshHeadingList>/i);
-  if (!meshListMatch) return [];
-  return extractAll(meshListMatch[1], "DescriptorName");
-}
-
-function parseKeywords(xml: string): string[] {
-  const keywordListMatch = xml.match(/<KeywordList[^>]*>([\s\S]*?)<\/KeywordList>/i);
-  if (!keywordListMatch) return [];
-  return extractAll(keywordListMatch[1], "Keyword");
-}
-
-function parsePublicationType(xml: string): string[] {
-  const pubTypeListMatch = xml.match(/<PublicationTypeList>([\s\S]*?)<\/PublicationTypeList>/i);
-  if (!pubTypeListMatch) return [];
-  return extractAll(pubTypeListMatch[1], "PublicationType");
-}
-
-function parseArticleIds(xml: string): { doi?: string; pmid?: string; pmcid?: string } {
-  const ids: { doi?: string; pmid?: string; pmcid?: string } = {};
-  const idBlocks = xml.match(/<ArticleId IdType="[^"]*">[^<]*<\/ArticleId>/gi) || [];
-  for (const block of idBlocks) {
-    const typeMatch = block.match(/IdType="([^"]*)"/);
-    const valueMatch = block.match(/>([^<]*)</);
-    if (typeMatch && valueMatch) {
-      const type = typeMatch[1];
-      const value = valueMatch[1];
-      if (type === "doi") ids.doi = value;
-      if (type === "pubmed") ids.pmid = value;
-      if (type === "pmc") ids.pmcid = value;
-    }
-  }
-  // Also check for ELocationID DOI
-  if (!ids.doi) {
-    const elocMatch = xml.match(/<ELocationID EIdType="doi"[^>]*>([^<]*)<\/ELocationID>/i);
-    if (elocMatch) ids.doi = elocMatch[1];
-  }
-  return ids;
-}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -143,7 +72,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // If year is still 0, try MedlineDate or ArticleDate
     if (!year) {
       const medlineDateMatch = articleXml.match(/<MedlineDate>(\d{4})/);
       if (medlineDateMatch) year = parseInt(medlineDateMatch[1], 10);
@@ -153,7 +81,6 @@ export async function GET(request: NextRequest) {
       if (articleDateMatch) year = parseInt(articleDateMatch[1], 10);
     }
 
-    // Also get PMID from MedlineCitation if not in ArticleIdList
     if (!articleIds.pmid) {
       const pmidMatch = articleXml.match(/<PMID[^>]*>(\d+)<\/PMID>/i);
       if (pmidMatch) articleIds.pmid = pmidMatch[1];

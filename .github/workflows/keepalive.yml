@@ -1,0 +1,25 @@
+# Supabase Keepalive
+#
+# Vercel Hobby plan does not execute cron jobs, so we use GitHub Actions
+# to ping the keepalive endpoint every 3 days. This prevents Supabase
+# from pausing the project due to inactivity.
+
+name: Supabase Keepalive
+
+on:
+  schedule:
+    - cron: '0 8 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping keepalive endpoint
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" https://pedquest.org/api/keepalive)
+          echo "HTTP status: $status"
+          if [ "$status" -ne 200 ]; then
+            echo "::error::Keepalive returned HTTP $status"
+            exit 1
+          fi
