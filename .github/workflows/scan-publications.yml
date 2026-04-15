@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Trigger publication scan
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
+          RESPONSE=$(curl -sL -w "\n%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             "https://pedquest.org/api/scan-publications")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)

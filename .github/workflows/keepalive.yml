@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Ping keepalive endpoint
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" https://pedquest.org/api/keepalive)
+          status=$(curl -sL -o /dev/null -w "%{http_code}" https://pedquest.org/api/keepalive)
           echo "HTTP status: $status"
           if [ "$status" -ne 200 ]; then
             echo "::error::Keepalive returned HTTP $status"
