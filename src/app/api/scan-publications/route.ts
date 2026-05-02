@@ -93,6 +93,16 @@ export async function GET(request: NextRequest) {
           const article = await fetchArticleByPmid(pmid);
           if (!article) continue;
 
+          // PubMed esearch can return a search-result PMID that efetch resolves to a
+          // DIFFERENT canonical PMID (merged/republished records). The seenPmids set
+          // is keyed on canonical PMIDs (from publications + committee_pmids), so we
+          // must re-check using article.pmid before treating it as new.
+          if (seenPmids.has(article.pmid) || seenPmids.has(pmid)) {
+            seenPmids.add(pmid);
+            seenPmids.add(article.pmid);
+            continue;
+          }
+
           // Verify the author is actually a consortium member by matching surname
           const authorSurnames = article.authors.map((a) => a.split(" ")[0]);
           if (!authorSurnames.some((s) => s.toLowerCase() === surname.toLowerCase())) {
@@ -100,6 +110,7 @@ export async function GET(request: NextRequest) {
           }
 
           seenPmids.add(pmid);
+          seenPmids.add(article.pmid);
           newArticles.push({ ...article, memberId });
 
           // Persist to Supabase. supabase-js does NOT throw on DB errors — it returns
