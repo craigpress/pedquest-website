@@ -39,20 +39,41 @@ export async function GET(request: NextRequest) {
   const seenPmids = new Set<string>(knownPmids.map(String));
   let scanned = 0;
 
-  // Also load already-logged PMIDs from Supabase if available
+  // Also load already-logged PMIDs from Supabase (publications + auto_discovered log).
+  // Both sources matter: a failed publications insert in the past should still be skipped
+  // if it was logged as auto_discovered.
   if (supabase) {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("publications")
         .select("pmid")
         .not("pmid", "is", null);
-      if (data) {
+      if (error) {
+        errors.push(`Supabase publications read failed: ${error.message}`);
+      } else if (data) {
         for (const row of data) {
           if (row.pmid) seenPmids.add(String(row.pmid));
         }
       }
-    } catch {
-      // Non-fatal — we still have committee_pmids as fallback
+    } catch (e) {
+      errors.push(`Supabase publications read threw: ${e}`);
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("publication_update_log")
+        .select("pmid")
+        .eq("action", "auto_discovered")
+        .not("pmid", "is", null);
+      if (error) {
+        errors.push(`Supabase update_log read failed: ${error.message}`);
+      } else if (data) {
+        for (const row of data) {
+          if (row.pmid) seenPmids.add(String(row.pmid));
+        }
+      }
+    } catch (e) {
+      errors.push(`Supabase update_log read threw: ${e}`);
     }
   }
 
@@ -81,11 +102,14 @@ export async function GET(request: NextRequest) {
           seenPmids.add(pmid);
           newArticles.push({ ...article, memberId });
 
-          // Insert into Supabase
+          // Persist to Supabase. supabase-js does NOT throw on DB errors — it returns
+          // { error }. We must check it explicitly or schema drift goes silent again.
+          let persisted = false;
           if (supabase) {
             try {
-              await supabase.from("publications").upsert(
+              const { error: pubErr } = await supabase.from("publications").upsert(
                 {
+                  id: `auto-${article.pmid}`,
                   pmid: article.pmid,
                   title: article.title,
                   authors: article.authors,
@@ -103,16 +127,31 @@ export async function GET(request: NextRequest) {
                 },
                 { onConflict: "pmid" }
               );
+              if (pubErr) {
+                errors.push(`publications upsert failed for PMID ${pmid}: ${pubErr.message}`);
+              } else {
+                persisted = true;
+              }
 
-              await supabase.from("publication_update_log").insert({
+              const { error: logErr } = await supabase.from("publication_update_log").insert({
                 pmid: article.pmid,
                 member_id: memberId,
                 action: "auto_discovered",
                 scanned_at: new Date().toISOString(),
               });
+              if (logErr) {
+                errors.push(`update_log insert failed for PMID ${pmid}: ${logErr.message}`);
+              }
             } catch (e) {
-              errors.push(`Supabase insert failed for PMID ${pmid}: ${e}`);
+              errors.push(`Supabase insert threw for PMID ${pmid}: ${e}`);
             }
+          }
+
+          // Only fire Discord notification once persistence (or its absence) is decided.
+          // If the DB write failed, skip the announcement so we don't spam the channel
+          // with the same PMID on every run.
+          if (supabase && !persisted) {
+            continue;
           }
 
           // Discord notification
@@ -151,13 +190,16 @@ export async function GET(request: NextRequest) {
   // Log the scan run
   if (supabase) {
     try {
-      await supabase.from("publication_update_log").insert({
+      const { error: scanLogErr } = await supabase.from("publication_update_log").insert({
         action: "scan_completed",
         scanned_at: new Date().toISOString(),
         metadata: { scanned, newCount: newArticles.length, errorCount: errors.length },
       });
-    } catch {
-      // Non-fatal
+      if (scanLogErr) {
+        errors.push(`scan_completed log insert failed: ${scanLogErr.message}`);
+      }
+    } catch (e) {
+      errors.push(`scan_completed log threw: ${e}`);
     }
   }
 
