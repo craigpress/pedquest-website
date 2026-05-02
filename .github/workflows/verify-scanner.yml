@@ -1,0 +1,32 @@
+name: Verify Publication Scanner
+
+# Health check that runs the day AFTER each scheduled scan.
+# Confirms:
+#   1. The scan actually persisted to Supabase (publications + publication_update_log)
+#   2. Auto-discovered articles map to known members
+#   3. Discord webhook is reachable
+#   4. The same PMID hasn't been re-announced (dedup is working)
+# Fails loud (non-zero exit + Discord alert) if any check fails.
+
+on:
+  schedule:
+    # Tuesday and Friday at 14:00 UTC — ~28h after each Mon/Thu 10:00 UTC scan
+    - cron: "0 14 * * 2,5"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run scanner health checks
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: node scripts/verify-scanner.mjs
