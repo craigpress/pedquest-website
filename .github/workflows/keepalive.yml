@@ -3,6 +3,11 @@
 # Vercel Hobby plan does not execute cron jobs, so we use GitHub Actions
 # to ping the keepalive endpoint every 3 days. This prevents Supabase
 # from pausing the project due to inactivity.
+#
+# The heartbeat step commits a timestamp once the repo has been idle for
+# 45+ days. A commit resets GitHub's "scheduled workflows are disabled
+# after 60 days of repository inactivity" timer, keeping every scheduled
+# workflow in this repo (keepalive, backup, scan, verify) enabled forever.
 
 name: Supabase Keepalive
 
@@ -10,6 +15,9 @@ on:
   schedule:
     - cron: '0 8 */3 * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   keepalive:
@@ -22,4 +30,22 @@ jobs:
           if [ "$status" -ne 200 ]; then
             echo "::error::Keepalive returned HTTP $status"
             exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Heartbeat commit if repo idle 45+ days
+        run: |
+          age_days=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "Repo last commit ${age_days} day(s) ago"
+          if [ "$age_days" -ge 45 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/last-keepalive.txt
+            git add .github/last-keepalive.txt
+            git commit -m "chore: keepalive heartbeat (keep scheduled workflows enabled)"
+            git push
+          else
+            echo "Repo active within 45 days — no heartbeat needed"
           fi
