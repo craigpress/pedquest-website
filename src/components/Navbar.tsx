@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useUser, useMember } from "@/lib/auth";
@@ -131,37 +132,16 @@ export default function Navbar() {
             className="flex items-center gap-2.5 no-underline shrink-0 group"
             onClick={() => setMobileOpen(false)}
           >
-            {/* PedQuEST wordmark — waveform mark + text */}
-            <span
-              aria-hidden="true"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 34,
-                height: 34,
-                borderRadius: 9,
-                background: "var(--accent-soft)",
-                color: "var(--accent-primary)",
-                flex: "none",
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 12h3l2-6 3 12 3-9 2 5h5" />
-              </svg>
-            </span>
-            <span
+            {/* PedQuEST wordmark — flame logo (2026) */}
+            <Image
+              src="/images/pedquest-wordmark-flame-2026.png"
+              alt="PedQuEST"
+              width={2556}
+              height={888}
+              priority
               className="transition-opacity duration-300 group-hover:opacity-85"
-              style={{
-                fontFamily: "var(--heading-font)",
-                fontSize: "1.35rem",
-                fontWeight: 700,
-                letterSpacing: "-0.01em",
-                color: "var(--text)",
-              }}
-            >
-              Ped<span style={{ color: "var(--accent-primary)" }}>QuEST</span>
-            </span>
+              style={{ height: 44, width: "auto" }}
+            />
           </Link>
 
           {/* Desktop nav links */}
