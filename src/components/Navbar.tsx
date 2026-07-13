@@ -132,7 +132,16 @@ export default function Navbar() {
             className="flex items-center gap-2.5 no-underline shrink-0 group"
             onClick={() => setMobileOpen(false)}
           >
-            {/* PedQuEST wordmark — flame logo (2026) */}
+            {/* PedQuEST brand — qEEG-brain symbol + flame wordmark (2026) */}
+            <Image
+              src="/images/pedquest-symbol-2026.png"
+              alt=""
+              aria-hidden="true"
+              width={1254}
+              height={1254}
+              priority
+              style={{ height: 44, width: 44, flex: "none" }}
+            />
             <Image
               src="/images/pedquest-wordmark-flame-2026.png"
               alt="PedQuEST"
