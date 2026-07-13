@@ -123,8 +123,8 @@ export default function Navbar() {
         }} />
 
         <nav
-          className="mx-auto flex items-center justify-between"
-          style={{ maxWidth: 1320, padding: "0 2.5rem", height: 88 }}
+          className="mx-auto flex items-center justify-between px-5 lg:px-10"
+          style={{ maxWidth: 1320, height: 88 }}
         >
           {/* Logo / Brand */}
           <Link
@@ -330,17 +330,16 @@ export default function Navbar() {
           {/* Backdrop */}
           <div
             className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.4)" }}
+            style={{ background: "rgba(0,0,0,0.65)" }}
             onClick={() => setMobileOpen(false)}
           />
-          {/* Menu panel */}
+          {/* Menu panel — solid so page content can't bleed through */}
           <div
             className="relative"
             style={{
-              background: "var(--bg-nav)",
-              backdropFilter: "blur(20px)",
+              background: "var(--bg)",
               borderBottom: "1px solid var(--border)",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.45)",
             }}
           >
             <ul id="mobile-nav-menu" className="flex flex-col gap-1 list-none m-0 px-6 py-5" role="navigation" aria-label="Mobile navigation">
