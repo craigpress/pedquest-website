@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import CaseCard from "@/components/CaseCard";
+import ResearchDisclaimer from "@/components/ResearchDisclaimer";
 import { getArchive } from "@/lib/cases-server";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function ArchivePage() {
           {items.map((it) => <CaseCard key={it.id} item={it} />)}
         </div>
       )}
+      <ResearchDisclaimer />
     </div>
   );
 }

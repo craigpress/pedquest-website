@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import CaseQuiz from "@/components/CaseQuiz";
+import ResearchDisclaimer from "@/components/ResearchDisclaimer";
 import { getTodaysPublicCase } from "@/lib/cases-server";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,7 @@ export default async function CaseOfTheDayPage() {
           <CaseQuiz caseData={c} />
         </article>
       )}
+      <ResearchDisclaimer />
     </div>
   );
 }

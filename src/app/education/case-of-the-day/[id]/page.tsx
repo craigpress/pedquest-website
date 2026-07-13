@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import CaseQuiz from "@/components/CaseQuiz";
+import ResearchDisclaimer from "@/components/ResearchDisclaimer";
 import { getPublicCaseById } from "@/lib/cases-server";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ export default async function ArchivedCasePage({ params }: { params: Promise<{ i
           <CaseQuiz caseData={c} archived />
         </article>
       )}
+      <ResearchDisclaimer />
     </div>
   );
 }
