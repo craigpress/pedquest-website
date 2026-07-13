@@ -125,7 +125,7 @@ CREATE POLICY "eeg-case images are public" ON storage.objects
 -- ============================================================
 INSERT INTO eeg_cases (id, publish_date, title, clinical_vignette, image_url,
     question_type, question_prompt, explanation, teaching_points, correct_region,
-    difficulty, tags, source, status)
+    region_tolerance, difficulty, tags, source, status)
 VALUES
 (
   '00000000-0000-4000-a000-000000000001',
@@ -141,6 +141,7 @@ VALUES
     'Left > right slowing localises rather than lateralises — always correlate with the montage and clinical context.',
     'Attenuation on one side can reflect cortical injury, fluid collection, or electrode issues — rule out technical causes first.'
   ],
+  NULL,
   NULL,
   'intermediate',
   ARRAY['asymmetry','focal slowing','fundamentals'],
