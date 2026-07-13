@@ -36,7 +36,7 @@ async function backfill(supabase: ReturnType<typeof createClient>, table: string
     if (APPLY) {
       const { error: upErr } = await supabase
         .from(table)
-        .update({ member_author_ids: union })
+        .update({ member_author_ids: union } as never)
         .eq("id", row.id);
       if (upErr) console.error(`    update failed: ${upErr.message}`);
     }
