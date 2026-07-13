@@ -18,15 +18,19 @@ const recentPubs = [...publications]
 // ── Living-EEG hero: deterministic wave lanes (SSR-stable, seamless loop) ──
 // Paths span 2× width (0–2880) with a base period of 1440, so a -1440px
 // translateX loops seamlessly. k = cycles per 1440 (density of the trace).
+// Different frequency (k) per lane = realistic multichannel EEG. All lanes share
+// ONE scroll speed (uniform dur) so they move on a common time axis — no phase
+// drift between lanes, so no unrealistic "ripple" travelling across the field.
+const HERO_WAVE_DUR = 30;
 const HERO_WAVE_LANES = [
-  { k: 3, amp: 30, y: 70, dur: 38, width: 1.7, op: 0.22 },
-  { k: 5, amp: 20, y: 150, dur: 29, width: 1.3, op: 0.18 },
-  { k: 8, amp: 14, y: 220, dur: 22, width: 1.1, op: 0.16 },
-  { k: 4, amp: 26, y: 300, dur: 33, width: 1.5, op: 0.2 },
-  { k: 11, amp: 10, y: 360, dur: 17, width: 1.0, op: 0.14 },
-  { k: 6, amp: 18, y: 430, dur: 25, width: 1.2, op: 0.17 },
-  { k: 9, amp: 13, y: 500, dur: 20, width: 1.0, op: 0.15 },
-  { k: 4, amp: 24, y: 560, dur: 35, width: 1.4, op: 0.19 },
+  { k: 3, amp: 30, y: 70, dur: HERO_WAVE_DUR, width: 1.7, op: 0.22 },
+  { k: 5, amp: 20, y: 150, dur: HERO_WAVE_DUR, width: 1.3, op: 0.18 },
+  { k: 8, amp: 14, y: 220, dur: HERO_WAVE_DUR, width: 1.1, op: 0.16 },
+  { k: 4, amp: 26, y: 300, dur: HERO_WAVE_DUR, width: 1.5, op: 0.2 },
+  { k: 11, amp: 10, y: 360, dur: HERO_WAVE_DUR, width: 1.0, op: 0.14 },
+  { k: 6, amp: 18, y: 430, dur: HERO_WAVE_DUR, width: 1.2, op: 0.17 },
+  { k: 9, amp: 13, y: 500, dur: HERO_WAVE_DUR, width: 1.0, op: 0.15 },
+  { k: 4, amp: 24, y: 560, dur: HERO_WAVE_DUR, width: 1.4, op: 0.19 },
 ];
 
 function heroWavePath({ k, amp, y }: { k: number; amp: number; y: number }) {
