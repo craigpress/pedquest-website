@@ -1,55 +1,73 @@
 @import "tailwindcss";
 
-/* ─── Light Mode: Warm Science ─── */
+/* ─── PedQuEST Instrument Palette (dark teal, WCAG 2.2 AA) ───
+   Site-wide dark theme from the design-system spec. Existing var names are
+   remapped to the new tokens so all components adopt the look; new semantic
+   aliases (--surface, --ink, --accent, …) are for redesigned sections. */
 :root {
-  --bg: #faf8f5;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f5f2ed;
-  --bg-nav: rgba(250, 248, 245, 0.85);
-  --text: #1a1a2e;
-  --text-secondary: #666666;
-  --text-muted: #999999;
-  --accent-primary: #d4603a;
-  --accent-primary-hover: #c04e2a;
-  --accent-secondary: #f4a261;
-  --accent-tertiary: #2a6b5a;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.15);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
+  color-scheme: dark;
+  /* semantic tokens (design-system spec) */
+  --surface: #0f1c2e;
+  --surface-2: #152539;
+  --ink: #e9f1f9;
+  --ink-2: #aabfd3;
+  --muted: #7d93a9;
+  --line: #213344;
+  --accent: #2ed6c6;
+  --accent-strong: #54e2d4;
+  --accent-soft: #0e2f34;
+  --warm: #f0a94a;
+  --good: #3ecb8e;
+
+  /* legacy names → mapped to instrument palette */
+  --bg: #080f1c;
+  --bg-card: #0f1c2e;
+  --bg-card-hover: #152539;
+  --bg-nav: rgba(8, 15, 28, 0.85);
+  --text: #e9f1f9;
+  --text-secondary: #aabfd3;
+  --text-muted: #7d93a9;
+  --accent-primary: #2ed6c6;
+  --accent-primary-hover: #54e2d4;
+  --accent-secondary: #f0a94a;
+  --accent-tertiary: #3ecb8e;
+  --border: #213344;
+  --border-strong: #2c4358;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
   --heading-font: var(--font-fraunces, "Fraunces"), serif;
   --body-font: var(--font-plus-jakarta, "Plus Jakarta Sans"), sans-serif;
-  --member-badge-bg: #fef2ee;
-  --member-badge-text: #d4603a;
-  --stat-color: #d4603a;
-  --map-pin: #d4603a;
-  --skeleton: #e8e4df;
+  --mono-font: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  --member-badge-bg: rgba(46, 214, 198, 0.12);
+  --member-badge-text: #2ed6c6;
+  --stat-color: #2ed6c6;
+  --map-pin: #2ed6c6;
+  --skeleton: #152539;
 }
 
-/* ─── Dark Mode: Clinical Navy ─── */
-[data-theme="dark"] {
-  --bg: #0a1628;
-  --bg-card: #111d32;
-  --bg-card-hover: #162440;
-  --bg-nav: rgba(10, 22, 40, 0.88);
-  --text: #e8ecf4;
-  --text-secondary: #8899aa;
-  --text-muted: #506070;
-  --accent-primary: #00d4aa;
-  --accent-primary-hover: #00b894;
-  --accent-secondary: #f59e0b;
-  --accent-tertiary: #38bdf8;
-  --border: rgba(100, 180, 255, 0.08);
-  --border-strong: rgba(100, 180, 255, 0.15);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
-  --heading-font: var(--font-fraunces, "Fraunces"), serif;
-  --body-font: var(--font-plus-jakarta, "Plus Jakarta Sans"), sans-serif;
-  --member-badge-bg: rgba(0, 212, 170, 0.12);
-  --member-badge-text: #00d4aa;
-  --stat-color: #00d4aa;
-  --map-pin: #00d4aa;
-  --skeleton: #162440;
+/* Dark is the only theme — the toggle keeps the instrument palette so it stays
+   consistent whether or not a data-theme attribute is present. */
+[data-theme="dark"],
+[data-theme="light"] {
+  --bg: #080f1c;
+  --bg-card: #0f1c2e;
+  --bg-card-hover: #152539;
+  --bg-nav: rgba(8, 15, 28, 0.85);
+  --text: #e9f1f9;
+  --text-secondary: #aabfd3;
+  --text-muted: #7d93a9;
+  --accent-primary: #2ed6c6;
+  --accent-primary-hover: #54e2d4;
+  --accent-secondary: #f0a94a;
+  --accent-tertiary: #3ecb8e;
+  --border: #213344;
+  --border-strong: #2c4358;
+  --member-badge-bg: rgba(46, 214, 198, 0.12);
+  --member-badge-text: #2ed6c6;
+  --stat-color: #2ed6c6;
+  --map-pin: #2ed6c6;
+  --skeleton: #152539;
 }
 
 /* ─── Base Styles ─── */

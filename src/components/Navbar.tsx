@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
@@ -132,16 +131,37 @@ export default function Navbar() {
             className="flex items-center gap-2.5 no-underline shrink-0 group"
             onClick={() => setMobileOpen(false)}
           >
-            {/* Real PedQuEST wordmark with qEEG texture */}
-            <Image
-              src="/images/pedquest-wordmark.png"
-              alt="PedQuEST"
-              width={151}
-              height={40}
-              priority
+            {/* PedQuEST wordmark — waveform mark + text */}
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 34,
+                height: 34,
+                borderRadius: 9,
+                background: "var(--accent-soft)",
+                color: "var(--accent-primary)",
+                flex: "none",
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 12h3l2-6 3 12 3-9 2 5h5" />
+              </svg>
+            </span>
+            <span
               className="transition-opacity duration-300 group-hover:opacity-85"
-              style={{ height: 40, width: "auto", objectFit: "contain" }}
-            />
+              style={{
+                fontFamily: "var(--heading-font)",
+                fontSize: "1.35rem",
+                fontWeight: 700,
+                letterSpacing: "-0.01em",
+                color: "var(--text)",
+              }}
+            >
+              Ped<span style={{ color: "var(--accent-primary)" }}>QuEST</span>
+            </span>
           </Link>
 
           {/* Desktop nav links */}
@@ -241,46 +261,28 @@ export default function Navbar() {
             {!user && (
               <Link
                 href="/join"
-                className="hidden lg:flex items-center gap-1.5 no-underline transition-all duration-200"
+                className="hidden lg:flex items-center no-underline transition-all duration-200"
                 style={{
-                  position: "relative",
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
                   fontFamily: "var(--body-font)",
-                  color: "white",
-                  padding: "0.5rem 1.1rem",
+                  color: "#05201d",
+                  padding: "0.55rem 1.2rem",
                   borderRadius: 999,
                   border: "none",
-                  background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary, var(--accent-primary)))",
-                  letterSpacing: "0.02em",
-                  overflow: "hidden",
+                  background: "var(--accent-primary)",
+                  letterSpacing: "0.01em",
                 }}
                 onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--accent-primary-hover)";
                   e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 212, 170, 0.3)";
                 }}
                 onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--accent-primary)";
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                {/* Spectrogram micro-texture */}
-                <span
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    opacity: 0.15,
-                    background: "repeating-linear-gradient(90deg, transparent 0px, rgba(255,255,255,0.3) 2px, transparent 4px, rgba(255,255,255,0.15) 6px, transparent 8px)",
-                    backgroundSize: "40px 100%",
-                    animation: "spectrogram-flow 8s linear infinite",
-                  }}
-                />
-                <span style={{ position: "relative", zIndex: 1 }}>Join Us</span>
-                <svg style={{ position: "relative", zIndex: 1 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="7" y1="17" x2="17" y2="7" />
-                  <polyline points="7 7 17 7 17 17" />
-                </svg>
+                Join the consortium
               </Link>
             )}
 
