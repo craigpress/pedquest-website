@@ -202,7 +202,9 @@ export default function Footer() {
               fontFamily: "var(--body-font)",
             }}
           >
-            &copy; {year} PedQuEST. All rights reserved.
+            &copy; {year} PedQuEST. All rights reserved. A research &amp; collaboration
+            consortium — content is for research and professional education only, and is
+            not medical advice.
           </p>
           <div className="flex items-center gap-3">
             <p
