@@ -134,7 +134,7 @@ export default function Navbar() {
           >
             {/* PedQuEST brand — qEEG-brain symbol + flame wordmark (2026) */}
             <Image
-              src="/images/pedquest-symbol-2026.png"
+              src="/images/pedquest-symbol-brain-2026.png"
               alt=""
               aria-hidden="true"
               width={1254}
