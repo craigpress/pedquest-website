@@ -35,10 +35,15 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+const SITE_URL = "https://pedquest.org";
+const SITE_TITLE = "PedQuEST — Pediatric Quantitative EEG Strategic Taskforce";
+const SITE_DESCRIPTION =
+  "PedQuEST is an international research consortium of pediatric neurologists, neurophysiologists, and researchers advancing quantitative EEG (qEEG) for brain monitoring in pediatric critical care. A research and collaboration platform — not medical advice.";
+
 export const metadata: Metadata = {
-  title: "PedQuEST — Pediatric Quantitative EEG Strategic Taskforce",
-  description:
-    "PedQuEST is an international consortium of pediatric neurologists, neurophysiologists, and researchers advancing quantitative EEG (qEEG) for brain monitoring in pediatric critical care.",
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   keywords: [
     "PedQuEST",
     "pediatric EEG",
@@ -48,6 +53,23 @@ export const metadata: Metadata = {
     "neurocritical care",
     "EEG monitoring",
   ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "PedQuEST",
+    url: SITE_URL,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [{ url: "/images/pedquest-wordmark.png", alt: "PedQuEST" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/images/pedquest-wordmark.png"],
+  },
   icons: {
     icon: "/favicon.svg",
   },
