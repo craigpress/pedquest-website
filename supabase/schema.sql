@@ -115,6 +115,27 @@ CREATE INDEX IF NOT EXISTS idx_members_leadership ON members(is_leadership);
 -- Row Level Security (RLS)
 -- ============================================================
 
+-- Admin allowlist check: true when the requesting JWT's email is a PedQuEST
+-- admin. Used by publications/abstracts write policies below. See migration
+-- 20260713_admin_write_rls.sql. Service-role key bypasses RLS entirely.
+CREATE OR REPLACE FUNCTION public.is_pedquest_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+  SELECT COALESCE(
+    lower(auth.jwt() ->> 'email') = ANY (ARRAY[
+      'pressca@chop.edu',
+      'craigpress@gmail.com',
+      'gbenedet@med.umich.edu',
+      'ajay.thomas@bcm.edu'
+    ]),
+    false
+  );
+$$;
+
 -- Members: anyone can read, only authenticated members can edit their own
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 
@@ -135,11 +156,12 @@ CREATE POLICY "Publications are viewable by everyone"
 
 CREATE POLICY "Admins can insert publications"
   ON publications FOR INSERT
-  WITH CHECK (true); -- Will restrict to admin role later
+  WITH CHECK (public.is_pedquest_admin());
 
 CREATE POLICY "Admins can update publications"
   ON publications FOR UPDATE
-  USING (true); -- Will restrict to admin role later
+  USING (public.is_pedquest_admin())
+  WITH CHECK (public.is_pedquest_admin());
 
 -- Abstracts: same as publications
 ALTER TABLE abstracts ENABLE ROW LEVEL SECURITY;
@@ -150,11 +172,12 @@ CREATE POLICY "Abstracts are viewable by everyone"
 
 CREATE POLICY "Admins can insert abstracts"
   ON abstracts FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (public.is_pedquest_admin());
 
 CREATE POLICY "Admins can update abstracts"
   ON abstracts FOR UPDATE
-  USING (true);
+  USING (public.is_pedquest_admin())
+  WITH CHECK (public.is_pedquest_admin());
 
 -- Documents: members can manage their own
 ALTER TABLE member_documents ENABLE ROW LEVEL SECURITY;
