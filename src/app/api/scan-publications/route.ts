@@ -3,6 +3,7 @@ import { members } from "@/data/members";
 import { searchPubMedByAuthor, fetchArticleByPmid, PubMedArticle } from "@/lib/pubmed";
 import { sendDiscordNotification } from "@/lib/notifications";
 import { createServerClient } from "@/lib/supabase";
+import { matchMemberAuthors, matchAuthorToMember } from "@/lib/memberMatch";
 import authorMapData from "../../../../author_map.json";
 import committeePmidsData from "../../../../committee_pmids.json";
 
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
   const supabase = createServerClient();
   const minDate = getMinDate();
   const errors: string[] = [];
-  const newArticles: Array<PubMedArticle & { memberId: string }> = [];
+  const newArticles: Array<PubMedArticle & { memberId: string; memberIds: string[] }> = [];
   const seenPmids = new Set<string>(knownPmids.map(String));
   let scanned = 0;
 
@@ -109,9 +110,16 @@ export async function GET(request: NextRequest) {
             continue;
           }
 
+          // Resolve EVERY consortium member on this paper — not just the one whose
+          // search surfaced it — so co-authored papers are tagged with all members.
+          // Since the PMID is added to seenPmids below, later per-member searches will
+          // skip it; capturing all members here is what prevents co-authors being lost.
+          const paperMemberIds = matchMemberAuthors(article.authors);
+          if (!paperMemberIds.includes(memberId)) paperMemberIds.push(memberId);
+
           seenPmids.add(pmid);
           seenPmids.add(article.pmid);
-          newArticles.push({ ...article, memberId });
+          newArticles.push({ ...article, memberId, memberIds: paperMemberIds });
 
           // Persist to Supabase. supabase-js does NOT throw on DB errors — it returns
           // { error }. We must check it explicitly or schema drift goes silent again.
@@ -134,6 +142,7 @@ export async function GET(request: NextRequest) {
                   mesh_terms: article.meshTerms,
                   publication_types: article.publicationTypes,
                   member_id: memberId,
+                  member_author_ids: paperMemberIds,
                   discovered_at: new Date().toISOString(),
                 },
                 { onConflict: "pmid" }
@@ -165,12 +174,9 @@ export async function GET(request: NextRequest) {
             continue;
           }
 
-          // Discord notification
+          // Discord notification — bold EVERY consortium member on the paper.
           const highlightedAuthors = article.authors
-            .map((a) => {
-              const s = a.split(" ")[0];
-              return s.toLowerCase() === surname.toLowerCase() ? `**${a}**` : a;
-            })
+            .map((a) => (matchAuthorToMember(a) ? `**${a}**` : a))
             .join(", ");
 
           await sendDiscordNotification({
@@ -222,6 +228,7 @@ export async function GET(request: NextRequest) {
       journal: a.journal,
       year: a.year,
       memberId: a.memberId,
+      memberIds: a.memberIds,
     })),
     errors,
   });
