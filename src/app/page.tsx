@@ -21,6 +21,32 @@ function getMemberBadge(pub: (typeof publications)[0]) {
   return member?.name ?? null;
 }
 
+// ── Living-EEG hero: deterministic wave lanes (SSR-stable, seamless loop) ──
+// Paths span 2× width (0–2880) with a base period of 1440, so a -1440px
+// translateX loops seamlessly. k = cycles per 1440 (density of the trace).
+const HERO_WAVE_LANES = [
+  { k: 3, amp: 30, y: 70, dur: 38, width: 1.7, op: 0.22 },
+  { k: 5, amp: 20, y: 150, dur: 29, width: 1.3, op: 0.18 },
+  { k: 8, amp: 14, y: 220, dur: 22, width: 1.1, op: 0.16 },
+  { k: 4, amp: 26, y: 300, dur: 33, width: 1.5, op: 0.2 },
+  { k: 11, amp: 10, y: 360, dur: 17, width: 1.0, op: 0.14 },
+  { k: 6, amp: 18, y: 430, dur: 25, width: 1.2, op: 0.17 },
+  { k: 9, amp: 13, y: 500, dur: 20, width: 1.0, op: 0.15 },
+  { k: 4, amp: 24, y: 560, dur: 35, width: 1.4, op: 0.19 },
+];
+
+function heroWavePath({ k, amp, y }: { k: number; amp: number; y: number }) {
+  const W = 2880;
+  const step = 9;
+  const freq = (2 * Math.PI * k) / 1440;
+  let d = `M0 ${y}`;
+  for (let x = step; x <= W; x += step) {
+    const yy = y + Math.sin(x * freq) * amp + Math.sin(x * freq * 2 + k) * amp * 0.3;
+    d += ` L${x} ${yy.toFixed(1)}`;
+  }
+  return d;
+}
+
 export default function HomePage() {
   const mainRef = useScrollReveal();
   const [scrollY, setScrollY] = useState(0);
@@ -36,51 +62,70 @@ export default function HomePage() {
 
   return (
     <main ref={mainRef}>
-      {/* ── Hero Section ── */}
+      {/* ── Hero Section — living-EEG ── */}
       <section className="hero-section">
         <div className="hero-bg" aria-hidden="true" />
-        {/* Spectrogram bands */}
-        <div className="spectrogram-container" aria-hidden="true">
-          <div className="spectrogram-band band-delta" />
-          <div className="spectrogram-band band-theta" />
-          <div className="spectrogram-band band-alpha" />
-          <div className="spectrogram-band band-beta" />
-          <div className="spectrogram-band band-gamma" />
-        </div>
-        {/* EEG waveform traces — parallax on scroll */}
+        {/* Living EEG wave field — parallax + fade on scroll */}
         <div
-          className="eeg-wave-container"
+          className="hero-waves"
           aria-hidden="true"
           style={{
-            transform: `translateY(${scrollY * 0.3}px)`,
-            opacity: Math.max(0, 1 - scrollY / 600),
+            transform: `translateY(${scrollY * 0.2}px)`,
+            opacity: Math.max(0.25, 1 - scrollY / 700),
           }}>
-          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="eeg-wave">
-            <path className="eeg-trace eeg-trace-1" d="M0 60 L50 60 L70 45 L80 75 L90 30 L100 90 L110 40 L120 70 L130 55 L150 60 L200 60 L220 50 L230 70 L240 35 L250 85 L260 42 L270 68 L280 55 L300 60 L400 60 L420 48 L430 72 L440 32 L450 88 L460 38 L470 65 L480 58 L500 60 L600 60 L620 52 L630 68 L640 38 L650 82 L660 44 L670 62 L680 56 L700 60 L800 60 L820 46 L830 74 L840 34 L850 86 L860 40 L870 66 L880 54 L900 60 L1000 60 L1020 50 L1030 70 L1040 36 L1050 84 L1060 42 L1070 64 L1080 58 L1100 60 L1200 60" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path className="eeg-trace eeg-trace-2" d="M0 60 L80 60 L100 48 L110 72 L120 35 L130 85 L140 42 L150 68 L160 55 L180 60 L280 60 L300 52 L310 68 L320 38 L330 82 L340 44 L350 62 L360 56 L380 60 L480 60 L500 46 L510 74 L520 34 L530 86 L540 40 L550 66 L560 54 L580 60 L680 60 L700 50 L710 70 L720 36 L730 84 L740 42 L750 64 L760 58 L780 60 L880 60 L900 48 L910 72 L920 35 L930 85 L940 42 L950 68 L960 55 L980 60 L1200 60" fill="none" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-            <path className="eeg-trace eeg-trace-3" d="M0 60 L120 60 L140 52 L150 68 L160 40 L170 80 L180 45 L190 65 L200 58 L220 60 L350 60 L370 48 L380 72 L390 36 L400 84 L410 42 L420 64 L430 56 L450 60 L580 60 L600 50 L610 70 L620 38 L630 82 L640 44 L650 62 L660 56 L680 60 L780 60 L800 46 L810 74 L820 34 L830 86 L840 40 L850 66 L860 54 L880 60 L1050 60 L1070 52 L1080 68 L1090 40 L1100 80 L1110 45 L1120 65 L1130 58 L1150 60 L1200 60" fill="none" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice">
+            {HERO_WAVE_LANES.map((lane, i) => (
+              <path
+                key={i}
+                className="hero-wave"
+                d={heroWavePath(lane)}
+                fill="none"
+                strokeWidth={lane.width}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  opacity: lane.op,
+                  animationDuration: `${lane.dur}s`,
+                }}
+              />
+            ))}
           </svg>
         </div>
         <div className="hero-content">
-          <h1 className="hero-heading">
-            Advancing Brain-Directed Care for Critically Ill Children
-          </h1>
-          <p className="hero-subtitle">
-            PedQuEST is an international, multidisciplinary consortium dedicated
-            to improving outcomes for critically ill children through
-            quantitative EEG (qEEG) research, education, and clinical
-            translation.
-          </p>
-          <div className="hero-ctas">
-            <Link href="/about" className="btn-primary">
-              Explore Our Work
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 8h10M9 4l4 4-4 4" />
+          <div className="hero-copy">
+            <span className="hero-eyebrow">
+              Pediatric Quantitative EEG · Strategic Taskforce
+            </span>
+            <h1 className="hero-heading">
+              Turn continuous EEG into{" "}
+              <span className="hero-accent">answers</span> at the bedside of
+              every critically ill child.
+            </h1>
+            <p className="hero-subtitle">
+              PedQuEST is an international consortium of pediatric neurologists,
+              neurophysiologists, and data scientists building the evidence,
+              methods, and shared standards for quantitative EEG in pediatric
+              critical care.
+            </p>
+            <div className="hero-ctas">
+              <Link href="/about" className="btn-primary">
+                Explore our work
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 8h10M9 4l4 4-4 4" />
+                </svg>
+              </Link>
+              <Link href="/join" className="btn-secondary">
+                Join the consortium
+              </Link>
+            </div>
+            <p className="hero-clarifier">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
               </svg>
-            </Link>
-            <Link href="/join" className="btn-secondary">
-              Join PedQuEST
-            </Link>
+              A research, education &amp; collaboration platform — not a source
+              of medical advice.
+            </p>
           </div>
         </div>
       </section>
@@ -334,12 +379,23 @@ export default function HomePage() {
         /* ── Hero ── */
         .hero-section {
           position: relative;
-          min-height: 78vh;
+          min-height: 82vh;
           display: flex;
           align-items: center;
-          justify-content: center;
           overflow: hidden;
-          padding: 4rem 2rem 2rem;
+          padding: 5rem 2rem 4rem;
+          background: #0a1628;
+          color: #e8ecf4;
+          /* Dark "monitor" hero in both themes — override tokens for its subtree */
+          --text: #eaf0f8;
+          --text-secondary: #9fb2c8;
+          --text-muted: #6c8bb0;
+          --accent-primary: #00d4aa;
+          --accent-primary-hover: #00b894;
+          --accent-tertiary: #38bdf8;
+          --border: rgba(120, 180, 255, 0.14);
+          --border-strong: rgba(120, 180, 255, 0.3);
+          --bg-card-hover: rgba(120, 180, 255, 0.08);
         }
         @keyframes gradient-drift {
           0%   { background-position: 0% 50%; }
@@ -421,36 +477,100 @@ export default function HomePage() {
           0% { background-position: 0 0; }
           100% { background-position: 400px 0; }
         }
+        /* ── Living-EEG wave field ── */
+        .hero-waves {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          pointer-events: none;
+          will-change: transform, opacity;
+        }
+        .hero-waves svg {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+        .hero-wave {
+          stroke: #00d4aa;
+          animation-name: hero-wave-scroll;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+        @keyframes hero-wave-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-1440px); }
+        }
+
         .hero-content {
           position: relative;
           z-index: 1;
-          max-width: 780px;
-          text-align: center;
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          text-align: left;
+        }
+        .hero-copy {
+          max-width: 760px;
+        }
+        .hero-eyebrow {
+          display: inline-block;
+          font-size: 0.8rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--accent-primary);
+          margin-bottom: 1.4rem;
+          animation: fade-up 0.7s ease-out both;
         }
         .hero-heading {
           font-family: var(--heading-font);
-          font-size: clamp(2.25rem, 5vw, 3.75rem);
+          font-size: clamp(2.4rem, 5.4vw, 4.1rem);
           font-weight: 800;
-          line-height: 1.08;
+          line-height: 1.05;
           color: var(--text);
           margin-bottom: 1.5rem;
-          letter-spacing: -0.025em;
-          animation: fade-up 0.7s ease-out both;
+          letter-spacing: -0.03em;
+          max-width: 16ch;
+          text-wrap: balance;
+          animation: fade-up 0.7s ease-out 0.08s both;
+        }
+        .hero-accent {
+          color: var(--accent-primary);
         }
         .hero-subtitle {
           font-size: 1.15rem;
           color: var(--text-secondary);
           line-height: 1.7;
-          max-width: 620px;
-          margin: 0 auto 2.5rem;
-          animation: fade-up 0.7s ease-out 0.15s both;
+          max-width: 48ch;
+          margin: 0 0 2.25rem;
+          animation: fade-up 0.7s ease-out 0.16s both;
         }
         .hero-ctas {
           display: flex;
           gap: 1rem;
-          justify-content: center;
+          justify-content: flex-start;
           flex-wrap: wrap;
-          animation: fade-up 0.7s ease-out 0.3s both;
+          animation: fade-up 0.7s ease-out 0.24s both;
+        }
+        .hero-clarifier {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.55rem;
+          margin-top: 1.9rem;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+          max-width: 46ch;
+          animation: fade-up 0.7s ease-out 0.32s both;
+        }
+        .hero-clarifier svg {
+          flex: none;
+          margin-top: 2px;
+          color: var(--accent-tertiary);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-wave { animation: none; }
         }
 
         /* ── Stats Bar ── */
