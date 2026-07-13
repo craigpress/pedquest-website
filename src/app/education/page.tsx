@@ -74,6 +74,66 @@ export default function EducationPage() {
         </p>
       </section>
 
+      {/* qEEG Case of the Day CTA */}
+      <a
+        href="/education/case-of-the-day"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "1rem",
+          flexWrap: "wrap",
+          marginBottom: "2.5rem",
+          padding: "1.25rem 1.5rem",
+          borderRadius: 16,
+          border: "1px solid var(--border)",
+          background: "var(--bg-card)",
+          boxShadow: "var(--shadow)",
+          textDecoration: "none",
+          color: "inherit",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: "monospace",
+              fontSize: "0.72rem",
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              color: "var(--accent-primary)",
+              fontWeight: 600,
+            }}
+          >
+            New · Daily
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--heading-font)",
+              fontSize: "1.35rem",
+              color: "var(--text)",
+              marginTop: 4,
+            }}
+          >
+            qEEG Case of the Day
+          </div>
+          <div style={{ color: "var(--text-secondary)", fontSize: "0.95rem", marginTop: 2 }}>
+            Test your read on a new EEG/qEEG image each day — with community stats and expert explanations.
+          </div>
+        </div>
+        <span
+          style={{
+            padding: "0.6rem 1.25rem",
+            borderRadius: 10,
+            background: "var(--accent-primary)",
+            color: "#fff",
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Today&rsquo;s case →
+        </span>
+      </a>
+
       {/* Audience Filter */}
       <section style={{ marginBottom: "2.5rem" }}>
         <div
