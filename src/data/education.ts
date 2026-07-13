@@ -38,7 +38,7 @@ export const educationResources: EducationResource[] = [
     id: "edu-3",
     title: "Bedside Decision-Support Teaching",
     description: "Decision-support modules designed for bedside use in the pediatric ICU. Helps intensivists and nursing staff interpret qEEG trends and make informed clinical decisions about neuromonitoring.",
-    type: "module",
+    type: "project",
     status: "planned",
     audience: ["intensivists", "technicians"],
     topics: ["qEEG", "Decision Support", "Bedside Care"],

@@ -140,7 +140,12 @@ export default function Navbar() {
               height={888}
               priority
               className="transition-opacity duration-300 group-hover:opacity-85"
-              style={{ height: 44, width: "auto" }}
+              style={{
+                height: 48,
+                width: "auto",
+                // lift the navy "ped" off the dark nav background
+                filter: "drop-shadow(0 0 10px rgba(190, 215, 235, 0.45))",
+              }}
             />
           </Link>
 
