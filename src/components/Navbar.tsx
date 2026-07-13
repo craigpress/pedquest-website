@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
@@ -132,9 +133,12 @@ export default function Navbar() {
             onClick={() => setMobileOpen(false)}
           >
             {/* Real PedQuEST wordmark with qEEG texture */}
-            <img
+            <Image
               src="/images/pedquest-wordmark.png"
               alt="PedQuEST"
+              width={151}
+              height={40}
+              priority
               className="transition-opacity duration-300 group-hover:opacity-85"
               style={{ height: 40, width: "auto", objectFit: "contain" }}
             />

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { members } from "@/data/members";
 
@@ -125,9 +126,12 @@ export default function AboutPage() {
       <section className="about-hero">
         <div className="about-hero-bg" aria-hidden="true" />
         <div className="about-hero-content">
-          <img
+          <Image
             src="/images/pedquest-logo-original.png"
             alt="PedQuEST Logo"
+            width={281}
+            height={80}
+            priority
             style={{ height: 80, width: "auto", marginBottom: "1.5rem" }}
           />
           <h1 className="about-hero-heading">About PedQuEST</h1>
