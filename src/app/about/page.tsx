@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { members, institutions, type Member } from "@/data/members";
+import { members, institutions, CONTINENT_BY_COUNTRY, type Member } from "@/data/members";
 import { publications } from "@/data/publications";
 import { PubYearChart } from "@/components/PubYearChart";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -20,14 +20,6 @@ const institutionCount = institutions.length;
 const countryCount = new Set(members.map((m) => m.country)).size;
 const publicationCount = publications.length;
 
-const CONTINENT_BY_COUNTRY: Record<string, string> = {
-  USA: "North America",
-  "United States": "North America",
-  Canada: "North America",
-  Netherlands: "Europe",
-  Australia: "Oceania",
-  "South Korea": "Asia",
-};
 const continentCount = new Set(
   members.map((m) => CONTINENT_BY_COUNTRY[m.country] ?? m.country)
 ).size;

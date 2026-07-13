@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { publications } from "@/data/publications";
-import { members, institutions } from "@/data/members";
+import { members, institutions, CONTINENT_BY_COUNTRY } from "@/data/members";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { PubYearChart } from "@/components/PubYearChart";
@@ -83,6 +83,20 @@ const pubsByYear: { year: number; count: number }[] = (() => {
 const NA_COUNTRIES = new Set(["USA", "United States", "US", "Canada"]);
 const naMemberCount = members.filter((m) => NA_COUNTRIES.has(m.country)).length;
 const intlMemberCount = memberCount - naMemberCount;
+const continentCount = new Set(
+  members.map((m) => CONTINENT_BY_COUNTRY[m.country] ?? m.country)
+).size;
+const intlContinents = [
+  ...new Set(
+    members
+      .filter((m) => !NA_COUNTRIES.has(m.country))
+      .map((m) => CONTINENT_BY_COUNTRY[m.country] ?? m.country)
+  ),
+];
+const CONTINENT_WORDS: Record<number, string> = {
+  2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+};
+const continentWord = CONTINENT_WORDS[continentCount] ?? String(continentCount);
 
 export default function HomePage() {
   const mainRef = useScrollReveal();
@@ -333,11 +347,11 @@ export default function HomePage() {
               </p>
             </div>
             <div className="network-card">
-              <span className="network-key">Europe · Oceania · Asia</span>
+              <span className="network-key">{intlContinents.join(" · ")}</span>
               <span className="network-num">{intlMemberCount} members</span>
               <p className="network-desc">
                 Global partners bringing shared protocols to children&apos;s
-                centers across four continents.
+                centers across {continentWord} continents.
               </p>
             </div>
             <Link href="/members" className="network-card network-card-accent">
