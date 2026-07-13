@@ -78,6 +78,7 @@ export default function PublicationsPage() {
   const [tab, setTab] = useState<Tab>("articles");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("new");
+  const [facetsOpen, setFacetsOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterYear, setFilterYear] = useState("");
   const [filterJournal, setFilterJournal] = useState("");
@@ -300,9 +301,24 @@ export default function PublicationsPage() {
         </div>
       </div>
 
+      <div className="pubs-wrap">
+        <button
+          type="button"
+          className="pubs-filter-toggle"
+          aria-expanded={facetsOpen}
+          onClick={() => setFacetsOpen((v) => !v)}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 6h16M7 12h10M10 18h4" />
+          </svg>
+          {facetsOpen ? "Hide filters" : "Filters"}
+          {activeTags.length > 0 && <span className="pubs-filter-count">{activeTags.length}</span>}
+        </button>
+      </div>
+
       <div className="pubs-wrap pubs-layout">
         {/* ── Facets sidebar ── */}
-        <aside className="pubs-facets" aria-label="Filters">
+        <aside className={`pubs-facets ${facetsOpen ? "open" : ""}`} aria-label="Filters">
           <div className="facet">
             <h3>By year</h3>
             <div className="yearbars" role="group" aria-label="Filter by year">
@@ -767,9 +783,27 @@ export default function PublicationsPage() {
         }
         .pubs-toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+        /* Mobile filter toggle — hidden on desktop */
+        .pubs-filter-toggle { display: none; }
+        .pubs-filter-count {
+          display: inline-flex; align-items: center; justify-content: center;
+          min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+          background: var(--accent); color: #05201d;
+          font-family: var(--mono-font); font-size: 0.72rem; font-weight: 700;
+        }
+
         @media (max-width: 900px) {
           .pubs-layout { grid-template-columns: 1fr; }
           .pubs-facets { position: static; }
+          /* Results-first: filters live behind a toggle so content isn't buried */
+          .pubs-filter-toggle {
+            display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.25rem;
+            padding: 0.7rem 1.1rem; border-radius: 11px; cursor: pointer;
+            font-family: var(--body-font); font-size: 0.9rem; font-weight: 600;
+            color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+          }
+          .pubs-facets { display: none; margin-bottom: 0.5rem; }
+          .pubs-facets.open { display: flex; }
         }
       `}</style>
     </main>

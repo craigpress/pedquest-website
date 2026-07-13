@@ -81,6 +81,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Mobile safety net: never let a stray wide element scroll the whole page
+   sideways, and keep media within its container. `clip` (not `hidden`) so it
+   doesn't create a scroll container that would break position: sticky. */
+body {
+  overflow-x: clip;
+}
+img, canvas, svg, video {
+  max-width: 100%;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);
