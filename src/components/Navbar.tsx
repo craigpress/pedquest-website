@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
@@ -132,16 +131,37 @@ export default function Navbar() {
             className="flex items-center gap-2.5 no-underline shrink-0 group"
             onClick={() => setMobileOpen(false)}
           >
-            {/* Real PedQuEST wordmark with qEEG texture */}
-            <Image
-              src="/images/pedquest-wordmark.png"
-              alt="PedQuEST"
-              width={151}
-              height={40}
-              priority
+            {/* PedQuEST wordmark — waveform mark + text */}
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 34,
+                height: 34,
+                borderRadius: 9,
+                background: "var(--accent-soft)",
+                color: "var(--accent-primary)",
+                flex: "none",
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 12h3l2-6 3 12 3-9 2 5h5" />
+              </svg>
+            </span>
+            <span
               className="transition-opacity duration-300 group-hover:opacity-85"
-              style={{ height: 40, width: "auto", objectFit: "contain" }}
-            />
+              style={{
+                fontFamily: "var(--heading-font)",
+                fontSize: "1.35rem",
+                fontWeight: 700,
+                letterSpacing: "-0.01em",
+                color: "var(--text)",
+              }}
+            >
+              Ped<span style={{ color: "var(--accent-primary)" }}>QuEST</span>
+            </span>
           </Link>
 
           {/* Desktop nav links */}
