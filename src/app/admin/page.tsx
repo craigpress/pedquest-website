@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
-import { publicationCategories } from "@/data/publications";
-import { abstractCategories } from "@/data/abstracts";
+import { publications, publicationCategories } from "@/data/publications";
+import { conferenceAbstracts, abstractCategories } from "@/data/abstracts";
+import { educationResources } from "@/data/education";
 import type { Publication } from "@/data/publications";
 import type { ConferenceAbstract } from "@/data/abstracts";
 import { useUser } from "@/lib/auth";
@@ -16,7 +17,15 @@ const CVImporter = dynamic(() => import("./CVImporter"), {
   loading: () => <p style={{ color: "var(--text-secondary)", padding: "2rem" }}>Loading CV Importer...</p>,
 });
 
-type AdminTab = "publication" | "abstract" | "cv-importer" | "members";
+type AdminTab = "dashboard" | "publication" | "abstract" | "cv-importer" | "members";
+
+const TAB_TITLES: Record<AdminTab, string> = {
+  dashboard: "Dashboard",
+  publication: "Publications",
+  abstract: "Conference abstracts",
+  "cv-importer": "CV importer",
+  members: "Members",
+};
 
 // Admin emails — only these users can access the admin page
 const ADMIN_EMAILS = [
@@ -160,7 +169,7 @@ function generateAbstractCode(abs: ConferenceAbstract): string {
 
 function AdminPageInner() {
   const { user, loading: authLoading } = useUser();
-  const [tab, setTab] = useState<AdminTab>("publication");
+  const [tab, setTab] = useState<AdminTab>("dashboard");
 
   // ALL hooks must be called before any early returns (Rules of Hooks)
   // Publication form state
@@ -541,46 +550,120 @@ function AdminPageInner() {
     }
   };
 
-  return (
-    <main style={{ maxWidth: "900px", margin: "0 auto", padding: "3rem 1.5rem" }}>
-      <header style={{ marginBottom: "2rem" }}>
-        <h1 className="section-heading">Admin - Publication Manager</h1>
-        <p className="section-subheading">
-          Add publications with PubMed autofill. Data is saved to localStorage.
-        </p>
-      </header>
+  const NAV_ITEMS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
+    {
+      key: "dashboard",
+      label: "Dashboard",
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>,
+    },
+    {
+      key: "publication",
+      label: "Publications",
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5" /></svg>,
+    },
+    {
+      key: "abstract",
+      label: "Abstracts",
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 5h16v14H4zM4 8l8 5 8-5" /></svg>,
+    },
+    {
+      key: "cv-importer",
+      label: "CV importer",
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16" /></svg>,
+    },
+    {
+      key: "members",
+      label: "Members",
+      icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="8" r="3.2" /><path d="M3 20a6 6 0 0 1 12 0M16 6.5a3 3 0 0 1 0 5.5M21 20a5.5 5.5 0 0 0-4-5.3" /></svg>,
+    },
+  ];
+  const memberCount = members.length + addedMembers.length - deletedMemberIds.length;
+  const draftCount = savedPubs.length + savedAbstracts.length;
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
-        <button
-          onClick={() => setTab("publication")}
-          className={tab === "publication" ? "btn-primary" : "btn-secondary"}
-          style={{ fontSize: "0.85rem", padding: "0.5rem 1.25rem" }}
-        >
-          Add Publication
-        </button>
-        <button
-          onClick={() => setTab("abstract")}
-          className={tab === "abstract" ? "btn-primary" : "btn-secondary"}
-          style={{ fontSize: "0.85rem", padding: "0.5rem 1.25rem" }}
-        >
-          Add Conference Abstract
-        </button>
-        <button
-          onClick={() => setTab("cv-importer")}
-          className={tab === "cv-importer" ? "btn-primary" : "btn-secondary"}
-          style={{ fontSize: "0.85rem", padding: "0.5rem 1.25rem" }}
-        >
-          CV Importer
-        </button>
-        <button
-          onClick={() => setTab("members")}
-          className={tab === "members" ? "btn-primary" : "btn-secondary"}
-          style={{ fontSize: "0.85rem", padding: "0.5rem 1.25rem" }}
-        >
-          Member Management
-        </button>
-      </div>
+  return (
+    <main className="adm-app">
+      {/* ── Sidebar ── */}
+      <aside className="adm-side">
+        <span className="adm-label">Content admin</span>
+        <nav className="adm-nav" aria-label="Admin sections">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              className={tab === item.key ? "on" : ""}
+              onClick={() => setTab(item.key)}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+          <a href="/admin/cases">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10 12 5 2 10l10 5 10-5ZM6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5" /></svg>
+            Education · Cases
+          </a>
+        </nav>
+        <div className="adm-who">
+          <span className="adm-av">{(user?.email ?? "?").slice(0, 2).toUpperCase()}</span>
+          <div className="adm-who-txt">
+            <span className="adm-who-email">{user?.email}</span>
+            <span className="adm-who-role">admin</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main column ── */}
+      <div className="adm-main">
+        <div className="adm-topbar">
+          <h1>{TAB_TITLES[tab]}</h1>
+          {draftCount > 0 && (
+            <span className="adm-drafts">{draftCount} local draft{draftCount !== 1 ? "s" : ""} pending export</span>
+          )}
+        </div>
+        <div className="adm-content">
+
+      {tab === "dashboard" && (
+        <>
+          <div className="adm-banner" role="note">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" style={{ flex: "none", marginTop: 1 }}><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z" /><path d="m9 12 2 2 4-4" /></svg>
+            <div>
+              <b>Access &amp; safety.</b> This console is limited to the admin
+              allowlist, and database writes are enforced by Row-Level Security
+              on the server — the same rules apply even if the API is bypassed.
+            </div>
+          </div>
+          <div className="adm-cards">
+            <button className="adm-card" onClick={() => setTab("members")}>
+              <span className="n">{memberCount}</span>
+              <span className="l">Members</span>
+            </button>
+            <button className="adm-card" onClick={() => setTab("publication")}>
+              <span className="n">{publications.length}</span>
+              <span className="l">Publications · <b>auto-synced</b></span>
+            </button>
+            <button className="adm-card" onClick={() => setTab("abstract")}>
+              <span className="n">{conferenceAbstracts.length}</span>
+              <span className="l">Conference abstracts</span>
+            </button>
+            <a className="adm-card" href="/education">
+              <span className="n">{educationResources.length}</span>
+              <span className="l">Education resources</span>
+            </a>
+          </div>
+          <div className="adm-scanrow">
+            <span className="ic">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5" /></svg>
+            </span>
+            <div className="txt">
+              <span className="t">PubMed publication scanner</span>
+              <span className="s">
+                Runs automatically on a schedule — new member papers import
+                from PubMed by author; manual entries and edits are preserved
+                across syncs.
+              </span>
+            </div>
+            <a className="adm-mini" href="/publications">View library</a>
+          </div>
+        </>
+      )}
 
       {tab === "publication" && (
         <>
@@ -1673,6 +1756,130 @@ function AdminPageInner() {
           )}
         </div>
       )}
+        </div>
+      </div>
+
+      <style>{`
+        /* ── Admin shell (mockup sidebar layout; dark instrument tokens) ── */
+        .adm-app {
+          display: grid; grid-template-columns: 230px 1fr;
+          max-width: 1320px; margin: 0 auto; min-height: calc(100vh - 88px);
+          align-items: stretch;
+        }
+        .adm-side {
+          display: flex; flex-direction: column; gap: 1rem;
+          padding: 1.75rem 1rem 1.25rem; border-right: 1px solid var(--line);
+        }
+        .adm-label {
+          font-family: var(--mono-font); font-size: 0.68rem; font-weight: 600;
+          letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+          padding: 0 0.65rem;
+        }
+        .adm-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .adm-nav button, .adm-nav a {
+          display: flex; align-items: center; gap: 0.6rem; width: 100%;
+          padding: 0.55rem 0.65rem; border-radius: 9px; text-align: left;
+          font-family: var(--body-font); font-size: 0.88rem; font-weight: 500;
+          color: var(--ink-2); background: transparent; border: none; cursor: pointer;
+          text-decoration: none;
+        }
+        .adm-nav button:hover, .adm-nav a:hover { background: var(--surface-2); color: var(--ink); }
+        .adm-nav button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+        .adm-who {
+          display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 0.65rem 0;
+          border-top: 1px solid var(--line);
+        }
+        .adm-av {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 32px; height: 32px; border-radius: 50%; flex: none;
+          background: var(--accent-soft); color: var(--accent);
+          font-family: var(--mono-font); font-size: 0.72rem; font-weight: 700;
+        }
+        .adm-who-txt { display: flex; flex-direction: column; min-width: 0; }
+        .adm-who-email {
+          font-size: 0.78rem; color: var(--ink); overflow: hidden;
+          text-overflow: ellipsis; white-space: nowrap;
+        }
+        .adm-who-role {
+          font-family: var(--mono-font); font-size: 0.64rem; letter-spacing: 0.08em;
+          text-transform: uppercase; color: var(--muted);
+        }
+
+        .adm-main { min-width: 0; }
+        .adm-topbar {
+          display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+          padding: 1.6rem 2rem 1.1rem; border-bottom: 1px solid var(--line);
+        }
+        .adm-topbar h1 {
+          font-family: var(--heading-font); font-size: 1.55rem; font-weight: 700;
+          color: var(--ink);
+        }
+        .adm-drafts {
+          font-family: var(--mono-font); font-size: 0.72rem; color: var(--warm);
+        }
+        .adm-content { padding: 1.6rem 2rem 3rem; }
+
+        .adm-banner {
+          display: flex; gap: 0.7rem; padding: 0.95rem 1.1rem; margin-bottom: 1.25rem;
+          border: 1px solid var(--accent-soft); border-radius: 12px;
+          background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+          font-size: 0.88rem; line-height: 1.55; color: var(--ink-2);
+        }
+        .adm-banner b { color: var(--ink); }
+        .adm-cards {
+          display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9rem;
+          margin-bottom: 1.25rem;
+        }
+        .adm-card {
+          display: flex; flex-direction: column; gap: 0.2rem; padding: 1.1rem 1.2rem;
+          background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
+          cursor: pointer; text-align: left; text-decoration: none;
+          transition: border-color 0.15s;
+        }
+        .adm-card:hover { border-color: var(--accent); }
+        .adm-card .n {
+          font-family: var(--heading-font); font-size: 1.7rem; font-weight: 700;
+          color: var(--ink);
+        }
+        .adm-card .l {
+          font-family: var(--mono-font); font-size: 0.68rem; letter-spacing: 0.06em;
+          text-transform: uppercase; color: var(--muted);
+        }
+        .adm-card .l b { color: var(--accent); font-weight: 600; }
+        .adm-scanrow {
+          display: flex; align-items: center; gap: 0.9rem; padding: 1rem 1.2rem;
+          background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
+        }
+        .adm-scanrow .ic {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 40px; height: 40px; border-radius: 11px; flex: none;
+          background: var(--accent-soft); color: var(--accent);
+        }
+        .adm-scanrow .txt { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; }
+        .adm-scanrow .t { font-weight: 600; font-size: 0.95rem; color: var(--ink); }
+        .adm-scanrow .s { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+        .adm-mini {
+          font-family: var(--mono-font); font-size: 0.75rem; color: var(--accent);
+          border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.9rem;
+          white-space: nowrap; text-decoration: none;
+        }
+        .adm-mini:hover { border-color: var(--accent); }
+
+        @media (max-width: 900px) {
+          .adm-app { grid-template-columns: 1fr; }
+          .adm-side {
+            flex-direction: row; align-items: center; flex-wrap: wrap;
+            border-right: none; border-bottom: 1px solid var(--line);
+            padding: 1rem 1.25rem;
+          }
+          .adm-nav { flex-direction: row; flex-wrap: wrap; }
+          .adm-nav button, .adm-nav a { width: auto; }
+          .adm-who { border-top: none; padding: 0; margin-left: auto; }
+          .adm-label { display: none; }
+          .adm-cards { grid-template-columns: repeat(2, 1fr); }
+          .adm-topbar, .adm-content { padding-left: 1.25rem; padding-right: 1.25rem; }
+        }
+      `}</style>
     </main>
   );
 }

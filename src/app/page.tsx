@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { publications } from "@/data/publications";
-import { members, institutions } from "@/data/members";
+import { members, institutions, CONTINENT_BY_COUNTRY } from "@/data/members";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { PubYearChart } from "@/components/PubYearChart";
 
 const memberCount = members.length;
 const institutionCount = institutions.length;
@@ -15,34 +16,195 @@ const recentPubs = [...publications]
   .sort((a, b) => b.year - a.year || (b.month ?? 0) - (a.month ?? 0))
   .slice(0, 5);
 
-// ── Living-EEG hero: deterministic wave lanes (SSR-stable, seamless loop) ──
-// Paths span 2× width (0–2880) with a base period of 1440, so a -1440px
-// translateX loops seamlessly. k = cycles per 1440 (density of the trace).
-// Different frequency (k) per lane = realistic multichannel EEG. All lanes share
-// ONE scroll speed (uniform dur) so they move on a common time axis — no phase
-// drift between lanes, so no unrealistic "ripple" travelling across the field.
-const HERO_WAVE_DUR = 30;
-const HERO_WAVE_LANES = [
-  { k: 3, amp: 30, y: 70, dur: HERO_WAVE_DUR, width: 1.7, op: 0.22 },
-  { k: 5, amp: 20, y: 150, dur: HERO_WAVE_DUR, width: 1.3, op: 0.18 },
-  { k: 8, amp: 14, y: 220, dur: HERO_WAVE_DUR, width: 1.1, op: 0.16 },
-  { k: 4, amp: 26, y: 300, dur: HERO_WAVE_DUR, width: 1.5, op: 0.2 },
-  { k: 11, amp: 10, y: 360, dur: HERO_WAVE_DUR, width: 1.0, op: 0.14 },
-  { k: 6, amp: 18, y: 430, dur: HERO_WAVE_DUR, width: 1.2, op: 0.17 },
-  { k: 9, amp: 13, y: 500, dur: HERO_WAVE_DUR, width: 1.0, op: 0.15 },
-  { k: 4, amp: 24, y: 560, dur: HERO_WAVE_DUR, width: 1.4, op: 0.19 },
-];
+// ── Living-EEG hero: canvas 10-channel montage (ported from the approved
+// homepage-v2 mockup). Each channel sums three sinusoids with deterministic
+// per-channel parameters, plus intermittent spindle bursts; a warm "discharge"
+// event periodically sweeps across the montage. Middle channels are emphasized.
+// Honors prefers-reduced-motion (renders one static frame mid-event).
+const EEG_CHANNELS = 10;
+const EEG_GRID = "rgba(120,200,210,0.06)";
+const EEG_TRACE = "rgba(78,225,210,"; // + alpha
+const EEG_GLOW = "rgba(46,214,198,0.35)";
+const EEG_WARM = "rgba(245,180,85,";
 
-function heroWavePath({ k, amp, y }: { k: number; amp: number; y: number }) {
-  const W = 2880;
-  const step = 9;
-  const freq = (2 * Math.PI * k) / 1440;
-  let d = `M0 ${y}`;
-  for (let x = step; x <= W; x += step) {
-    const yy = y + Math.sin(x * freq) * amp + Math.sin(x * freq * 2 + k) * amp * 0.3;
-    d += ` L${x} ${yy.toFixed(1)}`;
-  }
-  return d;
+function HeroEEG() {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const cv = ref.current;
+    if (!cv) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const gens = Array.from({ length: EEG_CHANNELS }, (_, i) => ({
+      a1: 8 + ((i * 37) % 9), f1: 0.8 + ((i * 13) % 5) * 0.25,
+      a2: 2.5 + ((i * 7) % 4), f2: 5 + ((i * 11) % 9),
+      a3: 1.2 + ((i * 5) % 3), f3: 14 + ((i * 17) % 12),
+      ph: (i * 1.7) % 6.28, drift: 0.2 + ((i * 3) % 5) * 0.06,
+    }));
+    const ev = { active: false, pos: 0, next: 3.5 };
+    let ctx: CanvasRenderingContext2D | null = null;
+    let W = 0;
+    let H = 0;
+    let t = 0;
+    let raf = 0;
+    let last = 0;
+
+    function fit() {
+      if (!cv) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const r = cv.getBoundingClientRect();
+      W = r.width;
+      H = r.height;
+      cv.width = W * dpr;
+      cv.height = H * dpr;
+      ctx = cv.getContext("2d");
+      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function chanVal(i: number, xt: number, tt: number) {
+      const g = gens[i];
+      let v =
+        Math.sin(xt * g.f1 * 6.28 + tt * g.drift + g.ph) * g.a1 +
+        Math.sin(xt * g.f2 * 6.28 + tt * 1.1 + g.ph * 1.3) * g.a2 +
+        Math.sin(xt * g.f3 * 6.28 + tt * 1.7) * g.a3;
+      // sleep-spindle-like intermittent burst
+      const sp = Math.max(0, Math.sin(tt * 0.5 + i * 1.3) - 0.7);
+      v += Math.sin(xt * 70 * 6.28 + tt * 3) * sp * 22;
+      return v;
+    }
+
+    function draw() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, W, H);
+      // faint EEG-paper grid
+      ctx.strokeStyle = EEG_GRID;
+      ctx.lineWidth = 1;
+      for (let gx = 0; gx < W; gx += Math.max(34, W / 28)) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, H);
+        ctx.stroke();
+      }
+      const top = H * 0.1;
+      const span = H * 0.82;
+      const gap = span / (EEG_CHANNELS - 1);
+      const evX = ev.active ? ev.pos * W : -1;
+      for (let i = 0; i < EEG_CHANNELS; i++) {
+        const baseY = top + i * gap;
+        const depth = i / (EEG_CHANNELS - 1);
+        const front = 1 - Math.abs(depth - 0.5) * 1.3; // middle channels emphasized
+        const alpha = 0.18 + Math.max(0, front) * 0.62;
+        ctx.lineWidth = 0.8 + Math.max(0, front) * 1.1;
+        ctx.beginPath();
+        for (let px = 0; px <= W; px += 2) {
+          const xt = px / W;
+          const amp = (gap * 0.42) / 12;
+          const val = chanVal(i, xt, t) * amp;
+          let eBoost = 0;
+          if (ev.active) {
+            const d = Math.abs(px - evX) / (W * 0.12);
+            if (d < 3) {
+              const env = Math.exp(-d * d);
+              eBoost = Math.sin(xt * 40 * 6.28 + t * 8) * env * gap * 0.9;
+            }
+          }
+          const y = baseY + val - eBoost;
+          if (px === 0) ctx.moveTo(px, y);
+          else ctx.lineTo(px, y);
+        }
+        ctx.strokeStyle = EEG_TRACE + alpha.toFixed(3) + ")";
+        ctx.shadowBlur = front > 0.5 ? 8 : 0;
+        ctx.shadowColor = EEG_GLOW;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+      // warm sweep highlight over the discharge
+      if (ev.active) {
+        ctx.save();
+        const x0 = evX - W * 0.14;
+        const x1 = evX + W * 0.14;
+        const grd = ctx.createLinearGradient(x0, 0, x1, 0);
+        grd.addColorStop(0, EEG_WARM + "0)");
+        grd.addColorStop(0.5, EEG_WARM + "0.5)");
+        grd.addColorStop(1, EEG_WARM + "0)");
+        ctx.strokeStyle = grd;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = EEG_WARM + "0.5)";
+        for (let i = 0; i < EEG_CHANNELS; i++) {
+          const baseY = top + i * gap;
+          const depth = i / (EEG_CHANNELS - 1);
+          const front = 1 - Math.abs(depth - 0.5) * 1.3;
+          ctx.beginPath();
+          for (let px = Math.max(0, x0); px <= Math.min(W, x1); px += 2) {
+            const xt = px / W;
+            const d = Math.abs(px - evX) / (W * 0.12);
+            const env = Math.exp(-d * d);
+            const amp = (gap * 0.42) / 12;
+            const y = baseY + chanVal(i, xt, t) * amp - Math.sin(xt * 40 * 6.28 + t * 8) * env * gap * 0.9;
+            if (px === Math.max(0, x0)) ctx.moveTo(px, y);
+            else ctx.lineTo(px, y);
+          }
+          ctx.globalAlpha = 0.35 + Math.max(0, front) * 0.5;
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function tick(dt: number) {
+      t += dt;
+      if (ev.active) {
+        ev.pos += dt * 0.42;
+        if (ev.pos > 1.15) {
+          ev.active = false;
+          ev.next = t + 4 + Math.sin(t) * 2 + 3;
+        }
+      } else if (t > ev.next) {
+        ev.active = true;
+        ev.pos = -0.15;
+      }
+    }
+
+    function staticFrame() {
+      ev.active = true;
+      ev.pos = 0.62;
+      t = 6.2;
+      draw();
+      ev.active = false;
+    }
+
+    function loop(ts: number) {
+      const dt = Math.min(0.05, (ts - last) / 1000 || 0);
+      last = ts;
+      tick(dt);
+      draw();
+      raf = requestAnimationFrame(loop);
+    }
+
+    fit();
+    const onResize = () => {
+      fit();
+      if (reduce) staticFrame();
+    };
+    window.addEventListener("resize", onResize);
+    if (reduce) staticFrame();
+    else raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={ref}
+      className="hero-eeg"
+      role="img"
+      aria-label="A live 10–20 montage electroencephalogram: ten channels of flowing brain-wave activity with an occasional discharge sweeping across the array."
+    />
+  );
 }
 
 // ── Impact section data (computed from real registries) ──
@@ -82,82 +244,29 @@ const pubsByYear: { year: number; count: number }[] = (() => {
 const NA_COUNTRIES = new Set(["USA", "United States", "US", "Canada"]);
 const naMemberCount = members.filter((m) => NA_COUNTRIES.has(m.country)).length;
 const intlMemberCount = memberCount - naMemberCount;
-
-function PubYearChart({ data }: { data: { year: number; count: number }[] }) {
-  const W = 520;
-  const H = 150;
-  const pad = 20;
-  const max = Math.max(1, ...data.map((d) => d.count));
-  const xs = (i: number) => pad + (i * (W - pad * 2)) / (data.length - 1 || 1);
-  const ys = (c: number) => H - pad - (c / max) * (H - pad * 2);
-  const line = data.map((d, i) => `${xs(i).toFixed(1)},${ys(d.count).toFixed(1)}`).join(" ");
-  const area = `${pad},${H - pad} ${line} ${W - pad},${H - pad}`;
-  const peak = data.reduce((a, b) => (b.count > a.count ? b : a), data[0]);
-  return (
-    <svg
-      className="pub-chart"
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="none"
-      role="img"
-      aria-label="Peer-reviewed publications per year"
-    >
-      <polygon points={area} fill="var(--accent)" opacity="0.09" />
-      <polyline
-        points={line}
-        fill="none"
-        stroke="var(--accent)"
-        strokeWidth="2"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      {peak && (
-        <circle cx={xs(data.indexOf(peak))} cy={ys(peak.count)} r="3.5" fill="var(--accent)" />
-      )}
-    </svg>
-  );
-}
+const continentCount = new Set(
+  members.map((m) => CONTINENT_BY_COUNTRY[m.country] ?? m.country)
+).size;
+const intlContinents = [
+  ...new Set(
+    members
+      .filter((m) => !NA_COUNTRIES.has(m.country))
+      .map((m) => CONTINENT_BY_COUNTRY[m.country] ?? m.country)
+  ),
+];
+const CONTINENT_WORDS: Record<number, string> = {
+  2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+};
+const continentWord = CONTINENT_WORDS[continentCount] ?? String(continentCount);
 
 export default function HomePage() {
   const mainRef = useScrollReveal();
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   return (
     <main ref={mainRef}>
-      {/* ── Hero Section — living-EEG ── */}
+      {/* ── Hero Section — living-EEG monitor ── */}
       <section className="hero-section">
-        <div className="hero-bg" aria-hidden="true" />
-        {/* Living EEG wave field — parallax + fade on scroll */}
-        <div
-          className="hero-waves"
-          aria-hidden="true"
-          style={{
-            transform: `translateY(${scrollY * 0.2}px)`,
-            opacity: Math.max(0.25, 1 - scrollY / 700),
-          }}>
-          <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice">
-            {HERO_WAVE_LANES.map((lane, i) => (
-              <path
-                key={i}
-                className="hero-wave"
-                d={heroWavePath(lane)}
-                fill="none"
-                strokeWidth={lane.width}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{
-                  opacity: lane.op,
-                  animationDuration: `${lane.dur}s`,
-                }}
-              />
-            ))}
-          </svg>
-        </div>
+        <HeroEEG />
         <div className="hero-content">
           <div className="hero-copy">
             <span className="hero-eyebrow">
@@ -195,6 +304,9 @@ export default function HomePage() {
             </p>
           </div>
         </div>
+        <span className="montage-tag" aria-hidden="true">
+          LIVE · 10–20 MONTAGE · 0–20 Hz
+        </span>
       </section>
 
       {/* ── Impact ── */}
@@ -366,11 +478,11 @@ export default function HomePage() {
               </p>
             </div>
             <div className="network-card">
-              <span className="network-key">Europe · Oceania · Asia</span>
+              <span className="network-key">{intlContinents.join(" · ")}</span>
               <span className="network-num">{intlMemberCount} members</span>
               <p className="network-desc">
                 Global partners bringing shared protocols to children&apos;s
-                centers across four continents.
+                centers across {continentWord} continents.
               </p>
             </div>
             <Link href="/members" className="network-card network-card-accent">
@@ -431,279 +543,64 @@ export default function HomePage() {
       </section>
 
       <style>{`
-        /* ── Homepage redesign sections (dark instrument palette) ── */
-        .home-section { padding: clamp(3.5rem, 7vw, 6rem) 2rem; background: var(--bg); }
-        .home-container { max-width: 1200px; margin: 0 auto; }
-        .section-head { max-width: 640px; margin-bottom: 2.75rem; }
-        .section-eyebrow {
-          font-family: var(--mono-font); font-size: 0.76rem; font-weight: 600;
-          letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
-        }
-        .section-h2 {
-          font-family: var(--heading-font); font-size: clamp(1.9rem, 3.6vw, 2.9rem);
-          font-weight: 700; line-height: 1.08; letter-spacing: -0.02em;
-          color: var(--ink); margin: 0.9rem 0 0; text-wrap: balance;
-        }
-        .section-sub {
-          margin-top: 1rem; font-size: 1.05rem; line-height: 1.6;
-          color: var(--ink-2); max-width: 52ch;
-        }
-        .section-cta { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; }
+        /* Shared section/card classes live in globals.css; below is hero-only. */
 
-        /* Impact */
-        .impact-grid {
-          display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.5rem; align-items: start;
-        }
-        .impact-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-        .stat-card {
-          display: flex; flex-direction: column; gap: 0.1rem; padding: 1.25rem;
-          background: var(--surface); border: 1px solid var(--line);
-          border-radius: 14px; min-height: 130px;
-        }
-        .stat-num {
-          font-family: var(--heading-font); font-size: 2rem; font-weight: 700;
-          color: var(--ink); letter-spacing: -0.02em;
-        }
-        .stat-key {
-          font-family: var(--mono-font); font-size: 0.72rem; letter-spacing: 0.1em;
-          text-transform: uppercase; color: var(--muted); margin-top: 0.15rem;
-        }
-        .stat-note { font-size: 0.82rem; color: var(--ink-2); margin-top: 0.5rem; }
-        .impact-chart {
-          padding: 1.5rem; background: var(--surface);
-          border: 1px solid var(--line); border-radius: 14px;
-        }
-        .chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
-        .chart-title { font-size: 0.95rem; color: var(--ink); font-weight: 600; }
-        .chart-tag {
-          font-family: var(--mono-font); font-size: 0.7rem; text-transform: uppercase;
-          letter-spacing: 0.08em; color: var(--muted);
-        }
-        .pub-chart { width: 100%; height: 160px; display: block; }
-        .chart-axis {
-          display: flex; justify-content: space-between; font-family: var(--mono-font);
-          font-size: 0.7rem; color: var(--muted); margin-top: 0.4rem;
-        }
-
-        /* What we do */
-        .work-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-        .work-card {
-          display: block; padding: 1.75rem; background: var(--surface);
-          border: 1px solid var(--line); border-radius: 16px; text-decoration: none;
-          transition: border-color 0.15s, transform 0.15s;
-        }
-        .work-card:hover { border-color: var(--accent); transform: translateY(-3px); }
-        .work-icon {
-          display: inline-flex; align-items: center; justify-content: center;
-          width: 40px; height: 40px; border-radius: 11px;
-          background: var(--accent-soft); color: var(--accent); margin-bottom: 1rem;
-        }
-        .work-title {
-          font-family: var(--heading-font); font-size: 1.2rem; font-weight: 600;
-          color: var(--ink); margin-bottom: 0.6rem;
-        }
-        .work-desc { font-size: 0.94rem; line-height: 1.6; color: var(--ink-2); }
-        .work-tags {
-          display: block; margin-top: 1.1rem; font-family: var(--mono-font);
-          font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
-        }
-
-        /* Research library */
-        .pub-list { border-top: 1px solid var(--line); }
-        .pub-row {
-          display: grid; grid-template-columns: 4rem 1fr auto; gap: 1.25rem;
-          align-items: center; padding: 1.25rem 0; border-bottom: 1px solid var(--line);
-        }
-        .pub-row-year { font-family: var(--mono-font); font-size: 0.9rem; font-weight: 600; color: var(--accent); }
-        .pub-row-title { font-size: 1rem; font-weight: 600; color: var(--ink); line-height: 1.4; }
-        .pub-row-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
-        .pub-pill {
-          font-family: var(--mono-font); font-size: 0.68rem; letter-spacing: 0.04em;
-          text-transform: uppercase; color: var(--ink-2); background: var(--surface-2);
-          border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.6rem;
-        }
-        .pub-pill-journal { color: var(--accent); border-color: var(--accent-soft); }
-        .pub-row-cite {
-          display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--mono-font);
-          font-size: 0.78rem; color: var(--ink-2); text-decoration: none; white-space: nowrap;
-        }
-        .pub-row-cite:hover { color: var(--accent); }
-
-        /* Network + Get involved */
-        .network-grid, .involve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-        .network-card, .involve-card {
-          display: flex; flex-direction: column; padding: 1.75rem; background: var(--surface);
-          border: 1px solid var(--line); border-radius: 16px; text-decoration: none; min-height: 200px;
-        }
-        .network-key, .involve-key {
-          font-family: var(--mono-font); font-size: 0.72rem; letter-spacing: 0.1em;
-          text-transform: uppercase; color: var(--muted);
-        }
-        .network-num {
-          display: block; font-family: var(--heading-font); font-size: 1.5rem;
-          font-weight: 700; color: var(--ink); margin: 0.5rem 0 0.7rem;
-        }
-        .involve-title {
-          font-family: var(--heading-font); font-size: 1.2rem; font-weight: 600;
-          color: var(--ink); margin: 0.5rem 0 0.6rem;
-        }
-        .network-desc, .involve-desc { font-size: 0.92rem; line-height: 1.55; color: var(--ink-2); flex: 1; }
-        .network-link, .involve-cta, .involve-link {
-          display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1rem;
-          font-size: 0.85rem; font-weight: 600; color: var(--accent);
-        }
-        .network-card-accent, .involve-card-accent {
-          background: linear-gradient(150deg, var(--accent), #1aa596); border-color: transparent;
-        }
-        .network-card-accent .network-key, .network-card-accent .network-num,
-        .network-card-accent .network-desc, .network-card-accent .network-link,
-        .involve-card-accent .involve-key, .involve-card-accent .involve-title,
-        .involve-card-accent .involve-desc, .involve-card-accent .involve-cta { color: #05201d; }
-
-        @media (max-width: 900px) {
-          .impact-grid { grid-template-columns: 1fr; }
-          .work-grid, .network-grid, .involve-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 560px) {
-          .impact-stats { grid-template-columns: repeat(2, 1fr); }
-          .pub-row { grid-template-columns: 3rem 1fr; }
-          .pub-row-cite { grid-column: 2; justify-self: start; }
-        }
-
-        /* ── Entrance animations ── */
+        /* ── Entrance animation ── */
         @keyframes fade-up {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scale-in {
-          from { opacity: 0; transform: scale(0.92); }
-          to { opacity: 1; transform: scale(1); }
-        }
 
-        /* ── Hero ── */
+        /* ── Hero — committed dark monitor ── */
         .hero-section {
           position: relative;
           min-height: 82vh;
           display: flex;
           align-items: center;
           overflow: hidden;
+          isolation: isolate;
           padding: 5rem 2rem 4rem;
-          background: var(--bg);
+          background: #060d18;
           color: var(--text);
         }
-        @keyframes gradient-drift {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .hero-bg {
+        .hero-eeg {
           position: absolute;
           inset: 0;
-          background:
-            radial-gradient(ellipse 80% 60% at 15% 30%, color-mix(in srgb, var(--accent-primary) 10%, transparent) 0%, transparent 60%),
-            radial-gradient(ellipse 60% 50% at 85% 25%, color-mix(in srgb, var(--accent-tertiary) 8%, transparent) 0%, transparent 55%),
-            radial-gradient(ellipse 70% 50% at 50% 70%, color-mix(in srgb, var(--accent-secondary) 8%, transparent) 0%, transparent 50%);
-          background-size: 200% 200%;
-          animation: gradient-drift 20s ease infinite;
-          z-index: 0;
-        }
-
-        /* ── Spectrogram ── */
-        .spectrogram-container {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 0;
-          opacity: 0.12;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-        .spectrogram-band {
-          flex: 1;
-          background-size: 400px 100%;
-          animation: spectrogram-flow 20s linear infinite;
-        }
-        .band-delta {
-          background: repeating-linear-gradient(90deg,
-            #1e3a8a 0px, #2563eb 8px, #1e40af 16px, #3b82f6 24px, #1d4ed8 32px,
-            #2563eb 40px, #1e3a8a 48px, #3b82f6 56px, #1e40af 64px, #2563eb 72px,
-            #1d4ed8 80px, #1e3a8a 88px, #2563eb 96px, transparent 100px,
-            #1e3a8a 108px, #3b82f6 116px, #1e40af 124px, #2563eb 132px, #1d4ed8 140px);
-          opacity: 0.9;
-          animation-duration: 25s;
-        }
-        .band-theta {
-          background: repeating-linear-gradient(90deg,
-            #0d9488 0px, #14b8a6 6px, #0f766e 12px, #2dd4bf 18px, #0d9488 24px,
-            #14b8a6 30px, transparent 36px, #0f766e 42px, #2dd4bf 48px, #0d9488 54px,
-            #14b8a6 60px, #0f766e 66px, #2dd4bf 72px, transparent 78px);
-          opacity: 0.8;
-          animation-duration: 18s;
-        }
-        .band-alpha {
-          background: repeating-linear-gradient(90deg,
-            #16a34a 0px, #22c55e 5px, #15803d 10px, #4ade80 15px, #16a34a 20px,
-            transparent 25px, #22c55e 30px, #15803d 35px, #4ade80 40px, #16a34a 45px,
-            #22c55e 50px, transparent 55px, #15803d 60px, #4ade80 65px);
-          opacity: 0.7;
-          animation-duration: 15s;
-        }
-        .band-beta {
-          background: repeating-linear-gradient(90deg,
-            #dc2626 0px, #f87171 4px, #b91c1c 8px, #fca5a5 12px, #dc2626 16px,
-            transparent 20px, #ef4444 24px, #b91c1c 28px, #f87171 32px, transparent 36px,
-            #dc2626 40px, #ef4444 44px, #fca5a5 48px, #b91c1c 52px);
-          opacity: 0.6;
-          animation-duration: 12s;
-        }
-        .band-gamma {
-          background: repeating-linear-gradient(90deg,
-            #9333ea 0px, #a855f7 3px, #7e22ce 6px, #c084fc 9px, #9333ea 12px,
-            transparent 15px, #a855f7 18px, transparent 21px, #7e22ce 24px, #c084fc 27px,
-            #9333ea 30px, #a855f7 33px, transparent 36px);
-          opacity: 0.5;
-          animation-duration: 10s;
-        }
-        @keyframes spectrogram-flow {
-          0% { background-position: 0 0; }
-          100% { background-position: 400px 0; }
-        }
-        /* ── Living-EEG wave field ── */
-        .hero-waves {
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          will-change: transform, opacity;
-        }
-        .hero-waves svg {
-          position: absolute;
-          top: 0;
-          left: 0;
           width: 100%;
           height: 100%;
+          z-index: 0;
+          display: block;
         }
-        .hero-wave {
-          stroke: var(--accent);
-          animation-name: hero-wave-scroll;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
+        /* scrim so the copy stays legible over the montage */
+        .hero-section::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          pointer-events: none;
+          background: radial-gradient(120% 90% at 18% 40%,
+            rgba(6, 13, 24, 0.94) 0%,
+            rgba(6, 13, 24, 0.72) 34%,
+            rgba(6, 13, 24, 0.30) 62%,
+            transparent 100%);
         }
-        @keyframes hero-wave-scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-1440px); }
+        .montage-tag {
+          position: absolute;
+          right: 22px;
+          bottom: 16px;
+          z-index: 2;
+          font-family: var(--mono-font);
+          font-size: 11px;
+          color: #5f7d88;
+          letter-spacing: 0.06em;
+        }
+        @media (max-width: 640px) {
+          .montage-tag { display: none; }
         }
 
         .hero-content {
           position: relative;
-          z-index: 1;
+          z-index: 2;
           width: 100%;
           max-width: 1200px;
           margin: 0 auto;
@@ -767,396 +664,11 @@ export default function HomePage() {
           margin-top: 2px;
           color: var(--accent-tertiary);
         }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-wave { animation: none; }
-        }
-
-        /* ── Stats Bar ── */
-        .stats-bar {
-          padding: 0 2rem;
-          margin-top: -2rem;
-          position: relative;
-          z-index: 2;
-        }
-        .stats-container {
-          max-width: 700px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 3rem;
-          padding: 2rem 3rem;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          box-shadow: var(--shadow-lg);
-          animation: scale-in 0.6s ease-out 0.45s both;
-        }
-        .stat-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.25rem;
-        }
-        .stat-number {
-          font-family: var(--heading-font);
-          font-size: 2.75rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          line-height: 1;
-        }
-        .stat-label {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          font-weight: 500;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-        .stat-divider {
-          width: 1px;
-          height: 48px;
-          background: var(--border-strong);
-        }
-
-        /* ── EEG Waveform ── */
-        .eeg-wave-container {
-          position: absolute;
-          bottom: 10%;
-          left: 0;
-          right: 0;
-          height: 140px;
-          z-index: 0;
-          opacity: 0.2;
-          overflow: hidden;
-        }
-        .eeg-wave {
-          width: 200%;
-          height: 100%;
-        }
-        .eeg-trace-1 {
-          stroke: #3b82f6;
-          animation: eeg-scroll 12s linear infinite;
-        }
-        .eeg-trace-2 {
-          stroke: #ef4444;
-          opacity: 0.6;
-          animation: eeg-scroll 16s linear infinite;
-        }
-        .eeg-trace-3 {
-          stroke: #10b981;
-          opacity: 0.5;
-          animation: eeg-scroll 20s linear infinite;
-        }
-        @keyframes eeg-scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-
-        /* ── Features ── */
-        .features-section {
-          padding: 4rem 2rem;
-          max-width: 1100px;
-          margin: 0 auto;
-        }
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-        }
-        .feature-card {
-          padding: 2.25rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          text-decoration: none;
-          color: var(--text);
-          cursor: pointer;
-          animation: fade-up 0.6s ease-out both;
-          transition: all 0.25s ease;
-        }
-        .feature-card:nth-child(1) { animation-delay: 0.1s; }
-        .feature-card:nth-child(2) { animation-delay: 0.2s; }
-        .feature-card:nth-child(3) { animation-delay: 0.3s; }
-        .feature-card:hover {
-          color: var(--text);
-          transform: translateY(-4px);
-        }
-        .feature-icon {
-          width: 52px;
-          height: 52px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .research-icon {
-          background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-          color: var(--accent-primary);
-        }
-        .education-icon {
-          background: color-mix(in srgb, var(--accent-tertiary) 12%, transparent);
-          color: var(--accent-tertiary);
-        }
-        .publications-icon {
-          background: color-mix(in srgb, var(--accent-secondary) 15%, transparent);
-          color: var(--accent-secondary);
-        }
-        .feature-title {
-          font-family: var(--heading-font);
-          font-size: 1.35rem;
-          font-weight: 700;
-        }
-        .feature-description {
-          font-size: 0.95rem;
-          color: var(--text-secondary);
-          line-height: 1.6;
-          flex: 1;
-        }
-        .feature-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.35rem;
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: var(--accent-primary);
-          margin-top: 0.5rem;
-          transition: gap 0.15s ease;
-        }
-        .feature-card:hover .feature-link {
-          gap: 0.6rem;
-        }
-
-        /* ── Publications Preview ── */
-        .publications-section {
-          padding: 4rem 2rem;
-          background: var(--bg-card);
-          border-top: 1px solid var(--border);
-          border-bottom: 1px solid var(--border);
-        }
-        .publications-container {
-          max-width: 1100px;
-          margin: 0 auto;
-        }
-        .publications-header {
-          margin-bottom: 3rem;
-        }
-        /* Featured research layout */
-        .featured-research-grid {
-          display: grid;
-          grid-template-columns: 1.4fr 1fr;
-          gap: 1.25rem;
-          align-items: start;
-        }
-        .featured-pub-card {
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .featured-pub-wave {
-          position: relative;
-          height: 100px;
-          background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 8%, var(--bg-card)) 0%, color-mix(in srgb, var(--accent-secondary) 6%, var(--bg-card)) 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-bottom: 1px solid var(--border);
-        }
-        .featured-badge {
-          position: absolute;
-          top: 12px;
-          left: 14px;
-          font-size: 0.65rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          color: var(--bg);
-          background: var(--accent-primary);
-          padding: 0.2rem 0.6rem;
-          border-radius: 4px;
-        }
-        .featured-pub-body {
-          padding: 1.75rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          flex: 1;
-        }
-        .featured-pub-title {
-          font-family: var(--heading-font);
-          font-size: 1.25rem;
-          font-weight: 700;
-          line-height: 1.35;
-          color: var(--text);
-        }
-        .featured-pub-abstract {
-          font-size: 0.88rem;
-          color: var(--text-secondary);
-          line-height: 1.65;
-        }
-        .sidebar-pubs {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-        .sidebar-pub-card {
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
-        }
-        .pub-card {
-          padding: 1.75rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        .pub-meta {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          font-size: 0.8rem;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-        .pub-journal {
-          color: var(--accent-primary);
-          font-weight: 600;
-        }
-        .pub-year {
-          color: var(--text-muted);
-        }
-        .pub-title {
-          font-family: var(--heading-font);
-          font-size: 1.05rem;
-          font-weight: 600;
-          line-height: 1.4;
-          color: var(--text);
-        }
-        .pub-authors {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-        }
-        .publications-cta {
-          margin-top: 2.5rem;
-          text-align: center;
-        }
-
-        /* ── PERF Acknowledgment ── */
-        .perf-section {
-          padding: 4rem 2rem;
-        }
-        .perf-container {
-          max-width: 700px;
-          margin: 0 auto;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        .perf-label {
-          font-size: 0.8rem;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          color: var(--text-muted);
-          font-weight: 600;
-        }
-        .perf-name {
-          font-family: var(--heading-font);
-          font-size: 1.35rem;
-          font-weight: 700;
-          color: var(--text);
-        }
-        .perf-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.35rem;
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: var(--accent-primary);
-          margin-top: 0.5rem;
-        }
-
-        /* ── Join CTA ── */
-        .join-section {
-          padding: 5rem 2rem;
-          background:
-            radial-gradient(ellipse 70% 50% at 50% 50%, color-mix(in srgb, var(--accent-primary) 8%, transparent) 0%, transparent 70%);
-          border-top: 1px solid var(--border);
-        }
-        .join-container {
-          max-width: 640px;
-          margin: 0 auto;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1.25rem;
-        }
-        .join-heading {
-          font-family: var(--heading-font);
-          font-size: 2rem;
-          font-weight: 700;
-          color: var(--text);
-        }
-        .join-description {
-          font-size: 1.05rem;
-          color: var(--text-secondary);
-          line-height: 1.7;
-          margin-bottom: 0.5rem;
-        }
-
         /* ── Responsive ── */
-        @media (max-width: 900px) {
-          .features-grid {
-            grid-template-columns: 1fr;
-            max-width: 500px;
-            margin: 0 auto;
-          }
-          .featured-research-grid {
-            grid-template-columns: 1fr;
-          }
-        }
         @media (max-width: 600px) {
           .hero-section {
             min-height: 65vh;
             padding: 3rem 1.25rem 2rem;
-          }
-          .stats-bar {
-            padding: 0 1.25rem;
-            margin-top: -1.5rem;
-          }
-          .stats-container {
-            gap: 1rem;
-            padding: 1.25rem 1rem;
-          }
-          .stat-number {
-            font-size: 2rem;
-          }
-          .stat-divider {
-            height: 36px;
-          }
-        }
-        @media (max-width: 480px) {
-          .stats-container {
-            gap: 0;
-            padding: 1.25rem 0.75rem;
-            justify-content: space-around;
-          }
-          .stat-divider {
-            display: none;
-          }
-          .features-section {
-            padding: 4rem 1.25rem;
-          }
-          .publications-section {
-            padding: 3.5rem 1.25rem;
-          }
-          .join-section {
-            padding: 4rem 1.25rem;
           }
         }
       `}</style>

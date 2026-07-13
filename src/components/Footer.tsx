@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <Link href="/" className="no-underline">
               <Image
-                src="/images/pedquest-wordmark.png"
+                src="/images/pedquest-wordmark-flame-2026.png"
                 alt="PedQuEST"
                 width={200}
                 height={60}

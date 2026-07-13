@@ -21,6 +21,16 @@ export interface Member {
   sortOrder: number;
 }
 
+// Country → continent, for computed stats (About panel, homepage network cards).
+export const CONTINENT_BY_COUNTRY: Record<string, string> = {
+  USA: "North America",
+  "United States": "North America",
+  Canada: "North America",
+  Netherlands: "Europe",
+  Australia: "Oceania",
+  "South Korea": "Asia",
+};
+
 export const members: Member[] = [
   // ── Leadership ──────────────────────────────────────────────
   {

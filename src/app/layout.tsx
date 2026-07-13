@@ -62,13 +62,13 @@ export const metadata: Metadata = {
     url: SITE_URL,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [{ url: "/images/pedquest-wordmark.png", alt: "PedQuEST" }],
+    images: [{ url: "/images/pedquest-wordmark-flame-2026.png", alt: "PedQuEST" }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/images/pedquest-wordmark.png"],
+    images: ["/images/pedquest-wordmark-flame-2026.png"],
   },
   icons: {
     icon: "/favicon.svg",
