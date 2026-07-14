@@ -149,6 +149,14 @@ export default function AdminCasesPage() {
 
   return (
     <Shell>
+      <style>{`
+        .cases-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .cases-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        @media (max-width: 640px) {
+          .cases-row-2 { grid-template-columns: 1fr; }
+          .cases-row-4 { grid-template-columns: 1fr 1fr; }
+        }
+      `}</style>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 22 }}>
         <div>
           <h1 style={h1}>qEEG Case of the Day — admin</h1>
@@ -225,7 +233,7 @@ function Editor({ edit, setEdit, onSave, onClose, onUpload, busy }:
           <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Use only licensed / de-identified images. No patient identifiers.</span>
         </Field>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="cases-row-2">
           <Field label="Question type">
             <select style={inp} value={edit.questionType} onChange={(e) => set({ questionType: e.target.value as QuestionType })}>
               <option value="multiple_choice">Multiple choice</option>
@@ -260,7 +268,7 @@ function Editor({ edit, setEdit, onSave, onClose, onUpload, busy }:
           </Field>
         ) : (
           <Field label="Correct region (normalized 0–1 rectangle)">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+            <div className="cases-row-4">
               {(["x", "y", "w", "h"] as const).map((k) => (
                 <label key={k} style={{ fontSize: 11, fontFamily: "monospace", color: "var(--text-muted)" }}>{k}
                   <input style={{ ...inp, marginTop: 2 }} type="number" step="0.01" min="0" max="1" value={edit.region[k]}
@@ -274,7 +282,7 @@ function Editor({ edit, setEdit, onSave, onClose, onUpload, busy }:
 
         <Field label="Explanation (shown after answering)"><textarea style={inp} rows={3} value={edit.explanation} onChange={(e) => set({ explanation: e.target.value })} /></Field>
         <Field label="Teaching points (one per line)"><textarea style={inp} rows={3} value={edit.teachingPointsText} onChange={(e) => set({ teachingPointsText: e.target.value })} /></Field>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="cases-row-2">
           <Field label="Tags (comma-separated)"><input style={inp} value={edit.tagsText} onChange={(e) => set({ tagsText: e.target.value })} /></Field>
           <Field label="Publish date"><input style={inp} type="date" value={edit.publishDate} onChange={(e) => set({ publishDate: e.target.value })} /></Field>
         </div>
