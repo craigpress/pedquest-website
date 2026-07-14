@@ -143,18 +143,13 @@ export default function Navbar() {
               style={{ height: 44, width: 44, flex: "none" }}
             />
             <Image
-              src="/images/pedquest-wordmark-flame-2026.png"
+              src="/images/pedquest-wordmark-flame-darknav-2026.png"
               alt="PedQuEST"
-              width={2556}
-              height={888}
+              width={2113}
+              height={744}
               priority
               className="transition-opacity duration-300 group-hover:opacity-85"
-              style={{
-                height: 48,
-                width: "auto",
-                // lift the navy "ped" off the dark nav background
-                filter: "drop-shadow(0 0 10px rgba(190, 215, 235, 0.45))",
-              }}
+              style={{ height: 48, width: "auto" }}
             />
           </Link>
 

@@ -30,10 +30,10 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <Link href="/" className="no-underline">
               <Image
-                src="/images/pedquest-wordmark-flame-2026.png"
+                src="/images/pedquest-wordmark-flame-darknav-2026.png"
                 alt="PedQuEST"
-                width={200}
-                height={60}
+                width={2113}
+                height={744}
                 style={{ height: 50, width: "auto", objectFit: "contain" }}
               />
             </Link>
