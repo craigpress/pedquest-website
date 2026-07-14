@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/admin-auth";
-import { mapCase, type Region } from "@/lib/cases";
+import { mapCase, caseImagePublishBlock, type Region } from "@/lib/cases";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -54,6 +54,20 @@ export async function POST(request: NextRequest) {
     if (action === "approve") patch.status = "approved";
     if (action === "archive") patch.status = "archived";
     if (action === "publish") {
+      // Enforce the image sourcing/licensing gate before anything goes live.
+      const { data: row } = await supabase
+        .from("eeg_cases")
+        .select("image_url,image_license,image_attribution")
+        .eq("id", id)
+        .single();
+      const missing = caseImagePublishBlock({
+        imageUrl: row?.image_url ?? "",
+        imageLicense: row?.image_license ?? null,
+        imageAttribution: row?.image_attribution ?? null,
+      });
+      if (missing) {
+        return NextResponse.json({ error: `Cannot publish: this case needs ${missing}.` }, { status: 400 });
+      }
       patch.status = "published";
       patch.publish_date = body.publishDate || new Date().toISOString().slice(0, 10);
     }
@@ -71,6 +85,9 @@ export async function POST(request: NextRequest) {
     title: String(input.title).slice(0, 300),
     clinical_vignette: input.clinicalVignette ?? null,
     image_url: input.imageUrl ?? "",
+    image_license: input.imageLicense ?? null,
+    image_attribution: input.imageAttribution ?? null,
+    image_source_url: input.imageSourceUrl ?? null,
     question_type: input.questionType === "point_to_feature" ? "point_to_feature" : "multiple_choice",
     question_prompt: String(input.questionPrompt).slice(0, 500),
     explanation: input.explanation ?? null,

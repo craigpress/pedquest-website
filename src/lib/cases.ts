@@ -5,6 +5,11 @@ export type QuestionType = "multiple_choice" | "point_to_feature";
 export type CaseStatus = "draft" | "pending_review" | "approved" | "published" | "archived";
 export type CaseSource = "team" | "ai";
 export type Difficulty = "introductory" | "intermediate" | "advanced";
+export type ImageLicense =
+  | "consortium"      // Tier 1: consortium-owned, de-identified
+  | "cc0" | "cc-by" | "cc-by-sa" | "cc-by-nc" | "cc-by-nd"   // Tier 2: openly licensed
+  | "public-domain"
+  | "ai-original";    // Tier 3: original synthetic image we generated
 
 export interface RectRegion { kind: "rect"; x: number; y: number; w: number; h: number }
 export interface CircleRegion { kind: "circle"; cx: number; cy: number; r: number }
@@ -28,6 +33,9 @@ export interface EegCase {
   imageUrl: string;
   imageWidth: number | null;
   imageHeight: number | null;
+  imageLicense: ImageLicense | null;
+  imageAttribution: string | null;
+  imageSourceUrl: string | null;
   questionType: QuestionType;
   questionPrompt: string;
   explanation: string | null;
@@ -126,6 +134,9 @@ export function mapCase(r: any, options: any[] = []): EegCase {
     imageUrl: r.image_url ?? "",
     imageWidth: r.image_width ?? null,
     imageHeight: r.image_height ?? null,
+    imageLicense: (r.image_license as ImageLicense) ?? null,
+    imageAttribution: r.image_attribution ?? null,
+    imageSourceUrl: r.image_source_url ?? null,
     questionType: r.question_type,
     questionPrompt: r.question_prompt,
     explanation: r.explanation ?? null,
@@ -143,6 +154,26 @@ export function mapCase(r: any, options: any[] = []): EegCase {
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+/**
+ * Publish gate from docs/CASE_IMAGE_SOURCING_POLICY.md: a case may only be
+ * PUBLISHED once it has an image, a license, and — unless the image is
+ * consortium-owned or AI-original — a non-empty attribution/credit line.
+ * Returns a human-readable reason the case is NOT publishable, or null if it is.
+ */
+export function caseImagePublishBlock(c: {
+  imageUrl: string;
+  imageLicense: ImageLicense | null;
+  imageAttribution: string | null;
+}): string | null {
+  if (!c.imageUrl || !c.imageUrl.trim()) return "an image";
+  if (!c.imageLicense) return "an image license";
+  const exempt = c.imageLicense === "consortium" || c.imageLicense === "ai-original";
+  if (!exempt && !(c.imageAttribution && c.imageAttribution.trim())) {
+    return "an attribution/credit line (required for this license)";
+  }
+  return null;
+}
 
 export function toPublicCase(c: EegCase): PublicCase {
   return {

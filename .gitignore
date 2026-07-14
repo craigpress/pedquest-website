@@ -37,3 +37,7 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Homelab infra (worker/unit/README) — deployed separately, kept out of the
+# repo because it contains internal network details.
+homelab/

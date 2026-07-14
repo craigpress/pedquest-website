@@ -102,6 +102,117 @@ export async function generateCaseDraft(input: {
   return draft;
 }
 
+// ---------------------------------------------------------------------------
+// Original synthetic case image (Tier 3 of the sourcing policy).
+//
+// Routes to the OpenClaw `$imagegen` bridge, exposed on OpenWebUI as the
+// `cipher-openclaw` model. We SYNTHESIZE an original figure from a text
+// description — we do NOT adapt or trace copyrighted figures. Returns a data:
+// URL (or an http(s) URL) for the generated image.
+//
+// OpenWebUI mangles/strips generated images when relaying, so the image endpoint
+// should point DIRECTLY at the OpenClaw bridge (which returns `delta.images`).
+// These fall back to the shared OPENWEBUI_* vars if the dedicated ones are unset.
+//
+// Config (env):
+//   OPENWEBUI_IMAGE_BASE_URL    direct OpenAI-compatible bridge base URL
+//   OPENWEBUI_IMAGE_API_KEY     bearer token for the bridge
+//   OPENWEBUI_IMAGE_MODEL       default "cipher-openclaw"
+//   OPENWEBUI_IMAGE_TIMEOUT_MS  default 240000
+// ---------------------------------------------------------------------------
+function imageEndpoint(): { base: string; key: string } | null {
+  const base = process.env.OPENWEBUI_IMAGE_BASE_URL || process.env.OPENWEBUI_BASE_URL;
+  const key = process.env.OPENWEBUI_IMAGE_API_KEY || process.env.OPENWEBUI_API_KEY;
+  return base && key ? { base, key } : null;
+}
+export function imageGeneratorConfigured(): boolean {
+  return !!imageEndpoint();
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function extractImageUrl(node: any): string | null {
+  if (!node || typeof node !== "object") return null;
+  const imgs = node.images;
+  if (Array.isArray(imgs)) {
+    for (const it of imgs) {
+      const u = typeof it === "string" ? it : it?.image_url?.url || it?.url || it?.image_url;
+      if (typeof u === "string" && (u.startsWith("data:image") || /^https?:\/\//.test(u))) return u;
+    }
+  }
+  const media = node.openclaw_media_urls;
+  if (Array.isArray(media)) {
+    for (const u of media) if (typeof u === "string" && (u.startsWith("data:image") || /^https?:\/\//.test(u))) return u;
+  }
+  if (typeof node.content === "string") {
+    const m = node.content.match(/\((data:image\/[^)]+)\)/) || node.content.match(/(https?:\/\/\S+\.(?:png|jpe?g|webp))/i);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+export async function generateCaseImage(description: string): Promise<string> {
+  const ep = imageEndpoint();
+  if (!ep) throw new Error("Image generator not configured (set OPENWEBUI_IMAGE_BASE_URL + OPENWEBUI_IMAGE_API_KEY, or the shared OPENWEBUI_* vars).");
+  const { base, key } = ep;
+  const model = process.env.OPENWEBUI_IMAGE_MODEL || "cipher-openclaw";
+  const timeoutMs = Number(process.env.OPENWEBUI_IMAGE_TIMEOUT_MS || 240000);
+
+  const prompt =
+    `Use $imagegen to create an ORIGINAL, fully synthetic teaching illustration ` +
+    `(do NOT copy, trace, or adapt any real or copyrighted figure). Subject: ${description}. ` +
+    `Render it as a clean, labeled EEG/qEEG-style figure on a white background, publication ` +
+    `quality, containing NO real patient data or identifiers. Return only the generated image.`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  let res: Response;
+  try {
+    res = await fetch(`${base.replace(/\/$/, "")}/api/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model, stream: true, messages: [{ role: "user", content: prompt }] }),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    clearTimeout(timeout);
+    throw new Error(`Image endpoint unreachable: ${(e as Error).message}`);
+  }
+  if (!res.ok || !res.body) { clearTimeout(timeout); throw new Error(`Image endpoint returned ${res.status}`); }
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", found = "";
+  try {
+    while (!found) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl: number;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl); buf = buf.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (!data || data === "[DONE]") continue;
+        let j: any; try { j = JSON.parse(data); } catch { continue; }
+        const choice = j?.choices?.[0];
+        const url = extractImageUrl(choice?.delta) ?? extractImageUrl(choice?.message);
+        if (url) { found = url; break; }
+      }
+    }
+  } finally {
+    clearTimeout(timeout);
+    try { await reader.cancel(); } catch { /* ignore */ }
+  }
+  if (!found) {
+    throw new Error(
+      "The image model returned no usable image. The OpenClaw $imagegen bridge must emit the " +
+      "PNG inline (a data: URL or delta.images) — a bare local file path is not reachable from the server.",
+    );
+  }
+  return found;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 function parseDraft(content: string): GeneratedCaseDraft {
   let text = content;
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);

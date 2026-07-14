@@ -15,6 +15,9 @@ interface EditState {
   title: string;
   clinicalVignette: string;
   imageUrl: string;
+  imageLicense: string;
+  imageAttribution: string;
+  imageSourceUrl: string;
   questionType: QuestionType;
   questionPrompt: string;
   explanation: string;
@@ -32,7 +35,8 @@ interface EditState {
 
 function blankEdit(): EditState {
   return {
-    title: "", clinicalVignette: "", imageUrl: "", questionType: "multiple_choice", questionPrompt: "",
+    title: "", clinicalVignette: "", imageUrl: "", imageLicense: "", imageAttribution: "", imageSourceUrl: "",
+    questionType: "multiple_choice", questionPrompt: "",
     explanation: "", teachingPointsText: "", tagsText: "", difficulty: "intermediate",
     options: [{ label: "", isCorrect: true, optionExplanation: "" }, { label: "", isCorrect: false, optionExplanation: "" }],
     region: { x: 0.4, y: 0.1, w: 0.2, h: 0.8 }, regionTolerance: 0.03,
@@ -43,6 +47,7 @@ function fromCase(c: AdminCase): EditState {
   const r = c.correctRegion && c.correctRegion.kind === "rect" ? c.correctRegion : { x: 0.4, y: 0.1, w: 0.2, h: 0.8 };
   return {
     id: c.id, title: c.title, clinicalVignette: c.clinicalVignette ?? "", imageUrl: c.imageUrl,
+    imageLicense: c.imageLicense ?? "", imageAttribution: c.imageAttribution ?? "", imageSourceUrl: c.imageSourceUrl ?? "",
     questionType: c.questionType, questionPrompt: c.questionPrompt, explanation: c.explanation ?? "",
     teachingPointsText: c.teachingPoints.join("\n"), tagsText: c.tags.join(", "), difficulty: c.difficulty,
     options: c.options.length ? c.options.map((o) => ({ label: o.label, isCorrect: o.isCorrect, optionExplanation: o.optionExplanation ?? "" }))
@@ -105,6 +110,7 @@ export default function AdminCasesPage() {
         action: "save",
         case: {
           id: edit.id, title: edit.title, clinicalVignette: edit.clinicalVignette, imageUrl: edit.imageUrl,
+          imageLicense: edit.imageLicense || null, imageAttribution: edit.imageAttribution || null, imageSourceUrl: edit.imageSourceUrl || null,
           questionType: edit.questionType, questionPrompt: edit.questionPrompt, explanation: edit.explanation,
           teachingPoints: edit.teachingPointsText.split("\n").map((s) => s.trim()).filter(Boolean),
           tags: edit.tagsText.split(",").map((s) => s.trim()).filter(Boolean),
@@ -129,6 +135,42 @@ export default function AdminCasesPage() {
       const res = await fetch("/api/admin/cases/generate", { method: "POST", headers: await authHeaders(), body: JSON.stringify({ topic }) });
       const json = await res.json();
       if (res.ok && json.success) { flash("Draft created — review it in the list."); load(); } else flash(json.error || "Generation failed.");
+    } finally { setBusy(false); }
+  }
+
+  async function genImage() {
+    if (!edit) return;
+    const description = prompt(
+      "Describe the ORIGINAL synthetic EEG/qEEG image to generate (Tier 3 — do NOT reference copyrighted figures):",
+      edit.clinicalVignette || edit.title || "",
+    );
+    if (!description) return;
+    setBusy(true); flash("Queued image generation…");
+    try {
+      const res = await fetch("/api/admin/cases/generate-image", {
+        method: "POST", headers: await authHeaders(),
+        body: JSON.stringify({ description }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) { flash(json.error || "Could not queue generation."); return; }
+      const jobId = json.jobId;
+      // A homelab worker generates + uploads; poll until it lands (~1-2 min).
+      const started = Date.now();
+      let announcedRunning = false;
+      while (Date.now() - started < 240000) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const sres = await fetch(`/api/admin/cases/generate-image?jobId=${jobId}`, { headers: await authHeaders() });
+        const s = await sres.json();
+        if (!sres.ok || !s.success) continue;
+        if (s.status === "done" && s.imageUrl) {
+          setEdit((prev) => prev ? { ...prev, imageUrl: s.imageUrl, imageLicense: prev.imageLicense || "ai-original" } : prev);
+          flash("Image generated & attached.");
+          return;
+        }
+        if (s.status === "error") { flash(`Generation failed: ${s.error || "unknown error"}`); return; }
+        if (s.status === "running" && !announcedRunning) { announcedRunning = true; flash("Generating image… (~1-2 min)"); }
+      }
+      flash("Still generating — give it a moment, then click Generate again to pick up the result.");
     } finally { setBusy(false); }
   }
 
@@ -198,7 +240,7 @@ export default function AdminCasesPage() {
       )}
 
       {edit && (
-        <Editor edit={edit} setEdit={setEdit} onSave={save} onClose={() => setEdit(null)} onUpload={uploadImage} busy={busy} />
+        <Editor edit={edit} setEdit={setEdit} onSave={save} onClose={() => setEdit(null)} onUpload={uploadImage} onGenImage={genImage} busy={busy} />
       )}
       {toast && (
         <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: "var(--text)", color: "var(--bg)", padding: "11px 18px", borderRadius: 10, fontFamily: "monospace", fontSize: 13, zIndex: 60 }}>{toast}</div>
@@ -207,8 +249,8 @@ export default function AdminCasesPage() {
   );
 }
 
-function Editor({ edit, setEdit, onSave, onClose, onUpload, busy }:
-  { edit: EditState; setEdit: (e: EditState) => void; onSave: () => void; onClose: () => void; onUpload: (f: File) => void; busy: boolean }) {
+function Editor({ edit, setEdit, onSave, onClose, onUpload, onGenImage, busy }:
+  { edit: EditState; setEdit: (e: EditState) => void; onSave: () => void; onClose: () => void; onUpload: (f: File) => void; onGenImage: () => void; busy: boolean }) {
   const set = (patch: Partial<EditState>) => setEdit({ ...edit, ...patch });
   return (
     <div role="dialog" aria-modal="true" aria-label="Edit case" onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
@@ -227,10 +269,33 @@ function Editor({ edit, setEdit, onSave, onClose, onUpload, busy }:
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <input style={{ ...inp, flex: 1, minWidth: 200 }} placeholder="/images/... or https://…" value={edit.imageUrl} onChange={(e) => set({ imageUrl: e.target.value })} />
             <label style={{ ...mini, cursor: "pointer" }}>Upload<input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} /></label>
+            <button type="button" style={mini} onClick={onGenImage} disabled={busy} title="Generate an original synthetic image with AI (cipher-openclaw / $imagegen)">✦ Generate (AI)</button>
           </div>
           {edit.imageUrl && (/* eslint-disable-next-line @next/next/no-img-element */
             <img src={edit.imageUrl} alt="" style={{ marginTop: 8, width: "100%", borderRadius: 10, border: "1px solid var(--border)" }} />)}
-          <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Use only licensed / de-identified images. No patient identifiers.</span>
+          <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Use only licensed / de-identified images, or AI-generated originals. No patient identifiers.</span>
+        </Field>
+
+        <div className="cases-row-2">
+          <Field label="Image license">
+            <select style={inp} value={edit.imageLicense} onChange={(e) => set({ imageLicense: e.target.value })}>
+              <option value="">— none (required to publish) —</option>
+              <option value="ai-original">AI-original (synthetic)</option>
+              <option value="consortium">Consortium (de-identified)</option>
+              <option value="public-domain">Public domain</option>
+              <option value="cc0">CC0</option>
+              <option value="cc-by">CC BY</option>
+              <option value="cc-by-sa">CC BY-SA</option>
+              <option value="cc-by-nc">CC BY-NC</option>
+              <option value="cc-by-nd">CC BY-ND</option>
+            </select>
+          </Field>
+          <Field label="Attribution / credit line">
+            <input style={inp} value={edit.imageAttribution} onChange={(e) => set({ imageAttribution: e.target.value })} placeholder="Required unless consortium / AI-original" />
+          </Field>
+        </div>
+        <Field label="Original source URL (if adapted from a published figure)">
+          <input style={inp} value={edit.imageSourceUrl} onChange={(e) => set({ imageSourceUrl: e.target.value })} placeholder="https://…" />
         </Field>
 
         <div className="cases-row-2">
