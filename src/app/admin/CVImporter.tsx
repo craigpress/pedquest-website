@@ -357,7 +357,7 @@ export default function CVImporter() {
           {/* Profile Data */}
           <div style={cardStyle}>
             <h2 style={sectionHeadingStyle}>Profile Data</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            <div className="adm-form-row-2">
               <div>
                 <label style={labelStyle}>Name</label>
                 <p style={{ fontSize: "0.9rem", color: "var(--text)", fontFamily: "var(--body-font)" }}>

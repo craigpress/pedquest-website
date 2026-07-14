@@ -759,7 +759,7 @@ function AdminPageInner() {
               </div>
 
               {/* Journal + Year + Month */}
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "0.75rem" }}>
+              <div className="adm-form-row-3a">
                 <div>
                   <label style={labelStyle}>Journal</label>
                   <input type="text" value={journal} onChange={(e) => setJournal(e.target.value)} style={inputStyle} />
@@ -783,7 +783,7 @@ function AdminPageInner() {
               </div>
 
               {/* IDs */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
+              <div className="adm-form-row-3">
                 <div>
                   <label style={labelStyle}>DOI</label>
                   <input type="text" value={doi} onChange={(e) => setDoi(e.target.value)} style={inputStyle} />
@@ -1022,7 +1022,7 @@ function AdminPageInner() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "0.75rem" }}>
+            <div className="adm-form-row-2a">
               <div>
                 <label style={labelStyle}>Conference Name</label>
                 <input type="text" value={absConference} onChange={(e) => setAbsConference(e.target.value)} style={inputStyle} />
@@ -1038,7 +1038,7 @@ function AdminPageInner() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
+            <div className="adm-form-row-3">
               <div>
                 <label style={labelStyle}>Date</label>
                 <input type="text" value={absDate} onChange={(e) => setAbsDate(e.target.value)} placeholder="November 2025" style={inputStyle} />
@@ -1402,7 +1402,7 @@ function AdminPageInner() {
 
               {/* Edit fields */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div className="adm-form-row-2">
                   <div>
                     <label style={labelStyle}>Full Name</label>
                     <input type="text" value={memberForm.name} onChange={(e) => setMemberForm(f => f ? { ...f, name: e.target.value } : f)} style={inputStyle} />
@@ -1413,7 +1413,7 @@ function AdminPageInner() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div className="adm-form-row-2">
                   <div>
                     <label style={labelStyle}>Role</label>
                     <input type="text" value={memberForm.role} onChange={(e) => setMemberForm(f => f ? { ...f, role: e.target.value } : f)} style={inputStyle} placeholder="e.g. Co-Director, Member" />
@@ -1451,7 +1451,7 @@ function AdminPageInner() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div className="adm-form-row-2">
                   <div>
                     <label style={labelStyle}>Email</label>
                     <input type="email" value={memberForm.email} onChange={(e) => setMemberForm(f => f ? { ...f, email: e.target.value } : f)} style={inputStyle} />
@@ -1462,7 +1462,7 @@ function AdminPageInner() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div className="adm-form-row-2">
                   <div>
                     <label style={labelStyle}>City</label>
                     <input type="text" value={memberForm.city} onChange={(e) => setMemberForm(f => f ? { ...f, city: e.target.value } : f)} style={inputStyle} placeholder="Philadelphia, PA" />
@@ -1818,6 +1818,15 @@ function AdminPageInner() {
           font-family: var(--mono-font); font-size: 0.72rem; color: var(--warm);
         }
         .adm-content { padding: 1.6rem 2rem 3rem; }
+
+        /* Form rows — collapse to a single column on phones */
+        .adm-form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .adm-form-row-2a { display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; }
+        .adm-form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .adm-form-row-3a { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; }
+        @media (max-width: 640px) {
+          .adm-form-row-2, .adm-form-row-2a, .adm-form-row-3, .adm-form-row-3a { grid-template-columns: 1fr; }
+        }
 
         .adm-banner {
           display: flex; gap: 0.7rem; padding: 0.95rem 1.1rem; margin-bottom: 1.25rem;
