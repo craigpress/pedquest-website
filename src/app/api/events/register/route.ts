@@ -5,6 +5,7 @@ import { isValidEmail, checkHoneypot, checkOrigin, truncate } from "@/lib/valida
 import { sendDiscordNotification, sendTelegramNotification, sendEmail } from "@/lib/notifications";
 import { getEventBySlug } from "@/lib/events-server";
 import { fmtEventDate, fmtEventTimeRange } from "@/lib/events";
+import { buildEventIcs } from "@/lib/ics";
 
 export async function POST(request: NextRequest) {
   const originCheck = checkOrigin(request);
@@ -74,6 +75,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const ics = buildEventIcs(event);
+
   sendEmail({
     to: safeEmail,
     subject: `Your link: ${event.series ? `${event.series} — ` : ""}${event.title}`,
@@ -87,11 +90,21 @@ export async function POST(request: NextRequest) {
       event.meetingId ? `Meeting ID: ${event.meetingId}` : "",
       event.passcode ? `Passcode: ${event.passcode}` : "",
       "",
+      "The attached calendar invite carries the same details, with reminders a",
+      "day before and 15 minutes before.",
+      "",
       `Hosted by ${event.host}.`,
       "PedQuEST — https://pedquest.org/events",
     ]
       .filter(Boolean)
       .join("\n"),
+    attachments: [
+      {
+        filename: ics.filename,
+        content: Buffer.from(ics.content, "utf8").toString("base64"),
+        contentType: "text/calendar",
+      },
+    ],
   });
 
   sendDiscordNotification({
@@ -118,6 +131,10 @@ export async function POST(request: NextRequest) {
       meetingId: event.meetingId,
       passcode: event.passcode,
     },
+    // Handed back so the success screen can offer the same invite as a
+    // download. Deliberately not a public GET route — that would serve the
+    // gated join details to anyone who guessed the URL.
+    calendar: { filename: ics.filename, content: ics.content },
     emailed: Boolean(process.env.RESEND_API_KEY),
   });
 }

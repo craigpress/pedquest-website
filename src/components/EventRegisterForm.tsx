@@ -8,6 +8,11 @@ interface Access {
   passcode: string | null;
 }
 
+interface Calendar {
+  filename: string;
+  content: string;
+}
+
 export default function EventRegisterForm({
   slug,
   note,
@@ -22,6 +27,7 @@ export default function EventRegisterForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [access, setAccess] = useState<Access | null>(null);
+  const [calendar, setCalendar] = useState<Calendar | null>(null);
   const [emailed, setEmailed] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -40,6 +46,7 @@ export default function EventRegisterForm({
         return;
       }
       setAccess(data.access ?? null);
+      setCalendar(data.calendar ?? null);
       setEmailed(Boolean(data.emailed));
     } catch {
       setError("Network error. Please try again.");
@@ -48,18 +55,38 @@ export default function EventRegisterForm({
     }
   }
 
+  function downloadCalendar() {
+    if (!calendar) return;
+    // Blob rather than a data: URI — Safari won't honour `download` on data URIs.
+    const url = URL.createObjectURL(
+      new Blob([calendar.content], { type: "text/calendar;charset=utf-8" })
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = calendar.filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (access) {
     return (
       <div className="ev-reg ev-reg-done">
         <h3 className="ev-reg-title">You&apos;re registered.</h3>
         <p className="ev-reg-note">
           {emailed
-            ? `We've sent the join details to ${email}. Here they are as well:`
+            ? `We've emailed the join details and a calendar invite to ${email}. Here they are as well:`
             : `Here are your join details — we've also noted your registration.`}
         </p>
-        <a className="btn-primary ev-reg-join" href={access.joinUrl} target="_blank" rel="noopener noreferrer">
-          Join on Zoom
-        </a>
+        <div className="ev-reg-actions">
+          <a className="btn-primary ev-reg-join" href={access.joinUrl} target="_blank" rel="noopener noreferrer">
+            Join on Zoom
+          </a>
+          {calendar && (
+            <button type="button" className="btn-secondary ev-reg-cal" onClick={downloadCalendar}>
+              Add to calendar
+            </button>
+          )}
+        </div>
         <dl className="ev-reg-meta">
           {access.meetingId && (
             <div>
@@ -192,7 +219,9 @@ const FORM_CSS = `
   }
   .ev-reg-fine a { color: var(--accent); }
   .ev-reg-done { border-color: var(--accent); }
-  .ev-reg-join { width: 100%; justify-content: center; }
+  .ev-reg-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+  .ev-reg-join, .ev-reg-cal { flex: 1 1 160px; justify-content: center; text-align: center; }
+  .ev-reg-cal { cursor: pointer; font: inherit; font-weight: 600; }
   .ev-reg-meta { display: flex; gap: 1.75rem; margin-top: 1.1rem; flex-wrap: wrap; }
   .ev-reg-meta dt {
     font-family: var(--mono-font); font-size: 0.68rem; letter-spacing: 0.06em;

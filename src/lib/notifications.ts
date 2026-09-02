@@ -42,6 +42,8 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   text: string;
+  /** Resend takes attachment content base64-encoded. */
+  attachments?: { filename: string; content: string; contentType?: string }[];
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
@@ -61,6 +63,15 @@ export async function sendEmail(opts: {
         // The sending domain may have no inbound MX (a send-only subdomain), in
         // which case replies would bounce — point them at a real mailbox.
         ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
+        ...(opts.attachments?.length
+          ? {
+              attachments: opts.attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+                ...(a.contentType ? { content_type: a.contentType } : {}),
+              })),
+            }
+          : {}),
       }),
     });
     if (!res.ok) {
