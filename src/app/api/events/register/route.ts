@@ -77,7 +77,11 @@ export async function POST(request: NextRequest) {
 
   const ics = buildEventIcs(event);
 
-  sendEmail({
+  // These MUST be awaited before responding. On Vercel the function can be
+  // frozen the moment the response is sent, which drops any in-flight fetch —
+  // fire-and-forget silently lost a registration email in testing. allSettled
+  // so a failing webhook can't stop the email (or vice versa).
+  const emailPromise = sendEmail({
     to: safeEmail,
     subject: `Your link: ${event.series ? `${event.series} — ` : ""}${event.title}`,
     text: [
@@ -107,7 +111,7 @@ export async function POST(request: NextRequest) {
     ],
   });
 
-  sendDiscordNotification({
+  const discordPromise = sendDiscordNotification({
     title: `🎟️ Event registration: ${event.title}`,
     color: 0x2ed6c6,
     fields: [
@@ -118,11 +122,13 @@ export async function POST(request: NextRequest) {
     footer: `PedQuEST Events · ${event.slug}`,
   });
 
-  sendTelegramNotification(
+  const telegramPromise = sendTelegramNotification(
     `🎟️ New registration for ${event.title}\n\n${safeEmail}${safeName ? ` (${safeName})` : ""}${
       safeInstitution ? `\n${safeInstitution}` : ""
     }`
   );
+
+  await Promise.allSettled([emailPromise, discordPromise, telegramPromise]);
 
   return NextResponse.json({
     success: true,
