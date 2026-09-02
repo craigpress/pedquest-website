@@ -58,6 +58,9 @@ export async function sendEmail(opts: {
         to: [opts.to],
         subject: opts.subject,
         text: opts.text,
+        // The sending domain may have no inbound MX (a send-only subdomain), in
+        // which case replies would bounce — point them at a real mailbox.
+        ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
       }),
     });
     if (!res.ok) {
