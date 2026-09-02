@@ -76,7 +76,12 @@ export async function sendEmail(opts: {
     });
     if (!res.ok) {
       console.error("[Email] Resend rejected the send:", res.status, await res.text());
+      return;
     }
+    // Log the message id so a "they never got it" report can be traced to a
+    // specific Resend delivery record instead of guessing.
+    const { id } = (await res.json()) as { id?: string };
+    console.log(`[Email] queued id=${id ?? "unknown"} to=${opts.to} subject="${opts.subject}"`);
   } catch (e) {
     console.error("[Email] send failed:", e);
   }
