@@ -70,8 +70,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Send notifications (non-blocking)
-  sendDiscordNotification({
+  // Must be awaited: on Vercel the function can be frozen as soon as the
+  // response is sent, dropping any in-flight fetch and silently losing the
+  // notification. allSettled so one failing webhook can't stop the other.
+  const discordPromise = sendDiscordNotification({
     title: `📬 New Contact: ${safeSubject}`,
     color: 0xd4603a,
     fields: [
@@ -82,9 +84,11 @@ export async function POST(request: NextRequest) {
     footer: "PedQuEST Contact Form",
   });
 
-  sendTelegramNotification(
+  const telegramPromise = sendTelegramNotification(
     `📬 New PedQuEST Contact\n\nFrom: ${safeName}\nEmail: ${safeEmail}\nSubject: ${safeSubject}\n\n${safeMessage}`
   );
+
+  await Promise.allSettled([discordPromise, telegramPromise]);
 
   console.log(`[Contact] ${safeName} <${safeEmail}> — ${safeSubject}`);
 
