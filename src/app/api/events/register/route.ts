@@ -1,0 +1,123 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { isValidEmail, checkHoneypot, checkOrigin, truncate } from "@/lib/validation";
+import { sendDiscordNotification, sendTelegramNotification, sendEmail } from "@/lib/notifications";
+import { getEventBySlug } from "@/lib/events-server";
+import { fmtEventDate, fmtEventTimeRange } from "@/lib/events";
+
+export async function POST(request: NextRequest) {
+  const originCheck = checkOrigin(request);
+  if (originCheck) return originCheck;
+
+  const ip = getClientIp(request);
+
+  if (isRateLimited(ip, "event-register", 10)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429 }
+    );
+  }
+
+  let body: Record<string, string>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  const { slug, email, name, institution, honeypot } = body;
+
+  const honeypotResponse = checkHoneypot(honeypot);
+  if (honeypotResponse) return honeypotResponse;
+
+  const event = slug ? await getEventBySlug(slug) : null;
+  if (!event || event.status !== "published" || event.registration !== "email") {
+    return NextResponse.json({ error: "Registration is not open for this event." }, { status: 404 });
+  }
+  if (!event.joinUrl) {
+    return NextResponse.json(
+      { error: "The join link for this event hasn't been posted yet. Please check back shortly." },
+      { status: 400 }
+    );
+  }
+
+  if (!email?.trim()) {
+    return NextResponse.json({ error: "Email is required." }, { status: 400 });
+  }
+  if (!isValidEmail(email)) {
+    return NextResponse.json(
+      { error: "Please provide a valid email address." },
+      { status: 400 }
+    );
+  }
+
+  const safeEmail = truncate(email.trim().toLowerCase(), 254);
+  const safeName = name?.trim() ? truncate(name.trim(), 200) : null;
+  const safeInstitution = institution?.trim() ? truncate(institution.trim(), 300) : null;
+
+  const supabase = createServerClient();
+  if (supabase) {
+    const { error } = await supabase.from("event_registrations").insert({
+      event_slug: event.slug,
+      email: safeEmail,
+      name: safeName,
+      institution: safeInstitution,
+    });
+    // A repeat registration is fine — the person just wants the link again.
+    if (error && error.code !== "23505") {
+      console.error("[EventRegister] Supabase insert failed:", error.message);
+      return NextResponse.json(
+        { error: "Registration failed. Please try again later." },
+        { status: 500 }
+      );
+    }
+  }
+
+  sendEmail({
+    to: safeEmail,
+    subject: `Your link: ${event.series ? `${event.series} — ` : ""}${event.title}`,
+    text: [
+      `You're registered for ${event.title}.`,
+      "",
+      `When: ${fmtEventDate(event.startsAt, event.timezone)}, ${fmtEventTimeRange(event)}`,
+      `Where: ${event.location ?? "Virtual"}`,
+      "",
+      `Join link: ${event.joinUrl}`,
+      event.meetingId ? `Meeting ID: ${event.meetingId}` : "",
+      event.passcode ? `Passcode: ${event.passcode}` : "",
+      "",
+      `Hosted by ${event.host}.`,
+      "PedQuEST — https://pedquest.org/events",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+
+  sendDiscordNotification({
+    title: `🎟️ Event registration: ${event.title}`,
+    color: 0x2ed6c6,
+    fields: [
+      { name: "Email", value: safeEmail, inline: true },
+      { name: "Name", value: safeName ?? "—", inline: true },
+      { name: "Institution", value: safeInstitution ?? "—" },
+    ],
+    footer: `PedQuEST Events · ${event.slug}`,
+  });
+
+  sendTelegramNotification(
+    `🎟️ New registration for ${event.title}\n\n${safeEmail}${safeName ? ` (${safeName})` : ""}${
+      safeInstitution ? `\n${safeInstitution}` : ""
+    }`
+  );
+
+  return NextResponse.json({
+    success: true,
+    access: {
+      joinUrl: event.joinUrl,
+      meetingId: event.meetingId,
+      passcode: event.passcode,
+    },
+    emailed: Boolean(process.env.RESEND_API_KEY),
+  });
+}

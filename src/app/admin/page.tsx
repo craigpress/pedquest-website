@@ -600,6 +600,10 @@ function AdminPageInner() {
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10 12 5 2 10l10 5 10-5ZM6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5" /></svg>
             Education · Cases
           </a>
+          <a href="/admin/events">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+            Events
+          </a>
         </nav>
         <div className="adm-who">
           <span className="adm-av">{(user?.email ?? "?").slice(0, 2).toUpperCase()}</span>

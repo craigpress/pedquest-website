@@ -36,6 +36,38 @@ export async function sendDiscordNotification(opts: {
   }
 }
 
+/** Transactional email via Resend. No-op unless RESEND_API_KEY is set, so the
+ *  caller can always fire it and fall back to showing the content on screen. */
+export async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  text: string;
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM || "PedQuEST <noreply@pedquest.org>",
+        to: [opts.to],
+        subject: opts.subject,
+        text: opts.text,
+      }),
+    });
+    if (!res.ok) {
+      console.error("[Email] Resend rejected the send:", res.status, await res.text());
+    }
+  } catch (e) {
+    console.error("[Email] send failed:", e);
+  }
+}
+
 export async function sendTelegramNotification(text: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
