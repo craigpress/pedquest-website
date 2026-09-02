@@ -29,6 +29,12 @@ function EventCard({ ev, featured }: { ev: PublicEvent; featured?: boolean }) {
             {past ? "Past" : "Upcoming"}
           </span>
         </div>
+      </div>
+
+      {/* Title and host mark share a row: title left and free to wrap, mark
+          right-aligned and vertically centred against it. */}
+      <div className="ev-card-title-row">
+        <h2 className={featured ? "ev-title-lg" : "ev-title"}>{ev.title}</h2>
         {ev.hostLogo && (
           <Image
             className="ev-host-logo"
@@ -39,8 +45,6 @@ function EventCard({ ev, featured }: { ev: PublicEvent; featured?: boolean }) {
           />
         )}
       </div>
-
-      <h2 className={featured ? "ev-title-lg" : "ev-title"}>{ev.title}</h2>
       {ev.summary && <p className="ev-summary">{ev.summary}</p>}
 
       <dl className="ev-facts">
@@ -315,8 +319,15 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
         .ev-card.past { opacity: 0.86; }
         .ev-card-head {
           display: flex; justify-content: space-between; align-items: flex-start;
-          gap: 1.25rem; margin-bottom: 1rem;
+          gap: 1.25rem; margin-bottom: 0.9rem;
         }
+        .ev-card-title-row {
+          display: flex; justify-content: space-between; align-items: center;
+          gap: 1.75rem;
+        }
+        /* min-width: 0 lets the heading actually wrap inside the flex row
+           instead of forcing the mark off the edge on a long title. */
+        .ev-card-title-row > h2 { flex: 1 1 auto; min-width: 0; }
         .ev-card-keys { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .ev-series {
           font-family: var(--mono-font); font-size: 0.68rem; font-weight: 600;
@@ -415,7 +426,9 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
           .ev-hero-logo { max-width: 400px; }
         }
         @media (max-width: 600px) {
-          .ev-card-head { flex-direction: column-reverse; align-items: flex-start; }
+          /* Stack the mark under the title rather than squeezing both. */
+          .ev-card-title-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+          .ev-host-logo { width: 170px; max-height: 94px; }
         }
       `}</style>
     </main>
