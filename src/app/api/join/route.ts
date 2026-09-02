@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
       research_interests: researchInterests?.trim() ? truncate(researchInterests.trim(), 2000) : null,
       how_heard: howHeard?.trim() ? truncate(howHeard.trim(), 500) : null,
       statement_of_interest: statementOfInterest?.trim() ? truncate(statementOfInterest.trim(), 5000) : null,
-      ip_address: ip,
     });
     if (error) {
       console.error("[Join] Supabase insert failed:", error.message);
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
   } else {
     console.log("[Join] Supabase not configured — logging submission only");
-    console.log(`Hospital: ${hospital} | PI: ${piEmail} | IP: ${ip}`);
+    console.log(`Hospital: ${hospital} | PI: ${piEmail}`);
   }
 
   return NextResponse.json({ success: true });

@@ -12,7 +12,10 @@ const routes: { path: string; priority: number; changeFrequency: MetadataRoute.S
   { path: "/events", priority: 0.7, changeFrequency: "weekly" },
   { path: "/contact", priority: 0.4, changeFrequency: "yearly" },
   { path: "/join", priority: 0.5, changeFrequency: "yearly" },
+  { path: "/join/individual", priority: 0.5, changeFrequency: "yearly" },
+  { path: "/join/site", priority: 0.5, changeFrequency: "yearly" },
   { path: "/sponsor", priority: 0.4, changeFrequency: "yearly" },
+  { path: "/privacy", priority: 0.2, changeFrequency: "yearly" },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

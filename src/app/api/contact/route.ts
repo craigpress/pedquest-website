@@ -59,7 +59,6 @@ export async function POST(request: NextRequest) {
       email: safeEmail,
       subject: safeSubject,
       message: safeMessage,
-      ip_address: ip,
     });
     if (error) {
       console.error("[Contact] Supabase insert failed:", error.message);

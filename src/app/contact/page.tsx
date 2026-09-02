@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import FormPrivacyNote from "@/components/FormPrivacyNote";
 
 const subjectOptions = [
   "General Inquiry",
@@ -284,6 +285,8 @@ export default function ContactPage() {
           >
             {status === "loading" ? "Sending..." : "Send Message"}
           </button>
+
+          <FormPrivacyNote what="your name, email and message" />
 
           {/* Feedback Messages */}
           {status === "success" && (

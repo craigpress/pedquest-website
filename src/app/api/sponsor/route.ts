@@ -68,7 +68,6 @@ export async function POST(request: NextRequest) {
       collaboration_description: description?.trim() ? truncate(description.trim(), 5000) : null,
       budget_range: budgetRange?.trim() ? truncate(budgetRange.trim(), 100) : null,
       how_heard: howHeard?.trim() ? truncate(howHeard.trim(), 500) : null,
-      ip_address: ip,
     });
     if (error) {
       console.error("[Sponsor] Supabase insert failed:", error.message);

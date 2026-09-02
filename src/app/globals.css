@@ -46,30 +46,6 @@
   --skeleton: #152539;
 }
 
-/* Dark is the only theme — the toggle keeps the instrument palette so it stays
-   consistent whether or not a data-theme attribute is present. */
-[data-theme="dark"],
-[data-theme="light"] {
-  --bg: #080f1c;
-  --bg-card: #0f1c2e;
-  --bg-card-hover: #152539;
-  --bg-nav: rgba(8, 15, 28, 0.85);
-  --text: #e9f1f9;
-  --text-secondary: #aabfd3;
-  --text-muted: #7d93a9;
-  --accent-primary: #2ed6c6;
-  --accent-primary-hover: #54e2d4;
-  --accent-secondary: #f0a94a;
-  --accent-tertiary: #3ecb8e;
-  --border: #213344;
-  --border-strong: #2c4358;
-  --member-badge-bg: rgba(46, 214, 198, 0.12);
-  --member-badge-text: #2ed6c6;
-  --stat-color: #2ed6c6;
-  --map-pin: #2ed6c6;
-  --skeleton: #152539;
-}
-
 /* ─── Base Styles ─── */
 * {
   margin: 0;
@@ -124,11 +100,6 @@ a:hover {
 .card:hover {
   box-shadow: var(--shadow-lg);
   border-color: var(--border-strong);
-  background: var(--bg-card-hover);
-}
-[data-theme="dark"] .card:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  border-color: rgba(0, 212, 170, 0.2);
   background: var(--bg-card-hover);
 }
 
@@ -248,11 +219,13 @@ a:hover {
   font-family: var(--body-font);
 }
 
-/* Dark mode map tiles */
-[data-theme="dark"] .leaflet-tile-pane {
+/* Map tiles, tuned for the dark palette */
+.leaflet-tile-pane {
   filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
 }
-[data-theme="dark"] .leaflet-container {
+/* Doubled class to outrank Leaflet's own `.leaflet-container { background: #ddd }`,
+   which used to lose to the higher-specificity [data-theme="dark"] selector. */
+.leaflet-container.leaflet-container {
   background: #0a1628;
 }
 

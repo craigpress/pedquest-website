@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import FormPrivacyNote from "@/components/FormPrivacyNote";
 
 const AREAS_OF_INTEREST = [
   "Research Funding",
@@ -299,6 +300,8 @@ export default function SponsorPage() {
                 </svg>
               )}
             </button>
+
+            <FormPrivacyNote what="your name, email, organisation and message" />
           </form>
         </div>
       </section>

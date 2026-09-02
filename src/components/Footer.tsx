@@ -218,6 +218,16 @@ export default function Footer() {
               Pediatric Quantitative EEG Strategic Taskforce
             </p>
             <Link
+              href="/privacy"
+              className="text-xs no-underline"
+              style={{
+                color: "var(--text-muted)",
+                fontFamily: "var(--body-font)",
+              }}
+            >
+              Privacy
+            </Link>
+            <Link
               href="/admin"
               className="text-xs no-underline"
               style={{

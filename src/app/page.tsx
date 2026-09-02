@@ -317,7 +317,7 @@ export default function HomePage() {
             <h2 className="section-h2">Evidence, not adjectives.</h2>
             <p className="section-sub">
               Every figure is computed from the live member and publication
-              registry — the same numbers our sites cite in grant applications.
+              registry, and updates as members join and papers are indexed.
             </p>
           </div>
           <div className="impact-grid">
@@ -511,7 +511,7 @@ export default function HomePage() {
             <h2 className="section-h2">Three ways to work with PedQuEST.</h2>
           </div>
           <div className="involve-grid">
-            <Link href="/join" className="involve-card involve-card-accent">
+            <Link href="/join/site" className="involve-card involve-card-accent">
               <span className="involve-key">For sites</span>
               <h3 className="involve-title">Join as a member site</h3>
               <p className="involve-desc">
