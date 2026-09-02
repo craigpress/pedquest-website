@@ -34,8 +34,8 @@ function EventCard({ ev, featured }: { ev: PublicEvent; featured?: boolean }) {
             className="ev-host-logo"
             src={ev.hostLogo}
             alt={ev.host}
-            width={140}
-            height={70}
+            width={440}
+            height={220}
           />
         )}
       </div>
@@ -177,8 +177,8 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
               <Image
                 src={lectureSeries.logo}
                 alt="Pediatric Neurocritical Care Research Group"
-                width={360}
-                height={180}
+                width={720}
+                height={284}
                 priority
               />
             </a>
@@ -276,7 +276,7 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
           background: var(--bg);
         }
         .ev-hero-grid {
-          display: grid; grid-template-columns: minmax(0, 1fr) 300px;
+          display: grid; grid-template-columns: minmax(0, 1fr) 400px;
           gap: 2.5rem; align-items: start;
           max-width: 1200px; margin: 0 auto;
         }
@@ -301,7 +301,7 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
         }
         .ev-hero-logo {
           display: block; background: #fff; border-radius: 16px;
-          padding: 1.5rem 1.25rem; border: 1px solid var(--line);
+          padding: 1.75rem 1.5rem; border: 1px solid var(--line);
         }
         .ev-hero-logo img { width: 100%; height: auto; }
 
@@ -332,8 +332,11 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
         .ev-state.past { color: var(--muted); }
         .ev-state.past .d { background: var(--muted); }
         .ev-host-logo {
-          width: 130px; height: auto; flex-shrink: 0;
-          background: #fff; border-radius: 10px; padding: 0.5rem 0.6rem;
+          /* max-height + contain keeps the wide PNCRG wordmark and the square
+             Seattle seal at comparable visual weight. */
+          width: 210px; height: auto; max-height: 116px; object-fit: contain;
+          flex-shrink: 0;
+          background: #fff; border-radius: 12px; padding: 0.6rem 0.75rem;
         }
         .ev-title-lg {
           font-family: var(--heading-font); font-size: clamp(1.5rem, 3.2vw, 2.1rem);
@@ -409,7 +412,7 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
 
         @media (max-width: 900px) {
           .ev-hero-grid { grid-template-columns: 1fr; }
-          .ev-hero-logo { max-width: 320px; }
+          .ev-hero-logo { max-width: 400px; }
         }
         @media (max-width: 600px) {
           .ev-card-head { flex-direction: column-reverse; align-items: flex-start; }
