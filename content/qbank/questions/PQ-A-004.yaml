@@ -1,0 +1,167 @@
+id: PQ-A-004
+version: 1
+status: draft
+title: Sign convention of the relative asymmetry index and spectrogram
+domain: foundations
+topics: [asymmetry index, relative asymmetry spectrogram, sign convention, laterality, breach]
+population: adolescent
+setting: PICU
+difficulty: introductory
+bloom: interpretation
+learning_objective: >-
+  State the sign and color conventions of the relative asymmetry index and the
+  asymmetry spectrogram, and use them to name the hemisphere with greater relative
+  power.
+
+stem:
+  vignette: >-
+    A 15-year-old boy is admitted to the PICU after evacuation of an acute right
+    subdural hematoma sustained in a fall. He is intubated and sedated with a
+    propofol infusion. Continuous EEG with a quantitative trend panel is started
+    postoperatively for encephalopathy out of proportion to sedation. Through the
+    first 3 hours the relative asymmetry index sits steadily at about minus 35
+    percent and the asymmetry spectrogram is uniformly blue across all displayed
+    frequencies, with no evolving bands and no change after endotracheal suctioning.
+    A resident covering the unit overnight is asked to state, from the trend panel
+    alone, which hemisphere carries more power before opening the raw EEG.
+  image_caption: >-
+    Three-hour qEEG panel: relative asymmetry index with the vertical axis labeled
+    minus 100 to plus 100 percent and a zero line, above an asymmetry spectrogram
+    with a frequency axis of 0 to 20 hertz and a red-to-blue color bar. Time axis in
+    minutes from the start of recording.
+  lead_in: >-
+    Which hemisphere has the greater relative power, and which display feature
+    establishes it?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Left hemisphere, because the relative asymmetry index is negative
+    correct: true
+    rationale: >-
+      By convention the relative asymmetry index is negative when the left hemisphere
+      has more power and positive when the right predominates, and the asymmetry
+      spectrogram shows left-hemisphere dominance as blue. Both features agree here.
+  - key: B
+    text: Right hemisphere, because the relative asymmetry index is negative
+    correct: false
+    rationale: >-
+      This is the inverted convention. A negative index does not indicate right
+      predominance, and it would also contradict the blue asymmetry spectrogram, which
+      marks the left side.
+  - key: C
+    text: Right hemisphere, because the asymmetry spectrogram is uniformly blue
+    correct: false
+    rationale: >-
+      Red rather than blue marks right-hemisphere dominance for a given frequency on
+      the asymmetry spectrogram; a uniformly blue spectrogram indicates the left side.
+  - key: D
+    text: Left hemisphere, because the absolute asymmetry index exceeds 30 percent
+    correct: false
+    rationale: >-
+      The absolute asymmetry index graphs the magnitude of the interhemispheric
+      difference on a 0 to 100 percent scale and carries no laterality information, so
+      it cannot by itself name a side.
+  - key: E
+    text: Neither, because a persistent index without evolution cannot be lateralized
+    correct: false
+    rationale: >-
+      Persistence tells you the asymmetry is structural rather than ictal, which is the
+      expected finding after evacuation of a right subdural hematoma, but a persistent
+      index is still signed and still lateralizing.
+
+explanation: >-
+  The correct answer is A. The relative asymmetry index is signed: negative values
+  indicate that the left hemisphere has more power and positive values that the right
+  predominates. On the asymmetry spectrogram, right-hemisphere dominance at a given
+  frequency is displayed as red and left-hemisphere dominance as blue, with darker
+  color meaning greater asymmetry. What the image shows: a flat index at about minus
+  35 percent and a uniformly blue asymmetry spectrogram across 0 to 20 hertz, both
+  pointing to the left hemisphere; the absence of evolving bands and the absence of
+  change after stimulation mark this as a persistent, structural asymmetry rather than
+  an ictal or post-ictal one, which fits attenuation over the operated right
+  hemisphere. Evidence: a pediatric neurocritical care review of trend construction
+  states that the absolute asymmetry index graphs the absolute difference, 0 to 100
+  percent, between the hemispheres as a running average, that the relative asymmetry
+  index displays index values from minus 100 to plus 100 percent with negative values
+  when the left hemisphere has more power and positive values when the right
+  predominates, and that on the asymmetry spectrogram right-hemisphere dominance for a
+  specific frequency is red and left-hemisphere dominance blue, the darker the color
+  the greater the asymmetry. The same review notes that asymmetry differences may
+  reflect extracerebral causes such as subdural hemorrhage or superficial scalp
+  swelling, not only cortical injury. Bedside takeaway: confirm the sign convention on
+  your own software before calling a side, and always ask whether an asymmetry is
+  cerebral or extracerebral.
+
+key_points:
+  - "Relative asymmetry index: negative means left has more power, positive means right."
+  - "Asymmetry spectrogram: blue is left-hemisphere dominance, red is right; darker is greater."
+  - The absolute asymmetry index gives magnitude only, from 0 to 100 percent, with no side.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100404
+    age_group: adolescent
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 180
+    background:
+      type: continuous
+      dominant_hz: 5.0
+      amplitude_uv: 45
+      slow_fraction: 0.55
+      reactivity: absent
+      asymmetry:
+        side: right
+        attenuation_pct: 55
+        slowing_hz: 1.5
+    events:
+      - type: stimulation
+        at_min: 120
+    annotations:
+      - { at_min: 120, label: "Endotracheal suctioning" }
+    panels:
+      - asymmetry_index
+      - asymmetry_relative
+    time_axis: elapsed
+    style:
+      asymmetry_index_axis_pct: [-100, 100]
+      asymmetry_index_zero_line: true
+      asymmetry_spectrogram_hz_range: [0, 20]
+      asymmetry_colorbar: blue_left_red_right
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

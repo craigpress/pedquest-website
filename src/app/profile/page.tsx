@@ -3,10 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useMember, signOut as supabaseSignOut } from "@/lib/auth";
+import { useMember, useRole, signOut as supabaseSignOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-
-const ADMIN_EMAILS = ["pressca@chop.edu", "craigpress@gmail.com", "gbenedet@med.umich.edu", "ajay.thomas@bcm.edu"];
 
 interface ProfileData {
   bio: string;
@@ -186,7 +184,7 @@ export default function ProfilePage() {
 
   const isAuthenticated = !!user;
   const effectiveEmail = user?.email || null;
-  const isAdmin = !!effectiveEmail && ADMIN_EMAILS.includes(effectiveEmail.toLowerCase());
+  const { isAdmin } = useRole();
 
   // Redirect if not authenticated
   useEffect(() => {

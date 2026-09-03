@@ -1,0 +1,158 @@
+# Verification trail: content/qbank/sources/PQ-B-006.md
+id: PQ-B-006
+version: 1
+status: draft
+title: Which post-arrest EEG observation carries prognostic weight, and when
+domain: clinical_prognosis
+topics: [cardiac arrest, timing of prognostication, background continuity, serial EEG]
+population: adolescent
+setting: PICU
+difficulty: intermediate
+bloom: application
+learning_objective: >-
+  Identify continuous background activity within the first 12 hours after return of
+  spontaneous circulation as the EEG observation associated with good short-term outcome,
+  and recognize that serial change in background score has not been.
+
+stem:
+  vignette: >-
+    A 14-year-old boy has an in-hospital cardiac arrest from a ventricular arrhythmia,
+    with 8 minutes of cardiopulmonary resuscitation before return of spontaneous
+    circulation. Targeted temperature management at 36.5 degrees Celsius is used. He is
+    intubated on fentanyl alone, without a sedative infusion or neuromuscular blockade.
+    Continuous EEG begins 3 hours after return of spontaneous circulation. A raw page from
+    the tenth hour is shown. The intensivist plans to repeat the background score at 24,
+    48 and 72 hours and use the trajectory to guide the family discussion.
+  image_caption: >-
+    Fifteen-second raw EEG page from the tenth hour after return of spontaneous
+    circulation, longitudinal bipolar montage, 19 scalp electrodes, 7 microvolts per
+    millimetre, filters 1 to 70 Hz with a 60 Hz notch. Time of day is suppressed. No
+    events or annotations fall within the displayed window.
+  lead_in: >-
+    Which observation from this recording carries prognostic weight for outcome at
+    hospital discharge?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Continuous background activity present within 12 hours of return of spontaneous circulation
+    correct: true
+    rationale: >-
+      On multivariable analysis of 73 children after cardiac arrest, continuous
+      background activity within 12 hours of return of spontaneous circulation was
+      associated with good short-term neurologic outcome.
+  - key: B
+    text: Improvement in the background score between 24 and 72 hours
+    correct: false
+    rationale: >-
+      Change in background score over time was not associated with outcome in this
+      cohort, and factor scores derived from standardized features were stable across
+      12-hour epochs for most children.
+  - key: C
+    text: Deterioration in the background score between 24 and 72 hours
+    correct: false
+    rationale: >-
+      The same analysis found no association for serial change in either direction; a few
+      individual children did change, mostly those with intermediate initial scores.
+  - key: D
+    text: The background score recorded at the end of continuous EEG monitoring
+    correct: false
+    rationale: >-
+      Electroencephalographic data collected after the initial period did not add
+      prognostic information beyond the early recording in this cohort.
+  - key: E
+    text: The total number of hours of continuous EEG completed
+    correct: false
+    rationale: >-
+      Monitoring duration is a resource and workflow variable. It carries no direct
+      prognostic meaning in post-arrest cohorts.
+
+explanation: >-
+  The correct answer is A. What the image shows: at hour 10 the page carries continuous,
+  moderately slow cerebral activity across all chains, without interburst intervals,
+  burst suppression or generalized attenuation, and without periodic patterns. Continuity
+  at this early time point, not the later trajectory, is the observation with published
+  prognostic value. Evidence: in a retrospective cohort of non-neonatal children with a
+  cardiac arrest lasting more than 2 minutes who were monitored within 72 hours of return
+  of spontaneous circulation, multivariable analysis of 73 children found that an arrest
+  duration under 20 minutes or continuous background activity within 12 hours of return of
+  spontaneous circulation was associated with good short-term neurologic outcome, whereas
+  change in background score over time and data collected after the initial hour were not
+  associated with outcome. A separate analysis of 89 consecutive children with 453 scored
+  EEG segments reduced standardized features to two factors, background and intermittent,
+  and found that factor scores did not change significantly across 12-hour epochs to 72
+  hours, although heat maps showed that some individual children with intermediate initial
+  scores did shift. Bedside takeaway: capture and grade the background early, and do not
+  promise a family that a later trajectory will change the estimate.
+
+key_points:
+  - Continuous background within 12 hours of return of spontaneous circulation predicted good outcome.
+  - Serial change in background score was not associated with outcome after pediatric arrest.
+  - Standardized background factor scores were stable across 12-hour epochs for most children.
+
+references:
+  - pmid: "27164188"
+    doi: 10.1097/PCC.0000000000000791
+    citation: >-
+      Ostendorf AP, Hartman ME, Friess SH. Early electroencephalographic findings
+      correlate with neurologic outcome in children following cardiac arrest. Pediatr
+      Crit Care Med. 2016;17(7):667-76.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "29438177"
+    doi: 10.1097/WNP.0000000000000459
+    citation: >-
+      Abend NS, Wiebe DJ, Xiao R, et al. EEG factors after pediatric cardiac arrest. J
+      Clin Neurophysiol. 2018;35(3):251-5.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: eeg_page
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100006
+    age_group: adolescent
+    sample_rate: 256
+    channels: standard_19
+    montage: longitudinal_bipolar
+    background:
+      type: continuous
+      dominant_hz: 4.5
+      amplitude_uv: 45
+      slow_fraction: 0.6
+      reactivity: present
+    at_min: 600.0
+    window_s: 15
+    sensitivity_uv_mm: 7
+    filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+    events: []
+    highlight: null
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

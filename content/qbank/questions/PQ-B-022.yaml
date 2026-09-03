@@ -1,0 +1,178 @@
+# Verification trail: content/qbank/sources/PQ-B-022.md
+id: PQ-B-022
+version: 1
+status: draft
+title: Seizure or pump artifact on a child cannulated for extracorporeal support
+domain: special_populations_pitfalls
+topics: [ECMO pump artifact, cannulation side, rhythmicity spectrogram, ipsilateral injury]
+population: child
+setting: ECMO
+difficulty: intermediate
+bloom: interpretation
+learning_objective: >-
+  Separate a continuous extracorporeal circuit artifact from an evolving electrographic
+  seizure on a trend panel, and relate the side of the seizure to the arterial cannulation
+  site.
+
+stem:
+  vignette: >-
+    A 4-year-old boy with refractory hypoxemic respiratory failure is placed on
+    venoarterial extracorporeal membrane oxygenation through right carotid cannulation.
+    Continuous EEG with a quantitative trend panel and a raw display is started within the
+    first hour. He receives a fentanyl infusion; no continuous sedative infusion and no
+    paralytic are running at the time of the window shown. A head computed tomogram
+    obtained on the second day shows an acute right middle cerebral artery territory
+    infarct. The bedside nurse reports that the seizure-probability trend has been
+    elevated since cannulation.
+  image_caption: >-
+    Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT
+    0-20 Hz L and R; relative asymmetry spectrogram; asymmetry index; suppression ratio L
+    and R), elapsed minutes; circuit running is annotated from minute 0. Lower: 15-second
+    raw page from minute 182, longitudinal bipolar, 7 microvolts per millimetre, 1-70 Hz.
+  lead_in: >-
+    Locate the electrographic seizure on the trend panel, distinguishing it from the
+    circuit artifact.
+
+question_type: point_to_feature
+options: []
+point_to_feature:
+  instruction: >-
+    Click the electrographic seizure on the right rhythmicity spectrogram. Do not click
+    the continuous circuit artifact or the later patting artifact.
+  target_event: 1
+  target_panel: rhythmicity_R
+  tolerance: 0.03
+
+explanation: >-
+  The seizure is the discrete evolving band on the right rhythmicity spectrogram at about
+  180 minutes. What the image shows: from minute 0 a narrow, unvarying horizontal stripe
+  runs across both rhythmicity spectrograms and both FFT panels at a fixed frequency, does
+  not change over 6 hours, is present bilaterally and does not deflect the asymmetry
+  index. That is the circuit pump artifact, and it is what has been holding the
+  seizure-probability trend high since cannulation. At about 180 minutes a separate band
+  appears only on the right, starting near 3.5 Hz and slowing to about 1.5 Hz over roughly
+  100 seconds, with a rightward deflection of the asymmetry index and a brief post-ictal
+  rise in the right suppression ratio; the raw page at minute 182 confirms evolving
+  rhythmic activity over the right hemisphere. Evidence: in 201
+  children monitored with continuous EEG during the first 24 hours of extracorporeal
+  support, electrographic seizures occurred in 33 (16 percent) at a median of 3.2 hours
+  (interquartile range 0.6 to 20.3) after monitoring began, and were always ipsilateral to
+  the imaged injury, although seizures were seen in only about a third of cases with
+  abnormal imaging. Among 28 patients with an isolated hemispheric lesion, right carotid
+  cannulation was associated with right hemisphere lesions and ascending aortic
+  cannulation with left hemisphere lesions, odds ratio 0.29 (95 percent confidence
+  interval 0.08 to 0.98). Bedside takeaway: know the cannulation side, and expect the
+  circuit to sit in the trend as a fixed, non-evolving stripe.
+
+key_points:
+  - Circuit pump artifact is a fixed, non-evolving, bilateral stripe; a seizure evolves and lateralizes.
+  - Seizures on extracorporeal support were always ipsilateral to the imaged injury.
+  - Right carotid cannulation was associated with right hemisphere lesions in 28 patients.
+
+references:
+  - pmid: "32631921"
+    doi: 10.1212/WNL.0000000000010188
+    citation: >-
+      Sansevere AJ, DiBacco ML, Akhondi-Asl A, et al. EEG features of brain injury during
+      extracorporeal membrane oxygenation in children. Neurology. 2020;95(10):e1372-80.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "34387276"
+    doi: 10.1097/WNP.0000000000000890
+    citation: >-
+      Chahine A, Chenouard A, Joram N, et al. Continuous amplitude-integrated
+      electroencephalography during neonatal and pediatric extracorporeal membrane
+      oxygenation. J Clin Neurophysiol. 2023;40(4):317-24.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: false
+
+image:
+  kind: composite
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100022
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    layout: panel_over_page
+    qeeg_panel:
+      duration_min: 360
+      background:
+        type: continuous
+        dominant_hz: 3.5
+        amplitude_uv: 45
+        slow_fraction: 0.7
+        asymmetry:
+          side: right
+          attenuation_pct: 40
+          slowing_hz: 1.5
+        reactivity: present
+      events:
+        - type: artifact
+          kind: ecmo_pump
+          at_min: 0
+          duration_s: 21600
+          side: all
+          intensity: medium
+        - type: seizure
+          onset_min: 180.0
+          duration_s: 100
+          onset_region: right_hemisphere
+          evolution: { start_hz: 3.5, end_hz: 1.5, amplitude_start_uv: 50, amplitude_end_uv: 145 }
+          spread: none
+          postictal_attenuation_s: 60
+        - type: artifact
+          kind: patting
+          at_min: 300
+          duration_s: 120
+          side: all
+          intensity: medium
+      annotations:
+        - { at_min: 0, label: "ECMO circuit running" }
+        - { at_min: 300, label: "Caregiver patting" }
+      panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - asymmetry_relative
+        - asymmetry_index
+        - suppression_ratio_L
+        - suppression_ratio_R
+      time_axis: elapsed
+    eeg_page:
+      at_min: 182.0
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      highlight: null
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

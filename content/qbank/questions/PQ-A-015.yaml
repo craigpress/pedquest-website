@@ -1,0 +1,187 @@
+id: PQ-A-015
+version: 1
+status: draft
+title: Recognizing cyclic seizures on a 12-hour trend panel
+domain: seizure_detection
+topics: [cyclic seizures, seizure burden, trend review, monitoring duration, state change]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  Distinguish a cyclic pattern of recurrent stereotyped electrographic seizures from
+  sleep-wake state cycling on a long trend panel, and explain why the distinction
+  changes management.
+
+stem:
+  vignette: >-
+    An 11-year-old boy is admitted to the PICU with a traumatic brain injury and a
+    left frontal contusion. He is intubated on a low-dose midazolam infusion, and
+    neuromuscular blockade was discontinued 6 hours before this window. Continuous
+    EEG with a quantitative trend panel is running. Across 12 hours the panel shows a
+    repeating pattern: every 20 minutes, a discrete stereotyped event lasting about
+    80 seconds with a left-sided rhythmicity band that slows from 5 to 2 hertz, an
+    arched rise in the left aEEG, a leftward asymmetry deflection, and a brief fall in
+    left amplitude afterward. His examination is unchanged, and no clinical events have
+    been observed or documented at any of these times.
+  image_caption: >-
+    Twelve-hour qEEG panel, top to bottom: seizure probability; rhythmicity
+    spectrogram (left, right); FFT spectrogram (left, right); relative asymmetry
+    spectrogram and asymmetry index; aEEG (left, right). Time axis in hours from the
+    start of the displayed window.
+  lead_in: >-
+    What is the best interpretation of the repeating events on this panel?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Cyclic left frontal electrographic seizures, none of them clinically apparent
+    correct: true
+    rationale: >-
+      Stereotyped, discrete, evolving events with a concordant lateralised amplitude
+      rise and post-ictal attenuation, recurring at a fixed short interval without
+      clinical accompaniment, describe a cyclic pattern of electrographic seizures.
+  - key: B
+    text: Sleep-wake state cycling, with spindle trains driving the rhythmicity bands
+    correct: false
+    rationale: >-
+      State cycling produces gradual, bilateral and roughly symmetric shifts over tens
+      of minutes without frequency evolution, post-ictal attenuation, or a lateralised
+      asymmetry deflection at each event.
+  - key: C
+    text: Electrographic status epilepticus, since events recur across the whole window
+    correct: false
+    rationale: >-
+      Electrographic status epilepticus is continuous or near-continuous ictal activity;
+      here roughly 80 seconds in every 20 minutes is ictal, so the pattern is recurrent
+      seizures rather than status.
+  - key: D
+    text: Recurrent rhythmic artifact from a 20-minute nursing care cycle
+    correct: false
+    rationale: >-
+      Mechanical and care-related artifact does not evolve in frequency and does not
+      produce a post-ictal fall in amplitude; the asymmetry deflection would also be
+      unusual for care artifact.
+  - key: E
+    text: Midazolam infusion effect, producing periodic bursts of beta activity
+    correct: false
+    rationale: >-
+      Benzodiazepine effect appears as a sustained increase in faster frequencies and a
+      change in continuity, not as discrete 80-second lateralised events with
+      frequency evolution.
+
+explanation: >-
+  The correct answer is A. The features that separate cyclic seizures from state
+  cycling are stereotypy, frequency evolution within each event, lateralisation, and
+  post-ictal attenuation. What the image shows: 36 nearly identical events at a fixed
+  20-minute interval, each with a left rhythmicity band slowing from 5 to 2 hertz, a
+  solid flame on the left FFT spectrogram, an arched rise in the left aEEG, a leftward
+  asymmetry deflection, and a brief post-ictal fall in left amplitude; the
+  seizure-probability trend rises at each. State cycling would move both hemispheres
+  together, gradually, without evolution or post-ictal attenuation. Recognising the
+  cyclic pattern matters because none of these events is clinically apparent, so the
+  entire seizure burden is invisible without EEG. Evidence: in a prospective cohort of
+  100 critically ill non-neonatal children with acute encephalopathy undergoing
+  continuous EEG, electrographic seizures occurred in 46 and electrographic status
+  epilepticus in 19; seizures were exclusively nonconvulsive in 32; clinical features
+  had little predictive value, and although 52 percent of patients with seizures had
+  them detected within the first hour of monitoring, 87 percent were detected within
+  24 hours. A pediatric review of spectrograms for seizure detection makes the case
+  that time-compressed trends are well suited to revealing exactly this kind of
+  temporal structure. Bedside takeaway: when events look identical and arrive on a
+  clock, quantify the burden across the whole panel before adjusting therapy.
+
+key_points:
+  - Cyclic seizures are stereotyped, evolving, lateralised events at a fixed interval.
+  - State cycling is gradual, bilateral, and lacks evolution or post-ictal attenuation.
+  - In 100 critically ill children, seizures were exclusively nonconvulsive in 32.
+
+references:
+  - pmid: "21307352"
+    doi: 10.1212/WNL.0b013e318211c19e
+    citation: >-
+      Abend NS, Gutierrez-Colina AM, Topjian AA, et al. Nonconvulsive seizures are
+      common in critically ill children. Neurology. 2011;76(12):1071-7.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "34510096"
+    doi: 10.1097/WNP.0000000000000868
+    citation: >-
+      Lalgudi Ganesan S, Hahn CD. Spectrograms for Seizure Detection in Critically Ill
+      Children. J Clin Neurophysiol. 2022;39(3):195-206.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101515
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 720
+    background:
+      type: continuous
+      dominant_hz: 5.0
+      amplitude_uv: 50
+      slow_fraction: 0.6
+      reactivity: present
+      asymmetry:
+        side: left
+        attenuation_pct: 20
+        slowing_hz: 1.0
+    events:
+      - type: seizure_cluster
+        start_min: 15
+        end_min: 715
+        interval_min: 20
+        seizure:
+          duration_s: 80
+          onset_region: left_frontal
+          evolution: { start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 55, amplitude_end_uv: 140 }
+          spread: hemispheric
+          postictal_attenuation_s: 40
+    annotations: []
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+    time_axis: elapsed
+    style:
+      spectrogram_hz_range: [0, 20]
+      rhythmicity_hz_range: [1, 25]
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

@@ -4,7 +4,7 @@
 // table (status = 'active') during `prebuild`. To change a member, edit
 // them in /admin and redeploy; hand edits here are overwritten.
 //
-// 69 active members.
+// 73 active members.
 
 import type { Member } from "./member-types";
 
@@ -139,6 +139,23 @@ export const members: Member[] = [
     sortOrder: 7,
   },
   {
+    id: "joost-wagenaar",
+    name: "Joost Wagenaar",
+    title: "PhD",
+    role: "Scientific Committee",
+    institution: "University of Pennsylvania",
+    department: "Bioengineering",
+    country: "USA",
+    city: "Philadelphia, PA",
+    lat: 39.9522,
+    lng: -75.1932,
+    bio: "Member of the PedQuEST Scientific Committee. Leads the Pennsieve data platform integration enabling secure EEG transfer, cloud-based analysis, and multicenter research infrastructure.",
+    interests: ["Data Science","Pennsieve","EEG Analytics","Biomedical Engineering"],
+    isLeadership: true,
+    leadershipRole: "scientific_committee",
+    sortOrder: 8,
+  },
+  {
     id: "cecil-hahn",
     name: "Cecil Hahn",
     title: "MD",
@@ -209,6 +226,23 @@ export const members: Member[] = [
     isLeadership: true,
     leadershipRole: "education_lead",
     sortOrder: 12,
+  },
+  {
+    id: "riley-kessler",
+    name: "Riley Kessler",
+    title: "MD",
+    role: "Education Team",
+    institution: "Children's Hospital of Philadelphia",
+    department: "Neurology",
+    country: "USA",
+    city: "Philadelphia, PA",
+    lat: 39.9483,
+    lng: -75.1935,
+    bio: "Child neurology resident in the Division of Neurology at Children's Hospital of Philadelphia. Received her MD from the University of Chicago Pritzker School of Medicine and recipient of the Tauen Chang Junior Member Award from the Child Neurology Society.",
+    interests: ["qEEG Education","Pediatric Neurology","Neurotransmitter Metabolism"],
+    websiteUrl: "https://www.chop.edu/doctors/kessler-riley",
+    isLeadership: false,
+    sortOrder: 13,
   },
   {
     id: "matthew-kirschen",
@@ -1193,5 +1227,33 @@ export const members: Member[] = [
     email: "j-goldstein4@northwestern.edu",
     isLeadership: false,
     sortOrder: 108,
+  },
+  {
+    id: "kerri-larovere",
+    name: "Kerri L. LaRovere",
+    title: "MD",
+    institution: "Boston Children's Hospital / Harvard",
+    country: "USA",
+    city: "Boston, MA",
+    lat: 42.337,
+    lng: -71.105,
+    bio: "",
+    interests: [],
+    isLeadership: false,
+    sortOrder: 109,
+  },
+  {
+    id: "carlos-castillo-pinto",
+    name: "Carlos Castillo Pinto",
+    title: "MD",
+    institution: "University of Washington / Seattle Children's",
+    country: "USA",
+    city: "Seattle, WA",
+    lat: 47.6625,
+    lng: -122.2876,
+    bio: "",
+    interests: [],
+    isLeadership: false,
+    sortOrder: 110,
   }
 ];

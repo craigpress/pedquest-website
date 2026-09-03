@@ -1,0 +1,198 @@
+# Verification trail: content/qbank/sources/PQ-B-025.md
+id: PQ-B-025
+version: 1
+status: draft
+title: Explaining the fall in trends after treated electrographic status epilepticus
+domain: special_populations_pitfalls
+topics: [post-ictal attenuation, suppression ratio, aEEG, ACNS terminology, seizure burden]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  Distinguish transient post-ictal attenuation after treated status epilepticus from a new
+  structural or ongoing ictal process, using bilaterality, temporal locking and
+  reversibility on the trends.
+
+stem:
+  vignette: >-
+    A 6-year-old boy admitted with acute necrotizing encephalopathy has 45 minutes of
+    electrographic status epilepticus, which stops after a levetiracetam load and a single
+    lorazepam dose at minute 60. No continuous sedative infusion is started and the doses
+    are annotated on the panel. Over the following hour the bedside nurse sees both aEEG
+    margins fall and both suppression-ratio trends climb, and pages to ask whether he is
+    deteriorating. Blood pressure, temperature and end-tidal carbon dioxide have been
+    unchanged and the pupils remain reactive.
+  image_caption: >-
+    Composite. Upper: 4-hour qEEG panel (seizure probability; rhythmicity L and R; FFT
+    0-20 Hz L and R; relative asymmetry spectrogram; asymmetry index; aEEG L and R;
+    suppression ratio L and R), elapsed minutes; levetiracetam and lorazepam annotated at
+    minute 60. Lower: 15-second raw page from minute 80, longitudinal bipolar, 7
+    microvolts per millimetre, 1-70 Hz with 60 Hz notch.
+  lead_in: >-
+    What is the most likely explanation for the change in the trends after treatment?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Post-ictal attenuation of the background
+    correct: true
+    rationale: >-
+      The fall is bilateral and symmetric, begins exactly at seizure offset, and recovers
+      toward baseline within the displayed window, which is the expected course of
+      post-ictal attenuation.
+  - key: B
+    text: A new hemispheric ischemic event
+    correct: false
+    rationale: >-
+      An acute hemispheric ischemic event would produce a lateralized fall with a
+      sustained deflection of the relative asymmetry spectrogram and asymmetry index,
+      neither of which is present.
+  - key: C
+    text: Ongoing electrographic status epilepticus that the trends cannot display
+    correct: false
+    rationale: >-
+      Continuing ictal activity would keep the rhythmicity bands and the aEEG margins up,
+      not drive them down, and the raw page confirms an attenuated, non-ictal tracing.
+  - key: D
+    text: Progressive cerebral edema with rising intracranial pressure
+    correct: false
+    rationale: >-
+      A rising-pressure course would evolve over hours and would not begin abruptly at
+      seizure offset or start to reverse within the same window.
+  - key: E
+    text: Displacement of electrodes over one hemisphere
+    correct: false
+    rationale: >-
+      An electrode problem is unilateral and abrupt, and would show as a step change in
+      the asymmetry index and in only one set of derivations.
+
+explanation: >-
+  The correct answer is A. What the image shows: from minute 15 to minute 60 both
+  rhythmicity spectrograms carry a continuous, broadly evolving band, the
+  seizure-probability trend is saturated and both aEEG margins are elevated and narrowed.
+  At minute 60, coincident with the annotated medications, the rhythmicity bands stop
+  abruptly. Over the next several minutes both aEEG margins fall together and both
+  suppression-ratio trends rise symmetrically, the relative asymmetry spectrogram and
+  asymmetry index stay near zero throughout, and by the end of the window the margins are
+  climbing back toward their pre-ictal level. The raw page at minute 80 shows a
+  low-voltage, slow but present and symmetric background, not an isoelectric one and not
+  an ictal one. Bilaterality, exact temporal locking to seizure offset, and reversibility
+  within the same window are the three features that identify this as post-ictal
+  attenuation, using attenuation and suppression as defined in the standardized critical
+  care EEG terminology. The alternative interpretations each predict a feature the panel
+  does not show. Evidence: in 259 critically ill children, higher maximum hourly seizure
+  burden was independently associated with neurologic decline, so the correct response to
+  treated status is to keep monitoring the burden rather than to reinterpret the immediate
+  post-ictal trends as new injury. Bedside takeaway: before escalating for a falling
+  trend, ask whether it is bilateral, time-locked and already reversing.
+
+key_points:
+  - Post-ictal attenuation is bilateral, locked to seizure offset and reverses within the window.
+  - A new hemispheric ischemic event would lateralize and deflect the asymmetry index.
+  - Keep monitoring after treated status; the outcome signal is seizure burden, not the post-ictal dip.
+
+references:
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's standardized critical care EEG terminology: 2021 version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "24595203"
+    doi: 10.1093/brain/awu042
+    citation: >-
+      Payne ET, Zhao XY, Frndova H, et al. Seizure burden is independently associated with
+      short term outcome in critically ill children. Brain. 2014;137(Pt 5):1429-38.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of noninvasive neuromonitoring
+      modalities in children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-38.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: composite
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100025
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    layout: panel_over_page
+    qeeg_panel:
+      duration_min: 240
+      background:
+        type: continuous
+        dominant_hz: 4.0
+        amplitude_uv: 50
+        slow_fraction: 0.7
+        reactivity: present
+      events:
+        - type: status_epilepticus
+          onset_min: 15
+          duration_min: 45
+          onset_region: generalized
+        - type: attenuation_transient
+          at_min: 60
+          duration_min: 55
+          side: both
+          depth_pct: 65
+      annotations:
+        - { at_min: 60, label: "Levetiracetam load; lorazepam 0.1 mg/kg" }
+      panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - asymmetry_relative
+        - asymmetry_index
+        - aeeg_L
+        - aeeg_R
+        - suppression_ratio_L
+        - suppression_ratio_R
+      time_axis: elapsed
+    eeg_page:
+      at_min: 80.0
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      highlight: null
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

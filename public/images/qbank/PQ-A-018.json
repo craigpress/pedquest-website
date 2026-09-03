@@ -1,0 +1,84 @@
+{
+  "id": "PQ-A-018",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": {
+    "kind": "rect",
+    "x": 0.648,
+    "y": 0.173426,
+    "w": 0.03535,
+    "h": 0.095925,
+    "panel": "rhythmicity_L"
+  },
+  "panels": [
+    {
+      "name": "seizure_probability",
+      "y0": 0.104,
+      "y1": 0.166926,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_L",
+      "y0": 0.173426,
+      "y1": 0.269351,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_R",
+      "y0": 0.275851,
+      "y1": 0.371775,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_L",
+      "y0": 0.378275,
+      "y1": 0.4742,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.4807,
+      "y1": 0.576624,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "asymmetry_relative",
+      "y0": 0.583124,
+      "y1": 0.671375,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "asymmetry_index",
+      "y0": 0.677875,
+      "y1": 0.743103,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_L",
+      "y0": 0.749603,
+      "y1": 0.835552,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_R",
+      "y0": 0.842052,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:26743fb44dadf8994d9d9fc7f768dba5e534a4d73a5c28908bca6b441e488ae7",
+  "path": "public/images/qbank/PQ-A-018.png"
+}

@@ -1,0 +1,187 @@
+id: PQ-A-025
+version: 1
+status: draft
+title: Testing reactivity and reading the response off the trend panel
+domain: background_terminology
+topics: [ACNS 2021 terminology, reactivity, stimulation protocol, EMG artifact, sedation caveat]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: application
+learning_objective: >-
+  Apply the ACNS 2021 definition of reactivity to a stimulation trial read on a trend
+  panel, and recognise why muscle and eye-blink artifact cannot establish reactivity.
+
+stem:
+  vignette: >-
+    A 3-year-old boy is in the PICU on day 2 after a drowning event. He is intubated,
+    receiving a low-dose dexmedetomidine infusion, and has received no neuromuscular
+    blockade for 24 hours. Continuous EEG with a quantitative trend panel is running
+    and the team is documenting reactivity. The bedside nurse performs a single sternal
+    rub. On the trend panel, both FFT spectrograms show a brief broadband increase in
+    power lasting about 4 seconds, most prominent in the temporal chains, with a
+    simultaneous spike in the envelope trend; the aEEG bands widen briefly. On the raw
+    EEG at that moment, the change is entirely high-frequency muscle activity with no
+    change in the underlying cerebral rhythms. The covering fellow proposes documenting
+    the record as reactive.
+  image_caption: >-
+    Two-hour qEEG panel, top to bottom: FFT spectrogram (left, right), 0 to 20 hertz;
+    envelope trend (left, right); aEEG (left, right); suppression ratio (left, right).
+    A sternal rub is annotated at 60 minutes. Time axis in minutes from the start of
+    the displayed window.
+  lead_in: >-
+    What is the most appropriate way to document reactivity from this trial?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Do not call it reactive; repeat with standardized escalating noxious stimulation
+    correct: true
+    rationale: >-
+      The appearance of muscle activity does not qualify as reactivity, so this trial
+      is uninformative. The terminology recommends a standard protocol using multiple
+      escalating stimuli and a confirmatory second round before an unreactive
+      designation.
+  - key: B
+    text: Document reactive, because power increased on both spectrograms after the stimulus
+    correct: false
+    rationale: >-
+      Reactivity requires a change in cerebral EEG activity. A broadband myogenic
+      increase confined to the temporal chains without any change in underlying cerebral
+      rhythms is artifact, and artifact cannot establish reactivity.
+  - key: C
+    text: Document reactive, because the envelope trend and aEEG bands both responded
+    correct: false
+    rationale: >-
+      Both are amplitude trends and both rise with muscle artifact; concordance between
+      two amplitude measures of the same artifact adds no independent evidence.
+  - key: D
+    text: Document unreactive, since the cerebral rhythms did not change with the stimulus
+    correct: false
+    rationale: >-
+      An unreactive designation should not be made on a single round of stimulation;
+      a second round of standardized noxious stimulation applied in the nonstimulated
+      state is suggested to confirm the finding.
+  - key: E
+    text: Document unclear, and make no further attempt while sedation continues
+    correct: false
+    rationale: >-
+      Unclear is a legitimate category when testing was inadequate, but abandoning
+      testing is not; retest properly, and if the record is then unreactive, report the
+      sedation as a caveat.
+
+explanation: >-
+  The correct answer is A. Reactivity is a statement about cerebral activity, so the
+  first question at every stimulation trial is whether the change seen is cerebral at
+  all. What the image shows: a 4-second broadband column of power on both FFT
+  spectrograms at the annotated sternal rub, maximal in the temporal chains and
+  extending to the top of the displayed frequency range, with a matching spike in the
+  envelope trend and a brief widening of the aEEG bands, while the suppression ratio
+  does not move; that combination is the trend fingerprint of muscle artifact rather
+  than of a cerebral response. Evidence: the ACNS 2021 terminology defines reactivity
+  as a change in cerebral EEG activity to stimulation, which may include a change in
+  voltage or frequency including attenuation of activity, states that the strength or
+  nature of the stimulus should be noted and that a standard protocol of testing
+  reactivity with multiple escalating stimuli is strongly encouraged, and states
+  explicitly that the appearance of muscle activity or eye blink artifacts does not
+  qualify as reactive. It further suggests that if an EEG is unreactive after one round
+  of stimulation a second round of standardized noxious stimulation should be performed
+  with the patient in their nonstimulated state to confirm the finding, that the
+  caveat of sedatives or paralytics be included in the impression, and it provides
+  the categories reactive, unreactive, SIRPIDs-only and unclear. The ACNS consensus
+  statement on continuous EEG likewise addresses standardised assessment of
+  consciousness in sedated patients. Bedside takeaway: define your unit's stimulation
+  protocol in advance, and treat any response that is broadband and maximal in the
+  temporal chains as artifact until the raw EEG proves otherwise.
+
+key_points:
+  - Reactivity requires a change in cerebral EEG voltage or frequency, not artifact.
+  - Muscle activity and eye-blink artifact explicitly do not qualify as reactive.
+  - Confirm an unreactive record with a second round of standardized noxious stimulation.
+
+references:
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's Standardized Critical Care EEG Terminology: 2021 Version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "25626778"
+    doi: 10.1097/WNP.0000000000000166
+    citation: >-
+      Herman ST, Abend NS, Bleck TP, et al. Consensus statement on continuous EEG in
+      critically ill adults and children, part I: indications. J Clin Neurophysiol.
+      2015;32(2):87-95.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 102525
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 120
+    background:
+      type: discontinuous
+      dominant_hz: 2.0
+      amplitude_uv: 35
+      slow_fraction: 0.8
+      reactivity: absent
+    events:
+      - type: stimulation
+        at_min: 60.0
+      - type: artifact
+        kind: emg_chewing
+        at_min: 60.0
+        duration_s: 4
+        channels: [T3, T4, T5, T6]
+        intensity: high
+    annotations:
+      - { at_min: 60, label: "Sternal rub" }
+    panels:
+      - fft_L
+      - fft_R
+      - envelope_L
+      - envelope_R
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+    style:
+      spectrogram_hz_range: [0, 20]
+      suppression_threshold_uv: 10
+      aeeg_axis: semilog
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

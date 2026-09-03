@@ -7,24 +7,32 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "backup": "tsx scripts/export-supabase.ts",
     "prebuild": "tsx scripts/generate-members.ts",
     "members:generate": "tsx scripts/generate-members.ts",
-    "members:seed": "tsx scripts/seed-members.ts"
+    "members:seed": "tsx scripts/seed-members.ts",
+    "qbank:validate": "tsx scripts/qbank-validate.ts",
+    "qbank:import": "tsx scripts/qbank-import.ts",
+    "qbank:generate": "tsx scripts/qbank-generate.ts",
+    "members:check-match": "tsx scripts/check-member-match.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.123.0",
     "@supabase/supabase-js": "^2.100.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@vercel/analytics": "^2.0.1",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "js-yaml": "^5.4.1",
     "leaflet": "^1.9.4",
-    "next": "^16.2.1",
-    "postcss": "^8.5.8",
+    "next": "^16.3.4",
+    "postcss": "^8.5.27",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0",
@@ -32,8 +40,12 @@
     "typescript": "^6.0.2"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
+    "@types/js-yaml": "^4.0.9",
     "@types/leaflet": "^1.9.21",
     "dotenv": "^17.3.1",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.4",
     "tsx": "^4.23.13"
   }
 }

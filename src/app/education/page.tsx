@@ -144,6 +144,23 @@ export default function EducationPage() {
               </svg>
             </span>
           </Link>
+
+          <Link href="/education/question-bank" className="edu-qbank">
+            <div>
+              <span className="edu-qbank-key">Self-assessment</span>
+              <h2 className="edu-qbank-title">qEEG question bank</h2>
+              <p className="edu-qbank-desc">
+                Peer-reviewed one-best-answer items on synthetic qEEG trend figures, with
+                per-option rationales, cited evidence, and progress tracked by domain.
+              </p>
+            </div>
+            <span className="edu-qbank-cta">
+              Browse questions
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 8h10M9 4l4 4-4 4" />
+              </svg>
+            </span>
+          </Link>
         </div>
       </section>
 
@@ -318,6 +335,28 @@ export default function EducationPage() {
           display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
           padding: 0.7rem 1.4rem; border-radius: 10px; background: #05201d;
           color: var(--accent-strong); font-weight: 600; font-size: 0.9rem;
+        }
+
+        /* Question bank — plain surface card (the accent card above is the only one) */
+        .edu-qbank {
+          display: flex; justify-content: space-between; align-items: center;
+          gap: 1.5rem; flex-wrap: wrap; padding: 1.75rem 2rem; border-radius: 16px;
+          margin-top: 1.15rem; background: var(--surface); border: 1px solid var(--line);
+          text-decoration: none; transition: border-color 0.15s ease;
+        }
+        .edu-qbank:hover { border-color: var(--accent); }
+        .edu-qbank-key {
+          font-family: var(--mono-font); font-size: 0.72rem; font-weight: 600;
+          letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+        }
+        .edu-qbank-title {
+          font-family: var(--heading-font); font-size: 1.4rem; font-weight: 700;
+          color: var(--ink); margin: 0.35rem 0;
+        }
+        .edu-qbank-desc { font-size: 0.93rem; line-height: 1.55; color: var(--ink-2); max-width: 52ch; }
+        .edu-qbank-cta {
+          display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+          font-family: var(--mono-font); font-size: 0.85rem; font-weight: 600; color: var(--accent);
         }
 
         /* Type filters */

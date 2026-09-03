@@ -1,0 +1,196 @@
+# Verification trail: content/qbank/sources/PQ-B-015.md
+id: PQ-B-015
+version: 1
+status: draft
+title: Timing of early post-traumatic seizures and the risk of post-traumatic epilepsy
+domain: clinical_prognosis
+topics: [traumatic brain injury, early post-traumatic seizures, post-traumatic epilepsy, sleep spindles]
+population: child
+setting: PICU
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  Relate the timing of early post-traumatic seizures to the odds of later post-traumatic
+  epilepsy in children undergoing multimodality neuromonitoring after traumatic brain
+  injury.
+
+stem:
+  vignette: >-
+    A 7-year-old boy is admitted after a high-speed motor vehicle collision with a severe
+    traumatic brain injury, bilateral contusions and a subdural hematoma. An intracranial
+    pressure monitor and continuous EEG with a quantitative trend panel are placed on the
+    day of injury. He receives a fentanyl infusion and hypertonic saline; no continuous
+    sedative infusion is used after the first day. The trend panel shown covers the
+    second day after injury, roughly 30 to 54 hours from the collision, during which
+    repeated electrographic seizures appear. Intracranial pressure has been 12 to 22
+    millimetres of mercury.
+  image_caption: >-
+    Twenty-four-hour qEEG panel covering roughly 30 to 54 hours after injury: seizure
+    probability; rhythmicity spectrogram (left, right); FFT spectrogram 0-20 Hz (left,
+    right); relative asymmetry spectrogram; asymmetry index; suppression ratio (left,
+    right). Elapsed minutes from the start of the window on the time axis.
+  lead_in: >-
+    How does the timing of these seizures relate to this child's risk of later
+    post-traumatic epilepsy?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Seizures between 24 and 168 hours after injury carry the strongest association
+    correct: true
+    rationale: >-
+      In a pediatric multimodality monitoring cohort, seizures occurring between 24 and
+      168 hours after injury carried an odds ratio of 21.47 for post-traumatic epilepsy,
+      the strongest timing signal reported.
+  - key: B
+    text: Seizures within the first 24 hours carry the strongest association
+    correct: false
+    rationale: >-
+      The association with later epilepsy was significant for seizures between 24 and 168
+      hours but not for those occurring within the first 24 hours after injury.
+  - key: C
+    text: Timing does not matter; any early seizure carries the same risk
+    correct: false
+    rationale: >-
+      Early post-traumatic seizures overall were associated with epilepsy, but the
+      association was carried by the later part of the first week, so timing does matter.
+  - key: D
+    text: Only seizures occurring after 7 days are associated with later epilepsy
+    correct: false
+    rationale: >-
+      Seizures after 7 days are late post-traumatic seizures and are by definition part
+      of the epilepsy outcome; the point here is that seizures within the first week
+      already predict it.
+  - key: E
+    text: The association holds only when intracranial pressure remains normal
+    correct: false
+    rationale: >-
+      Raised intracranial pressure was itself an independent predictor of post-traumatic
+      epilepsy, so normal pressure is not a condition for the seizure-timing association.
+
+explanation: >-
+  The correct answer is A. What the image shows: both rhythmicity spectrograms carry
+  repeated discrete bands over the 24-hour window, most prominent on the left, each
+  starting near 4 Hz and slowing over roughly 90 seconds; the seizure-probability trend
+  rises with each; the relative asymmetry spectrogram and asymmetry index deflect
+  leftward during the events and return between them; the suppression-ratio trends stay
+  low, confirming that the child is not pharmacologically suppressed. These are recurrent
+  focal electrographic seizures on the second day after injury, that is, in the 24-to-168
+  hour window. Evidence: 61 surviving children who underwent multimodality neurologic
+  monitoring after traumatic brain injury, including continuous EEG and intracranial
+  pressure monitoring, were analysed for post-traumatic epilepsy, defined as unprovoked
+  seizures 2 months after injury or a continued need for antiseizure medication at 12
+  months; 10 (16.4 percent) developed it. Early post-traumatic seizures within the first 7
+  days carried an odds ratio of 7.58 (95 percent confidence interval 1.81 to 39.68), and
+  this association was significant for seizures occurring between 24 and 168 hours after
+  injury, odds ratio 21.47 (4.18 to 110.38), but not for those within the first 24 hours.
+  Among children with early seizures, more time in seizure on surface EEG raised the odds
+  further, 7.28 (2.05 to 73.14). Epileptiform discharges, odds ratio 8.06, abnormal sleep
+  spindles, 4.88, raised intracranial pressure, 1.25, and impaired cerebrovascular
+  pressure reactivity were also associated. Bedside takeaway: seizures on day two to seven
+  are the ones to document, quantify and follow.
+
+key_points:
+  - Seizures 24 to 168 hours after pediatric TBI carried an odds ratio of 21.47 for later epilepsy.
+  - Seizures within the first 24 hours were not independently associated with epilepsy.
+  - Epileptiform discharges and abnormal sleep spindles also predicted post-traumatic epilepsy.
+
+references:
+  - pmid: "35526326"
+    doi: 10.1016/j.eplepsyres.2022.106935
+    citation: >-
+      Appavu BL, Temkit M, Kensicki JF, Kuwabara M, Burrows BT, Adelson PD. Acute
+      physiologic prediction of pediatric post-traumatic epilepsy. Epilepsy Res.
+      2022;183:106935.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "36007060"
+    doi: 10.1097/WNP.0000000000000965
+    citation: >-
+      Appavu BL, Fox J, Kuwabara M, Burrows BT, Temkit M, Adelson PD. Association of
+      cerebral and systemic physiology with quantitative electroencephalographic
+      characteristics of early posttraumatic seizures. J Clin Neurophysiol.
+      2024;41(3):257-64.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "27500827"
+    doi: 10.1016/j.yebeh.2016.07.012
+    citation: >-
+      Vaewpanich J, Reuter-Rice K. Continuous electroencephalography in pediatric
+      traumatic brain injury: seizure characteristics and outcomes. Epilepsy Behav.
+      2016;62:225-30.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: false
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100015
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 1440
+    background:
+      type: continuous
+      dominant_hz: 4.0
+      amplitude_uv: 50
+      slow_fraction: 0.65
+      asymmetry:
+        side: left
+        attenuation_pct: 25
+        slowing_hz: 1.5
+      reactivity: present
+    events:
+      - type: seizure_cluster
+        start_min: 90
+        end_min: 1350
+        interval_min: 105
+        seizure:
+          duration_s: 90
+          onset_region: left_frontal
+          evolution: { start_hz: 4.0, end_hz: 1.6, amplitude_start_uv: 60, amplitude_end_uv: 150 }
+    annotations:
+      - { at_min: 0, label: "Hour 30 after injury" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

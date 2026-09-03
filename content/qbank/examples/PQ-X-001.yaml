@@ -1,0 +1,172 @@
+# Exemplar question — the reference for tone, depth, sourcing and image-spec discipline.
+# Evidence numbers below were verified against PubMed metadata (PMID 20861452) on 2026-09-03.
+id: PQ-X-001
+version: 1
+status: draft
+title: Distinguishing a left temporal seizure from EMG artifact on a 4-hour qEEG panel
+domain: seizure_detection
+topics: [rhythmicity spectrogram, aEEG, EMG artifact, evolution, bedside screening]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: interpretation
+learning_objective: >-
+  Identify the trend signatures that separate an evolving focal electrographic seizure
+  from broadband muscle artifact, and state why raw-EEG confirmation is still required.
+
+stem:
+  vignette: >-
+    A 6-year-old boy is admitted to the PICU after a 12-minute convulsive seizure at home
+    during a febrile illness. He was intubated for airway protection and is receiving a
+    low-dose midazolam infusion. Continuous EEG with a quantitative trend panel is started
+    2 hours after arrival. At the 4-hour mark the bedside nurse, who screens the trend panel
+    hourly, pages you because the seizure-probability trend rose twice: once at about
+    70 minutes and again at about 95 minutes. She has not reviewed the raw EEG. A dose of
+    lorazepam was given at 100 minutes for a suspected clinical event.
+  image_caption: >-
+    Four-hour qEEG panel, top to bottom: seizure probability; rhythmicity spectrogram
+    (left, right); FFT spectrogram 0–20 Hz (left, right); relative asymmetry spectrogram
+    and asymmetry index; aEEG (left, right); suppression ratio (left, right). Time axis in
+    minutes from the start of recording; the lorazepam dose is annotated at 100 minutes.
+  lead_in: >-
+    Which feature of the panel best identifies the event at 95 minutes as an electrographic
+    seizure rather than artifact?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Broadband power increase across all frequencies in the left temporal region at 70 minutes
+    correct: false
+    rationale: >-
+      The 70-minute event is a broadband, non-evolving burst confined to the temporal chain
+      with no change in aEEG margins on the contralateral side — the signature of chewing or
+      other EMG artifact, which also drives the seizure-probability trend.
+  - key: B
+    text: An evolving left rhythmicity band slowing from about 4 Hz to 1.5 Hz while the left aEEG margins rise
+    correct: true
+    rationale: >-
+      A discrete band of rhythmicity that changes frequency over about 2 minutes, with a
+      concurrent lateralized rise of the aEEG envelope and a transient asymmetry deflection,
+      is the trend correlate of an evolving focal seizure.
+  - key: C
+    text: A symmetric rise in both aEEG margins at 95 minutes consistent with arousal
+    correct: false
+    rationale: >-
+      The aEEG change at 95 minutes is lateralized to the left; arousal produces a symmetric
+      shift and does not create an evolving rhythmicity band.
+  - key: D
+    text: A persistent leftward shift of the asymmetry index throughout the recording
+    correct: false
+    rationale: >-
+      The asymmetry index is near zero for most of the recording and deflects only during the
+      event; a persistent shift would suggest a structural or post-ictal asymmetry, not an
+      ictal event.
+  - key: E
+    text: The rise in seizure probability alone, which is sufficient without reviewing the raw EEG
+    correct: false
+    rationale: >-
+      Seizure-probability trends flag candidates; both events raised it. Published pediatric
+      accuracy data describe trend displays as screening tools that require correlation with
+      the raw EEG.
+
+explanation: >-
+  The correct answer is B. The 95-minute event shows the classic trend signature of an
+  evolving focal seizure: a discrete band on the left rhythmicity spectrogram that starts
+  near 4 Hz and slows to about 1.5 Hz over roughly two minutes, accompanied by a rise in the
+  left aEEG margins and a transient deflection of the asymmetry index toward the left, then a
+  brief post-ictal fall in left amplitude. The earlier event at 70 minutes is different in
+  kind: power increases across all frequencies at once, does not evolve, and is confined to
+  the temporal chain — the pattern of muscle artifact, which trend algorithms often score as
+  high seizure probability. Evidence: in a pediatric ICU study of 27 continuous EEG
+  recordings containing 553 seizures over 487 hours, neurophysiologists blinded to the raw
+  EEG identified seizures with a median sensitivity of 83.3 % using color density spectral
+  array and 81.5 % using aEEG; sensitivity across individual recordings ranged from 0 % to
+  100 %, was lowest for low-amplitude, short and focal seizures, and false positives occurred
+  about once every 17 to 20 hours. The authors concluded that these displays are useful
+  screening tools whose accuracy should improve when findings are correlated in real time
+  with the underlying raw EEG. Bedside takeaway: treat a trend alarm as a prompt to open the
+  raw EEG at that time point and look for evolution before treating.
+
+key_points:
+  - Evolution in frequency on the rhythmicity spectrogram plus a lateralized aEEG rise marks a focal seizure.
+  - Broadband, non-evolving power confined to one chain is artifact until the raw EEG proves otherwise.
+  - Pediatric trend screening reached about 80 % median sensitivity; short, focal, low-amplitude seizures are missed.
+
+references:
+  - pmid: "20861452"
+    doi: 10.1212/WNL.0b013e3181f9619e
+    citation: >-
+      Stewart CP, Otsubo H, Ochi A, Sharma R, Hutchison JS, Hahn CD. Seizure identification
+      in the ICU using quantitative EEG displays. Neurology. 2010;75(17):1501-8.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: pmc-oa
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 20100922
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 240
+    background:
+      type: continuous
+      dominant_hz: 5.5
+      amplitude_uv: 45
+      slow_fraction: 0.45
+      reactivity: present
+    events:
+      - type: artifact
+        kind: emg_chewing
+        at_min: 70
+        duration_s: 150
+        side: left
+        intensity: high
+      - type: seizure
+        onset_min: 95.0
+        duration_s: 130
+        onset_region: left_temporal
+        evolution: { start_hz: 4.0, end_hz: 1.5, amplitude_start_uv: 50, amplitude_end_uv: 160 }
+        spread: hemispheric
+        postictal_attenuation_s: 45
+    annotations:
+      - { at_min: 100, label: "Lorazepam 0.1 mg/kg" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: exemplar (Claude, session 2026-09-03)
+  model: claude-fable-5-1
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

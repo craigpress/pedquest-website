@@ -1,0 +1,155 @@
+id: PQ-A-014
+version: 1
+status: draft
+title: Clicking the electrode chain where the seizure begins on the raw page
+domain: seizure_detection
+topics: [raw EEG confirmation, ictal onset localization, longitudinal bipolar montage, point to feature, ECG artifact]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: interpretation
+learning_objective: >-
+  Confirm a trend-flagged event on the raw EEG page by identifying the electrode chain
+  in which the evolving ictal rhythm begins, while rejecting a rhythmic non-cerebral
+  signal elsewhere on the page.
+
+stem:
+  vignette: >-
+    A 4-year-old girl is admitted to the PICU after a prolonged convulsive seizure
+    complicating gastroenteritis with hyponatraemia. She is intubated and sedated.
+    Continuous EEG with a quantitative trend panel is running and an automated
+    seizure-detection algorithm marks an event. You open the raw EEG at the marked
+    time to confirm it before treating. The 15-second page shows, in one chain, a
+    rhythmic sharply contoured discharge that begins at about 5 hertz and slows across
+    the page with increasing amplitude and clear spread to the adjacent chain; in a
+    separate chain there is a regular narrow deflection recurring at about 2 hertz
+    that does not change in frequency or amplitude and is time-locked to the pulse
+    oximeter tone.
+  image_caption: >-
+    Fifteen-second raw EEG page in longitudinal bipolar montage, 7 microvolts per
+    millimetre, low-frequency filter 1 hertz, high-frequency filter 70 hertz, 60 hertz
+    notch on. Chains are displayed in standard order with a single-lead ECG channel
+    at the bottom of the page.
+  lead_in: >-
+    Click the electrode chain in which the electrographic seizure begins.
+
+question_type: point_to_feature
+options: []
+point_to_feature:
+  instruction: >-
+    Click within the chain that shows the earliest evolving rhythmic discharge, not the
+    chain with the regular pulse-locked deflection.
+  target_event: 1
+  target_panel: page
+  tolerance: 0.05
+
+explanation: >-
+  The expected region is the left temporal chain, where the evolving ictal rhythm
+  begins before spreading. What the image shows: in the left temporal chain a rhythmic,
+  sharply contoured discharge starts near 5 hertz, slows progressively across the page,
+  grows in amplitude, and then appears with a short delay in the adjacent left
+  parasagittal chain, which is the definition of evolution and spread. The regular
+  2 hertz deflection in the other chain has a fixed frequency, a fixed amplitude, an
+  identical waveform on every beat, and a one-to-one relationship with the ECG channel
+  at the bottom of the page; that is cardiac artifact and it does not evolve.
+  Evidence: automated detectors mark candidate times but do not settle the diagnosis.
+  In 19 continuous EEG recordings from critically ill children containing 379 seizures
+  identified on raw EEG, four commercial algorithms detected 36.9, 92.3, 75.9 and
+  74.4 percent of seizures, with daily false-positive rates averaging 4.7, 126.3, 5.1
+  and 15.5 respectively; by comparison, EEG experts identified 76.5 percent of seizures
+  using color density spectral array and 73.7 percent using aEEG, with daily
+  false-positive rates of 1.7 and 1.5. The authors concluded that such algorithms may
+  serve as early warning systems that prompt review of quantitative or raw EEG tracings.
+  Bedside takeaway: treat every detector mark and every trend alarm as a pointer to a
+  page of raw EEG, and require evolution and a plausible field before you call it ictal.
+
+key_points:
+  - Ictal onset is the chain with the earliest evolving rhythmic discharge and spread.
+  - Fixed-frequency deflections locked to the ECG channel are cardiac artifact.
+  - Commercial detectors in children ranged from 36.9 to 92.3 percent sensitivity.
+
+references:
+  - pmid: "32205601"
+    doi: 10.1097/CCM.0000000000004180
+    citation: >-
+      Din F, Lalgudi Ganesan S, Akiyama T, et al. Seizure Detection Algorithms in
+      Critically Ill Children: A Comparative Evaluation. Crit Care Med.
+      2020;48(4):545-552.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's Standardized Critical Care EEG Terminology: 2021 Version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: eeg_page
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101414
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    montage: longitudinal_bipolar
+    at_min: 143.0
+    window_s: 15
+    sensitivity_uv_mm: 7
+    filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+    highlight: null
+    background:
+      type: continuous
+      dominant_hz: 5.0
+      amplitude_uv: 45
+      slow_fraction: 0.55
+      reactivity: present
+    events:
+      - type: artifact
+        kind: ecg
+        at_min: 140.0
+        duration_s: 600
+        channels: [T4, T6]
+        intensity: medium
+      - type: seizure
+        onset_min: 143.1
+        duration_s: 95
+        onset_region: left_temporal
+        evolution: { start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 60, amplitude_end_uv: 160 }
+        spread: hemispheric
+        postictal_attenuation_s: 40
+    annotations:
+      - { at_min: 143.0, label: "Automated detection" }
+    style:
+      show_ecg_channel: true
+      chain_order: standard
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

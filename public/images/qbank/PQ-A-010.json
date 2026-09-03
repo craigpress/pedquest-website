@@ -1,0 +1,49 @@
+{
+  "id": "PQ-A-010",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "total_power_L",
+      "y0": 0.104,
+      "y1": 0.2552,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "total_power_R",
+      "y0": 0.2617,
+      "y1": 0.4129,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "alpha_delta_ratio_L",
+      "y0": 0.4194,
+      "y1": 0.5706,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "alpha_delta_ratio_R",
+      "y0": 0.5771,
+      "y1": 0.7283,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "asymmetry_relative",
+      "y0": 0.7348,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:ae610304c4cd1f680fe182a96cfeeb20944c4f84dd4e7fbab16dbb1777647c74",
+  "path": "public/images/qbank/PQ-A-010.png"
+}

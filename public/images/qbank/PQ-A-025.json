@@ -1,0 +1,70 @@
+{
+  "id": "PQ-A-025",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "fft_L",
+      "y0": 0.104,
+      "y1": 0.220682,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.227182,
+      "y1": 0.343863,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "envelope_L",
+      "y0": 0.350363,
+      "y1": 0.439041,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "envelope_R",
+      "y0": 0.445541,
+      "y1": 0.534219,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_L",
+      "y0": 0.540719,
+      "y1": 0.645266,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_R",
+      "y0": 0.651766,
+      "y1": 0.756313,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_L",
+      "y0": 0.762813,
+      "y1": 0.842156,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_R",
+      "y0": 0.848656,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:9f436b5685b2d14f113cbee0330f566dce3737d9371dbade8bd432d00710ae1d",
+  "path": "public/images/qbank/PQ-A-025.png"
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
+import { ensureUserRole } from "@/lib/roles-server";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -74,14 +75,21 @@ export async function GET(request: NextRequest) {
     // Ensure user exists in Supabase
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find((u) => u.email === email);
+    let supabaseUserId = existingUser?.id ?? null;
 
     if (!existingUser) {
-      await supabaseAdmin.auth.admin.createUser({
+      const { data: created } = await supabaseAdmin.auth.admin.createUser({
         email,
         email_confirm: true,
         user_metadata: { full_name: name, auth_provider: "authentik" },
       });
+      supabaseUserId = created?.user?.id ?? null;
     }
+
+    // Register the member in public.user_roles (idempotent: creates a
+    // 'member' row on first login, backfills user_id, never downgrades an
+    // existing editor/admin). See src/lib/roles-server.ts.
+    await ensureUserRole(email, supabaseUserId);
 
     // Generate a token hash server-side (no email is sent)
     const { data: linkData, error: linkError } =

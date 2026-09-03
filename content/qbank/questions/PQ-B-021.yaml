@@ -1,0 +1,164 @@
+# Verification trail: content/qbank/sources/PQ-B-021.md
+id: PQ-B-021
+version: 1
+status: draft
+title: The commonest barrier to a bedside qEEG trend-review program
+domain: monitoring_practice
+topics: [qEEG workflow, training, documentation, program implementation, survey]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: recall
+learning_objective: >-
+  Identify lack of formal qEEG training as the most frequently reported barrier to
+  quantitative EEG use in North American pediatric intensive care units.
+
+stem:
+  vignette: >-
+    A PICU is starting a bedside quantitative EEG trend-review program. Trends display at
+    every bedside, nurses screen the panel hourly, and the neurophysiologist reviews the
+    trends twice daily and reports verbally on rounds. There is no written qEEG report
+    template, no defined alarm threshold and no required training before a nurse or
+    resident begins screening. The unit has a neurocritical care service and about four
+    intensive care EEGs per day. The medical director asks which gap most commonly limits
+    programs like this one.
+  image_caption: >-
+    Eight-hour qEEG panel as displayed at the bedside: seizure probability; rhythmicity
+    spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index;
+    aEEG (left, right); suppression ratio (left, right). Elapsed minutes on the time axis.
+    No annotations or medication marks are present.
+  lead_in: >-
+    Which gap in this program was the most frequently reported barrier in a North
+    American survey?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Lack of formal training in qEEG interpretation
+    correct: true
+    rationale: >-
+      Twenty-two of 26 qEEG users, 85 percent, named lack of qEEG training as a barrier,
+      and only 3 of 22 institutions required training before a provider reviewed trends.
+  - key: B
+    text: Absence of quantitative EEG software licences
+    correct: false
+    rationale: >-
+      Software availability was not the limiting factor; more than half of surveyed
+      institutions already used qEEG in their intensive care units.
+  - key: C
+    text: Insufficient overnight EEG technologist staffing
+    correct: false
+    rationale: >-
+      Technologist coverage is a real constraint on acquisition, but it was not the barrier
+      most often named by users of qEEG in this survey.
+  - key: D
+    text: Inability to store quantitative trends for later review
+    correct: false
+    rationale: >-
+      Trend storage is a technical detail of acquisition and archiving and was not the
+      dominant reported barrier.
+  - key: E
+    text: Absence of a neurocritical care consult service
+    correct: false
+    rationale: >-
+      Having a neurocritical care service was associated with using qEEG, and this unit
+      already has one, so it cannot be the gap in question.
+
+explanation: >-
+  The correct answer is A. What the image shows: a complete, well-formed trend panel with
+  a stable continuous background, empty rhythmicity spectrograms, a symmetric FFT and a
+  flat suppression ratio; the display itself is not the problem. The problem is that
+  nobody in the workflow has defined who is trained to read it, against what threshold, or
+  how the read is documented. Evidence: an electronic survey distributed to the Pediatric
+  Neurocritical Care Research Group, the Pediatric Status Epilepticus Research Group and
+  intensivists in 16 Canadian pediatric intensive care units received 50 responses from 39
+  institutions, a 53 percent institutional response rate, with 37 of 50 respondents from
+  the United States and 12 from Canada. Twenty-two of 39 institutions, 56 percent, used
+  qEEG in their intensive care units, and use was associated with having a neurocritical
+  care service, 200 or more neurocritical care consultations per year, 1500 or more
+  intensive care admissions per year and four or more intensive care EEGs per day. Among
+  users, 24 of 26, 92 percent, felt qEEG enhanced the care of children with acute
+  neurologic injury, while 22 of 26, 85 percent, identified lack of qEEG training as a
+  barrier. Review and reporting were not standardized at most institutions: training was
+  required at only 3 of 22, 14 percent, and 7 of 22, 32 percent, had an established
+  curriculum. Bedside takeaway: build the training and the report template before you turn
+  the trends on.
+
+key_points:
+  - Lack of qEEG training was a barrier for 85 percent of pediatric intensive care users surveyed.
+  - Fifty-six percent of 39 surveyed institutions used qEEG, but review and reporting were unstandardized.
+  - Only 14 percent required training and 32 percent had an established qEEG curriculum.
+
+references:
+  - pmid: "36731228"
+    doi: 10.1016/j.pediatrneurol.2022.12.016
+    citation: >-
+      Benedetti GM, Morgan LA, Sansevere AJ, et al. The spectrum of quantitative EEG
+      utilization across North America: a cross-sectional survey. Pediatr Neurol.
+      2023;141:1-8.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of noninvasive neuromonitoring
+      modalities in children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-38.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100021
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 480
+    background:
+      type: continuous
+      dominant_hz: 6.0
+      amplitude_uv: 50
+      slow_fraction: 0.45
+      reactivity: present
+    events: []
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

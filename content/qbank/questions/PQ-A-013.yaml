@@ -1,0 +1,193 @@
+id: PQ-A-013
+version: 1
+status: draft
+title: Which spectrogram is most sensitive for detecting a focal seizure
+domain: seizure_detection
+topics: [asymmetry spectrogram, FFT spectrogram, seizure detection trend, focal seizures, sensitivity]
+population: adolescent
+setting: EMU
+difficulty: intermediate
+bloom: application
+learning_objective: >-
+  Select the qEEG trend with the highest published sensitivity for focal-onset
+  seizures, and state the sensitivity figures and study population that support the
+  choice.
+
+stem:
+  vignette: >-
+    A 14-year-old girl with drug-resistant focal epilepsy is admitted for
+    presurgical video-EEG monitoring. Her habitual seizures are brief right
+    frontocentral events with a subtle behavioural arrest and no convulsive
+    component, and previous admissions have shown that they do not secondarily
+    generalize. The unit is building a nightly qEEG review workflow so that the
+    overnight technologist can screen the trend panel between page-by-page reviews and
+    flag candidate events for the epileptologist in the morning. Only one trend can be
+    placed at the top of the panel as the primary screening trend. The team asks which
+    single trend gives the best chance of catching her events.
+  image_caption: >-
+    Four-hour qEEG panel showing, in unlabeled order, a seizure-detection probability
+    trend, FFT spectrograms (left, right), a relative asymmetry spectrogram, and
+    rhythmicity spectrograms (left, right). Three brief right frontocentral seizures
+    occur during the window. Time axis in minutes from the start of recording.
+  lead_in: >-
+    Which trend has the highest published sensitivity for focal-onset seizures?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: The asymmetry spectrogram
+    correct: true
+    rationale: >-
+      In the published comparison of spectrogram sensitivities by seizure subtype, the
+      asymmetry spectrogram had the highest sensitivity for focal seizures at 117 of
+      125, or 94 percent, which fits the lateralised power shift a focal seizure
+      produces.
+  - key: B
+    text: The FFT spectrogram
+    correct: false
+    rationale: >-
+      The FFT spectrogram was the most sensitive trend for secondarily generalized
+      seizures at 158 of 187, or 84 percent, but not for focal-onset events, which may
+      not raise whole-hemisphere power enough to be conspicuous.
+  - key: C
+    text: The seizure-detection probability trend
+    correct: false
+    rationale: >-
+      The seizure-detection trend had the highest overall sensitivity at 402 of 562,
+      or 72 percent, and was best for generalized-onset seizures at 197 of 250, or
+      79 percent, but it was not the best trend for focal onset.
+  - key: D
+    text: The rhythmicity spectrogram
+    correct: false
+    rationale: >-
+      Rhythmicity is useful for identifying ictal rhythms, particularly alongside an
+      automated detector, but it also flags spindles, the posterior dominant rhythm and
+      repetitive artifact, and it did not top the focal-seizure comparison.
+  - key: E
+    text: The suppression ratio
+    correct: false
+    rationale: >-
+      The suppression ratio tracks the proportion of time the EEG is suppressed and is
+      used for burst suppression and anesthetic titration; it is not a seizure-screening
+      trend.
+
+explanation: >-
+  The correct answer is A. Different seizure types leave different fingerprints on the
+  trend panel, so the best single screening trend depends on the seizure type you are
+  hunting. A focal seizure redistributes power to one hemisphere, which is exactly what
+  an asymmetry display is built to show. What the image shows: three brief events with
+  a lateralised deflection on the relative asymmetry spectrogram at each, while the
+  hemispheric FFT spectrograms show only a modest change and the detection trend rises
+  at some but not all of the events. Evidence: in a cohort of 562 seizures from
+  58 patients aged 5 to 64 years (mean 36 years) monitored in an ICU or epilepsy
+  monitoring unit, comprising 125 focal, 187 secondarily generalized and 250
+  generalized seizures, overall spectrogram sensitivities for seizure detection ranged
+  from 43 to 72 percent, with the highest overall sensitivity from the
+  seizure-detection trend at 402 of 562, or 72 percent; the asymmetry spectrogram had
+  the highest sensitivity for detecting focal seizures at 117 of 125, or 94 percent;
+  the FFT spectrogram was most sensitive for secondarily generalized seizures at
+  158 of 187, or 84 percent; and the seizure-detection trend was most sensitive for
+  generalized-onset seizures at 197 of 250, or 79 percent. This was a mixed-age adult
+  and pediatric cohort, not a pediatric study, so the figures should be applied to
+  children with caution. Bedside takeaway: choose the screening trend to match the
+  expected seizure type, and read a panel rather than a single trend when you can.
+
+key_points:
+  - Asymmetry spectrogram had 94 percent sensitivity for focal seizures, 117 of 125.
+  - FFT spectrogram was best for secondarily generalized seizures, 158 of 187 or 84 percent.
+  - Figures come from a mixed-age cohort aged 5 to 64 years, not a pediatric-only study.
+
+references:
+  - pmid: "29414138"
+    doi: 10.1016/j.seizure.2018.01.008
+    citation: >-
+      Goenka A, Boro A, Yozawitz E. Comparative sensitivity of quantitative EEG (QEEG)
+      spectrograms for detecting seizure subtypes. Seizure. 2018;55:70-75.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: false
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101313
+    age_group: adolescent
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 240
+    background:
+      type: continuous
+      dominant_hz: 9.0
+      amplitude_uv: 45
+      slow_fraction: 0.3
+      reactivity: present
+    events:
+      - type: seizure
+        onset_min: 48.0
+        duration_s: 45
+        onset_region: right_frontal
+        evolution: { start_hz: 6.0, end_hz: 3.0, amplitude_start_uv: 50, amplitude_end_uv: 95 }
+        spread: none
+        postictal_attenuation_s: 30
+      - type: seizure
+        onset_min: 129.0
+        duration_s: 40
+        onset_region: right_central
+        evolution: { start_hz: 6.0, end_hz: 3.0, amplitude_start_uv: 50, amplitude_end_uv: 90 }
+        spread: none
+        postictal_attenuation_s: 30
+      - type: seizure
+        onset_min: 201.0
+        duration_s: 50
+        onset_region: right_frontal
+        evolution: { start_hz: 6.0, end_hz: 2.5, amplitude_start_uv: 55, amplitude_end_uv: 100 }
+        spread: none
+        postictal_attenuation_s: 30
+    annotations: []
+    panels:
+      - seizure_probability
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - rhythmicity_L
+      - rhythmicity_R
+    time_axis: elapsed
+    style:
+      panel_labels: hidden
+      spectrogram_hz_range: [0, 20]
+      asymmetry_colorbar: blue_left_red_right
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

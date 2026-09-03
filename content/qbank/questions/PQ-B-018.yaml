@@ -1,0 +1,162 @@
+# Verification trail: content/qbank/sources/PQ-B-018.md
+id: PQ-B-018
+version: 1
+status: draft
+title: Naming the ACNS indication for continuous EEG in unexplained encephalopathy
+domain: monitoring_practice
+topics: [ACNS consensus, indications, nonconvulsive status epilepticus, cEEG workflow]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: application
+learning_objective: >-
+  Match a clinical scenario to the correct American Clinical Neurophysiology Society
+  consensus indication for continuous critical care EEG in a critically ill child.
+
+stem:
+  vignette: >-
+    A 9-year-old girl was admitted 24 hours ago with convulsive status epilepticus, which
+    stopped after lorazepam and a levetiracetam load. She has not received a continuous
+    sedative infusion and no neuromuscular blockade is running; the last benzodiazepine
+    dose was 20 hours ago. She remains unresponsive with intermittent eye deviation to the
+    right and a nonfocal motor examination. Neuroimaging is unremarkable. The intensivist
+    asks the neurology service to state the indication for continuous EEG so it can be
+    documented in the consult note.
+  image_caption: >-
+    Fifteen-second raw EEG page from the second hour of monitoring, longitudinal bipolar
+    montage, 19 scalp electrodes, 7 microvolts per millimetre, filters 1 to 70 Hz with a
+    60 Hz notch. Time of day is suppressed and no annotations fall within the displayed
+    window.
+  lead_in: >-
+    Which consensus indication for continuous EEG does this clinical situation represent?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Diagnosis of nonconvulsive seizures and nonconvulsive status epilepticus
+    correct: true
+    rationale: >-
+      Persistent unexplained altered mental status after convulsive status epilepticus is
+      the archetypal setting for this recommendation, and the page confirms ongoing
+      evolving ictal activity.
+  - key: B
+    text: Assessment of the efficacy of therapy for seizures and status epilepticus
+    correct: false
+    rationale: >-
+      This indication applies once treatment is being titrated against a known ictal
+      pattern. Here the diagnostic question comes first: nothing had been recorded yet.
+  - key: C
+    text: Identification of ischemia in a patient at high risk for cerebral ischemia
+    correct: false
+    rationale: >-
+      This suggested indication applies to populations such as subarachnoid hemorrhage or
+      vascular surgery. Nothing in the vignette places this child at high ischemic risk.
+  - key: D
+    text: Assessment of level of consciousness during pharmacologically induced coma
+    correct: false
+    rationale: >-
+      No continuous sedative infusion or induced coma is running, so there is no
+      pharmacologic suppression to titrate or interpret.
+  - key: E
+    text: Characterization of paroxysmal events of uncertain cause
+    correct: false
+    rationale: >-
+      This indication fits discrete stereotyped spells of unclear nature. The problem here
+      is sustained unexplained encephalopathy, not an episodic event.
+
+explanation: >-
+  The correct answer is A. What the image shows: the page carries a well-formed, rhythmic
+  2 to 3 Hz sharply contoured discharge over the left posterior quadrant that changes in
+  frequency and field across the 15 seconds, spreading anteriorly, with relative
+  attenuation of the contralateral chains. That evolution over a single page identifies an
+  electrographic seizure rather than a periodic pattern or a burst-suppression background,
+  and the clinical picture of persistent unresponsiveness with eye deviation after
+  convulsive status epilepticus is nonconvulsive status epilepticus. Evidence: the
+  American Clinical Neurophysiology Society critical care continuous EEG task force
+  developed expert consensus recommendations for adults and children. The panel recommends
+  continuous EEG for the diagnosis of nonconvulsive seizures, nonconvulsive status
+  epilepticus and other paroxysmal events, and for assessment of the efficacy of therapy
+  for seizures and status epilepticus. It suggests continuous EEG for identification of
+  ischemia in patients at high risk for cerebral ischemia, for assessment of level of
+  consciousness in patients receiving intravenous sedation or pharmacologically induced
+  coma, and for prognostication in patients after cardiac arrest. For each indication the
+  statement describes the populations involved, the utility of video and quantitative EEG
+  trends, and the suggested timing, duration and frequency of review. Bedside takeaway:
+  name the indication in the consult note; it sets the expected duration and the review
+  frequency.
+
+key_points:
+  - Unexplained altered mental status after convulsive status epilepticus is a diagnostic cEEG indication.
+  - The consensus recommends cEEG for nonconvulsive seizures, status epilepticus and paroxysmal events.
+  - Ischemia detection, sedation depth and post-arrest prognosis are separately suggested indications.
+
+references:
+  - pmid: "25626778"
+    doi: 10.1097/WNP.0000000000000166
+    citation: >-
+      Herman ST, Abend NS, Bleck TP, et al. Consensus statement on continuous EEG in
+      critically ill adults and children, part I: indications. J Clin Neurophysiol.
+      2015;32(2):87-95.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "21307352"
+    doi: 10.1212/WNL.0b013e318211c19e
+    citation: >-
+      Abend NS, Gutierrez-Colina AM, Topjian AA, et al. Nonconvulsive seizures are common
+      in critically ill children. Neurology. 2011;76(12):1071-7.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: eeg_page
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100018
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    montage: longitudinal_bipolar
+    background:
+      type: continuous
+      dominant_hz: 4.0
+      amplitude_uv: 45
+      slow_fraction: 0.65
+      reactivity: present
+    events:
+      - type: status_epilepticus
+        onset_min: 95
+        duration_min: 40
+        onset_region: left_occipital
+    at_min: 118.0
+    window_s: 15
+    sensitivity_uv_mm: 7
+    filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+    highlight: null
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

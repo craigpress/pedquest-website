@@ -1,0 +1,172 @@
+# Verification trail: content/qbank/sources/PQ-B-016.md
+id: PQ-B-016
+version: 1
+status: draft
+title: Risk-stratified continuous EEG duration in a critically ill child
+domain: monitoring_practice
+topics: [monitoring duration, seizure risk stratification, epileptiform discharges, resource use]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: application
+learning_objective: >-
+  Apply a risk-stratified model that combines age, prior clinically evident seizures and
+  emergent EEG risk factors to choose a continuous EEG duration for a critically ill child.
+
+stem:
+  vignette: >-
+    A 5-year-old girl is admitted to the PICU with encephalopathy after a systemic
+    inflammatory illness. She has never had a clinically evident seizure. Continuous EEG
+    with a quantitative trend panel is started on admission. She is receiving fentanyl but
+    no continuous sedative infusion and no neuromuscular blockade. The first 6 hours,
+    shown here, contain no electrographic seizures, no epileptiform discharges and no
+    ictal-interictal continuum patterns. The intensivist needs the EEG machine for another
+    admission and asks whether monitoring can stop now.
+  image_caption: >-
+    Six-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
+    spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right); suppression
+    ratio (left, right). Elapsed minutes on the time axis. A caregiver-patting artifact is
+    annotated at 150 minutes. No medication annotations fall within this window.
+  lead_in: >-
+    What is the shortest monitoring duration after which her residual risk of an
+    electrographic seizure falls below 5 percent?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: 6 hours
+    correct: true
+    rationale: >-
+      A child of 1 year or older with no prior clinically evident seizures and no
+      emergent EEG risk factors reached a residual electrographic seizure risk below 5
+      percent after 6 hours of monitoring.
+  - key: B
+    text: 12 hours
+    correct: false
+    rationale: >-
+      Twelve hours is not one of the model's decision points, and this child's risk
+      profile is already the lowest of the six groups described.
+  - key: C
+    text: 24 hours
+    correct: false
+    rationale: >-
+      One day is the duration for children under 1 year without risk factors, or for
+      children of 1 year or older who have either prior seizures or emergent EEG risks.
+  - key: D
+    text: 48 hours
+    correct: false
+    rationale: >-
+      Two days applies to children of 1 year or older with both prior seizures and EEG
+      risk factors, or to infants under 1 year with EEG risk factors.
+  - key: E
+    text: 60 hours
+    correct: false
+    rationale: >-
+      Two and a half days was required only for infants under 1 year with prior seizures,
+      regardless of emergent EEG risk factors.
+
+explanation: >-
+  The correct answer is A. What the image shows: the rhythmicity spectrograms are empty
+  apart from a broadband, non-evolving, bilateral rise at the annotated patting artifact
+  at 150 minutes; the seizure-probability trend is flat except at that artifact; the FFT
+  spectrograms show symmetric slow-dominant power without arches; the aEEG margins are
+  continuous and stable; and the asymmetry index stays near zero. There is therefore no
+  seizure and no emergent EEG risk factor in the first 6 hours. Evidence: a prospective
+  observational cohort of 719 consecutive critically ill children with encephalopathy
+  used two baseline clinical risk factors, age and prior clinically evident seizures, and
+  two emergent EEG risk factors, epileptiform discharges and ictal-interictal continuum
+  patterns, in a multistate survival model. Electrographic seizures occurred in 184
+  children (26 percent). Patients reached a residual risk below 5 percent after 6 hours if
+  they were 1 year or older without prior seizures or EEG risk factors; 1 day if under 1
+  year without prior seizures or EEG risks, or 1 year or older with either; 2 days if 1
+  year or older with both, or under 1 year with EEG risks but no prior seizures; and 2.5
+  days if under 1 year with prior seizures. For a residual risk below 2 percent, only the
+  no-risk-factor groups needed longer, at 1.5 days under 1 year and 1 day at 1 year or
+  older. Bedside takeaway: record the four risk factors explicitly, then set the stop time.
+
+key_points:
+  - Age 1 year or older with no prior seizures and no EEG risk factors reached under 5 percent risk at 6 hours.
+  - Emergent EEG risk factors are epileptiform discharges and ictal-interictal continuum patterns.
+  - Infants under 1 year with prior seizures needed 2.5 days to reach the same threshold.
+
+references:
+  - pmid: "32690798"
+    doi: 10.1212/WNL.0000000000010421
+    citation: >-
+      Fung FW, Fan J, Vala L, et al. EEG monitoring duration to identify
+      electroencephalographic seizures in critically ill children. Neurology.
+      2020;95(11):e1599-608.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "26057408"
+    doi: 10.1097/WNP.0000000000000198
+    citation: >-
+      Abend NS, Topjian AA, Williams S. Could EEG monitoring in critically ill children be
+      a cost-effective neuroprotective strategy? J Clin Neurophysiol. 2015;32(6):486-94.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100016
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 360
+    background:
+      type: continuous
+      dominant_hz: 5.0
+      amplitude_uv: 50
+      slow_fraction: 0.55
+      reactivity: present
+    events:
+      - type: artifact
+        kind: patting
+        at_min: 150
+        duration_s: 200
+        side: all
+        intensity: medium
+    annotations:
+      - { at_min: 150, label: "Caregiver patting" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

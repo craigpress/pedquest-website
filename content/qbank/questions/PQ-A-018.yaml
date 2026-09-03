@@ -1,0 +1,163 @@
+id: PQ-A-018
+version: 1
+status: draft
+title: Separating chest physiotherapy artifact from the real seizure on a panel
+domain: seizure_detection
+topics: [chest physiotherapy artifact, seizure mimics, point to feature, rhythmicity spectrogram, aEEG arch]
+population: infant
+setting: PICU
+difficulty: intermediate
+bloom: interpretation
+learning_objective: >-
+  Discriminate a scheduled rhythmic mechanical artifact from a true electrographic
+  seizure on a multi-trend panel and select the true seizure by its evolution and
+  lateralised amplitude rise.
+
+stem:
+  vignette: >-
+    A 7-month-old boy is admitted to the PICU with bronchiolitis, respiratory failure
+    and a new right-sided focal seizure at presentation. He is intubated on a
+    dexmedetomidine infusion and is not receiving neuromuscular blockade. He has
+    scheduled chest physiotherapy. Continuous EEG with a quantitative trend panel is
+    running. Over 4 hours the panel shows two conspicuous events. The first is a
+    sustained bilateral rhythmic band that starts and stops abruptly, lasting about
+    10 minutes, with no frequency evolution and no change in the asymmetry index. The
+    second is a 90-second event with a rhythmicity band slowing from 4 to 1.5 hertz
+    over the left hemisphere, an arched rise in the left aEEG, a leftward asymmetry
+    deflection, and a brief fall in left amplitude afterward.
+  image_caption: >-
+    Four-hour qEEG panel, top to bottom: seizure probability; rhythmicity spectrogram
+    (left, right); FFT spectrogram (left, right); relative asymmetry spectrogram and
+    asymmetry index; aEEG (left, right). Scheduled chest physiotherapy is annotated at
+    70 minutes. Time axis in minutes from the start of recording.
+  lead_in: >-
+    Click the electrographic seizure on the left rhythmicity spectrogram panel.
+
+question_type: point_to_feature
+options: []
+point_to_feature:
+  instruction: >-
+    Click the left rhythmicity spectrogram at the evolving 90-second event, not at the
+    sustained bilateral band that coincides with chest physiotherapy.
+  target_event: 1
+  target_panel: rhythmicity_L
+  tolerance: 0.03
+
+explanation: >-
+  The expected region is the evolving event at 150 minutes on the left rhythmicity
+  spectrogram. What the image shows: two events that a bedside reader would flag and
+  that the seizure-probability trend scores similarly, but only one of which evolves.
+  The 70-minute event is bilateral, fixed in frequency, begins and ends abruptly with
+  the annotated chest physiotherapy, lasts as long as the treatment, and leaves the
+  asymmetry index at zero and the aEEG margins unchanged in shape. The 150-minute
+  event is lateralised, slows from 4 to 1.5 hertz over about 90 seconds, produces a
+  solid flame on the left FFT spectrogram, arches the left aEEG upward, deflects the
+  asymmetry index to the left, and is followed by a brief post-ictal fall in left
+  amplitude. Evidence: a pediatric neurocritical care review of qEEG in the ICU states
+  that rhythmic patterns such as patting and respiratory therapy artifact are less
+  likely to be removed by artifact-reduction algorithms and that both can be mistaken
+  for seizures if the raw EEG and video are not reviewed, and separately that the
+  rhythmicity spectrogram is susceptible to highlighting repetitive artifacts from
+  respiratory treatments or patting. Published pediatric performance data show why
+  the confusion matters: in 27 continuous EEG recordings containing 553 seizures over
+  487 hours, blinded neurophysiologists reached a median sensitivity of 83.3 percent
+  with color density spectral array and 81.5 percent with aEEG, with false positives
+  occurring about once every 17 to 20 hours. Bedside takeaway: check the nursing
+  schedule before you check the drug chart, then open the raw EEG.
+
+key_points:
+  - Chest physiotherapy artifact is bilateral, fixed in frequency, and treatment-locked.
+  - A seizure evolves in frequency and lifts the aEEG and asymmetry trends on one side.
+  - Artifact reduction rarely removes rhythmic respiratory or patting artifact.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "20861452"
+    doi: 10.1212/WNL.0b013e3181f9619e
+    citation: >-
+      Stewart CP, Otsubo H, Ochi A, Sharma R, Hutchison JS, Hahn CD. Seizure
+      identification in the ICU using quantitative EEG displays. Neurology.
+      2010;75(17):1501-8.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101818
+    age_group: infant
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 240
+    background:
+      type: continuous
+      dominant_hz: 4.0
+      amplitude_uv: 55
+      slow_fraction: 0.6
+      reactivity: present
+    events:
+      - type: artifact
+        kind: chest_pt
+        at_min: 70.0
+        duration_s: 600
+        side: all
+        intensity: high
+      - type: seizure
+        onset_min: 150.0
+        duration_s: 90
+        onset_region: left_central
+        evolution: { start_hz: 4.0, end_hz: 1.5, amplitude_start_uv: 60, amplitude_end_uv: 155 }
+        spread: hemispheric
+        postictal_attenuation_s: 45
+    annotations:
+      - { at_min: 70, label: "Chest physiotherapy" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+    time_axis: elapsed
+    style:
+      artifact_band_hz: 3.0
+      rhythmicity_hz_range: [1, 25]
+      spectrogram_hz_range: [0, 20]
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

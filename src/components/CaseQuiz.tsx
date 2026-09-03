@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
-import type { PublicCase, RevealResult, Region } from "@/lib/cases";
+import { imageCreditLine, type CaseReference, type PublicCase, type RevealResult, type Region } from "@/lib/cases";
 
 const SESSION_KEY = "pedquest_eeg_session";
 function getSessionId(): string {
@@ -21,7 +21,16 @@ async function getAccessToken(): Promise<string | null> {
   try { const { data } = await sb.auth.getSession(); return data.session?.access_token ?? null; } catch { return null; }
 }
 
-export default function CaseQuiz({ caseData, archived = false }: { caseData: PublicCase; archived?: boolean }) {
+export default function CaseQuiz({
+  caseData,
+  archived = false,
+  onNext,
+}: {
+  caseData: PublicCase;
+  archived?: boolean;
+  /** practice mode: render a "next question" button after the reveal */
+  onNext?: () => void;
+}) {
   const [selected, setSelected] = useState<string | null>(null);
   const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
   const [reveal, setReveal] = useState<RevealResult | null>(null);
@@ -65,6 +74,7 @@ export default function CaseQuiz({ caseData, archived = false }: { caseData: Pub
   }, [caseData, selected, point, answerKey]);
 
   const answered = !!reveal;
+  const credit = imageCreditLine(caseData);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -97,10 +107,39 @@ export default function CaseQuiz({ caseData, archived = false }: { caseData: Pub
         )
       )}
 
+      {/* image caption + credit line (question-bank items carry both) */}
+      {(caseData.imageCaption || credit) && (
+        <div style={{ marginTop: -8 }}>
+          {caseData.imageCaption && (
+            <p style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>
+              {caseData.imageCaption}
+            </p>
+          )}
+          {credit && (
+            <p style={{ fontFamily: "monospace", fontSize: 11.5, color: "var(--text-muted)", margin: "6px 0 0" }}>
+              {credit}
+              {caseData.imageSourceUrl && (
+                <>
+                  {" · "}
+                  <a href={caseData.imageSourceUrl} target="_blank" rel="noopener noreferrer">source</a>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* question */}
-      <h2 style={{ fontFamily: "var(--heading-font)", fontSize: "1.4rem", margin: 0, color: "var(--text)" }}>
-        {caseData.questionPrompt}
-      </h2>
+      <div>
+        <h2 style={{ fontFamily: "var(--heading-font)", fontSize: "1.4rem", margin: 0, color: "var(--text)" }}>
+          {caseData.leadIn || caseData.questionPrompt}
+        </h2>
+        {caseData.leadIn && caseData.questionPrompt && caseData.questionPrompt !== caseData.leadIn && (
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 0" }}>
+            {caseData.questionPrompt}
+          </p>
+        )}
+      </div>
 
       {/* multiple choice */}
       {caseData.questionType === "multiple_choice" && (
@@ -133,7 +172,7 @@ export default function CaseQuiz({ caseData, archived = false }: { caseData: Pub
                   </span>
                   {answered && <span style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-muted)" }}>{pct}% · {count}</span>}
                 </span>
-                {answered && rev?.explanation && (isChosen || isCorrect) && (
+                {answered && rev?.explanation && (
                   <span style={{ position: "relative", display: "block", marginTop: 8, fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.5 }}>
                     {rev.explanation}
                   </span>
@@ -155,7 +194,18 @@ export default function CaseQuiz({ caseData, archived = false }: { caseData: Pub
           </button>
         </div>
       ) : (
-        <Reveal reveal={reveal!} />
+        <>
+          <Reveal reveal={reveal!} />
+          {onNext && (
+            <div>
+              <button type="button" onClick={onNext}
+                style={{ padding: "12px 24px", borderRadius: 10, border: "1px solid var(--border)", cursor: "pointer",
+                  background: "var(--bg-card)", color: "var(--text)", fontWeight: 600, fontSize: 15 }}>
+                Next question →
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -163,6 +213,11 @@ export default function CaseQuiz({ caseData, archived = false }: { caseData: Pub
 
 function Reveal({ reveal }: { reveal: RevealResult }) {
   const pct = reveal.stats.total ? Math.round((reveal.stats.correctCount / reveal.stats.total) * 100) : 0;
+  // Question-bank items carry key_points; older Case-of-the-Day rows only have
+  // teaching_points, and a reveal cached in localStorage before the bank
+  // shipped has neither field.
+  const points: string[] = reveal.keyPoints?.length ? reveal.keyPoints : (reveal.teachingPoints ?? []);
+  const references: CaseReference[] = reveal.references ?? [];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem", borderTop: "1px solid var(--border)", paddingTop: "1.3rem" }}>
       <div style={{
@@ -179,12 +234,46 @@ function Reveal({ reveal }: { reveal: RevealResult }) {
         <p style={{ margin: 0, fontSize: "1.02rem", lineHeight: 1.65, color: "var(--text)" }}>{reveal.explanation}</p>
       )}
 
-      {reveal.teachingPoints.length > 0 && (
+      {points.length > 0 && (
         <div>
-          <div style={{ fontFamily: "monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Teaching points</div>
+          <div style={{ fontFamily: "monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Key points</div>
           <ul style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 6 }}>
-            {reveal.teachingPoints.map((t, i) => <li key={i} style={{ color: "var(--text-secondary)", lineHeight: 1.55 }}>{t}</li>)}
+            {points.map((t, i) => <li key={i} style={{ color: "var(--text-secondary)", lineHeight: 1.55 }}>{t}</li>)}
           </ul>
+        </div>
+      )}
+
+      {references.length > 0 && (
+        <div>
+          <div style={{ fontFamily: "monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Evidence</div>
+          <ol style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 7 }}>
+            {references.map((r) => (
+              <li key={r.id} style={{ color: "var(--text-secondary)", lineHeight: 1.5, fontSize: 13.5 }}>
+                {r.citation}
+                {r.pmid && (
+                  <>
+                    {" "}
+                    <a href={`https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/`} target="_blank" rel="noopener noreferrer"
+                      style={{ fontFamily: "monospace", fontSize: 12 }}>
+                      PubMed {r.pmid} ↗
+                    </a>
+                  </>
+                )}
+                {!r.pmid && r.doi && (
+                  <>
+                    {" "}
+                    <a href={`https://doi.org/${r.doi}`} target="_blank" rel="noopener noreferrer"
+                      style={{ fontFamily: "monospace", fontSize: 12 }}>
+                      doi ↗
+                    </a>
+                  </>
+                )}
+                {r.role === "primary" && (
+                  <span style={{ fontFamily: "monospace", fontSize: 10.5, marginLeft: 6, color: "var(--accent-primary)" }}>PRIMARY</span>
+                )}
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 

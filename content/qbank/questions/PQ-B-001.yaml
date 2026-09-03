@@ -1,0 +1,174 @@
+# Verification trail: content/qbank/sources/PQ-B-001.md
+id: PQ-B-001
+version: 1
+status: draft
+title: Naming the aEEG background pattern in a cooled term neonate
+domain: background_terminology
+topics: [aEEG, pattern classification, burst suppression, neonatal HIE, ACNS neonatal terminology]
+population: neonate
+setting: NICU
+difficulty: introductory
+bloom: interpretation
+learning_objective: >-
+  Classify a neonatal aEEG background using the CNV, DNV, BS, CLV and FT scheme and
+  name the feature that separates burst suppression from discontinuous normal voltage.
+
+stem:
+  vignette: >-
+    A term neonate is admitted on the day of birth after a sentinel event during labor,
+    with a cord arterial pH of 6.9 and a 10-minute Apgar score of 4. The examination
+    shows stupor, absent suck and diffuse hypotonia. Therapeutic hypothermia is started
+    at 4 hours of life and core temperature has been held at 33.5 degrees Celsius.
+    Two-channel amplitude-integrated EEG with a raw tracing is running from 5 hours of
+    life. The infant has received one fentanyl bolus, 6 hours before this window, and no
+    antiseizure medication. The neonatal nurse practitioner asks you to name the
+    background pattern before rounds.
+  image_caption: >-
+    Six-hour, two-channel aEEG (C3-P3 and C4-P4) on the conventional semilog amplitude
+    axis, linear from 0 to 10 microvolts and logarithmic from 10 to 100 microvolts, with
+    hours from the start of recording on the time axis. A 15-second raw EEG inset is
+    shown. No medication marks or annotations fall within this window.
+  lead_in: Which aEEG background pattern best describes this tracing?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Burst suppression
+    correct: true
+    rationale: >-
+      The trace is discontinuous with an essentially isoelectric lower margin between
+      high-voltage bursts, and the interburst segments show no residual variability.
+      That combination defines burst suppression on aEEG.
+  - key: B
+    text: Continuous low voltage
+    correct: false
+    rationale: >-
+      Continuous extremely low voltage is a continuous trace whose whole band sits at a
+      low amplitude; there are no discrete high-voltage bursts rising out of an
+      isoelectric baseline.
+  - key: C
+    text: Continuous normal voltage
+    correct: false
+    rationale: >-
+      Continuous normal voltage has an unbroken band with the lower margin above the
+      isoelectric line throughout. This tracing is interrupted by long, flat interburst
+      intervals.
+  - key: D
+    text: Discontinuous normal voltage
+    correct: false
+    rationale: >-
+      Discontinuous normal voltage is also interrupted, but the interburst segments
+      retain measurable low-voltage activity rather than falling to an isoelectric
+      lower margin. That is the discriminating feature here.
+  - key: E
+    text: Flat trace
+    correct: false
+    rationale: >-
+      A flat trace is mainly isoelectric throughout, without recurring high-voltage
+      bursts. Bursts reaching well above the normal upper margin exclude this category.
+
+explanation: >-
+  The correct answer is A: the tracing is burst suppression because high-voltage bursts
+  rise out of an interburst segment whose lower margin is essentially isoelectric. What
+  the image shows: both channels are discontinuous, with bursts recurring roughly every
+  9 seconds, an upper margin that climbs well above the normal band during each burst,
+  and an interburst lower margin pinned at the bottom of the linear part of the axis
+  with no residual variability. Sleep-wake cycling is absent and the raw inset confirms
+  that the flat segments are suppression rather than a display artifact. The single
+  discriminator against discontinuous normal voltage is the interburst amplitude, not the
+  burst amplitude: discontinuous normal voltage keeps measurable activity between bursts.
+  Evidence: Toet and colleagues classified aEEG in 73 asphyxiated term infants, 68 of
+  whom were followed for 12 months or more, using this five-pattern scheme (flat trace,
+  continuous extremely low voltage, burst suppression, discontinuous normal voltage and
+  continuous normal voltage). Burst suppression together with flat trace and continuous
+  low voltage predicted poor outcome with a sensitivity of 0.85 and a specificity of
+  0.77 at 3 hours of age and 0.91 and 0.86 at 6 hours. In 872 cooled neonates monitored
+  with three-channel aEEG, seizures occurred in 33.9 percent overall and the worse the
+  early background, the higher the seizure risk. Bedside takeaway: read the interburst
+  lower margin, and confirm it on the raw tracing before you call a background
+  suppressed.
+
+key_points:
+  - Burst suppression on aEEG means high-voltage bursts over an essentially isoelectric interburst lower margin.
+  - Discontinuous normal voltage keeps measurable activity between bursts; that is the discriminator.
+  - Burst suppression, low voltage or flat trace at 6 hours predicted poor outcome in term asphyxia.
+
+references:
+  - pmid: "10375357"
+    doi: 10.1136/fn.81.1.f19
+    citation: >-
+      Toet MC, Hellstrom-Westas L, Groenendaal F, Eken P, de Vries LS. Amplitude
+      integrated EEG 3 and 6 hours after birth in full term neonates with
+      hypoxic-ischaemic encephalopathy. Arch Dis Child Fetal Neonatal Ed.
+      1999;81(1):F19-23.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "37966836"
+    doi: 10.1001/jamanetworkopen.2023.43429
+    citation: >-
+      Variane GFT, Dahlen A, Pietrobom RFR, et al. Remote monitoring for seizures during
+      therapeutic hypothermia in neonates with hypoxic-ischemic encephalopathy. JAMA Netw
+      Open. 2023;6(11):e2343429.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: cc-by
+    member_author: false
+  - pmid: "23545767"
+    doi: 10.1097/WNP.0b013e3182872b24
+    citation: >-
+      Tsuchida TN, Wusthoff CJ, Shellhaas RA, et al. American Clinical Neurophysiology
+      Society standardized EEG terminology and categorization for the description of
+      continuous EEG monitoring in neonates. J Clin Neurophysiol. 2013;30(2):161-73.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100001
+    age_group: neonate
+    sample_rate: 256
+    duration_h: 6
+    channels: [C3-P3, C4-P4]
+    pattern: BS
+    sleep_wake_cycling: absent
+    background:
+      type: burst_suppression
+      dominant_hz: 1.5
+      amplitude_uv: 35
+      slow_fraction: 0.85
+      burst_suppression: { burst_s: 1.5, ibi_s: 9.0 }
+      reactivity: absent
+    seizures: []
+    raw_strip_at_h: 2.50
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

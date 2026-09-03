@@ -1,0 +1,181 @@
+id: PQ-A-008
+version: 1
+status: draft
+title: What the notch filter and artifact reduction do and do not remove
+domain: foundations
+topics: [notch filter, artifact reduction, line noise, EMG artifact, patting artifact]
+population: adolescent
+setting: PICU
+difficulty: intermediate
+bloom: application
+learning_objective: >-
+  Predict which qEEG artifacts are removed by line-frequency and artifact-reduction
+  processing and which persist, and choose the processing step that will not fix a
+  rhythmic mechanical artifact.
+
+stem:
+  vignette: >-
+    A 13-year-old girl with cystic fibrosis is admitted to the PICU with respiratory
+    failure and a new encephalopathy. Continuous EEG with a quantitative trend panel
+    has been running for 8 hours. The technologist reports that the trend panel is
+    hard to read: there is a continuous dense band very high on the spectrogram, a
+    broad diffuse increase in power whenever the patient grimaces, and a rhythmic band
+    near 13 hertz that appears in blocks lasting about 20 minutes, four times a day.
+    The nursing flowsheet documents high-frequency chest wall oscillation vest therapy
+    four times daily. She has received no antiseizure medication. Impedances are
+    5 kiloohms or less at every electrode.
+  image_caption: >-
+    Fifteen-second raw EEG page in longitudinal bipolar montage during vest therapy,
+    at 7 microvolts per millimetre, with a low-frequency filter of 1 hertz, a
+    high-frequency filter of 70 hertz and the 60 hertz notch filter switched off.
+  lead_in: >-
+    Which of the three findings will persist after the notch filter and artifact
+    reduction are applied?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Only the continuous dense band high on the spectrogram
+    correct: false
+    rationale: >-
+      That band is line-frequency artifact at 60 hertz, which is precisely what the
+      notch filter and artifact reduction remove well; it is the finding least likely
+      to persist.
+  - key: B
+    text: Only the broad power increase that accompanies grimacing
+    correct: false
+    rationale: >-
+      Grimacing produces myogenic artifact, which artifact-reduction algorithms handle
+      well. It is also time-locked to an observable clinical event, so it is easy to
+      recognise even when present.
+  - key: C
+    text: Only the rhythmic 13 hertz band that coincides with vest therapy
+    correct: true
+    rationale: >-
+      Rhythmic mechanical artifact from respiratory therapy and patting is the category
+      that artifact reduction is least likely to remove, and it is the category most
+      readily mistaken for a seizure on a rhythmicity or FFT spectrogram.
+  - key: D
+    text: The dense high band and the grimacing-related increase, but not the 13 hertz band
+    correct: false
+    rationale: >-
+      This reverses the expected performance: line-frequency and myogenic artifact are
+      the two categories that processing removes most reliably.
+  - key: E
+    text: All three, because trend processing cannot remove artifact once it is recorded
+    correct: false
+    rationale: >-
+      Artifact-reduction algorithms do work on the digital signal after acquisition and
+      perform well for line-frequency and myogenic artifact; the claim that nothing can
+      be removed is too strong.
+
+explanation: >-
+  The correct answer is C. Rhythmic mechanical artifact is the artifact class that
+  survives standard processing and is therefore the one that most often reaches a
+  bedside reader as a false seizure. What the image shows: on the raw page the
+  13 hertz activity is present across widely separated chains without a physiological
+  field, does not evolve in frequency, and starts and stops abruptly with the therapy;
+  the 60 hertz artifact appears as a uniform fine oscillation on every channel because
+  the notch filter is switched off. Evidence: a pediatric neurocritical care review of
+  qEEG in the ICU states that most qEEG software offers artifact-reduction algorithms
+  which perform well in removal of electrical artifact, 60 hertz in the United States
+  and 50 hertz in Europe, and of myogenic artifact, but that rhythmic patterns such as
+  patting and respiratory therapy artifact are less likely to be filtered and both can
+  be mistaken for seizures if the raw EEG and video are not reviewed; the same review
+  illustrates artifact in the 13 to 14 hertz range from a high-frequency chest wall
+  oscillation vest in an adolescent, and separately notes that the rhythmicity
+  spectrogram is susceptible to highlighting repetitive artifacts from respiratory
+  treatments or patting. Bedside takeaway: when a rhythmic band recurs on a schedule,
+  compare it against the nursing flowsheet before you compare it against a seizure.
+
+key_points:
+  - Artifact reduction removes line-frequency and myogenic artifact reliably.
+  - Rhythmic patting and respiratory therapy artifact usually persists after processing.
+  - A rhythmic band recurring on a care schedule should be checked against the flowsheet.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "25626777"
+    doi: 10.1097/WNP.0000000000000165
+    citation: >-
+      Herman ST, Abend NS, Bleck TP, et al. Consensus statement on continuous EEG in
+      critically ill adults and children, part II: personnel, technical specifications,
+      and clinical practice. J Clin Neurophysiol. 2015;32(2):96-108.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: eeg_page
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100808
+    age_group: adolescent
+    sample_rate: 256
+    channels: standard_19
+    montage: longitudinal_bipolar
+    at_min: 305.0
+    window_s: 15
+    sensitivity_uv_mm: 7
+    filters: { lf_hz: 1, hf_hz: 70, notch_hz: null }
+    highlight: null
+    background:
+      type: continuous
+      dominant_hz: 6.0
+      amplitude_uv: 40
+      slow_fraction: 0.5
+      reactivity: present
+    events:
+      - type: artifact
+        kind: sixty_hz
+        at_min: 0
+        duration_s: 28800
+        side: all
+        intensity: medium
+      - type: artifact
+        kind: chest_pt
+        at_min: 300
+        duration_s: 1200
+        side: all
+        intensity: high
+      - type: artifact
+        kind: emg_chewing
+        at_min: 302
+        duration_s: 20
+        channels: [T3, T5, F7]
+        intensity: medium
+    annotations:
+      - { at_min: 300, label: "Oscillation vest therapy" }
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

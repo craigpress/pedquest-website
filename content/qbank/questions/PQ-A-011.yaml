@@ -1,0 +1,161 @@
+id: PQ-A-011
+version: 1
+status: draft
+title: Clicking the seizure onset on the left rhythmicity spectrogram
+domain: seizure_detection
+topics: [rhythmicity spectrogram, seizure onset, EMG artifact, point to feature, evolution]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: interpretation
+learning_objective: >-
+  Locate the onset of an evolving focal electrographic seizure on a hemispheric
+  rhythmicity spectrogram and distinguish it from an earlier non-evolving muscle
+  artifact on the same panel.
+
+stem:
+  vignette: >-
+    A 9-year-old boy is admitted to the PICU with acute encephalopathy and new focal
+    motor seizures on the right side of the body. He is intubated for airway protection
+    and receives a low-dose midazolam infusion; no neuromuscular blockade has been
+    given. Continuous EEG with a quantitative trend panel is started. Over the first
+    3 hours the panel shows two candidate events. The first is a broad, non-evolving
+    increase in power confined to the left temporal chain, coincident with a nursing
+    note of oral care. The second is a discrete band on the left rhythmicity
+    spectrogram that starts near 4 hertz and slows to about 1.5 hertz over roughly
+    2 minutes, with a simultaneous rise in the left aEEG margins and a transient
+    leftward deflection of the asymmetry index.
+  image_caption: >-
+    Three-hour qEEG panel, top to bottom: rhythmicity spectrogram (left, right); FFT
+    spectrogram (left, right); relative asymmetry spectrogram and asymmetry index;
+    aEEG (left, right). Time axis in minutes from the start of recording. Oral care is
+    annotated at 55 minutes.
+  lead_in: >-
+    Click the onset of the electrographic seizure on the left rhythmicity spectrogram
+    panel.
+
+question_type: point_to_feature
+options: []
+point_to_feature:
+  instruction: >-
+    Click the left rhythmicity spectrogram at the leading edge of the discrete
+    evolving band, not at the earlier broadband event.
+  target_event: 1
+  target_panel: rhythmicity_L
+  tolerance: 0.03
+
+explanation: >-
+  The expected region is the leading edge of the discrete rhythmicity band at
+  118 minutes on the left rhythmicity spectrogram. What the image shows: two events
+  that differ in kind. At 55 minutes, power rises across all frequencies at once,
+  stays at one frequency, is confined to the left temporal chain, and is time-locked to
+  an oral-care annotation; that is muscle artifact. At 118 minutes a narrow band
+  appears near 4 hertz on the left rhythmicity spectrogram, slows to about 1.5 hertz
+  over about 2 minutes, and is accompanied by a rise in the left aEEG margins, a
+  transient leftward deflection of the asymmetry index, and a solid flame on the left
+  FFT spectrogram, followed by a brief post-ictal fall in left amplitude. Evolution in
+  frequency plus a concordant lateralised amplitude rise is the trend signature of a
+  focal electrographic seizure. Evidence: in a pediatric ICU study of 27 continuous EEG
+  recordings containing 553 seizures over 487 hours, neurophysiologists blinded to the
+  raw EEG identified seizures with a median sensitivity of 83.3 percent using color
+  density spectral array and 81.5 percent using aEEG, with sensitivity lowest for
+  low-amplitude, short and focal seizures. A pediatric review of spectrograms for
+  seizure detection in critically ill children makes the same point, that time-
+  compressed trends improve the timeliness of diagnosis but do not replace raw-EEG
+  confirmation. Bedside takeaway: a trend alarm marks a time, not a diagnosis; open the
+  raw EEG at that time and look for evolution.
+
+key_points:
+  - Frequency evolution over 1 to 2 minutes marks a seizure on the rhythmicity trend.
+  - Broadband non-evolving power confined to one chain and tied to care is artifact.
+  - Blinded pediatric readers reached about 83 percent median sensitivity on CDSA.
+
+references:
+  - pmid: "20861452"
+    doi: 10.1212/WNL.0b013e3181f9619e
+    citation: >-
+      Stewart CP, Otsubo H, Ochi A, Sharma R, Hutchison JS, Hahn CD. Seizure
+      identification in the ICU using quantitative EEG displays. Neurology.
+      2010;75(17):1501-8.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "34510096"
+    doi: 10.1097/WNP.0000000000000868
+    citation: >-
+      Lalgudi Ganesan S, Hahn CD. Spectrograms for Seizure Detection in Critically Ill
+      Children. J Clin Neurophysiol. 2022;39(3):195-206.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101111
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 180
+    background:
+      type: continuous
+      dominant_hz: 5.5
+      amplitude_uv: 50
+      slow_fraction: 0.5
+      reactivity: present
+    events:
+      - type: artifact
+        kind: emg_chewing
+        at_min: 55.0
+        duration_s: 120
+        channels: [T3, T5, F7]
+        intensity: high
+      - type: seizure
+        onset_min: 118.0
+        duration_s: 125
+        onset_region: left_temporal
+        evolution: { start_hz: 4.0, end_hz: 1.5, amplitude_start_uv: 55, amplitude_end_uv: 150 }
+        spread: hemispheric
+        postictal_attenuation_s: 50
+    annotations:
+      - { at_min: 55, label: "Oral care" }
+    panels:
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+    time_axis: elapsed
+    style:
+      rhythmicity_hz_range: [1, 25]
+      spectrogram_hz_range: [0, 20]
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

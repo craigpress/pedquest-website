@@ -1,0 +1,181 @@
+id: PQ-A-021
+version: 1
+status: draft
+title: Assigning the ACNS continuity category from the suppression ratio
+domain: background_terminology
+topics: [ACNS 2021 terminology, continuity, discontinuous, suppression ratio, attenuation]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: recall
+learning_objective: >-
+  Match a measured percentage of suppression to the correct ACNS 2021 background
+  continuity category, and state the percentage boundaries that define each category.
+
+stem:
+  vignette: >-
+    A 6-year-old girl is admitted to the PICU with acute disseminated
+    encephalomyelitis and a depressed level of consciousness. She receives no
+    sedative infusion and no neuromuscular blockade. Continuous EEG with a
+    quantitative trend panel is running. Because the team wants the trend to correspond
+    to standard terminology, the technologist has set the suppression threshold on the
+    trend to 10 microvolts. Over the displayed 3 hours the suppression ratio averages
+    30 percent in both hemispheres and is stable. On the raw EEG page, periods during
+    which all activity is below 10 microvolts alternate with periods of higher voltage
+    mixed-frequency activity, and each low-voltage period lasts 2 to 4 seconds.
+  image_caption: >-
+    Composite display. Upper panel: 3-hour qEEG panel with suppression ratio (left,
+    right), 0 to 100 percent, threshold set at 10 microvolts, and aEEG (left, right).
+    Lower panel: 15-second raw EEG page in longitudinal bipolar montage at
+    7 microvolts per millimetre. Time axis in minutes.
+  lead_in: >-
+    Which ACNS 2021 background continuity category does this recording meet?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Continuous, with no sustained periods of attenuation or suppression
+    correct: false
+    rationale: >-
+      Continuous requires no meaningful periods of attenuation or suppression, whereas
+      almost a third of this record is suppressed.
+  - key: B
+    text: Nearly continuous, 1 to 9 percent attenuation or suppression
+    correct: false
+    rationale: >-
+      Nearly continuous is defined as continuous but with occasional periods, 1 to
+      9 percent of the record, of attenuation or suppression lasting at least
+      1 second; 30 percent is well above that ceiling.
+  - key: C
+    text: Discontinuous, 10 to 49 percent attenuation or suppression
+    correct: true
+    rationale: >-
+      Discontinuous is a pattern of attenuation or suppression alternating with higher
+      voltage activity, with 10 to 49 percent of the record consisting of attenuation or
+      suppression, which is exactly what a stable 30 percent suppression ratio
+      describes.
+  - key: D
+    text: Burst suppression, 50 to 99 percent attenuation or suppression
+    correct: false
+    rationale: >-
+      Burst attenuation or burst suppression requires 50 to 99 percent of the record to
+      consist of attenuation or suppression; the 2021 revision changed this from the
+      previous greater-than-50-percent wording.
+  - key: E
+    text: Suppression, more than 99 percent of the record
+    correct: false
+    rationale: >-
+      The suppression category applies when more than 99 percent of the record is
+      suppressed, a threshold raised in 2021 from the previous requirement that the
+      entirety of the record be involved.
+
+explanation: >-
+  The correct answer is C. The ACNS 2021 continuity categories are separated by the
+  percentage of the record occupied by attenuation or suppression, and a suppression
+  ratio measured with a 10 microvolt threshold reports approximately that same
+  quantity. What the image shows: a flat bilateral suppression ratio near 30 percent
+  with narrow aEEG bands, and a raw page on which 2 to 4 second periods of activity
+  below 10 microvolts alternate with higher voltage mixed-frequency activity.
+  Evidence: the ACNS 2021 terminology defines nearly continuous as continuous but with
+  occasional, 1 to 9 percent of the record, periods of attenuation or suppression
+  lasting at least 1 second; discontinuous as a pattern of attenuation or suppression
+  alternating with higher voltage activity with 10 to 49 percent of the record
+  consisting of attenuation or suppression; and burst attenuation or burst suppression
+  as the same alternating pattern with 50 to 99 percent of the record so occupied.
+  It further distinguishes attenuation, in which the lower-voltage periods are at least
+  10 microvolts but less than 50 percent of the higher-voltage background, from
+  suppression, in which the lower-voltage periods are below 10 microvolts, and notes
+  explicitly that this voltage cutoff differs from the ACNS neonatal terminology. That
+  last note matters here: the trend's threshold is user-configurable, so a suppression
+  ratio only maps onto the ACNS categories when the threshold is set to match.
+  Bedside takeaway: check the configured suppression threshold before you translate a
+  trend percentage into a terminology category.
+
+key_points:
+  - Nearly continuous is 1 to 9 percent, discontinuous 10 to 49, burst suppression 50 to 99.
+  - ACNS suppression means below 10 microvolts; attenuation means at least 10 microvolts.
+  - A suppression ratio maps to these categories only if its threshold is set to 10 microvolts.
+
+references:
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's Standardized Critical Care EEG Terminology: 2021 Version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: composite
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 102121
+    layout: panel_over_page
+    qeeg_panel:
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 180
+      background:
+        type: discontinuous
+        dominant_hz: 2.5
+        amplitude_uv: 55
+        slow_fraction: 0.75
+        reactivity: present
+        burst_suppression:
+          burst_s: 7.0
+          ibi_s: 3.0
+      events: []
+      panels:
+        - suppression_ratio_L
+        - suppression_ratio_R
+        - aeeg_L
+        - aeeg_R
+      time_axis: elapsed
+      style:
+        suppression_threshold_uv: 10
+        suppression_ratio_axis_pct: [0, 100]
+        suppression_ratio_mean_pct: 30
+    eeg_page:
+      at_min: 90.0
+      window_s: 15
+      sensitivity_uv_mm: 7
+      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      montage: longitudinal_bipolar
+      highlight: null
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

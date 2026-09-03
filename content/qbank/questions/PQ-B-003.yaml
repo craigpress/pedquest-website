@@ -1,0 +1,167 @@
+# Verification trail: content/qbank/sources/PQ-B-003.md
+id: PQ-B-003
+version: 1
+status: draft
+title: Prognostic weight of the time to sleep-wake cycling on neonatal aEEG
+domain: background_terminology
+topics: [aEEG, sleep-wake cycling, neonatal HIE, prognosis, background maturation]
+population: neonate
+setting: NICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  Recognize emerging sleep-wake cycling on a neonatal aEEG and state how the time of its
+  onset relates to neurodevelopmental outcome after hypoxic-ischemic encephalopathy.
+
+stem:
+  vignette: >-
+    A term neonate with moderate hypoxic-ischemic encephalopathy has been monitored with
+    two-channel amplitude-integrated EEG since 4 hours of life. The background was
+    discontinuous on the first day and no cyclical variation was present. The window
+    shown covers 24 to 36 hours of life. Sedation was stopped 12 hours ago and no
+    antiseizure medication has been given. Core temperature has been held at 33.5 degrees
+    Celsius throughout. The attending neonatologist is preparing to speak with the family
+    and asks how the tracing changes the expected trajectory.
+  image_caption: >-
+    Twelve-hour, two-channel aEEG (C3-P3 and C4-P4) covering 24 to 36 hours of life, on
+    the semilog amplitude axis, linear from 0 to 10 microvolts and logarithmic from 10 to
+    100 microvolts. Hours of life are on the time axis. A 15-second raw EEG inset is
+    shown. No medication marks fall within this window.
+  lead_in: >-
+    Compared with an infant whose cycling first appears after 36 hours of life, what
+    outcome difference is expected?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: A developmental quotient about 8.5 points higher at follow-up
+    correct: true
+    rationale: >-
+      In a cohort of 171 term infants with hypoxic-ischemic encephalopathy, the median
+      developmental quotient differed by 8.5 points between infants whose cycling began
+      before rather than after 36 hours of life.
+  - key: B
+    text: A developmental quotient about 8.5 points lower at follow-up
+    correct: false
+    rationale: >-
+      The direction is reversed. Earlier onset of cycling was associated with the better,
+      not the worse, developmental quotient.
+  - key: C
+    text: No measurable difference in developmental quotient at follow-up
+    correct: false
+    rationale: >-
+      The time of onset of cycling carried independent prognostic value; a 36-hour
+      cutoff classified good versus poor outcome correctly in 82 percent of infants.
+  - key: D
+    text: Higher survival but an equivalent developmental quotient among survivors
+    correct: false
+    rationale: >-
+      Cycling was indeed far more common in survivors, but the reported difference across
+      the 36-hour cutoff was in developmental quotient among survivors, not survival alone.
+  - key: E
+    text: A difference confined to gross motor scores
+    correct: false
+    rationale: >-
+      The reported difference was in the global developmental quotient, not a
+      domain-restricted motor effect.
+
+explanation: >-
+  The correct answer is A. What the image shows: over the 24-to-36-hour window the
+  previously featureless band begins to broaden and narrow in a slow, repeating rhythm,
+  with the lower margin rising during the broad phases; this is immature but definite
+  sleep-wake cycling, and the raw inset shows the corresponding alternation between more
+  and less continuous activity. Nothing else in the window has changed, and no medication
+  was given, so the change reflects recovering background organization rather than a drug
+  effect. Evidence: in 171 term newborns with hypoxic-ischemic encephalopathy, cycling was
+  seen in 95.4 percent of survivors but in only 8.1 percent of those who died. The median
+  interval from birth to the onset of cycling separated the encephalopathy grades, at 7,
+  33 and 62 hours for grades I, II and III, and infants with seizure discharges developed
+  cycling 30.5 hours later than those without. Good outcome was associated with earlier
+  onset and a normal cycling pattern; the median Griffiths developmental quotient differed
+  by 8.5 points between infants who started cycling before versus after 36 hours, and the
+  36-hour cutoff classified good versus poor outcome correctly in 82 percent. In a
+  separate cohort of 74 cooled and non-cooled infants, never developing cycling always
+  predicted poor outcome. Bedside takeaway: record the hour of life at which cycling
+  first appears, and treat it as prognostic data.
+
+key_points:
+  - Sleep-wake cycling appeared in 95.4 percent of survivors and 8.1 percent of infants who died.
+  - Median time to cycling was 7, 33 and 62 hours for encephalopathy grades I, II and III.
+  - Cycling before 36 hours of life classified good versus poor outcome correctly in 82 percent.
+
+references:
+  - pmid: "15687440"
+    doi: 10.1542/peds.2004-0863
+    citation: >-
+      Osredkar D, Toet MC, van Rooij LGM, van Huffelen AC, Groenendaal F, de Vries LS.
+      Sleep-wake cycling on amplitude-integrated electroencephalography in term newborns
+      with hypoxic-ischemic encephalopathy. Pediatrics. 2005;115(2):327-32.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "20566612"
+    doi: 10.1542/peds.2009-2938
+    citation: >-
+      Thoresen M, Hellstrom-Westas L, Liu X, de Vries LS. Effect of hypothermia on
+      amplitude-integrated electroencephalogram in infants with asphyxia. Pediatrics.
+      2010;126(1):e131-9.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100003
+    age_group: neonate
+    sample_rate: 256
+    duration_h: 12
+    channels: [C3-P3, C4-P4]
+    pattern: DNV
+    sleep_wake_cycling: immature
+    background:
+      type: discontinuous
+      dominant_hz: 2.0
+      amplitude_uv: 30
+      slow_fraction: 0.75
+      reactivity: present
+    events:
+      - type: state_change
+        at_min: 150
+        to: sleep
+      - type: state_change
+        at_min: 330
+        to: wake
+      - type: state_change
+        at_min: 510
+        to: sleep
+    seizures: []
+    raw_strip_at_h: 6.00
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

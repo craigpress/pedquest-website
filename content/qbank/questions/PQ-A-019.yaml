@@ -1,0 +1,192 @@
+id: PQ-A-019
+version: 1
+status: draft
+title: What a negative bedside trend screen excludes after pediatric cardiac arrest
+domain: seizure_detection
+topics: [bedside screening, negative predictive value, positive predictive value, cardiac arrest, aEEG plus CDSA]
+population: child
+setting: PICU
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  Interpret the published sensitivity, specificity and predictive values of bedside
+  trend screening by critical care providers after pediatric cardiac arrest, and state
+  what a negative screen does and does not exclude.
+
+stem:
+  vignette: >-
+    A 5-year-old girl is admitted to the PICU after an out-of-hospital cardiac arrest
+    with 18 minutes of cardiopulmonary resuscitation. Continuous EEG with a
+    quantitative trend panel is started 2 hours after return of spontaneous
+    circulation. Overnight coverage is by critical care attendings and nurses who have
+    completed a short structured tutorial on aEEG and color density spectral array;
+    the neurophysiologist reads the raw EEG twice daily. At 03:00 the covering
+    attending reviews the trend panel, calls it negative for seizures, and asks whether
+    the morning raw-EEG read can safely be deferred to the afternoon so that the team
+    can prioritise other work. The examination is unchanged and no clinical events have
+    been observed.
+  image_caption: >-
+    Composite display. Upper panel: 6-hour qEEG panel with aEEG (left, right), FFT
+    spectrogram (left, right) and suppression ratio (left, right). Lower panel:
+    15-second raw EEG page from 04:10 in longitudinal bipolar montage at 7 microvolts
+    per millimetre. Time axis in clock time.
+  lead_in: >-
+    What is the best statement about the accuracy of this bedside trend screen?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Sensitivity near 70 to 77 percent with high negative predictive value, so seizures remain possible
+    correct: true
+    rationale: >-
+      Both post-arrest pediatric studies reported sensitivity in this range with
+      negative predictive values of 86 to 89 percent, meaning a negative screen makes
+      seizures less likely but does not exclude them, and raw-EEG review should not be
+      deferred on that basis.
+  - key: B
+    text: Sensitivity above 95 percent, so a negative screen effectively excludes seizures
+    correct: false
+    rationale: >-
+      No published pediatric bedside-screening study has reported sensitivity in that
+      range; the highest reported sensitivity in these post-arrest cohorts was
+      77 percent.
+  - key: C
+    text: Positive predictive value above 80 percent, so a positive screen can be treated directly
+    correct: false
+    rationale: >-
+      Positive predictive value was only 46 to 49 percent, so roughly half of positive
+      bedside screens are false and treating on the screen alone would overtreat.
+  - key: D
+    text: Adding color density spectral array to aEEG raises sensitivity above 90 percent
+    correct: false
+    rationale: >-
+      Adding the spectral array did not improve seizure detection over aEEG alone,
+      although providers felt more confident using both together.
+  - key: E
+    text: Specificity above 90 percent, so false alarms are rare in this setting
+    correct: false
+    rationale: >-
+      Specificity was 65 to 68 percent, so false alarms are common; that is the
+      counterpart of the low positive predictive value.
+
+explanation: >-
+  The correct answer is A. Bedside trend screening after cardiac arrest performs like a
+  rule-out test with a moderate ceiling: good negative predictive value, poor positive
+  predictive value, and sensitivity well short of the level that would justify deferring
+  expert review. What the image shows: an aEEG with narrow bands, spectrograms with
+  intermittent columns of power, and a suppression ratio near 50 percent, a
+  configuration that is easy to read as quiescent; the raw page beneath, from a time
+  the screen called negative, contains a brief low-amplitude ictal run in a single
+  chain. Evidence: in 39 critical care providers, 20 physicians and 19 nurses, who
+  classified 100 color density spectral array images, presented in duplicate, from
+  children monitored after
+  cardiac arrest, sensitivity was 70 percent (95 percent confidence interval 67 to 73),
+  specificity 68 percent (66 to 70), positive predictive value 46 percent and negative
+  predictive value 86 percent, with sensitivity for status epilepticus 72 percent
+  (69 to 74). In a companion study, 23 critical care providers classifying 100 aEEG
+  images and 100 combined aEEG plus color density spectral array images achieved
+  sensitivity 77 percent (73 to 80), specificity 65 percent (62 to 67), negative
+  predictive value 88 percent and positive predictive value 46 percent for aEEG, and
+  sensitivity 77 percent (74 to 81), specificity 68 percent (66 to 71), negative
+  predictive value 89 percent and positive predictive value 49 percent for the
+  combination; adding the spectral array did not improve detection, though 87 percent
+  of providers felt it did. Both were image-classification studies, not real-time
+  bedside trials. Bedside takeaway: a negative bedside screen lowers but does not
+  eliminate the probability of seizures, and it is not a reason to delay the
+  neurophysiologist's read.
+
+key_points:
+  - Post-arrest bedside trend screening reached 70 to 77 percent sensitivity in children.
+  - Negative predictive value was 86 to 89 percent; positive predictive value only 46 to 49.
+  - Adding CDSA to aEEG raised confidence but not measured seizure detection.
+
+references:
+  - pmid: "25651050"
+    doi: 10.1097/PCC.0000000000000352
+    citation: >-
+      Topjian AA, Fry M, Jawad AF, et al. Detection of electrographic seizures by
+      critical care providers using color density spectral array after cardiac arrest is
+      feasible. Pediatr Crit Care Med. 2015;16(5):461-7.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "28234810"
+    doi: 10.1097/PCC.0000000000001099
+    citation: >-
+      Du Pont-Thibodeau G, Sanchez SM, Jawad AF, et al. Seizure Detection by Critical
+      Care Providers Using Amplitude-Integrated Electroencephalography and Color
+      Density Spectral Array in Pediatric Cardiac Arrest Patients. Pediatr Crit Care
+      Med. 2017;18(4):363-369.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: composite
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101919
+    layout: panel_over_page
+    qeeg_panel:
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 360
+      background:
+        type: discontinuous
+        dominant_hz: 2.0
+        amplitude_uv: 30
+        slow_fraction: 0.8
+        reactivity: absent
+      events:
+        - type: seizure
+          onset_min: 250.0
+          duration_s: 35
+          onset_region: right_temporal
+          evolution: { start_hz: 3.0, end_hz: 2.0, amplitude_start_uv: 22, amplitude_end_uv: 32 }
+          spread: none
+          postictal_attenuation_s: 20
+      panels:
+        - aeeg_L
+        - aeeg_R
+        - fft_L
+        - fft_R
+        - suppression_ratio_L
+        - suppression_ratio_R
+      time_axis: clock
+      style:
+        suppression_threshold_uv: 5
+        suppression_ratio_axis_pct: [0, 100]
+    eeg_page:
+      at_min: 250.0
+      window_s: 15
+      sensitivity_uv_mm: 7
+      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      montage: longitudinal_bipolar
+      highlight: null
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

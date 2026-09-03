@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="480" viewBox="0 0 1800 480" role="img" aria-labelledby="title desc">
+  <title id="title">PedQuEST</title>
+  <desc id="desc">PedQuEST wordmark with a connected quantitative EEG flame symbol.</desc>
+  <defs>
+    <linearGradient id="signal" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#E83E26"/>
+      <stop offset="0.22" stop-color="#FFB000"/>
+      <stop offset="0.45" stop-color="#00D4E8"/>
+      <stop offset="1" stop-color="#1556D8"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="48" y1="342" x2="264" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#102A72"/>
+      <stop offset="0.52" stop-color="#1565E8"/>
+      <stop offset="1" stop-color="#00CFE3"/>
+    </linearGradient>
+    <linearGradient id="wordmark" x1="344" y1="0" x2="1560" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#102A72"/>
+      <stop offset="0.34" stop-color="#1556D8"/>
+      <stop offset="0.58" stop-color="#00CFE3"/>
+      <stop offset="0.79" stop-color="#F3DD24"/>
+      <stop offset="0.91" stop-color="#FF9A00"/>
+      <stop offset="1" stop-color="#E83E26"/>
+    </linearGradient>
+  </defs>
+
+  <g aria-label="Connected qEEG flame symbol">
+    <circle cx="170" cy="240" r="130" fill="none" stroke="url(#ring)" stroke-width="12"/>
+    <g fill="none" stroke="#1556D8" stroke-width="5" opacity="0.24">
+      <path d="M78 148 262 332M66 240 274 240M78 332 262 148M170 110 170 370"/>
+    </g>
+
+    <g fill="url(#ring)" stroke="#FFFFFF" stroke-width="6">
+      <circle cx="170" cy="110" r="18"/>
+      <circle cx="262" cy="148" r="18"/>
+      <circle cx="300" cy="240" r="18"/>
+      <circle cx="262" cy="332" r="18"/>
+      <circle cx="170" cy="370" r="18"/>
+      <circle cx="78" cy="332" r="18"/>
+      <circle cx="40" cy="240" r="18"/>
+      <circle cx="78" cy="148" r="18"/>
+    </g>
+
+    <g fill="url(#signal)">
+      <rect x="91" y="232" width="10" height="28" rx="5"/>
+      <rect x="107" y="214" width="10" height="46" rx="5"/>
+      <rect x="123" y="180" width="10" height="80" rx="5"/>
+      <rect x="139" y="207" width="10" height="53" rx="5"/>
+      <rect x="155" y="145" width="10" height="115" rx="5"/>
+      <rect x="171" y="194" width="10" height="66" rx="5"/>
+      <rect x="187" y="164" width="10" height="96" rx="5"/>
+      <rect x="203" y="204" width="10" height="56" rx="5"/>
+      <rect x="219" y="178" width="10" height="82" rx="5"/>
+      <rect x="235" y="215" width="10" height="45" rx="5"/>
+    </g>
+    <path d="M84 260H252" stroke="#102A72" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <text x="344" y="318" fill="url(#wordmark)" font-family="Aptos Display, Segoe UI, Arial, sans-serif" font-size="252" font-weight="600" letter-spacing="-11">PedQuEST</text>
+</svg>

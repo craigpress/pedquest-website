@@ -1,0 +1,63 @@
+{
+  "id": "PQ-A-007",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": {
+    "kind": "rect",
+    "x": 0.464667,
+    "y": 0.104,
+    "w": 0.042378,
+    "h": 0.104468,
+    "panel": "suppression_ratio_L"
+  },
+  "panels": [
+    {
+      "name": "suppression_ratio_L",
+      "y0": 0.104,
+      "y1": 0.208468,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_R",
+      "y0": 0.214968,
+      "y1": 0.319436,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_L",
+      "y0": 0.325936,
+      "y1": 0.463589,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_R",
+      "y0": 0.470089,
+      "y1": 0.607741,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_L",
+      "y0": 0.614241,
+      "y1": 0.76787,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.77437,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:62224862b4a96041b10d2b71ab3a38c1a6988952f06b9c8c925d2aa0de82cd13",
+  "path": "public/images/qbank/PQ-A-007.png"
+}

@@ -81,7 +81,7 @@ export default function ContactPage() {
           style={{ maxWidth: 600, lineHeight: 1.7 }}
         >
           Have a question about PedQuEST, interested in joining the consortium,
-          or want to explore a research collaboration? We'd love to hear from you.
+          or want to explore a research collaboration? We&apos;d love to hear from you.
         </p>
       </section>
 
@@ -302,7 +302,7 @@ export default function ContactPage() {
                 fontWeight: 500,
               }}
             >
-              Thank you! Your message has been sent. We'll get back to you soon.
+              Thank you! Your message has been sent. We&apos;ll get back to you soon.
             </div>
           )}
 
@@ -349,7 +349,7 @@ export default function ContactPage() {
             >
               PedQuEST is a growing consortium of pediatric institutions
               committed to advancing qEEG research and clinical practice. Whether
-              you're a researcher, clinician, or institution, there are many ways
+              you&apos;re a researcher, clinician, or institution, there are many ways
               to contribute.
             </p>
           </div>

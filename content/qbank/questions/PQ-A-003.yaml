@@ -1,0 +1,187 @@
+id: PQ-A-003
+version: 1
+status: draft
+title: Computing the suppression ratio during pentobarbital titration
+domain: foundations
+topics: [suppression ratio, burst suppression, pentobarbital, trend arithmetic, infusion titration]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: application
+learning_objective: >-
+  Define the suppression ratio as the percentage of time the EEG is below a
+  prespecified suppression amplitude, and compute it from a described epoch during
+  anesthetic titration for refractory status epilepticus.
+
+stem:
+  vignette: >-
+    An 8-year-old boy with refractory status epilepticus is receiving a pentobarbital
+    infusion in the PICU. The team's written target is a suppression ratio of 60 to
+    80 percent. Continuous EEG with a quantitative trend panel is running, and the
+    suppression ratio is displayed separately for each hemisphere with a suppression
+    threshold set at 5 microvolts. At the current infusion rate the raw EEG shows a
+    stereotyped pattern that repeats every 10 seconds: a 2-second burst of mixed-
+    frequency activity reaching 90 microvolts, followed by 8 seconds during which the
+    maximum amplitude in every channel stays below 5 microvolts. The bedside nurse
+    asks whether the infusion should be increased before the attending arrives.
+  image_caption: >-
+    Three-hour qEEG panel: suppression ratio (left, right) with the vertical axis
+    0 to 100 percent and a horizontal reference band drawn at 60 to 80 percent; aEEG
+    (left, right); FFT spectrogram (left, right). Pentobarbital rate increases are
+    annotated at 40 and 95 minutes. Time axis in minutes from the start of recording.
+  lead_in: >-
+    What suppression ratio corresponds to the repeating 10-second pattern described?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: 20 percent
+    correct: false
+    rationale: >-
+      20 percent is the fraction of each cycle spent in burst rather than in
+      suppression. Reading the ratio as burst time is a common inversion and would
+      prompt an unnecessary and potentially harmful increase in the infusion.
+  - key: B
+    text: 40 percent
+    correct: false
+    rationale: >-
+      No element of the described cycle occupies 4 of every 10 seconds; this value
+      would sit below the written target and again prompt escalation.
+  - key: C
+    text: 60 percent
+    correct: false
+    rationale: >-
+      60 percent is the lower edge of the written target band, but the arithmetic of
+      the described cycle gives a higher value; the patient is already inside the
+      target range.
+  - key: D
+    text: 80 percent
+    correct: true
+    rationale: >-
+      Eight of every 10 seconds have maximum amplitudes below the 5 microvolt
+      suppression threshold, so the suppression ratio is 8 of 10, or 80 percent. That
+      is at the top of the written 60 to 80 percent target, and the infusion should not
+      be increased.
+  - key: E
+    text: 90 percent
+    correct: false
+    rationale: >-
+      90 microvolts is the burst amplitude, not a time fraction. Substituting an
+      amplitude for a duration is the error this option is designed to catch.
+
+explanation: >-
+  The correct answer is D. The suppression ratio is a time measure, not an amplitude
+  measure: it is the percentage of a moving epoch during which the EEG signal is below
+  a prespecified amplitude consistent with suppression. In the described cycle, 8 of
+  every 10 seconds are below the 5 microvolt threshold, giving 8 of 10, or 80 percent.
+  What the image shows: both suppression-ratio panels sit at the upper edge of the
+  shaded 60 to 80 percent reference band after the second pentobarbital increase, with
+  the aEEG lower margins correspondingly low and the FFT spectrograms showing
+  intermittent narrow columns of power at the bursts rather than continuous power.
+  Evidence: a pediatric neurocritical care review of qEEG trend construction defines
+  the suppression ratio as the percentage of time the EEG signal is below a
+  prespecified amplitude consistent with suppression and gives exactly this worked
+  example, that if during a 10-second epoch of EEG eight of the seconds had maximum
+  amplitudes below 5 microvolts the percentage suppression would be 80 percent,
+  displayed as a running average with percentage suppression on the y-axis; the same
+  review identifies pharmacologically induced burst suppression as one of the main
+  indications for the trend. Two cautions: the threshold is configurable, so the same
+  EEG can yield different ratios at different settings, and artifact or a high-impedance
+  electrode can falsely lower the ratio. Bedside takeaway: before titrating to a
+  suppression-ratio number, confirm the configured threshold and look at the raw EEG
+  to be sure the burst-interburst pattern is real.
+
+key_points:
+  - Suppression ratio is percent of time below a set suppression amplitude, not an amplitude.
+  - Eight suppressed seconds in a 10-second epoch equals a suppression ratio of 80 percent.
+  - The suppression threshold is user-configurable, so always verify it before titrating.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's Standardized Critical Care EEG Terminology: 2021 Version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100303
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 180
+    background:
+      type: burst_suppression
+      dominant_hz: 2.0
+      amplitude_uv: 90
+      slow_fraction: 0.6
+      reactivity: absent
+      burst_suppression:
+        burst_s: 2.0
+        ibi_s: 8.0
+    events:
+      - type: sedation_change
+        at_min: 40
+        direction: increase
+        agent: pentobarbital
+        effect: { suppression_ratio_target_pct: 55, ramp_min: 15 }
+      - type: sedation_change
+        at_min: 95
+        direction: increase
+        agent: pentobarbital
+        effect: { suppression_ratio_target_pct: 80, ramp_min: 15 }
+    annotations:
+      - { at_min: 40, label: "Pentobarbital rate increase" }
+      - { at_min: 95, label: "Pentobarbital rate increase" }
+    panels:
+      - suppression_ratio_L
+      - suppression_ratio_R
+      - aeeg_L
+      - aeeg_R
+      - fft_L
+      - fft_R
+    time_axis: elapsed
+    style:
+      suppression_threshold_uv: 5
+      suppression_ratio_axis_pct: [0, 100]
+      suppression_ratio_target_band_pct: [60, 80]
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

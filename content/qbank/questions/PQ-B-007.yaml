@@ -1,0 +1,171 @@
+# Verification trail: content/qbank/sources/PQ-B-007.md
+id: PQ-B-007
+version: 1
+status: draft
+title: The hourly seizure burden threshold above which neurologic decline rises sharply
+domain: clinical_prognosis
+topics: [seizure burden, rhythmicity spectrogram, neurologic decline, threshold, PICU]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  State the maximum hourly electrographic seizure burden above which both the probability
+  and the magnitude of neurologic decline rose sharply in critically ill children.
+
+stem:
+  vignette: >-
+    A 2-year-old girl is admitted to the PICU with acute encephalitis and altered mental
+    status. Continuous video EEG with a quantitative trend panel is started on arrival.
+    She is receiving levetiracetam and no continuous sedative infusion. Over the first 6
+    hours the panel shows recurrent stereotyped electrographic seizures without a clinical
+    correlate; in the worst single hour they occupy a little more than 14 minutes. The
+    intensivist asks whether the burden has crossed the threshold at which published
+    pediatric data show a steep rise in the risk of neurologic decline.
+  image_caption: >-
+    Six-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
+    spectrogram 0-20 Hz (left, right); asymmetry index; suppression ratio (left, right).
+    Elapsed minutes on the time axis. The levetiracetam load is annotated at 30 minutes.
+  lead_in: >-
+    Above what maximum hourly electrographic seizure burden did the probability and
+    magnitude of neurologic decline rise sharply?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: 5 percent of an hour, about 3 minutes
+    correct: false
+    rationale: >-
+      Risk did increase continuously with burden, but the inflection identified in the
+      cohort was far higher than 5 percent of an hour.
+  - key: B
+    text: 10 percent of an hour, about 6 minutes
+    correct: false
+    rationale: >-
+      A plausible guess, and close to a neonatal threshold reported elsewhere, but not
+      the value at which the pediatric curve turned sharply upward.
+  - key: C
+    text: 20 percent of an hour, about 12 minutes
+    correct: true
+    rationale: >-
+      Above a maximum seizure burden of 20 percent per hour, equal to 12 minutes in a
+      given hour, both the probability and the magnitude of neurologic decline rose
+      sharply across all diagnostic categories.
+  - key: D
+    text: 40 percent of an hour, about 24 minutes
+    correct: false
+    rationale: >-
+      This overshoots the published inflection; children with burdens between 20 and 40
+      percent per hour were already at markedly increased risk.
+  - key: E
+    text: 50 percent of an hour, about 30 minutes
+    correct: false
+    rationale: >-
+      Half of an hour occupied by seizures would meet most definitions of electrographic
+      status epilepticus and is well beyond the reported threshold.
+
+explanation: >-
+  The correct answer is C. What the image shows: the left and right rhythmicity
+  spectrograms carry repeated discrete bands, each starting near 3 Hz and slowing over
+  about 170 seconds and recurring every 12 minutes; the seizure-probability trend rises
+  with each, the aEEG-independent FFT panels show matching low-frequency arches, and the
+  asymmetry index deflects only transiently, so this is a generalized-onset stereotyped
+  cluster rather than artifact. Summed across the worst hour, the ictal segments occupy
+  slightly more than 20 percent of that hour. Evidence: in a prospective cohort of 259
+  infants and children in pediatric and cardiac intensive care units who underwent
+  clinically ordered continuous video EEG, seizures occurred in 93 (36 percent) and status
+  epilepticus in 23 (9 percent), with a median monitoring duration of 37 hours. Children
+  with neurologic decline had a mean maximum hourly seizure burden of 15.7 percent
+  compared with 1.8 percent in those without decline. Above a maximum burden of 20 percent
+  per hour, equal to 12 minutes, both the probability and the magnitude of decline rose
+  sharply across all diagnostic categories, and each 1 percent increase in maximum hourly
+  burden raised the odds of decline by 1.13 (95 percent confidence interval 1.05 to 1.21).
+  Seizure burden was not associated with mortality. Bedside takeaway: quantify minutes of
+  seizure per hour and escalate treatment before the 12-minute mark.
+
+key_points:
+  - Above 20 percent of an hour, or 12 minutes, neurologic decline rose sharply in 259 children.
+  - Each 1 percent rise in maximum hourly seizure burden raised the odds of decline by 1.13.
+  - Seizure burden predicted neurologic decline but not mortality in this cohort.
+
+references:
+  - pmid: "24595203"
+    doi: 10.1093/brain/awu042
+    citation: >-
+      Payne ET, Zhao XY, Frndova H, et al. Seizure burden is independently associated with
+      short term outcome in critically ill children. Brain. 2014;137(Pt 5):1429-38.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "23164815"
+    doi: 10.1097/CCM.0b013e3182668035
+    citation: >-
+      Topjian AA, Gutierrez-Colina AM, Sanchez SM, et al. Electrographic status epilepticus
+      is associated with mortality and worse short-term outcome in critically ill
+      children. Crit Care Med. 2013;41(1):215-23.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100007
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 360
+    background:
+      type: continuous
+      dominant_hz: 4.0
+      amplitude_uv: 55
+      slow_fraction: 0.7
+      reactivity: present
+    events:
+      - type: seizure_cluster
+        start_min: 20
+        end_min: 350
+        interval_min: 12
+        seizure:
+          duration_s: 170
+          onset_region: generalized
+          evolution: { start_hz: 3.0, end_hz: 1.4, amplitude_start_uv: 70, amplitude_end_uv: 180 }
+    annotations:
+      - { at_min: 30, label: "Levetiracetam 60 mg/kg" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

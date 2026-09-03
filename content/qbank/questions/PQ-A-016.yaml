@@ -1,0 +1,190 @@
+id: PQ-A-016
+version: 1
+status: draft
+title: How many neonatal seizures a single-channel aEEG will miss
+domain: seizure_detection
+topics: [neonatal seizures, aEEG sensitivity, reader experience, seizure duration, seizure amplitude]
+population: neonate
+setting: NICU
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  Quantify the sensitivity of neonatologist interpretation of single-channel aEEG for
+  individual neonatal seizures and for affected records, and name the seizure
+  characteristics that predict detection.
+
+stem:
+  vignette: >-
+    A level IV NICU is drafting a policy for neonates at risk of seizures. The unit
+    has 24-hour access to single-channel aEEG at every bedside but conventional EEG
+    only on weekdays. The proposed policy states that a neonate with a normal
+    single-channel aEEG reviewed by an experienced neonatologist does not need
+    conventional EEG. You are asked to advise on whether the published sensitivity
+    data support that statement. The unit's own audit of the last year shows that most
+    of its confirmed neonatal seizures were shorter than 1 minute, of low amplitude,
+    and occurred fewer than three times per hour. Conceptional ages ranged from term
+    to 6 weeks corrected.
+  image_caption: >-
+    Six-hour single-channel aEEG with the raw single-channel trace displayed beneath
+    it, from a neonate in whom conventional EEG recorded 14 brief low-amplitude
+    seizures during the same window; the conventional-EEG seizure times are marked on
+    an annotation strip. Time axis in hours from the start of recording.
+  lead_in: >-
+    Which statement about neonatologist-read single-channel aEEG best informs this
+    policy?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Neonatologists detected 12 to 38 percent of individual seizures across readers
+    correct: true
+    rationale: >-
+      In the reference study, six neonatologists of varying aEEG experience detected
+      12 to 38 percent of the 851 individual seizures and identified seizures in 22 to
+      57 percent of the 125 records, so a normal aEEG cannot exclude seizures.
+  - key: B
+    text: Neonatologists detected more than 90 percent of individual seizures
+    correct: false
+    rationale: >-
+      Ninety-four percent describes the proportion of records with at least one seizure
+      visible in the single channel, a theoretical ceiling, not the proportion of
+      seizures that readers actually identified.
+  - key: C
+    text: Neonatologists identified seizures in 78 percent of affected records
+    correct: false
+    rationale: >-
+      Seventy-eight percent is the proportion of individual seizures that appeared in
+      the single central channel at all; reader identification of affected records was
+      lower, 22 to 57 percent.
+  - key: D
+    text: Detection did not depend on reader experience, only on seizure duration
+    correct: false
+    rationale: >-
+      Multivariate analysis found that the reader's experience with aEEG interpretation
+      correlated with detection, alongside seizure duration, amplitude, count per hour,
+      and appearance in the recorded channel.
+  - key: E
+    text: Brief low-amplitude seizures were detected as reliably as long high-amplitude ones
+    correct: false
+    rationale: >-
+      The opposite is true, and it is the point most relevant to this unit: seizures
+      that are infrequent, brief, or of low amplitude are difficult to detect even for
+      experienced readers.
+
+explanation: >-
+  The correct answer is A. The proposed policy conflates what a single channel can in
+  principle contain with what human readers actually find in it, and the gap between
+  those two numbers is large. What the image shows: an aEEG that a reader would call
+  normal and continuous, with a stable lower margin and no arched deflections, above an
+  annotation strip marking 14 conventional-EEG seizures during the same window; the raw
+  single-channel trace beneath is the only part of the display in which the brief
+  ictal runs are visible at all. Evidence: in a study of 851 neonatal seizures from
+  125 conventional EEGs in infants of 34 to 50 weeks conceptional age, 94 percent of
+  the conventional EEGs had at least one seizure visible in a single C3 to C4 channel
+  and 78 percent of all seizures appeared in that channel, so the theoretical
+  sensitivity was high; however six neonatologists of varying expertise identified
+  seizures in only 22 to 57 percent of the 125 records and detected only 12 to
+  38 percent of the 851 individual seizures. Seizures were briefer and lower in
+  amplitude in the single channel than on conventional EEG, and appearance in that
+  channel, duration, amplitude, count per hour and reader experience all correlated
+  with detection. A systematic review of 10 studies, 433 infants, found median
+  sensitivity of 76 percent, range 71 to 85, and specificity 85 percent, range 39 to
+  96, for individual seizures when aEEG was read with the raw trace, but only
+  39 percent, range 25 to 80, without it, and concluded that aEEG cannot be
+  recommended as the mainstay for diagnosis and management of neonatal seizures.
+  Bedside takeaway: a normal single-channel aEEG does not exclude neonatal seizures,
+  and reading it with the raw trace roughly doubles sensitivity.
+
+key_points:
+  - Neonatologists detected only 12 to 38 percent of 851 individual neonatal seizures.
+  - Reading aEEG with the raw trace raised median sensitivity from 39 to 76 percent.
+  - Brief, low-amplitude and infrequent seizures are the ones aEEG misses.
+
+references:
+  - pmid: "17908764"
+    doi: 10.1542/peds.2007-0514
+    citation: >-
+      Shellhaas RA, Soaita AI, Clancy RR. Sensitivity of amplitude-integrated
+      electroencephalography for neonatal seizure detection. Pediatrics.
+      2007;120(4):770-7.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "26456517"
+    doi: 10.1016/j.seizure.2015.09.014
+    citation: >-
+      Rakshasbhuvankar A, Paul S, Nagarajan L, Ghosh S, Rao S. Amplitude-integrated EEG
+      for detection of neonatal seizures: a systematic review. Seizure. 2015;33:90-8.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: false
+  - pmid: "22146359"
+    doi: 10.1097/WNP.0b013e31823e96d7
+    citation: >-
+      Shellhaas RA, Chang T, Tsuchida T, et al. The American Clinical Neurophysiology
+      Society's Guideline on Continuous Electroencephalography Monitoring in Neonates.
+      J Clin Neurophysiol. 2011;28(6):611-7.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101616
+    age_group: neonate
+    sample_rate: 256
+    channels: [C3-C4]
+    montage: neonatal_reduced
+    duration_h: 6
+    pattern: CNV
+    sleep_wake_cycling: immature
+    seizures:
+      - { onset_h: 0.6, duration_min: 0.5 }
+      - { onset_h: 1.1, duration_min: 0.6 }
+      - { onset_h: 1.9, duration_min: 0.4 }
+      - { onset_h: 2.4, duration_min: 0.7 }
+      - { onset_h: 3.2, duration_min: 0.5 }
+      - { onset_h: 4.1, duration_min: 0.6 }
+      - { onset_h: 5.0, duration_min: 0.5 }
+    raw_strip_at_h: 2.4
+    background:
+      type: continuous
+      dominant_hz: 2.5
+      amplitude_uv: 40
+      slow_fraction: 0.6
+      reactivity: present
+    style:
+      seizure_amplitude_uv: 25
+      show_reference_seizure_strip: true
+      reference_seizure_count: 14
+      amplitude_axis: semilog
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null
