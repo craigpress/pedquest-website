@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isValidEmail, checkHoneypot, checkOrigin, truncate } from "@/lib/validation";
+import { sendDiscordNotification, sendTelegramNotification } from "@/lib/notifications";
 
 export async function POST(request: NextRequest) {
   const originCheck = checkOrigin(request);
@@ -78,8 +79,38 @@ export async function POST(request: NextRequest) {
     }
   } else {
     console.log("[Sponsor] Supabase not configured — logging submission only");
-    console.log(`Company: ${companyName} | Contact: ${contactEmail} | IP: ${ip}`);
+    console.log(`Company: ${companyName} | Contact: ${contactEmail}`);
   }
+
+  // Must be awaited: on Vercel the function can be frozen as soon as the
+  // response is sent, dropping any in-flight fetch and silently losing the
+  // notification. allSettled so one failing webhook can't stop the other.
+  const safeCompany = truncate(companyName.trim(), 300);
+  const safeContact = truncate(contactName.trim(), 200);
+  const safeContactEmail = truncate(contactEmail.trim(), 254);
+
+  await Promise.allSettled([
+    sendDiscordNotification({
+      title: `🤝 Sponsor enquiry: ${safeCompany}`,
+      channel: "site",
+      color: 0x3ecb8e,
+      fields: [
+        { name: "Contact", value: safeContact, inline: true },
+        { name: "Email", value: safeContactEmail, inline: true },
+        { name: "Tier", value: tier?.trim() ? truncate(tier.trim(), 100) : "—", inline: true },
+        { name: "Budget", value: budgetRange?.trim() ? truncate(budgetRange.trim(), 100) : "—", inline: true },
+        { name: "Website", value: website?.trim() ? truncate(website.trim(), 500) : "—", inline: true },
+        { name: "Areas of interest", value: areas?.trim() ? truncate(areas.trim(), 1000) : "—" },
+        { name: "Description", value: description?.trim() ? truncate(description.trim(), 1000) : "—" },
+      ],
+      footer: "PedQuEST Sponsor Enquiry",
+    }),
+    sendTelegramNotification(
+      `🤝 New PedQuEST sponsor enquiry\n\nCompany: ${safeCompany}\nContact: ${safeContact}\nEmail: ${safeContactEmail}`
+    ),
+  ]);
+
+  console.log(`[Sponsor] ${safeCompany} — ${safeContactEmail}`);
 
   return NextResponse.json({ success: true });
 }

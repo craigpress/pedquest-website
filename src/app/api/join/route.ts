@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isValidEmail, checkHoneypot, checkOrigin, truncate } from "@/lib/validation";
+import { sendDiscordNotification, sendTelegramNotification } from "@/lib/notifications";
 
 export async function POST(request: NextRequest) {
   const originCheck = checkOrigin(request);
@@ -86,6 +87,36 @@ export async function POST(request: NextRequest) {
     console.log("[Join] Supabase not configured — logging submission only");
     console.log(`Hospital: ${hospital} | PI: ${piEmail}`);
   }
+
+  // Must be awaited: on Vercel the function can be frozen as soon as the
+  // response is sent, dropping any in-flight fetch and silently losing the
+  // notification. allSettled so one failing webhook can't stop the other.
+  const safeHospital = truncate(hospital.trim(), 300);
+  const safePiName = piName?.trim() ? truncate(piName.trim(), 200) : "—";
+  const safePiEmail = truncate(piEmail.trim(), 254);
+
+  await Promise.allSettled([
+    sendDiscordNotification({
+      title: `🏥 Member site application: ${safeHospital}`,
+      channel: "site",
+      color: 0xf0a94a,
+      fields: [
+        { name: "PI", value: safePiName, inline: true },
+        { name: "Email", value: safePiEmail, inline: true },
+        { name: "Role", value: roleTitle?.trim() ? truncate(roleTitle.trim(), 200) : "—", inline: true },
+        { name: "University", value: affiliatedUniversity?.trim() ? truncate(affiliatedUniversity.trim(), 300) : "—" },
+        { name: "Research interests", value: researchInterests?.trim() ? truncate(researchInterests.trim(), 1000) : "—" },
+        { name: "Statement", value: statementOfInterest?.trim() ? truncate(statementOfInterest.trim(), 1000) : "—" },
+        { name: "How they heard", value: howHeard?.trim() ? truncate(howHeard.trim(), 500) : "—" },
+      ],
+      footer: "PedQuEST Member Site Application",
+    }),
+    sendTelegramNotification(
+      `🏥 New PedQuEST member site application\n\nSite: ${safeHospital}\nPI: ${safePiName}\nEmail: ${safePiEmail}`
+    ),
+  ]);
+
+  console.log(`[Join] ${safeHospital} — ${safePiEmail}`);
 
   return NextResponse.json({ success: true });
 }

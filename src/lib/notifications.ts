@@ -11,12 +11,12 @@ export async function sendDiscordNotification(opts: {
    *  registrations) belongs in #website-notifications; the publication scanner
    *  belongs in #publications. Defaults to "publications" so the scanner and
    *  the GitHub Action keep using DISCORD_WEBHOOK_URL unchanged. Falls back to
-   *  DISCORD_WEBHOOK_URL when DISCORD_WEBHOOK_URL_SITE is unset, so nothing
-   *  goes silent before the second webhook is configured. */
+   *  DISCORD_WEBHOOK_URL when DISCORD_WEBHOOK_WEBSITE_NOTIFICATIONS is unset,
+   *  so nothing goes silent before the second webhook is configured. */
   channel?: "site" | "publications";
 }): Promise<void> {
   const webhookUrl =
-    (opts.channel === "site" ? process.env.DISCORD_WEBHOOK_URL_SITE : undefined) ||
+    (opts.channel === "site" ? process.env.DISCORD_WEBHOOK_WEBSITE_NOTIFICATIONS : undefined) ||
     process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) return;
 
