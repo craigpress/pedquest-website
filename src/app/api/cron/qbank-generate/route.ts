@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { generateDrafts } from "@/lib/qbank/generate";
+import { drainRevisionJobs } from "@/lib/qbank/revise";
 import { notifyEditorsOfPendingItems } from "@/lib/qbank/notify";
 
 export const runtime = "nodejs";
@@ -34,11 +35,18 @@ export async function GET(request: NextRequest) {
   const countParam = Number(request.nextUrl.searchParams.get("count") ?? "3");
   const count = Number.isFinite(countParam) ? Math.max(1, Math.min(countParam, 10)) : 3;
   const budgetMs = Number(process.env.QBANK_GENERATE_BUDGET_MS ?? 45000);
+  const llmTimeoutMs = Number(process.env.QBANK_LLM_TIMEOUT_MS ?? 40000);
+
+  // Drain editor-requested revisions first — a "request changes" on an AI item
+  // queues one; process a few before spending the remaining budget on new drafts.
+  const revisions = await drainRevisionJobs(supabase, {
+    limit: 3, timeoutMs: llmTimeoutMs, budgetMs: Math.floor(budgetMs / 2),
+  });
 
   const summary = await generateDrafts(supabase, {
     count,
     budgetMs,
-    timeoutMs: Number(process.env.QBANK_LLM_TIMEOUT_MS ?? 40000),
+    timeoutMs: llmTimeoutMs,
   });
 
   const drafted = summary.results.filter((r) => r.status === "drafted" && r.caseId);
@@ -65,6 +73,11 @@ export async function GET(request: NextRequest) {
     requested: count,
     drafted: drafted.length,
     failed: summary.results.filter((r) => r.status === "failed").length,
+    revisions: {
+      processed: revisions.length,
+      succeeded: revisions.filter((r) => r.ok).length,
+      failed: revisions.filter((r) => !r.ok).length,
+    },
     editorsNotified: notified,
     blueprintMissing: summary.blueprintMissing,
     notes: summary.notes,

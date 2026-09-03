@@ -178,6 +178,43 @@ stops starting new drafts once `QBANK_GENERATE_BUDGET_MS` (default 45 000) has
 elapsed and reports what it skipped. Lower `count`, or run the cron more often —
 do not raise the budget above the platform limit.
 
+## 6a. Feedback → revision loop (AI items)
+
+Requesting changes on an **AI-generated** item automatically feeds the review
+notes back to the model, re-checks the result and re-renders the image — the
+editor does not hand-edit the spec. Human-authored items are unaffected (their
+"request changes" just returns them to the queue; edit the spec and re-render).
+
+Flow (`src/lib/qbank/revise.ts`):
+
+1. A `changes_requested` review on an item with `source = 'ai'` inserts an
+   `eeg_case_generation_jobs` row with `mode = 'revision'`, `case_id`, and the
+   notes in `feedback` (status `pending`).
+2. `processRevisionJob` runs: **revise** (one chat call — the model gets the
+   whole current item JSON and is told to EDIT it, keeping everything the
+   feedback does not touch and preserving the id, references and PMIDs; it is
+   not a redraft) → **critic** → **write** the revised JSON onto the case (the
+   `version_bump` trigger snapshots a revision and increments `version`) →
+   **enqueue a render** from the new spec → status `pending_review`.
+   - **Evidence reuse.** The abstracts that grounded the original draft are
+     stored on the first generation job's `retrieval`. The reviser re-receives
+     them, so the model reuses the same sources rather than inventing new ones,
+     and the numbers-sourced + references checks run against that corpus exactly
+     as for a fresh draft. For a human-authored item there is no stored corpus,
+     so those two checks are skipped (structure, one-best-answer, ACNS
+     terminology, copyright and live PMID existence still run) and the editor is
+     the backstop.
+3. It runs three ways: **inline** right after the review (the console shows the
+   revised draft and new image), on demand via **"Revise with AI now"**
+   (`POST {action:"regenerate"}`), and in **bulk from the weekly cron**
+   (`drainRevisionJobs`, which also resets any revision stuck in `running` >10
+   min from a function timeout). So it is automated whether or not anyone
+   presses the button.
+
+A failed revision leaves the job `failed` with the reason and the item in the
+queue; the editor can retry or edit by hand. Editing the spec in the save form
+also auto-enqueues a render now (no separate button needed).
+
 ## 7. Editor workflow
 
 `/admin/qbank` — the queue: per-status counts, filters (status, domain,

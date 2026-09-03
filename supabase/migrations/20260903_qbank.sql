@@ -255,12 +255,30 @@ CREATE TABLE IF NOT EXISTS public.eeg_case_generation_jobs (
   draft          JSONB,
   critic_report  JSONB,
   case_id        UUID REFERENCES public.eeg_cases(id) ON DELETE SET NULL,
+  -- 'new' = drafted from scratch (blueprint gap → retrieval → draft);
+  -- 'revision' = revise an existing case from an editor's review feedback.
+  mode           TEXT NOT NULL DEFAULT 'new' CHECK (mode IN ('new','revision')),
+  feedback       TEXT,
   error          TEXT,
   created_at     TIMESTAMPTZ DEFAULT NOW(),
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
+-- Idempotent add for an already-created table (re-run safety).
+ALTER TABLE public.eeg_case_generation_jobs
+  ADD COLUMN IF NOT EXISTS mode     TEXT NOT NULL DEFAULT 'new',
+  ADD COLUMN IF NOT EXISTS feedback TEXT;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'eeg_case_generation_jobs_mode_check'
+  ) THEN
+    ALTER TABLE public.eeg_case_generation_jobs
+      ADD CONSTRAINT eeg_case_generation_jobs_mode_check CHECK (mode IN ('new','revision'));
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS eeg_case_generation_jobs_status_idx
   ON public.eeg_case_generation_jobs (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS eeg_case_generation_jobs_revision_idx
+  ON public.eeg_case_generation_jobs (mode, status, created_at);
 
 DROP TRIGGER IF EXISTS eeg_case_generation_jobs_updated_at ON public.eeg_case_generation_jobs;
 CREATE TRIGGER eeg_case_generation_jobs_updated_at BEFORE UPDATE ON public.eeg_case_generation_jobs

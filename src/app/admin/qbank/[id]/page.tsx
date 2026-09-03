@@ -174,27 +174,61 @@ export default function AdminQbankItemPage() {
       setError("Please say what needs to change — the note is what the author sees.");
       return;
     }
-    const result = await post({ action: "review", decision, notes: reviewNotes.trim() || null }, `Recorded: ${decision.replace("_", " ")}.`);
-    if (result) setReviewNotes("");
+    const notes = reviewNotes.trim();
+    const result = await post({ action: "review", decision, notes: notes || null }, `Recorded: ${decision.replace("_", " ")}.`);
+    if (!result) return;
+    setReviewNotes("");
+    // For an AI item, "request changes" queues an automatic revision. Run it
+    // now so the editor sees the revised draft + new image without waiting for
+    // the weekly cron. If it fails, the job stays queued for the cron.
+    if (decision === "changes_requested" && result.regeneration?.queued) {
+      await regenerate(notes);
+    }
+  }
+
+  async function pollRender(jobId: string): Promise<void> {
+    if (!jobId) return;
+    const started = Date.now();
+    // The Python worker polls the queue; a render takes seconds, not minutes.
+    while (Date.now() - started < 180000) {
+      await new Promise((r) => setTimeout(r, 4000));
+      const res = await fetch(`/api/admin/qbank/render?jobId=${jobId}`, { headers: await authHeaders() });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error || "Could not poll the render job."); return; }
+      if (json.status === "done") { flash("Rendered."); await load(); return; }
+      if (json.status === "error") { setError(json.error || "The renderer reported an error."); return; }
+    }
+    flash("Still rendering — reload in a moment.");
   }
 
   async function rerender() {
     const result = await post({ action: "render" }, "Render queued.");
-    const jobId = result?.jobId;
-    if (!jobId) return;
+    if (!result?.jobId) return;
     setBusy(true);
+    try { await pollRender(result.jobId); } finally { setBusy(false); }
+  }
+
+  // AI item only: feed the review feedback back to the model, re-critique,
+  // re-render, and return the item to the queue as a new version.
+  async function regenerate(feedback?: string) {
+    setBusy(true);
+    setError(null);
     try {
-      const started = Date.now();
-      // The Python worker polls the queue; a render takes seconds, not minutes.
-      while (Date.now() - started < 180000) {
-        await new Promise((r) => setTimeout(r, 4000));
-        const res = await fetch(`/api/admin/qbank/render?jobId=${jobId}`, { headers: await authHeaders() });
-        const json = await res.json();
-        if (!res.ok) { setError(json.error || "Could not poll the render job."); return; }
-        if (json.status === "done") { flash("Rendered."); await load(); return; }
-        if (json.status === "error") { setError(json.error || "The renderer reported an error."); return; }
+      const res = await fetch(`/api/admin/qbank/${id}`, {
+        method: "POST", headers: await authHeaders(),
+        body: JSON.stringify({ action: "regenerate", ...(feedback ? { feedback } : {}) }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "The AI revision failed — the item stays queued for the weekly run.");
+        await load();
+        return;
       }
-      flash("Still rendering — reload in a moment.");
+      flash("Revised by AI — rendering the new image…");
+      await load();
+      if (json.renderJobId) await pollRender(json.renderJobId);
+    } catch {
+      setError("Network error during the AI revision.");
     } finally {
       setBusy(false);
     }
@@ -357,6 +391,20 @@ export default function AdminQbankItemPage() {
               <button type="button" style={btnGhost} onClick={() => review("changes_requested")} disabled={busy}>Request changes</button>
               <button type="button" style={{ ...btnGhost, color: "var(--accent-secondary)" }} onClick={() => review("rejected")} disabled={busy}>Reject</button>
             </div>
+            {item.case.source === "ai" && (
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0 }}>
+                Requesting changes on this AI-drafted item automatically feeds your note back to the
+                model, re-checks it, and re-renders the image.{" "}
+                <button
+                  type="button"
+                  onClick={() => regenerate(reviewNotes.trim() || undefined)}
+                  disabled={busy}
+                  style={{ ...btnGhost, padding: "2px 8px", fontSize: 12 }}
+                >
+                  Revise with AI now
+                </button>
+              </p>
+            )}
 
             <div style={{ borderTop: "1px solid var(--border)", marginTop: 16, paddingTop: 14 }}>
               <div style={eyebrow}>Schedule as Case of the Day</div>

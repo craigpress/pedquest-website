@@ -475,6 +475,8 @@ CREATE TABLE IF NOT EXISTS public.eeg_case_generation_jobs (
   draft          JSONB,
   critic_report  JSONB,
   case_id        UUID REFERENCES public.eeg_cases(id) ON DELETE SET NULL,
+  mode           TEXT NOT NULL DEFAULT 'new' CHECK (mode IN ('new','revision')),
+  feedback       TEXT,   -- editor review notes, for mode = 'revision'
   error          TEXT,
   created_at     TIMESTAMPTZ DEFAULT NOW(),
   updated_at     TIMESTAMPTZ DEFAULT NOW()

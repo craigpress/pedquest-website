@@ -4,12 +4,20 @@ import { requireRole } from "@/lib/admin-auth";
 import { getEditorItem } from "@/lib/qbank-server";
 import { notifyEditorsOfPendingItems } from "@/lib/qbank/notify";
 import { specHash } from "@/lib/qbank/question";
+import { describeProvider } from "@/lib/qbank/draft";
+import { processRevisionJob, queueRevisionJob } from "@/lib/qbank/revise";
 import {
   DIFFICULTIES, QBANK_BLOOMS, QBANK_DOMAINS, QBANK_POPULATIONS, QBANK_SETTINGS,
   type Region,
 } from "@/lib/cases";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// The regenerate action makes an LLM call plus PubMed verification; give the
+// function room. 60s is allowed on every Vercel plan; if it is killed the
+// revision job stays queued and the weekly cron drains it.
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 // One question-bank item. Editor or admin.
 //
@@ -58,7 +66,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   const action = String(body.action || "save");
 
   const { data: current } = await supabase
-    .from("eeg_cases").select("id,status,created_by,qbank_id,title,domain,spec").eq("id", id).maybeSingle();
+    .from("eeg_cases").select("id,status,created_by,qbank_id,title,domain,spec,source").eq("id", id).maybeSingle();
   if (!current) return NextResponse.json({ error: "Item not found." }, { status: 404 });
 
   // ---------------- save ----------------
@@ -93,9 +101,12 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       patch.teaching_points = points;
     }
     if (Array.isArray(input.tags)) patch.tags = input.tags.map((t: unknown) => String(t).slice(0, 60)).filter(Boolean);
+    const oldSpecHash = current.spec ? specHash(current.spec) : null;
+    let specChanged = false;
     if (input.spec && typeof input.spec === "object") {
       patch.spec = input.spec;
       patch.spec_hash = specHash(input.spec);
+      specChanged = patch.spec_hash !== oldSpecHash;
     }
     if (input.correctRegion !== undefined) patch.correct_region = (input.correctRegion as Region) ?? null;
     if (typeof input.regionTolerance === "number") patch.region_tolerance = input.regionTolerance;
@@ -151,7 +162,19 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       }
     }
 
-    return NextResponse.json({ success: true });
+    // A changed image spec means the picture is now stale. Enqueue a render so
+    // the editor does not have to remember a second button — the Python worker
+    // (or a manual re-render) picks it up and updates image_url + sidecar.
+    let renderJobId: string | null = null;
+    if (specChanged) {
+      const { data: rj } = await supabase
+        .from("eeg_case_render_jobs")
+        .insert({ case_id: id, spec: patch.spec, status: "pending" })
+        .select("id").single();
+      renderJobId = (rj as any)?.id ?? null;
+    }
+
+    return NextResponse.json({ success: true, renderJobId });
   }
 
   // ---------------- review ----------------
@@ -187,7 +210,76 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
 
     const { error } = await supabase.from("eeg_cases").update(patch).eq("id", id);
     if (error) return dbError(error, "Could not update the item's status.");
-    return NextResponse.json({ success: true, status: patch.status });
+
+    // For an AI-generated item, "request changes" queues an automatic revision:
+    // the feedback is fed back to the model, the item is re-critiqued and
+    // re-rendered, and it returns to the review queue as a new version. The
+    // queue is drained inline below (best effort) and by the weekly cron, so it
+    // happens whether or not anyone presses "Revise with AI".
+    let regeneration: Record<string, unknown> | null = null;
+    if (decision === "changes_requested" && current.source === "ai") {
+      const jobId = await queueRevisionJob(supabase, {
+        caseId: id,
+        feedback: notes ?? "",
+        title: current.title,
+        model: describeProvider().model,
+      });
+      regeneration = { queued: !!jobId, jobId };
+    }
+
+    return NextResponse.json({ success: true, status: patch.status, regeneration });
+  }
+
+  // ---------------- regenerate (AI item: revise from feedback) ----------------
+  // Runs a queued revision inline: revise → critic → write new version →
+  // enqueue render. Called by the editor console right after a changes_requested
+  // review on an AI item, or from the "Revise with AI" button as a retry.
+  if (action === "regenerate") {
+    if (current.source !== "ai") {
+      return NextResponse.json(
+        { error: "Automatic revision is only available for AI-generated items. Edit the spec and press re-render instead." },
+        { status: 400 },
+      );
+    }
+    // Prefer an explicit jobId, else the newest pending/failed revision job,
+    // else create one from the supplied feedback or the latest review notes.
+    let jobId: string | null = typeof body.jobId === "string" ? body.jobId : null;
+    if (!jobId) {
+      const { data: existing } = await supabase
+        .from("eeg_case_generation_jobs")
+        .select("id")
+        .eq("case_id", id).eq("mode", "revision").in("status", ["pending", "failed"])
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      jobId = (existing as any)?.id ?? null;
+    }
+    if (!jobId) {
+      let feedback = typeof body.feedback === "string" ? body.feedback : "";
+      if (!feedback) {
+        const { data: lastReview } = await supabase
+          .from("eeg_case_reviews")
+          .select("notes")
+          .eq("case_id", id).eq("decision", "changes_requested")
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        feedback = (lastReview as any)?.notes ?? "";
+      }
+      jobId = await queueRevisionJob(supabase, {
+        caseId: id, feedback, title: current.title, model: describeProvider().model,
+      });
+    }
+    if (!jobId) return NextResponse.json({ error: "Could not queue the revision." }, { status: 500 });
+
+    const outcome = await processRevisionJob(supabase, jobId, {
+      timeoutMs: Number(process.env.QBANK_LLM_TIMEOUT_MS ?? 45000),
+    });
+    if (!outcome.ok) {
+      return NextResponse.json(
+        { error: outcome.error ?? "The revision failed.", jobId, critic: outcome.critic ?? null },
+        { status: 422 },
+      );
+    }
+    return NextResponse.json({
+      success: true, jobId, renderJobId: outcome.renderJobId ?? null, critic: outcome.critic ?? null,
+    });
   }
 
   // ---------------- re-render ----------------
