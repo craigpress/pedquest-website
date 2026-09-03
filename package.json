@@ -8,7 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "backup": "tsx scripts/export-supabase.ts"
+    "backup": "tsx scripts/export-supabase.ts",
+    "prebuild": "tsx scripts/generate-members.ts",
+    "members:generate": "tsx scripts/generate-members.ts",
+    "members:seed": "tsx scripts/seed-members.ts"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +33,7 @@
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",
-    "dotenv": "^17.3.1"
+    "dotenv": "^17.3.1",
+    "tsx": "^4.23.13"
   }
 }

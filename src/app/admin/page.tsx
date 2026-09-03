@@ -9,7 +9,7 @@ import type { Publication } from "@/data/publications";
 import type { ConferenceAbstract } from "@/data/abstracts";
 import { useUser } from "@/lib/auth";
 import { members, type Member } from "@/data/members";
-import { supabase } from "@/lib/supabase";
+import { supabase, getSupabase } from "@/lib/supabase";
 import { MEMBER_NAME_MAP, MEMBER_DISPLAY_NAMES, matchMemberAuthors } from "@/lib/memberMatch";
 
 const CVImporter = dynamic(() => import("./CVImporter"), {
@@ -238,10 +238,16 @@ function AdminPageInner() {
   const [memberSaving, setMemberSaving] = useState(false);
   const [memberSaved, setMemberSaved] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
-  // TODO: Supabase integration will persist member edits. For now, edits update display via localStorage.
-  const [memberOverrides, setMemberOverrides] = useState<Record<string, Partial<Member>>>({});
-  const [addedMembers, setAddedMembers] = useState<Member[]>([]);
-  const [deletedMemberIds, setDeletedMemberIds] = useState<string[]>([]);
+  // Members live in the Supabase `members` table; the site renders them from a
+  // module regenerated from that table at build time. Saving here is durable
+  // and shared - it reaches the site on the next publish.
+  type AdminMemberRow = Member & { status: "active" | "archived" | "review" };
+  const [dbMembers, setDbMembers] = useState<AdminMemberRow[]>([]);
+  const [membersLoading, setMembersLoading] = useState(true);
+  const [memberError, setMemberError] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishMsg, setPublishMsg] = useState<string | null>(null);
   const memberPhotoRef = useRef<HTMLInputElement>(null);
   const memberCvRef = useRef<HTMLInputElement>(null);
 
@@ -252,15 +258,67 @@ function AdminPageInner() {
       if (stored) setSavedPubs(JSON.parse(stored));
       const storedAbs = localStorage.getItem(STORAGE_KEY_ABSTRACTS);
       if (storedAbs) setSavedAbstracts(JSON.parse(storedAbs));
-      // Load member overrides, added members, deleted members
-      const storedOverrides = localStorage.getItem("pedquest-admin-member-overrides");
-      if (storedOverrides) setMemberOverrides(JSON.parse(storedOverrides));
-      const storedAdded = localStorage.getItem("pedquest-admin-added-members");
-      if (storedAdded) setAddedMembers(JSON.parse(storedAdded));
-      const storedDeleted = localStorage.getItem("pedquest-admin-deleted-members");
-      if (storedDeleted) setDeletedMemberIds(JSON.parse(storedDeleted));
     } catch { /* ignore */ }
   }, []);
+
+  const authHeaders = useCallback(async (json = true) => {
+    const sb = getSupabase();
+    const token = sb ? (await sb.auth.getSession()).data.session?.access_token : null;
+    return { ...(json ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+  }, []);
+
+  const loadMembers = useCallback(async () => {
+    setMembersLoading(true);
+    setMemberError(null);
+    try {
+      const res = await fetch("/api/admin/members", { headers: await authHeaders() });
+      const json = await res.json();
+      if (res.ok && json.success) setDbMembers(json.members);
+      else setMemberError(json.error || "Could not load members.");
+    } catch {
+      setMemberError("Network error loading members.");
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [authHeaders]);
+
+  useEffect(() => { void loadMembers(); }, [loadMembers]);
+
+  /** POST to the members endpoint and refresh. Returns true on success. */
+  const memberAction = useCallback(async (body: Record<string, unknown>): Promise<boolean> => {
+    setMemberError(null);
+    try {
+      const res = await fetch("/api/admin/members", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setMemberError(json.error || "Save failed.");
+        return false;
+      }
+      await loadMembers();
+      return true;
+    } catch {
+      setMemberError("Network error saving member.");
+      return false;
+    }
+  }, [authHeaders, loadMembers]);
+
+  const publishSite = useCallback(async () => {
+    setPublishing(true);
+    setPublishMsg(null);
+    try {
+      const res = await fetch("/api/admin/publish", { method: "POST", headers: await authHeaders() });
+      const json = await res.json();
+      setPublishMsg(res.ok && json.success ? json.message : (json.error || "Publish failed."));
+    } catch {
+      setPublishMsg("Network error triggering the rebuild.");
+    } finally {
+      setPublishing(false);
+    }
+  }, [authHeaders]);
 
   const savePubs = useCallback((pubs: Publication[]) => {
     setSavedPubs(pubs);
@@ -577,7 +635,7 @@ function AdminPageInner() {
       icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="8" r="3.2" /><path d="M3 20a6 6 0 0 1 12 0M16 6.5a3 3 0 0 1 0 5.5M21 20a5.5 5.5 0 0 0-4-5.3" /></svg>,
     },
   ];
-  const memberCount = members.length + addedMembers.length - deletedMemberIds.length;
+  const memberCount = dbMembers.filter((m) => m.status === "active").length || members.length;
   const draftCount = savedPubs.length + savedAbstracts.length;
 
   return (
@@ -1301,7 +1359,7 @@ function AdminPageInner() {
               </button>
             </div>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1rem", fontFamily: "var(--body-font)" }}>
-              Add, edit, or remove members. Changes are saved to localStorage — export to apply to codebase.
+              Add, edit, or archive members. Changes save to the database immediately; press Publish to rebuild the site with them.
             </p>
             <input
               type="text"
@@ -1310,23 +1368,38 @@ function AdminPageInner() {
               placeholder="Search members by name, institution, or role..."
               style={inputStyle}
             />
-            {(addedMembers.length > 0 || deletedMemberIds.length > 0) && (
-              <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                {addedMembers.length > 0 && (
-                  <span style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", borderRadius: 4, background: "rgba(16,185,129,0.15)", color: "var(--accent-primary)", fontFamily: "var(--body-font)" }}>
-                    {addedMembers.length} pending addition{addedMembers.length > 1 ? "s" : ""}
-                  </span>
-                )}
-                {deletedMemberIds.length > 0 && (
-                  <span style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#ef4444", fontFamily: "var(--body-font)" }}>
-                    {deletedMemberIds.length} pending removal{deletedMemberIds.length > 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
+            {memberError && (
+              <p role="alert" style={{ marginTop: "0.75rem", color: "var(--accent-secondary)", fontSize: "0.85rem", fontFamily: "var(--body-font)" }}>
+                {memberError}
+              </p>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontFamily: "var(--body-font)" }}>
+                {membersLoading
+                  ? "Loading members…"
+                  : `${dbMembers.filter((m) => m.status === "active").length} active · ${dbMembers.filter((m) => m.status === "archived").length} archived · ${dbMembers.filter((m) => m.status === "review").length} needs review`}
+              </span>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--text-secondary)", fontSize: "0.8rem", fontFamily: "var(--body-font)", cursor: "pointer" }}>
+                <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+                Show archived &amp; review
+              </label>
+              <button
+                onClick={publishSite}
+                disabled={publishing}
+                className="btn-secondary"
+                style={{ marginLeft: "auto", fontSize: "0.8rem", padding: "0.5rem 1.1rem", cursor: publishing ? "wait" : "pointer", opacity: publishing ? 0.7 : 1 }}
+                title="Rebuild the live site from the database"
+              >
+                {publishing ? "Publishing…" : "Publish to site"}
+              </button>
+            </div>
+            {publishMsg && (
+              <p style={{ marginTop: "0.5rem", color: "var(--accent-primary)", fontSize: "0.8rem", fontFamily: "var(--body-font)" }}>
+                {publishMsg}
+              </p>
             )}
           </div>
 
-          {/* Member list or edit/add form */}
           {(editingMember || addingMember) && memberForm ? (
             <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
@@ -1529,53 +1602,14 @@ function AdminPageInner() {
                 {/* Save / Delete / Cancel */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border)", flexWrap: "wrap" }}>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       if (!memberForm) return;
+                      if (!memberForm.name.trim()) { setMemberError("Name is required."); return; }
                       setMemberSaving(true);
-
-                      if (addingMember) {
-                        // Add new member
-                        const id = memberForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-                        if (!id || !memberForm.name.trim()) {
-                          alert("Name is required.");
-                          setMemberSaving(false);
-                          return;
-                        }
-                        const allMembers = [...members, ...addedMembers];
-                        if (allMembers.some(m => m.id === id)) {
-                          alert(`A member with ID "${id}" already exists.`);
-                          setMemberSaving(false);
-                          return;
-                        }
-                        const newMember: Member = {
-                          id,
-                          name: memberForm.name,
-                          title: memberForm.title,
-                          role: memberForm.role || undefined,
-                          institution: memberForm.institution,
-                          department: memberForm.department || undefined,
-                          country: memberForm.country || "USA",
-                          city: memberForm.city || "",
-                          lat: 0,
-                          lng: 0,
-                          bio: memberForm.bio,
-                          interests: memberForm.interests.split(",").map(s => s.trim()).filter(Boolean),
-                          email: memberForm.email || undefined,
-                          orcidId: memberForm.orcidId || undefined,
-                          websiteUrl: memberForm.websiteUrl || undefined,
-                          photoUrl: memberForm.photoUrl || undefined,
-                          isLeadership: false,
-                          sortOrder: allMembers.length + 1,
-                        };
-                        const updated = [...addedMembers, newMember];
-                        setAddedMembers(updated);
-                        try { localStorage.setItem("pedquest-admin-added-members", JSON.stringify(updated)); } catch { /* ignore */ }
-                        setAddingMember(false);
-                        setMemberForm(null);
-                        setMemberPhotoPreview(null);
-                      } else if (editingMember) {
-                        // Edit existing member
-                        const overrides: Partial<Member> = {
+                      const ok = await memberAction({
+                        action: "save",
+                        member: {
+                          id: editingMember?.id,
                           name: memberForm.name,
                           title: memberForm.title,
                           role: memberForm.role,
@@ -1584,24 +1618,30 @@ function AdminPageInner() {
                           city: memberForm.city,
                           country: memberForm.country,
                           bio: memberForm.bio,
-                          interests: memberForm.interests.split(",").map(s => s.trim()).filter(Boolean),
+                          interests: memberForm.interests.split(",").map((t) => t.trim()).filter(Boolean),
                           email: memberForm.email,
                           orcidId: memberForm.orcidId,
                           websiteUrl: memberForm.websiteUrl,
                           photoUrl: memberForm.photoUrl,
-                        };
-                        const updated = { ...memberOverrides, [editingMember.id]: overrides };
-                        setMemberOverrides(updated);
-                        try {
-                          localStorage.setItem("pedquest-admin-member-overrides", JSON.stringify(updated));
-                          if (memberForm.cvFilename) {
-                            localStorage.setItem(`pedquest_cv_${editingMember.id}`, memberForm.cvFilename);
-                          }
-                        } catch { /* ignore */ }
-                      }
-
+                          // Preserved rather than reset: this form doesn't expose them.
+                          lat: editingMember?.lat,
+                          lng: editingMember?.lng,
+                          authEmail: editingMember?.authEmail,
+                          isLeadership: editingMember?.isLeadership ?? false,
+                          leadershipRole: editingMember?.leadershipRole,
+                          sortOrder: editingMember?.sortOrder,
+                          status: editingMember ? (editingMember as AdminMemberRow).status : "active",
+                        },
+                      });
                       setMemberSaving(false);
-                      setMemberSaved(true);
+                      if (ok) {
+                        setMemberSaved(true);
+                        if (addingMember) {
+                          setAddingMember(false);
+                          setMemberForm(null);
+                          setMemberPhotoPreview(null);
+                        }
+                      }
                     }}
                     disabled={memberSaving || (!addingMember && !memberForm?.name.trim())}
                     className="btn-primary"
@@ -1619,16 +1659,16 @@ function AdminPageInner() {
                   {/* Delete button — only for existing members, not while adding */}
                   {editingMember && !addingMember && (
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (!editingMember) return;
-                        if (!confirm(`Remove ${editingMember.name} from the member list? They will be archived.`)) return;
-                        const updated = [...deletedMemberIds, editingMember.id];
-                        setDeletedMemberIds(updated);
-                        try { localStorage.setItem("pedquest-admin-deleted-members", JSON.stringify(updated)); } catch { /* ignore */ }
-                        setEditingMember(null);
-                        setMemberForm(null);
-                        setMemberPhotoPreview(null);
-                        setMemberSaved(false);
+                        if (!confirm(`Archive ${editingMember.name}? They come off the site at the next publish, and the record is kept.`)) return;
+                        const ok = await memberAction({ action: "archive", id: editingMember.id });
+                        if (ok) {
+                          setEditingMember(null);
+                          setMemberForm(null);
+                          setMemberPhotoPreview(null);
+                          setMemberSaved(false);
+                        }
                       }}
                       style={{
                         marginLeft: "auto", fontSize: "0.85rem", padding: "0.6rem 1.5rem",
@@ -1636,7 +1676,7 @@ function AdminPageInner() {
                         color: "#ef4444", cursor: "pointer", fontWeight: 600, fontFamily: "var(--body-font)",
                       }}
                     >
-                      Remove Member
+                      Archive Member
                     </button>
                   )}
                   {memberSaved && (
@@ -1651,8 +1691,8 @@ function AdminPageInner() {
             /* Member list */
             <div className="card" style={{ padding: "1.5rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {[...members, ...addedMembers]
-                  .filter((m) => !deletedMemberIds.includes(m.id))
+                {dbMembers
+                  .filter((m) => (showArchived ? true : m.status === "active"))
                   .filter((m) => {
                     if (!memberSearch.trim()) return true;
                     const q = memberSearch.toLowerCase();
@@ -1664,8 +1704,7 @@ function AdminPageInner() {
                     );
                   })
                   .map((m) => {
-                    const overridden = memberOverrides[m.id];
-                    const displayMember = overridden ? { ...m, ...overridden } : m;
+                    const displayMember = m;
                     return (
                       <div
                         key={m.id}
@@ -1729,15 +1768,14 @@ function AdminPageInner() {
                             {displayMember.department && ` — ${displayMember.department}`}
                           </div>
                         </div>
-                        {/* Edit indicator */}
-                        {addedMembers.some(am => am.id === m.id) && (
-                          <span style={{ fontSize: "0.7rem", padding: "0.2rem 0.5rem", borderRadius: 4, background: "rgba(16,185,129,0.2)", color: "var(--accent-primary)", fontFamily: "var(--body-font)", flexShrink: 0 }}>
-                            new
-                          </span>
-                        )}
-                        {overridden && (
-                          <span style={{ fontSize: "0.7rem", padding: "0.2rem 0.5rem", borderRadius: 4, background: "var(--accent-primary)", color: "white", fontFamily: "var(--body-font)", flexShrink: 0 }}>
-                            edited
+                        {m.status !== "active" && (
+                          <span style={{
+                            fontSize: "0.7rem", padding: "0.2rem 0.5rem", borderRadius: 4, flexShrink: 0,
+                            fontFamily: "var(--body-font)",
+                            background: m.status === "archived" ? "rgba(125,147,169,0.2)" : "rgba(240,169,74,0.2)",
+                            color: m.status === "archived" ? "var(--text-muted)" : "var(--accent-secondary)",
+                          }}>
+                            {m.status === "archived" ? "archived" : "needs review"}
                           </span>
                         )}
                         <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem", flexShrink: 0 }}>
@@ -1746,7 +1784,7 @@ function AdminPageInner() {
                       </div>
                     );
                   })}
-                {[...members, ...addedMembers].filter((m) => !deletedMemberIds.includes(m.id)).filter((m) => {
+                {dbMembers.filter((m) => (showArchived ? true : m.status === "active")).filter((m) => {
                   if (!memberSearch.trim()) return true;
                   const q = memberSearch.toLowerCase();
                   return m.name.toLowerCase().includes(q) || m.institution.toLowerCase().includes(q) || (m.role && m.role.toLowerCase().includes(q)) || (m.department && m.department.toLowerCase().includes(q));
