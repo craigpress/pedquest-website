@@ -4,7 +4,7 @@
 // table (status = 'active') during `prebuild`. To change a member, edit
 // them in /admin and redeploy; hand edits here are overwritten.
 //
-// 71 active members.
+// 73 active members.
 
 import type { Member } from "./member-types";
 
@@ -1227,5 +1227,33 @@ export const members: Member[] = [
     email: "j-goldstein4@northwestern.edu",
     isLeadership: false,
     sortOrder: 108,
+  },
+  {
+    id: "kerri-larovere",
+    name: "Kerri L. LaRovere",
+    title: "MD",
+    institution: "Boston Children's Hospital / Harvard",
+    country: "USA",
+    city: "Boston, MA",
+    lat: 42.337,
+    lng: -71.105,
+    bio: "",
+    interests: [],
+    isLeadership: false,
+    sortOrder: 109,
+  },
+  {
+    id: "carlos-castillo-pinto",
+    name: "Carlos Castillo Pinto",
+    title: "MD",
+    institution: "University of Washington / Seattle Children's",
+    country: "USA",
+    city: "Seattle, WA",
+    lat: 47.6625,
+    lng: -122.2876,
+    bio: "",
+    interests: [],
+    isLeadership: false,
+    sortOrder: 110,
   }
 ];
