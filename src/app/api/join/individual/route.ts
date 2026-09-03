@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
   await Promise.all([
     sendDiscordNotification({
       title: `✉️ New individual signup: ${row.name}`,
+      channel: "site",
       color: 0x2ed6c6,
       fields: adminFields,
     }),

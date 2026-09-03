@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
 
   const discordPromise = sendDiscordNotification({
     title: `🎟️ Event registration: ${event.title}`,
+    channel: "site",
     color: 0x2ed6c6,
     fields: [
       { name: "Email", value: safeEmail, inline: true },

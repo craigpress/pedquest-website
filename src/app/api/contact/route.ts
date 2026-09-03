@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
   // notification. allSettled so one failing webhook can't stop the other.
   const discordPromise = sendDiscordNotification({
     title: `📬 New Contact: ${safeSubject}`,
+    channel: "site",
     color: 0xd4603a,
     fields: [
       { name: "Name", value: safeName, inline: true },
