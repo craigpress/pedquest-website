@@ -75,6 +75,17 @@ async function main() {
   const { data: existing, error: readErr } = await supabase.from("members").select("id, status");
   if (readErr) throw new Error(`Read failed: ${readErr.message}`);
 
+  // Guard: once the reconciliation has run the TABLE is the source of truth and
+  // these files are frozen snapshots. Re-running would silently undo later admin
+  // edits - e.g. re-archiving someone who has since been restored.
+  const alreadyReconciled = (existing ?? []).some((r) => r.status !== "active");
+  if (alreadyReconciled && !process.argv.includes("--force") && !checkOnly) {
+    throw new Error(
+      "The members table already carries statuses, so it has been reconciled and is now the source of truth. " +
+        "Re-running would overwrite admin edits from the stale files. Pass --force only if you really mean to."
+    );
+  }
+
   // In the old snapshot but in neither file - do not assume retired.
   const reviewIds = (existing ?? [])
     .map((r) => r.id as string)
