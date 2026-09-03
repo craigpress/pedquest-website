@@ -1,0 +1,185 @@
+id: PQ-A-022
+version: 1
+status: draft
+title: Reporting highly epileptiform bursts during burst suppression
+domain: background_terminology
+topics: [ACNS 2021 terminology, burst suppression, highly epileptiform bursts, burst definition, suppression ratio]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: interpretation
+learning_objective: >-
+  Apply the ACNS 2021 criteria for a burst and for highly epileptiform bursts to a
+  pharmacologically induced burst-suppression pattern displayed on a trend panel.
+
+stem:
+  vignette: >-
+    A 10-year-old girl with super-refractory status epilepticus is receiving a
+    pentobarbital infusion in the PICU. Continuous EEG with a quantitative trend panel
+    is running with the suppression threshold set to 10 microvolts, and the suppression
+    ratio has been stable at about 70 percent bilaterally for 4 hours. On the raw EEG,
+    the bursts average 1.6 seconds and each contains six phases. Within roughly
+    80 percent of the bursts there are three or four clearly epileptiform sharp waves,
+    and within any single burst the interval between consecutive sharp waves averages
+    about 0.4 seconds. The team is preparing the daily EEG report and must describe the
+    bursts using ACNS 2021 terminology.
+  image_caption: >-
+    Four-hour qEEG panel, top to bottom: suppression ratio (left, right), 0 to 100
+    percent, threshold 10 microvolts; aEEG (left, right); FFT spectrogram (left,
+    right) with intermittent narrow columns of power. Time axis in minutes from the
+    start of the displayed window.
+  lead_in: >-
+    How should the bursts be described in the report?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Highly epileptiform bursts are present
+    correct: true
+    rationale: >-
+      Two or more epileptiform discharges appear within the majority of bursts, and
+      within a single burst the interpeak latency of about 0.4 seconds corresponds to
+      roughly 2.5 hertz, which satisfies the requirement of an average of 1 hertz or
+      faster.
+  - key: B
+    text: Highly epileptiform bursts are absent because discharges occur below 1 hertz
+    correct: false
+    rationale: >-
+      An interpeak latency of about 0.4 seconds is a frequency of roughly 2.5 hertz,
+      since the frequency is calculated as the inverse of the typical interpeak
+      latency of consecutive discharges within a single burst.
+  - key: C
+    text: Highly epileptiform bursts are absent because fewer than half the bursts qualify
+    correct: false
+    rationale: >-
+      Roughly 80 percent of the bursts contain the discharges, which exceeds the
+      requirement that they appear within the majority, defined as more than 50
+      percent, of bursts.
+  - key: D
+    text: Highly epileptiform bursts are absent because at least five discharges are required
+    correct: false
+    rationale: >-
+      The 2021 criterion requires two or more epileptiform discharges within the
+      majority of bursts, revised from the earlier wording of multiple discharges;
+      three to four per burst clearly satisfies it.
+  - key: E
+    text: The events should be reported as discharges rather than bursts
+    correct: false
+    rationale: >-
+      Bursts must average at least 0.5 seconds and have at least four phases; these
+      average 1.6 seconds with six phases, so they qualify as bursts and not as
+      discharges.
+
+explanation: >-
+  The correct answer is A. Reporting a burst-suppression pattern requires two separate
+  judgements: whether the events even qualify as bursts, and whether those bursts are
+  highly epileptiform. Both are met here. What the image shows: a stable suppression
+  ratio near 70 percent bilaterally, which places the record in the ACNS burst
+  attenuation or burst suppression category of 50 to 99 percent, with narrow aEEG
+  bands and FFT spectrograms broken into intermittent narrow columns of power
+  corresponding to the bursts. Evidence: the ACNS 2021 terminology states that bursts
+  must average at least 0.5 seconds and have at least four phases, that is at least
+  three baseline crossings, and that shorter or fewer-phase events should be
+  considered discharges instead. It defines highly epileptiform bursts as present if
+  two or more epileptiform discharges, spikes or sharp waves, are seen within the
+  majority, more than 50 percent, of bursts and occur at an average of 1 hertz or
+  faster within a single burst, with frequency calculated as the inverse of the typical
+  interpeak latency of consecutive epileptiform discharges within a single burst, or if
+  a rhythmic potentially ictal-appearing pattern occurs at 1 per second or faster
+  within the majority of bursts. The 2021 version also narrowed burst suppression from
+  greater than 50 percent to 50 to 99 percent of the record. Bedside takeaway: compute
+  the within-burst discharge frequency from the interpeak latency, not from the number
+  of discharges per burst.
+
+key_points:
+  - Bursts must average at least 0.5 seconds and contain at least four phases.
+  - Highly epileptiform bursts need 2 or more discharges in over half of bursts at 1 hertz or faster.
+  - Within-burst frequency is the inverse of the typical interpeak latency.
+
+references:
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's Standardized Critical Care EEG Terminology: 2021 Version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 102222
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 240
+    background:
+      type: burst_suppression
+      dominant_hz: 2.0
+      amplitude_uv: 95
+      slow_fraction: 0.55
+      reactivity: absent
+      burst_suppression:
+        burst_s: 1.6
+        ibi_s: 3.7
+    events:
+      - type: sedation_change
+        at_min: 0
+        direction: increase
+        agent: pentobarbital
+        effect: { suppression_ratio_target_pct: 70, ramp_min: 5 }
+    annotations:
+      - { at_min: 0, label: "Pentobarbital infusion at target" }
+    panels:
+      - suppression_ratio_L
+      - suppression_ratio_R
+      - aeeg_L
+      - aeeg_R
+      - fft_L
+      - fft_R
+    time_axis: elapsed
+    style:
+      suppression_threshold_uv: 10
+      suppression_ratio_axis_pct: [0, 100]
+      suppression_ratio_mean_pct: 70
+      burst_phases: 6
+      burst_epileptiform_discharges: 3
+      burst_interpeak_latency_s: 0.4
+      burst_fraction_highly_epileptiform: 0.8
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

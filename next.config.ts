@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
     // Limit dev server workers to prevent OOM on Windows (default = CPU count)
     cpus: 4,
   },
+  // The question-bank generator reads its blueprint, style guide and exemplar
+  // from content/qbank at request time. Those are plain files, not imports, so
+  // Next's tracer cannot see them — include them explicitly or the cron route
+  // finds nothing in the Vercel bundle.
+  outputFileTracingIncludes: {
+    "/api/cron/qbank-generate": ["./content/qbank/**/*"],
+  },
   async headers() {
     // Content-Security-Policy. Ships as Report-Only first: violations show up in
     // the browser console without breaking the page, so the allowances below can

@@ -1,0 +1,3 @@
+-r requirements.txt
+wfdb>=4.1
+mne>=1.5

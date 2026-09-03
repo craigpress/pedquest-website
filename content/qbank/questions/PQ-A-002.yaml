@@ -1,0 +1,173 @@
+id: PQ-A-002
+version: 1
+status: draft
+title: Reading the axes and color scale of an FFT spectrogram
+domain: foundations
+topics: [FFT spectrogram, color density spectral array, power, frequency axis, color scale]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: recall
+learning_objective: >-
+  State what the horizontal axis, vertical axis and color of an FFT spectrogram
+  (color density spectral array) represent, and name the quantity that the color
+  encodes.
+
+stem:
+  vignette: >-
+    A 5-year-old girl is admitted to the PICU with acute encephalopathy after a
+    prolonged febrile illness. Continuous EEG with a quantitative trend panel has been
+    running for 4 hours. She is intubated and receiving a dexmedetomidine infusion; no
+    neuromuscular blockade has been given. During orientation to the trend display, a
+    first-year critical care fellow is shown the two FFT spectrogram panels, one for
+    each hemisphere. She can see that the appearance of the panels changes over the
+    recording, with a broad band of warm color low on the panel and a narrow strip of
+    darker color higher up, but she has not yet been taught what each axis of the
+    panel encodes and asks you to name them before she tries to interpret any change.
+  image_caption: >-
+    Four-hour qEEG panel showing FFT spectrograms for the left and right hemispheres.
+    The vertical axis of each spectrogram is labeled 0 to 20 with tick marks at 4, 8,
+    12, 16 and 20; the horizontal axis is labeled in minutes; a color bar runs from
+    black through dark blue to red and white.
+  lead_in: >-
+    On each FFT spectrogram panel, what do the vertical axis and the color respectively
+    represent?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Vertical axis frequency in hertz; color the power at that frequency
+    correct: true
+    rationale: >-
+      This is the standard construction. Frequency occupies the vertical axis, time the
+      horizontal axis, and power at each time-frequency point is mapped to a color,
+      conventionally with warm colors for high power and dark blue to black for low
+      power.
+  - key: B
+    text: Vertical axis amplitude in microvolts; color the frequency at that amplitude
+    correct: false
+    rationale: >-
+      Amplitude-focused trends such as the aEEG and the envelope trend put amplitude on
+      the vertical axis, but the FFT spectrogram does not; and color never encodes
+      frequency, which is already given by vertical position.
+  - key: C
+    text: Vertical axis power in square microvolts; color the frequency band contributing it
+    correct: false
+    rationale: >-
+      Power is what the color encodes, not the vertical axis. A line graph of total or
+      band power over time is a different, separate trend.
+  - key: D
+    text: Vertical axis interhemispheric asymmetry; color which hemisphere predominates
+    correct: false
+    rationale: >-
+      That describes the asymmetry spectrogram, in which color indicates the side with
+      greater relative power. The FFT spectrogram for a single hemisphere carries no
+      laterality information by itself.
+  - key: E
+    text: Vertical axis time in minutes; color the amplitude of the raw EEG signal
+    correct: false
+    rationale: >-
+      Time is on the horizontal axis in every qEEG trend so that the display can be read
+      left to right alongside the rest of the panel, and the color encodes spectral
+      power rather than raw signal amplitude.
+
+explanation: >-
+  The correct answer is A. On an FFT spectrogram, also called a color density spectral
+  array, frequency is on the vertical axis, time is on the horizontal axis, and the
+  power at each frequency is encoded as color. What the image shows: the vertical axis
+  is scaled 0 to 20 hertz, the horizontal axis in minutes, and a color bar runs from
+  black and dark blue at the low-power end to red and white at the high-power end;
+  the broad band of warm color low on the panel is high delta power and the narrow
+  darker strip above it is the comparatively small contribution of faster frequencies.
+  Evidence: a pediatric neurocritical care review of trend construction states that
+  frequency-based trends rely on the fast Fourier transform, that frequency power is
+  the area under the FFT amplitude curve for each frequency and is displayed as the
+  square of the amplitude in square microvolts, and that on the FFT spectrogram or
+  CDSA frequencies are displayed on the y-axis, time on the x-axis, and power as a
+  color spectrogram in which warm colors such as red, pink and white represent high
+  power while dark blue to black represents low power. Earlier ICU trend literature
+  describes the same Fourier-based display. Note that the color scale is adjustable,
+  so the same recording can look very different at two bedsides. Bedside takeaway:
+  before interpreting any spectrogram, read its frequency range and its color bar,
+  because both are user-configurable.
+
+key_points:
+  - "FFT spectrogram: frequency on the y-axis, time on the x-axis, power as color."
+  - Power is the square of amplitude, reported in square microvolts.
+  - Warm colors conventionally mean high power; the color scale is user-adjustable.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "15592009"
+    citation: >-
+      Scheuer ML, Wilson SB. Data analysis for continuous EEG monitoring in the ICU:
+      seeing the forest and the trees. J Clin Neurophysiol. 2004;21(5):353-78.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100202
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 240
+    background:
+      type: continuous
+      dominant_hz: 3.5
+      amplitude_uv: 55
+      slow_fraction: 0.7
+      reactivity: present
+    events:
+      - type: sedation_change
+        at_min: 150
+        direction: increase
+        agent: dexmedetomidine
+        effect: { beta_boost: false, ramp_min: 20 }
+    annotations:
+      - { at_min: 150, label: "Dexmedetomidine increased" }
+    panels:
+      - fft_L
+      - fft_R
+    time_axis: elapsed
+    style:
+      spectrogram_hz_range: [0, 20]
+      spectrogram_ticks_hz: [4, 8, 12, 16, 20]
+      colorbar: black_blue_red_white
+      show_colorbar: true
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

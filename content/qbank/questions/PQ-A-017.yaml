@@ -1,0 +1,180 @@
+id: PQ-A-017
+version: 1
+status: draft
+title: What adding channels to a neonatal aEEG improves and what it does not
+domain: seizure_detection
+topics: [multichannel aEEG, single-channel aEEG, neonatal HIE, patient-level detection, seizure-level detection]
+population: neonate
+setting: NICU
+difficulty: intermediate
+bloom: application
+learning_objective: >-
+  Contrast seizure-level and patient-level detection rates for single-channel versus
+  multichannel neonatal aEEG, and apply the distinction to a decision about seizure
+  burden monitoring.
+
+stem:
+  vignette: >-
+    A term neonate with hypoxic-ischemic encephalopathy is being cooled in the NICU.
+    A single-channel aEEG derived across the central electrodes has been running since
+    admission and has shown two arched deflections, both confirmed as seizures on the
+    raw trace and treated with phenobarbital. The team wants to know whether upgrading
+    to an eight-channel aEEG display would let them quantify seizure burden accurately
+    enough to titrate a second antiseizure medication, or whether it would mainly help
+    them decide which infants have any seizures at all. Conventional EEG is available
+    but is read only twice daily by the on-call neurophysiologist.
+  image_caption: >-
+    Side-by-side neonatal aEEG display: left, single channel derived across the central
+    electrodes; right, four channels covering central and temporal derivations for both
+    hemispheres, over the same 4-hour epoch, with a raw-EEG inset at the second event.
+    Time axis in hours from the start of the epoch.
+  lead_in: >-
+    What does the published comparison of single-channel and multichannel neonatal aEEG
+    support?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: A modest gain in seizure-level detection, with near-complete patient-level detection
+    correct: true
+    rationale: >-
+      In the reference study, sensitivity for individual seizure patterns rose from
+      30 percent with single-channel to 39 percent with multichannel aEEG, while
+      multichannel identified all patients with at least one seizure pattern and
+      single-channel identified all but one.
+  - key: B
+    text: A large gain in seizure-level detection, sufficient to quantify seizure burden
+    correct: false
+    rationale: >-
+      Even multichannel aEEG detected fewer than half of the individual seizure
+      patterns, so neither display can be relied on to count seizures or measure burden.
+  - key: C
+    text: No difference in either seizure-level or patient-level detection
+    correct: false
+    rationale: >-
+      Seizure-level detection was slightly better with multichannel recording, and the
+      authors concluded that patient identification can be improved with multichannel
+      recordings.
+  - key: D
+    text: A gain only for seizures arising away from the central electrodes
+    correct: false
+    rationale: >-
+      Wider spatial coverage is the mechanism of the gain, but the study reported an
+      overall improvement in the detection rate rather than an effect restricted to a
+      single region.
+  - key: E
+    text: A gain in specificity rather than sensitivity, by rejecting artifact
+    correct: false
+    rationale: >-
+      The comparison addressed detection rates for seizure patterns against
+      conventional EEG, not the rejection of artifact, and additional channels bring
+      additional artifact.
+
+explanation: >-
+  The correct answer is A. Adding channels changes which question the aEEG can answer:
+  it makes the display good at telling you whether an infant is having seizures at all,
+  without making it good at counting them. What the image shows: at the second event
+  the multichannel display shows a clear arched rise in one derivation pair with only
+  a minimal deflection in the central channel on the left, while several other events
+  visible in the raw inset produce no deflection in either display. Evidence: in
+  12 full-term infants with hypoxic-ischemic encephalopathy and conventional-EEG
+  seizure patterns, 121 seizure patterns with a mean duration of 58 seconds were
+  identified, 68 percent of which occurred over the centrotemporal region. Sensitivity
+  for the detection of seizure patterns was 30 percent, confidence interval 0.22 to
+  0.38, for single-channel aEEG and 39 percent, confidence interval 0.31 to 0.48, for
+  multichannel aEEG. Multichannel aEEG identified all patients with at least one
+  seizure pattern, confidence interval 0.75 to 1.00, whereas single-channel aEEG with
+  C4 to C3 as the optimal derivation identified all but one, confidence interval 0.66
+  to 0.99. This was a small, selected sample of 12 infants, so the patient-level
+  confidence intervals are wide. Bedside takeaway: use aEEG, single or multichannel,
+  to decide who needs conventional EEG; use conventional EEG to measure burden and
+  titrate therapy.
+
+key_points:
+  - Single-channel aEEG detected 30 percent and multichannel 39 percent of seizure patterns.
+  - Multichannel aEEG identified all 12 infants with at least one seizure pattern.
+  - Use aEEG to triage to conventional EEG, not to quantify seizure burden.
+
+references:
+  - pmid: "19782640"
+    doi: 10.1016/j.clinph.2009.08.015
+    citation: >-
+      Bourez-Swart MD, van Rooij L, Rizzo C, et al. Detection of subclinical
+      electroencephalographic seizure patterns with multichannel amplitude-integrated
+      EEG in full-term neonates. Clin Neurophysiol. 2009;120(11):1916-1922.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "23545767"
+    doi: 10.1097/WNP.0b013e3182872b24
+    citation: >-
+      Tsuchida TN, Wusthoff CJ, Shellhaas RA, et al. American Clinical Neurophysiology
+      Society standardized EEG terminology and categorization for the description of
+      continuous EEG monitoring in neonates. J Clin Neurophysiol. 2013;30(2):161-73.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101717
+    age_group: neonate
+    sample_rate: 256
+    channels: [C3-C4, C3-T3, C4-T4, T3-T4]
+    montage: neonatal_reduced
+    duration_h: 4
+    pattern: DNV
+    sleep_wake_cycling: absent
+    seizures:
+      - { onset_h: 0.8, duration_min: 1.0 }
+      - { onset_h: 2.1, duration_min: 1.2 }
+      - { onset_h: 2.9, duration_min: 0.7 }
+      - { onset_h: 3.4, duration_min: 0.8 }
+    raw_strip_at_h: 2.1
+    background:
+      type: discontinuous
+      dominant_hz: 1.5
+      amplitude_uv: 35
+      slow_fraction: 0.75
+      reactivity: present
+    events:
+      - type: temperature_change
+        at_min: 0
+        from_c: 33.5
+        to_c: 33.5
+        over_min: 240
+    annotations:
+      - { at_min: 50, label: "Phenobarbital 20 mg/kg" }
+    style:
+      layout: side_by_side_single_vs_multichannel
+      single_channel: C3-C4
+      seizure_onset_region_by_index: [right_temporal, right_temporal, left_temporal, right_frontal]
+      amplitude_axis: semilog
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

@@ -1,3 +1,12 @@
+---
+tags:
+  - domain/eeg-monitoring
+  - type/project
+  - project/pedquest
+  - domain/seizures-and-epilepsy
+  - domain/research-methods
+  - type/reference
+---
 # qEEG "Case of the Day" — feature branch
 
 Branch: `feature/eeg-case-of-the-day`

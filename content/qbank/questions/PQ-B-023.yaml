@@ -1,0 +1,167 @@
+# Verification trail: content/qbank/sources/PQ-B-023.md
+id: PQ-B-023
+version: 1
+status: draft
+title: Seizures appearing during rewarming from therapeutic hypothermia
+domain: special_populations_pitfalls
+topics: [rewarming, therapeutic hypothermia, neonatal seizures, monitoring duration, aEEG]
+population: neonate
+setting: NICU
+difficulty: introductory
+bloom: recall
+learning_objective: >-
+  State how often neonates cooled for hypoxic-ischemic encephalopathy have their seizure
+  onset during rewarming, and justify continuing monitoring through the rewarming period.
+
+stem:
+  vignette: >-
+    A term neonate cooled for moderate hypoxic-ischemic encephalopathy has completed 72
+    hours at 33.5 degrees Celsius. No seizures were recorded during cooling and no
+    antiseizure medication has been given. Rewarming at 0.5 degrees per hour begins at 72
+    hours of life. Amplitude-integrated EEG with a raw display has run throughout. During
+    the window shown the core temperature rises from 33.5 to 36.5 degrees and a new
+    electrographic seizure appears. The charge nurse asks whether monitoring should
+    routinely continue through rewarming in infants who have had no seizures.
+  image_caption: >-
+    Six-hour, two-channel aEEG (C3-P3 and C4-P4) spanning rewarming from 33.5 to 36.5
+    degrees Celsius, on the semilog amplitude axis, linear from 0 to 10 microvolts and
+    logarithmic from 10 to 100 microvolts. Hours from the start of rewarming are on the
+    time axis. A 15-second raw EEG inset is shown. Temperature steps are annotated.
+  lead_in: >-
+    Approximately what proportion of cooled neonates with electrographic seizures have
+    their seizure onset during rewarming?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: About 2 percent
+    correct: false
+    rationale: >-
+      This understates the risk. Rewarming is a recognized window for seizure onset, not a
+      rare curiosity.
+  - key: B
+    text: About 11 percent
+    correct: true
+    rationale: >-
+      Among 296 cooled neonates with electrographic seizures, 34, or 11.5 percent, had
+      their seizure onset during rewarming.
+  - key: C
+    text: About 34 percent
+    correct: false
+    rationale: >-
+      33.9 percent is the proportion of all cooled neonates in the cohort who had
+      electrographic seizures at any point, not the proportion whose onset was at rewarming.
+  - key: D
+    text: About 61 percent
+    correct: false
+    rationale: >-
+      61.1 percent is the proportion whose seizure onset fell between 6 and 24 hours of
+      life, which is the commonest onset window.
+  - key: E
+    text: About 72 percent
+    correct: false
+    rationale: >-
+      71.9 percent is the proportion of seizures that were electrographic only, with no
+      clinical correlate at all.
+
+explanation: >-
+  The correct answer is B. What the image shows: through the first part of the window the
+  band is discontinuous but stable, with cycling beginning to appear; as the annotated
+  temperature steps rise the band shows an abrupt narrowing with elevation of both margins
+  lasting about 3 minutes, and the raw inset taken during that rise shows evolving rhythmic
+  activity, confirming an electrographic seizure rather than a movement artifact from
+  handling during rewarming. Nothing else changed at that moment. Evidence: a prospective
+  multicenter cohort enrolled 872 cooled newborns with hypoxic-ischemic encephalopathy
+  across 32 hospitals, monitored with three-channel amplitude-integrated EEG including a
+  raw tracing and video, with remote neurologist support. Electrographic seizures were
+  identified in 296 (33.9 percent), and were electrographic only in 213 of those (71.9
+  percent). Seizure onset was most frequent between 6 and 24 hours of life, in 181 (61.1
+  percent), but seizure onset occurred during rewarming in 34 (11.5 percent). Early
+  abnormal background carried a strong association with seizures: infants with a flat trace
+  had the highest seizure rate, 68.2 percent, with an odds ratio of 12.90 (95 percent
+  confidence interval 7.57 to 22.22) compared with continuous normal voltage, and absence
+  of sleep-wake cycling carried an odds ratio of 2.22 (1.67 to 2.96). A single antiseizure
+  medication controlled seizures in 192 (64.9 percent). Bedside takeaway: leave the
+  monitor on through rewarming, including for infants who never seized while cold.
+
+key_points:
+  - Seizure onset occurred during rewarming in 11.5 percent of 296 cooled neonates with seizures.
+  - Electrographic seizures affected 33.9 percent of 872 cooled neonates; 71.9 percent were electrographic only.
+  - A flat trace carried an odds ratio of 12.90 for seizures compared with continuous normal voltage.
+
+references:
+  - pmid: "37966836"
+    doi: 10.1001/jamanetworkopen.2023.43429
+    citation: >-
+      Variane GFT, Dahlen A, Pietrobom RFR, et al. Remote monitoring for seizures during
+      therapeutic hypothermia in neonates with hypoxic-ischemic encephalopathy. JAMA Netw
+      Open. 2023;6(11):e2343429.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: cc-by
+    member_author: false
+  - pmid: "22146359"
+    doi: 10.1097/WNP.0b013e31823e96d7
+    citation: >-
+      Shellhaas RA, Chang T, Tsuchida T, et al. The American Clinical Neurophysiology
+      Society's guideline on continuous electroencephalography monitoring in neonates. J
+      Clin Neurophysiol. 2011;28(6):611-7.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100023
+    age_group: neonate
+    sample_rate: 256
+    duration_h: 6
+    channels: [C3-P3, C4-P4]
+    pattern: DNV
+    sleep_wake_cycling: immature
+    background:
+      type: discontinuous
+      dominant_hz: 2.0
+      amplitude_uv: 32
+      slow_fraction: 0.75
+      reactivity: present
+    events:
+      - type: temperature_change
+        at_min: 0
+        from_c: 33.5
+        to_c: 36.5
+        over_min: 360
+    annotations:
+      - { at_min: 0, label: "Rewarming start 33.5 C" }
+      - { at_min: 360, label: "36.5 C reached" }
+    seizures:
+      - { onset_h: 4.30, duration_min: 3 }
+    raw_strip_at_h: 4.32
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

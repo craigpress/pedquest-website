@@ -1,0 +1,63 @@
+{
+  "id": "PQ-A-020",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "seizure_probability",
+      "y0": 0.104,
+      "y1": 0.183864,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_L",
+      "y0": 0.190364,
+      "y1": 0.312107,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_R",
+      "y0": 0.318607,
+      "y1": 0.44035,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_L",
+      "y0": 0.44685,
+      "y1": 0.568593,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.575093,
+      "y1": 0.696836,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_L",
+      "y0": 0.703336,
+      "y1": 0.812418,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_R",
+      "y0": 0.818918,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:ab2380335694e00837cfe671d16ba7f0cef196acefcdeae3a32480b3dca11887",
+  "path": "public/images/qbank/PQ-A-020.png"
+}

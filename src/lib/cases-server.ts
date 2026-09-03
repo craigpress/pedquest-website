@@ -2,7 +2,10 @@
 // correct answers / regions / responses never depend on client-side RLS.
 // NEVER import this from a "use client" module.
 import { createServerClient } from "@/lib/supabase";
-import { mapCase, toPublicCase, type EegCase, type PublicCase, type CaseStats } from "@/lib/cases";
+import {
+  mapCase, mapReference, toPublicCase,
+  type CaseReference, type EegCase, type PublicCase, type CaseStats,
+} from "@/lib/cases";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 async function loadCaseRow(match: (q: any) => any): Promise<EegCase | null> {
@@ -25,6 +28,24 @@ export async function getTodaysCase(): Promise<EegCase | null> {
 
 export async function getCaseById(id: string): Promise<EegCase | null> {
   return loadCaseRow((q) => q.eq("id", id).limit(1));
+}
+
+/** Look a bank item up by its permanent content ID (e.g. PQ-A-007). */
+export async function getCaseByQbankId(qbankId: string): Promise<EegCase | null> {
+  return loadCaseRow((q) => q.eq("qbank_id", qbankId).limit(1));
+}
+
+/** Citations for one case, ordered as the writer arranged them. */
+export async function getCaseReferences(caseId: string): Promise<CaseReference[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("eeg_case_references")
+    .select("*")
+    .eq("case_id", caseId)
+    .order("sort_order");
+  if (error || !data) return [];
+  return data.map(mapReference);
 }
 
 /** Public (answer-stripped) variants for rendering pages. */

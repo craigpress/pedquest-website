@@ -1,0 +1,185 @@
+id: PQ-A-006
+version: 1
+status: draft
+title: Why a right frontal neonatal seizure is absent from a central aEEG channel
+domain: foundations
+topics: [aEEG, electrode derivation, spatial sampling, neonatal seizures, trend limitations]
+population: neonate
+setting: NICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  Explain how the choice of electrode derivation limits which neonatal seizures can
+  appear on an aEEG, using published data on the proportion of neonatal seizures
+  visible in a single cross-central channel.
+
+stem:
+  vignette: >-
+    A term neonate born after an unremarkable pregnancy presents on day of life 2
+    with intermittent right arm stiffening. Full-array conventional EEG with the
+    reduced neonatal set is applied and a single-channel aEEG is derived across the
+    central electrodes for the bedside team. Over 6 hours the conventional EEG records
+    nine electrographic seizures, each 40 to 70 seconds long, all arising from the
+    right frontal region with amplitudes of 30 to 45 microvolts and no clear spread.
+    The neonatologist reviewing only the aEEG reports a normal continuous trace with
+    no seizures. The recording contains no artifact and impedances were acceptable
+    throughout.
+  image_caption: >-
+    Six-hour single-channel aEEG derived across the central electrodes, semilogarithmic
+    amplitude axis, with the conventional EEG seizure times marked on a separate
+    annotation strip below the trace. Time axis in hours from the start of recording.
+  lead_in: >-
+    What best explains why none of the nine seizures is visible on the aEEG trace?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: The seizures arose too far from the electrodes used to build the aEEG
+    correct: true
+    rationale: >-
+      An aEEG samples only the derivation it is built from. Right frontal discharges
+      that do not spread need not reach a cross-central channel, so no amplitude rise
+      is generated and the trace stays normal.
+  - key: B
+    text: The 2 to 20 hertz band-pass filter removed the ictal rhythm
+    correct: false
+    rationale: >-
+      Neonatal ictal rhythms fall largely within 2 to 20 hertz, which is the band the
+      aEEG filter is designed to amplify rather than reject.
+  - key: C
+    text: The seizures were too long to raise the aEEG margin above baseline
+    correct: false
+    rationale: >-
+      Longer seizures are more, not less, likely to be seen on aEEG; duration is one of
+      the characteristics that predicts detection.
+  - key: D
+    text: The semilogarithmic axis compressed the ictal amplitude rise out of view
+    correct: false
+    rationale: >-
+      The relevant amplitudes here sit at the bottom of the axis, where the scale is
+      linear and expanded; compression applies above 10 microvolts.
+  - key: E
+    text: Therapeutic hypothermia suppressed the ictal amplitude below detection
+    correct: false
+    rationale: >-
+      This neonate is not described as cooled, and hypothermia is not required to
+      explain the finding when the derivation cannot see the involved region.
+
+explanation: >-
+  The correct answer is A. An aEEG reports amplitude from the specific derivation it is
+  built from, so a focal seizure that never involves those electrodes produces no
+  amplitude change and the trace can look entirely normal. What the image shows: a
+  continuous aEEG band with a stable lower margin and no arched upward deflections,
+  while the annotation strip marks nine conventional-EEG seizures underneath, making
+  the mismatch between the trend and the reference standard explicit. Evidence: in a
+  study of 851 neonatal seizures from 125 conventional EEGs in infants of 34 to 50
+  weeks conceptional age, 78 percent of all neonatal seizures appeared in the single
+  C3 to C4 channel and 94 percent of the records had at least one seizure visible in
+  that channel; seizures were briefer and lower in amplitude in that channel than on
+  conventional EEG, and appearance in C3 to C4, seizure duration, seizure amplitude,
+  seizure count per hour and the reader's aEEG experience all correlated with
+  detection. In 12 term infants with hypoxic-ischemic encephalopathy, 68 percent of
+  121 seizure patterns occurred over the centrotemporal region, which is why
+  cross-central derivations perform as well as they do and why frontal-only events are
+  the classic miss. A pediatric review makes the general point that abnormalities
+  occurring far from the electrodes used to build the aEEG may not be detected.
+  Bedside takeaway: know which electrodes your aEEG is derived from, and never accept
+  a normal aEEG as excluding a focal seizure remote from that derivation.
+
+key_points:
+  - An aEEG can only show events involving the electrodes it is derived from.
+  - 78 percent of 851 neonatal seizures appeared in a single C3 to C4 channel.
+  - 68 percent of neonatal seizure patterns in term HIE were centrotemporal, not frontal.
+
+references:
+  - pmid: "17908764"
+    doi: 10.1542/peds.2007-0514
+    citation: >-
+      Shellhaas RA, Soaita AI, Clancy RR. Sensitivity of amplitude-integrated
+      electroencephalography for neonatal seizure detection. Pediatrics.
+      2007;120(4):770-7.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "19782640"
+    doi: 10.1016/j.clinph.2009.08.015
+    citation: >-
+      Bourez-Swart MD, van Rooij L, Rizzo C, et al. Detection of subclinical
+      electroencephalographic seizure patterns with multichannel amplitude-integrated
+      EEG in full-term neonates. Clin Neurophysiol. 2009;120(11):1916-1922.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100606
+    age_group: neonate
+    sample_rate: 256
+    channels: [C3-C4]
+    montage: neonatal_reduced
+    duration_h: 6
+    pattern: CNV
+    sleep_wake_cycling: immature
+    seizures: []
+    raw_strip_at_h: null
+    background:
+      type: continuous
+      dominant_hz: 2.5
+      amplitude_uv: 40
+      slow_fraction: 0.6
+      reactivity: present
+    events:
+      - type: seizure_cluster
+        start_min: 45
+        end_min: 320
+        interval_min: 34
+        seizure:
+          duration_s: 55
+          onset_region: right_frontal
+          evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45 }
+          spread: none
+    annotations:
+      - { at_min: 45, label: "cEEG seizure 1" }
+      - { at_min: 320, label: "cEEG seizure 9" }
+    style:
+      show_reference_seizure_strip: true
+      amplitude_axis: semilog
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

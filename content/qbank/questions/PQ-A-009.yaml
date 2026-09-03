@@ -1,0 +1,175 @@
+id: PQ-A-009
+version: 1
+status: draft
+title: Distinguishing the envelope trend from the aEEG on the same panel
+domain: foundations
+topics: [envelope trend, peak envelope, aEEG, amplitude trends, trend construction]
+population: infant
+setting: CICU
+difficulty: introductory
+bloom: recall
+learning_objective: >-
+  State how the envelope trend is constructed and name the single feature that
+  distinguishes it from the aEEG when both amplitude trends are displayed together.
+
+stem:
+  vignette: >-
+    A 4-month-old infant is monitored in the cardiac ICU after arterial switch
+    operation for transposition of the great arteries. Continuous EEG with a
+    quantitative trend panel was started in the operating room and has run for
+    10 hours. The panel her team uses displays two amplitude-focused trends stacked
+    together, one labeled aEEG and one labeled envelope, both derived from the same
+    hemisphere. A cardiac ICU nurse notices that the two traces rise and fall together
+    but that one is drawn as a filled band with an upper and a lower margin while the
+    other is drawn as a single line, and asks what is actually different between them.
+  image_caption: >-
+    Ten-hour qEEG panel: aEEG (left, right) drawn as a filled band on a
+    semilogarithmic amplitude axis, above envelope trend (left, right) drawn as a
+    single running line on a linear microvolt axis. Time axis in hours from the start
+    of recording.
+  lead_in: >-
+    Which statement correctly describes how the envelope trend differs from the aEEG?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: It plots a running average of median or maximum waveform amplitude, not a margin band
+    correct: true
+    rationale: >-
+      The envelope trend is built by plotting the running average of either the median
+      amplitude, giving the envelope trend, or the maximum amplitude, giving the peak
+      envelope, of waveforms between 2 and 20 hertz, and is displayed as a line rather
+      than as upper and lower margins.
+  - key: B
+    text: It plots spectral power rather than amplitude, so it is a frequency-focused trend
+    correct: false
+    rationale: >-
+      The envelope trend is amplitude-focused. Power-based displays are the FFT
+      spectrogram and the band-power and ratio trends.
+  - key: C
+    text: It is derived from a single electrode pair, whereas the aEEG uses all 19 channels
+    correct: false
+    rationale: >-
+      The relationship is closer to the reverse: the aEEG is classically built from one
+      homologous derivation, and both trends can be displayed for a whole hemisphere.
+  - key: D
+    text: It uses a wider band-pass of 0.5 to 70 hertz, which is why it looks smoother
+    correct: false
+    rationale: >-
+      Both trends work over a 2 to 20 hertz band; smoothness reflects the running
+      average, not a different band-pass.
+  - key: E
+    text: It reports the percentage of each epoch spent below a suppression threshold
+    correct: false
+    rationale: >-
+      That is the suppression ratio, a separate amplitude-focused trend reported in
+      percent rather than in microvolts.
+
+explanation: >-
+  The correct answer is A. Both trends are amplitude-focused and both operate on
+  waveforms between 2 and 20 hertz, but they summarise amplitude differently: the
+  aEEG shows a band whose upper and lower margins bracket the amplitude distribution
+  on a semilogarithmic axis, while the envelope trend plots a running average of a
+  single amplitude statistic as a line. What the image shows: the aEEG panels are
+  filled bands with distinguishable upper and lower margins on a semilogarithmic axis,
+  and the envelope panels beneath them are single lines on a linear microvolt axis that
+  track the same excursions; because both reflect amplitude, they move together during
+  seizures, sedation changes and state changes. Evidence: a pediatric neurocritical
+  care review of qEEG trend construction describes envelope trends as made by plotting
+  the running average of either the median amplitude, called the envelope trend, or the
+  maximum amplitude, called the peak envelope, of waveforms between 2 and 20 hertz,
+  displaying amplitude variation over time, and notes that like the aEEG they may be
+  shown as a single graph or separated by hemisphere and that the trend is helpful for
+  detecting the amplitude rise of a seizure or other pathology that affects EEG
+  voltage. The same review defines the aEEG semilogarithmic display and the suppression
+  ratio as distinct trends. Bedside takeaway: because the aEEG and the envelope trend
+  measure nearly the same thing, treat concordant movement in both as one piece of
+  evidence, not two.
+
+key_points:
+  - Envelope trend plots a running average of median amplitude over 2 to 20 hertz.
+  - The peak envelope variant uses maximum rather than median amplitude.
+  - aEEG shows a margin band on a semilog axis; the envelope trend shows one line.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "15592009"
+    citation: >-
+      Scheuer ML, Wilson SB. Data analysis for continuous EEG monitoring in the ICU:
+      seeing the forest and the trees. J Clin Neurophysiol. 2004;21(5):353-78.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100909
+    age_group: infant
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 600
+    background:
+      type: continuous
+      dominant_hz: 4.5
+      amplitude_uv: 50
+      slow_fraction: 0.6
+      reactivity: present
+    events:
+      - type: state_change
+        at_min: 180
+        to: sleep
+      - type: state_change
+        at_min: 300
+        to: arousal
+      - type: sedation_change
+        at_min: 420
+        direction: decrease
+        agent: midazolam
+        effect: { ramp_min: 30 }
+    annotations:
+      - { at_min: 420, label: "Midazolam weaned" }
+    panels:
+      - aeeg_L
+      - aeeg_R
+      - envelope_L
+      - envelope_R
+    time_axis: elapsed
+    style:
+      aeeg_axis: semilog
+      envelope_axis_uv: [0, 100]
+      envelope_statistic: median
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

@@ -1,3 +1,13 @@
+---
+tags:
+  - domain/infrastructure
+  - type/project
+  - project/pedquest
+  - domain/eeg-monitoring
+  - domain/seizures-and-epilepsy
+  - domain/research-methods
+  - type/handoff
+---
 # PedQuEST Site Redesign — Handoff
 
 **Purpose:** continue the dark-teal "instrument panel" redesign across the

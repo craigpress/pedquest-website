@@ -1,0 +1,170 @@
+# Verification trail: content/qbank/sources/PQ-B-014.md
+id: PQ-B-014
+version: 1
+status: draft
+title: Test characteristics of a severely abnormal 24-hour aEEG background on ECMO
+domain: clinical_prognosis
+topics: [ECMO, aEEG background score, specificity, prognostication, neuromonitoring]
+population: child
+setting: ECMO
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  State the specificity of a severely abnormal aEEG background score in the first 24 hours
+  of extracorporeal membrane oxygenation for unfavorable outcome, and distinguish it from
+  the sensitivity and predictive values.
+
+stem:
+  vignette: >-
+    A 6-month-old infant with fulminant myocarditis is placed on venoarterial
+    extracorporeal membrane oxygenation. Amplitude-integrated EEG with a raw display is
+    applied within the first hour of cannulation and is scored in 3-hour blocks over the
+    first day. She receives a fentanyl infusion and intermittent rocuronium boluses for
+    circuit safety. Over the first 24 hours the aEEG background score is severely
+    abnormal in every block. No electrographic seizures have occurred. The team asks how
+    confidently this recording identifies an unfavorable outcome at discharge.
+  image_caption: >-
+    Twenty-four-hour, two-channel aEEG (C3-P3 and C4-P4) from the first day of
+    extracorporeal membrane oxygenation, on the semilog amplitude axis, linear from 0 to
+    10 microvolts and logarithmic from 10 to 100 microvolts. Hours from cannulation are on
+    the time axis. A 15-second raw EEG inset is shown. A continuous circuit-pump artifact
+    is annotated.
+  lead_in: >-
+    Approximately what specificity does a severely abnormal 24-hour aEEG background score
+    carry for an unfavorable outcome?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: About 44 percent
+    correct: false
+    rationale: >-
+      44 percent is the sensitivity of the threshold score, which is why a normal-looking
+      aEEG cannot be used to rule out an unfavorable outcome.
+  - key: B
+    text: About 57 percent
+    correct: false
+    rationale: >-
+      57 percent is the negative predictive value, again reflecting how poorly this test
+      excludes an unfavorable outcome.
+  - key: C
+    text: About 75 percent
+    correct: false
+    rationale: >-
+      No reported test characteristic of the aEEG background score in this cohort was
+      near 75 percent.
+  - key: D
+    text: About 95 percent
+    correct: false
+    rationale: >-
+      95 percent is the positive predictive value in this cohort, which depends on the
+      local prevalence of unfavorable outcome and is not the specificity.
+  - key: E
+    text: About 97 percent
+    correct: true
+    rationale: >-
+      A 24-hour aEEG background score above the reported threshold identified unfavorable
+      outcome with a specificity of 97 percent, making a severely abnormal score highly
+      specific but insensitive.
+
+explanation: >-
+  The correct answer is E. What the image shows: both channels carry a narrow, depressed
+  band with long, essentially isoelectric stretches interrupted by sparse low-voltage
+  bursts, no cyclical variation over the 24 hours, and a raw inset confirming a suppressed
+  tracing; a regular, narrow-band artifact from the circuit pump runs through the whole
+  recording without altering the envelope. This is a severely abnormal background rather
+  than a pump-driven display problem. Evidence: in a retrospective cohort of 73 neonates
+  and children supported with extracorporeal membrane oxygenation and monitored with
+  amplitude-integrated EEG, background was summarized as a score determined in 3-hour
+  blocks within the first 24 hours. Thirty-two patients had a favorable and 41 an
+  unfavorable neurologic outcome by Pediatric Cerebral Performance Category at discharge.
+  A 24-hour background score above the reported threshold was associated with an
+  unfavorable outcome with a sensitivity of 44 percent, a specificity of 97 percent, a
+  positive predictive value of 95 percent and a negative predictive value of 57 percent,
+  and in multivariable analysis with a hazard ratio of 6.1 (95 percent confidence interval
+  2.31 to 16.24). The presence of seizures was not associated with outcome at discharge.
+  A separate cohort of 201 children on this support found a severely abnormal conventional
+  background in 12 percent, again highly specific but insensitive for death, at 0.97 and
+  0.23. Bedside takeaway: a severely abnormal early aEEG on ECMO is meaningful when
+  present and reassures no one when absent.
+
+key_points:
+  - A severely abnormal 24-hour aEEG background on ECMO was 97 percent specific, 44 percent sensitive.
+  - Positive predictive value was 95 percent and negative predictive value only 57 percent.
+  - Seizures on ECMO were not associated with outcome at discharge in this 73-patient cohort.
+
+references:
+  - pmid: "34387276"
+    doi: 10.1097/WNP.0000000000000890
+    citation: >-
+      Chahine A, Chenouard A, Joram N, et al. Continuous amplitude-integrated
+      electroencephalography during neonatal and pediatric extracorporeal membrane
+      oxygenation. J Clin Neurophysiol. 2023;40(4):317-24.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: false
+  - pmid: "32631921"
+    doi: 10.1212/WNL.0000000000010188
+    citation: >-
+      Sansevere AJ, DiBacco ML, Akhondi-Asl A, et al. EEG features of brain injury during
+      extracorporeal membrane oxygenation in children. Neurology. 2020;95(10):e1372-80.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100014
+    age_group: infant
+    sample_rate: 256
+    duration_h: 24
+    channels: [C3-P3, C4-P4]
+    pattern: BS
+    sleep_wake_cycling: absent
+    background:
+      type: burst_suppression
+      dominant_hz: 1.2
+      amplitude_uv: 20
+      slow_fraction: 0.92
+      burst_suppression: { burst_s: 1.0, ibi_s: 16.0 }
+      reactivity: absent
+    events:
+      - type: artifact
+        kind: ecmo_pump
+        at_min: 0
+        duration_s: 86400
+        side: all
+        intensity: low
+    annotations:
+      - { at_min: 0, label: "ECMO circuit running" }
+    seizures: []
+    raw_strip_at_h: 12.00
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

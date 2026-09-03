@@ -1,0 +1,158 @@
+# Verification trail: content/qbank/sources/PQ-B-020.md
+id: PQ-B-020
+version: 1
+status: draft
+title: When two-channel aEEG is not enough for suspected neonatal seizures
+domain: monitoring_practice
+topics: [aEEG limitations, single-channel detection, conventional cEEG, neonatal seizures]
+population: neonate
+setting: NICU
+difficulty: intermediate
+bloom: application
+learning_objective: >-
+  Decide when to escalate from two-channel aEEG to conventional full-array continuous
+  video EEG, using data on how many neonatal seizures a central channel and its readers
+  miss.
+
+stem:
+  vignette: >-
+    A 39-week neonate on the second day of life has repeated episodes of rhythmic
+    lip-smacking with tonic eye deviation lasting about 30 seconds each. There is no
+    encephalopathy and the infant is otherwise well, feeding between episodes. Two-channel
+    amplitude-integrated EEG with a raw display was applied 6 hours ago and shows a
+    continuous normal voltage background with emerging cycling and one brief unexplained
+    rise in the margins. No antiseizure medication has been given. The neonatologist asks
+    whether the aEEG is sufficient to decide about treatment.
+  image_caption: >-
+    Six-hour, two-channel aEEG (C3-P3 and C4-P4) on the semilog amplitude axis, linear
+    from 0 to 10 microvolts and logarithmic from 10 to 100 microvolts. Hours from the
+    start of recording are on the time axis. A 15-second raw EEG inset is shown. No
+    medication annotations fall within this window.
+  lead_in: >-
+    What is the best next step in this infant's neurophysiologic monitoring?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Transition to conventional full-array continuous video EEG
+    correct: true
+    rationale: >-
+      Brief, low-amplitude and infrequent neonatal seizures are the ones a central channel
+      and its readers miss most often, and this infant's events are exactly that profile.
+  - key: B
+    text: Continue two-channel aEEG alone and treat any further rise in the margins
+    correct: false
+    rationale: >-
+      Treating on the basis of an unconfirmed margin rise risks both missed seizures and
+      unnecessary medication, since movement and other artifacts also lift the envelope.
+  - key: C
+    text: Continue aEEG alone but add a third channel over the vertex
+    correct: false
+    rationale: >-
+      Adding a channel helps a little, but even complete visibility in a central derivation
+      still left readers detecting only a minority of individual seizures.
+  - key: D
+    text: Obtain a 30-minute conventional EEG and then stop monitoring
+    correct: false
+    rationale: >-
+      Events recurring over hours will not reliably be captured in a single short study,
+      and a normal 30-minute recording would not exclude them.
+  - key: E
+    text: Rely on the automated seizure-detection alarm built into the aEEG monitor
+    correct: false
+    rationale: >-
+      An automated alarm on a two-channel montage inherits the same spatial limitation and
+      does not substitute for reviewing a full-array recording with video.
+
+explanation: >-
+  The correct answer is A. What the image shows: the background is a continuous band with
+  a lower margin above the 5-microvolt gridline and early cyclical broadening, so the
+  background itself is reassuring. There is one abrupt narrowing and elevation of the band
+  lasting about 2 minutes; the raw inset taken at that moment is equivocal, showing
+  rhythmic activity that could be ictal or movement-related. Nothing in a two-channel
+  display can resolve that, and nothing in it can detect a seizure that never reaches the
+  central derivation. Evidence: 851 neonatal seizures from 125 conventional EEGs in infants
+  of 34 to 50 weeks conceptional age were reviewed against the single C3 to C4 channel
+  from which aEEG is derived. At least one seizure was visible in that channel on 94
+  percent of the records, and 78 percent of all individual seizures appeared in it, but
+  seizures were briefer and lower in amplitude there than on the conventional recording.
+  Six neonatologists of varying experience reading the derived aEEG identified seizures on
+  22 to 57 percent of the 125 records and detected only 12 to 38 percent of the 851
+  individual seizures; detection correlated with seizure duration, amplitude, count per
+  hour and reader experience. Guideline recommendations for neonatal continuous EEG in
+  suspected seizures are conditional and based on very low quality evidence, so the
+  clinical stakes should drive the choice. Bedside takeaway: when treatment decisions hinge
+  on the answer, record the full array with video.
+
+key_points:
+  - Readers of derived aEEG detected only 12 to 38 percent of 851 individual neonatal seizures.
+  - Seventy-eight percent of seizures appeared in the central channel, but briefer and lower in amplitude.
+  - Brief, low-amplitude, infrequent seizures are the ones a two-channel display misses.
+
+references:
+  - pmid: "17908764"
+    doi: 10.1542/peds.2007-0514
+    citation: >-
+      Shellhaas RA, Soaita AI, Clancy RR. Sensitivity of amplitude-integrated
+      electroencephalography for neonatal seizure detection. Pediatrics.
+      2007;120(4):770-7.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "39752571"
+    doi: 10.1097/WNP.0000000000001120
+    citation: >-
+      Wusthoff CJ, Numis AL, Pressler RM, et al. The American Clinical Neurophysiology
+      Society guideline on indications for continuous electroencephalography monitoring in
+      neonates. J Clin Neurophysiol. 2025;42(1):1-11.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100020
+    age_group: neonate
+    sample_rate: 256
+    duration_h: 6
+    channels: [C3-P3, C4-P4]
+    pattern: CNV
+    sleep_wake_cycling: immature
+    background:
+      type: continuous
+      dominant_hz: 4.0
+      amplitude_uv: 45
+      slow_fraction: 0.55
+      reactivity: present
+    seizures:
+      - { onset_h: 3.20, duration_min: 2 }
+    raw_strip_at_h: 3.22
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

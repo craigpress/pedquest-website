@@ -1,0 +1,28 @@
+{
+  "id": "PQ-A-004",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "asymmetry_index",
+      "y0": 0.104,
+      "y1": 0.451438,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "asymmetry_relative",
+      "y0": 0.457938,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:aa2481ea1bc3d086c4f6f78ef27f6328a84bfb0c6c00449273ce8f58b42da524",
+  "path": "public/images/qbank/PQ-A-004.png"
+}

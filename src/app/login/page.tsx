@@ -105,6 +105,28 @@ export default function LoginPage() {
           Sign in with Authentik
         </button>
 
+        {/* First-time setup — members provisioned in Authentik set their own
+            password through the recovery flow before their first sign-in. */}
+        <p
+          style={{
+            fontFamily: "var(--body-font)",
+            fontSize: "0.85rem",
+            color: "var(--text-secondary)",
+            textAlign: "center",
+            margin: "-0.75rem 0 1.5rem",
+            lineHeight: 1.5,
+          }}
+        >
+          <a
+            href="https://auth.presshome.net/if/flow/pedquest-recovery/"
+            style={{ color: "var(--accent-primary)", fontWeight: 600 }}
+          >
+            First time here? Set your password
+          </a>
+          <br />
+          Authentik will then offer to add a passkey, so you can skip the password next time.
+        </p>
+
         {/* Divider */}
         <div
           style={{

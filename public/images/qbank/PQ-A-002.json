@@ -1,0 +1,28 @@
+{
+  "id": "PQ-A-002",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "fft_L",
+      "y0": 0.104,
+      "y1": 0.51275,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.51925,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:f11987e75e69d0747f4efae88b92d75760a869cfd3828516dd4b04a1283ea64d",
+  "path": "public/images/qbank/PQ-A-002.png"
+}

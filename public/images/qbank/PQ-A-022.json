@@ -1,0 +1,56 @@
+{
+  "id": "PQ-A-022",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "suppression_ratio_L",
+      "y0": 0.104,
+      "y1": 0.208468,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_R",
+      "y0": 0.214968,
+      "y1": 0.319436,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_L",
+      "y0": 0.325936,
+      "y1": 0.463589,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_R",
+      "y0": 0.470089,
+      "y1": 0.607741,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_L",
+      "y0": 0.614241,
+      "y1": 0.76787,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.77437,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:69f2cffedf96310e14a4dd49e6f0b203fbdd2c9fd78d96007570196736c72ea7",
+  "path": "public/images/qbank/PQ-A-022.png"
+}

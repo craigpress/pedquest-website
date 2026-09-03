@@ -1,0 +1,177 @@
+# Verification trail: content/qbank/sources/PQ-B-010.md
+id: PQ-B-010
+version: 1
+status: draft
+title: Hypothermia moves the aEEG prognostic window in neonatal encephalopathy
+domain: clinical_prognosis
+topics: [neonatal HIE, therapeutic hypothermia, aEEG, time to normal trace, prognostication]
+population: neonate
+setting: NICU
+difficulty: advanced
+bloom: application
+learning_objective: >-
+  Explain why an abnormal aEEG at 3 to 6 hours is a weaker predictor under therapeutic
+  hypothermia and identify the time to recovery of a normal background as the better
+  predictor.
+
+stem:
+  vignette: >-
+    A term neonate meets cooling criteria after perinatal asphyxia and starts therapeutic
+    hypothermia at 3 hours of life, with core temperature held at 33.5 degrees Celsius.
+    Two-channel amplitude-integrated EEG was applied at 2 hours of life. The window shown
+    covers 3 to 6 hours of life. No antiseizure medication has been given and one
+    morphine dose was given at 3 hours. At 8 hours of life a trainee asks whether the team
+    can now tell the parents that the outlook is poor on the basis of this tracing.
+  image_caption: >-
+    Three-hour, two-channel aEEG (C3-P3 and C4-P4) covering 3 to 6 hours of life, on the
+    semilog amplitude axis, linear from 0 to 10 microvolts and logarithmic from 10 to 100
+    microvolts. Hours of life are on the time axis. A 15-second raw EEG inset is shown.
+    Core temperature was 33.5 degrees Celsius throughout.
+  lead_in: >-
+    What is the most appropriate use of this 3-to-6-hour tracing for prognosis in a cooled
+    infant?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Defer prognostication and reassess whether the background has normalized by 48 hours of life
+    correct: true
+    rationale: >-
+      Under hypothermia the positive predictive value of an abnormal 3-to-6-hour pattern
+      falls to 59 percent, and infants with good outcome had normalized by 48 hours rather
+      than 24 hours.
+  - key: B
+    text: Counsel that outcome is very likely poor on the basis of the 3-to-6-hour pattern
+    correct: false
+    rationale: >-
+      That inference is valid at normothermia, where the positive predictive value was 84
+      percent, but not under hypothermia, where it fell to 59 percent.
+  - key: C
+    text: Counsel that outcome is very likely poor if the same pattern persists at 12 hours of life
+    correct: false
+    rationale: >-
+      Twelve hours is still too early. In cooled infants only abnormalities persisting at
+      and beyond 24 hours were associated with poor outcome, and severe abnormalities
+      became significantly predictive after 36 hours.
+  - key: D
+    text: Stop cooling, because the background already establishes a poor prognosis
+    correct: false
+    rationale: >-
+      This is the most harmful option. An early severe aEEG does not identify infants who
+      cannot benefit, and cooling should be completed.
+  - key: E
+    text: Rely on the moderately abnormal voltage criteria at 3 to 6 hours instead of the pattern
+    correct: false
+    rationale: >-
+      A moderately abnormal voltage background at 3 to 6 hours did not predict outcome in
+      the cooled cohort, so substituting voltage for pattern does not help.
+
+explanation: >-
+  The correct answer is A. What the image shows: over the 3-to-6-hour window both channels
+  are discontinuous with high-voltage bursts rising from an essentially isoelectric
+  interburst lower margin, no cyclical variation, and a raw inset confirming suppression
+  between bursts. This is burst suppression at 3 to 6 hours in an infant already at 33.5
+  degrees. Evidence: 74 infants recruited with CoolCap entry criteria had 72 hours of aEEG
+  and Bayley Scales of Infant Development II at 18 months. The positive predictive value
+  of an abnormal aEEG pattern at 3 to 6 hours of age was 84 percent under normothermia but
+  only 59 percent under hypothermia, and a moderately abnormal voltage background at 3 to
+  6 hours did not predict outcome at all. The recovery time to a normal background pattern
+  was the best predictor of poor outcome, at 96.2 percent under hypothermia and 90.9
+  percent under normothermia, and never developing sleep-wake cycling always predicted a
+  poor outcome. Infants with good outcome had normalized by 24 hours when treated with
+  normothermia and by 48 hours when treated with hypothermia. In a separate cohort of 23
+  cooled infants, 10 of 15 with a burst-suppression pattern or worse at 6 hours had a
+  normal outcome at 1 year, and only abnormalities persisting at and beyond 24 hours
+  carried a poor prognosis. Bedside takeaway: under cooling, the clock for aEEG
+  prognostication runs to 48 hours, not 6.
+
+key_points:
+  - Under hypothermia the positive predictive value of an abnormal 3-to-6-hour aEEG fell to 59 percent.
+  - Time to recovery of a normal background was the best predictor, 96.2 percent under hypothermia.
+  - Good-outcome cooled infants normalized by 48 hours; 10 of 15 with burst suppression at 6 hours did well.
+
+references:
+  - pmid: "20566612"
+    doi: 10.1542/peds.2009-2938
+    citation: >-
+      Thoresen M, Hellstrom-Westas L, Liu X, de Vries LS. Effect of hypothermia on
+      amplitude-integrated electroencephalogram in infants with asphyxia. Pediatrics.
+      2010;126(1):e131-9.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "20050830"
+    doi: 10.1111/j.1651-2227.2009.01653.x
+    citation: >-
+      Hallberg B, Grossmann K, Bartocci M, Blennow M. The prognostic value of early aEEG
+      in asphyxiated infants undergoing systemic hypothermia treatment. Acta Paediatr.
+      2010;99(4):531-6.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "10375357"
+    doi: 10.1136/fn.81.1.f19
+    citation: >-
+      Toet MC, Hellstrom-Westas L, Groenendaal F, Eken P, de Vries LS. Amplitude
+      integrated EEG 3 and 6 hours after birth in full term neonates with
+      hypoxic-ischaemic encephalopathy. Arch Dis Child Fetal Neonatal Ed.
+      1999;81(1):F19-23.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100010
+    age_group: neonate
+    sample_rate: 256
+    duration_h: 3
+    channels: [C3-P3, C4-P4]
+    pattern: BS
+    sleep_wake_cycling: absent
+    background:
+      type: burst_suppression
+      dominant_hz: 1.5
+      amplitude_uv: 40
+      slow_fraction: 0.9
+      burst_suppression: { burst_s: 2.0, ibi_s: 11.0 }
+      reactivity: absent
+    events:
+      - type: temperature_change
+        at_min: 0
+        from_c: 33.5
+        to_c: 33.5
+        over_min: 180
+    seizures: []
+    raw_strip_at_h: 1.50
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

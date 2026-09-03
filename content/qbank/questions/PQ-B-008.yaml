@@ -1,0 +1,170 @@
+# Verification trail: content/qbank/sources/PQ-B-008.md
+id: PQ-B-008
+version: 1
+status: draft
+title: Which EEG categorization is independently associated with mortality in the PICU
+domain: clinical_prognosis
+topics: [electrographic status epilepticus, mortality, PCPC, ictal-interictal continuum]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  Distinguish electrographic status epilepticus from isolated electrographic seizures and
+  state which of the two is independently associated with mortality in critically ill
+  children.
+
+stem:
+  vignette: >-
+    A 5-year-old boy is admitted with pneumococcal meningitis and acute encephalopathy.
+    Continuous EEG with a quantitative trend panel is started 2 hours after admission. He
+    is receiving fentanyl and a single dose of lorazepam was given before the recording
+    began; no continuous sedative infusion is running. Over the 4 hours shown the panel
+    demonstrates near-continuous ictal activity, with ictal segments occupying roughly
+    three-quarters of each hour and only brief interruptions. The team is preparing a
+    prognostic discussion and asks which way to categorize the recording.
+  image_caption: >-
+    Four-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
+    spectrogram 0-20 Hz (left, right); relative asymmetry spectrogram; asymmetry index;
+    suppression ratio (left, right). Elapsed minutes on the time axis. No medication
+    annotations fall within this window.
+  lead_in: >-
+    Which categorization of this recording is independently associated with mortality in
+    critically ill children?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Electrographic status epilepticus
+    correct: true
+    rationale: >-
+      In 200 children monitored in a PICU, electrographic status epilepticus was
+      independently associated with mortality, with an odds ratio of 5.1, and with
+      worsening of the Pediatric Cerebral Performance Category.
+  - key: B
+    text: Isolated electrographic seizures
+    correct: false
+    rationale: >-
+      Electrographic seizures that did not reach status were not associated with
+      mortality, with an odds ratio of 1.3 and a confidence interval that crossed 1.
+  - key: C
+    text: Generalized rhythmic delta activity
+    correct: false
+    rationale: >-
+      A rhythmic delta pattern on the ictal-interictal continuum is not what this panel
+      shows, and it was not the exposure tested in the mortality analysis.
+  - key: D
+    text: Lateralized periodic discharges
+    correct: false
+    rationale: >-
+      The relative asymmetry spectrogram and asymmetry index do not show a sustained
+      lateralized abnormality, and periodic discharges were not the tested exposure.
+  - key: E
+    text: Interictal epileptiform discharges without seizures
+    correct: false
+    rationale: >-
+      Discharges without seizures describe a different, lower-risk group and cannot apply
+      to a recording occupied by near-continuous ictal activity.
+
+explanation: >-
+  The correct answer is A. What the image shows: both rhythmicity spectrograms carry
+  broad, continuously evolving bands that occupy most of every hour, with only short gaps;
+  the seizure-probability trend is saturated; the FFT panels show sustained
+  low-to-mid-frequency power on both sides; the relative asymmetry spectrogram and
+  asymmetry index remain near zero, so the activity is generalized and symmetric rather
+  than lateralized. Ictal activity occupying most of each hour meets any working
+  definition of electrographic status epilepticus, not isolated seizures. Evidence: in a
+  prospective observational study, 200 non-neonatal children admitted to a PICU with acute
+  encephalopathy underwent continuous EEG. Eighty-four (42 percent) had seizures,
+  categorized as electrographic seizures in 41 (20.5 percent) and electrographic status
+  epilepticus in 43 (21.5 percent). Thirty-six children (18 percent) died and 88 (44
+  percent) had worsening of the Pediatric Cerebral Performance Category. In multivariable
+  analysis adjusting for age, neurologic disorder category, premorbid neurodevelopmental
+  status, sex and EEG background category, electrographic status epilepticus was
+  associated with mortality, with an odds ratio of 5.1 (95 percent confidence interval 1.4
+  to 18), and with category worsening, with an odds ratio of 17.3 (3.7 to 80).
+  Electrographic seizures were associated with neither. Bedside takeaway: say explicitly
+  in the note whether the recording is seizures or status; the two carry different
+  prognoses.
+
+key_points:
+  - Electrographic status epilepticus carried an odds ratio of 5.1 for mortality in 200 PICU children.
+  - Isolated electrographic seizures were not associated with mortality, odds ratio 1.3.
+  - Status was also associated with worsening cerebral performance category, odds ratio 17.3.
+
+references:
+  - pmid: "23164815"
+    doi: 10.1097/CCM.0b013e3182668035
+    citation: >-
+      Topjian AA, Gutierrez-Colina AM, Sanchez SM, et al. Electrographic status epilepticus
+      is associated with mortality and worse short-term outcome in critically ill
+      children. Crit Care Med. 2013;41(1):215-23.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "24384638"
+    doi: 10.1212/WNL.0000000000000082
+    citation: >-
+      Wagenman KL, Blake TP, Sanchez SM, et al. Electrographic status epilepticus and
+      long-term outcome in critically ill children. Neurology. 2014;82(5):396-404.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100008
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 240
+    background:
+      type: continuous
+      dominant_hz: 3.5
+      amplitude_uv: 50
+      slow_fraction: 0.75
+      reactivity: present
+    events:
+      - type: status_epilepticus
+        onset_min: 10
+        duration_min: 220
+        onset_region: generalized
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

@@ -1,3 +1,11 @@
+---
+tags:
+  - domain/eeg-monitoring
+  - type/reference
+  - project/pedquest
+  - domain/seizures-and-epilepsy
+  - domain/research-methods
+---
 # Case of the Day — Image Sourcing & Licensing Policy
 
 **Status:** draft for review · **Written:** 2026-07-13 · **Applies to:** every image

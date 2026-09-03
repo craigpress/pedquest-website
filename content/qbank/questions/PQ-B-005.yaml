@@ -1,0 +1,191 @@
+# Verification trail: content/qbank/sources/PQ-B-005.md
+id: PQ-B-005
+version: 1
+status: draft
+title: Continuous but unreactive background during targeted temperature management
+domain: clinical_prognosis
+topics: [cardiac arrest, reactivity, targeted temperature management, prognosis, odds ratio]
+population: child
+setting: PICU
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  Quantify how a continuous but unreactive background during hypothermia changes the odds
+  of an unfavorable short-term outcome compared with a continuous and reactive background.
+
+stem:
+  vignette: >-
+    An 8-year-old boy is resuscitated after a witnessed drowning, with 11 minutes of
+    cardiopulmonary resuscitation. Targeted temperature management at 33 degrees Celsius
+    is begun and continuous EEG with a quantitative trend panel starts 5 hours after
+    return of spontaneous circulation. He is receiving fentanyl but no neuromuscular
+    blockade and no continuous sedative infusion. At 20 hours, while still at 33 degrees,
+    the technologist performs a standardized noxious stimulus at the bedside and
+    documents it on the tracing. The intensivist asks how this recording changes the
+    prognostic estimate before the family meeting.
+  image_caption: >-
+    Twenty-four-hour qEEG panel: seizure probability; rhythmicity spectrogram (left,
+    right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right);
+    suppression ratio (left, right). Elapsed minutes on the time axis. Core temperature
+    was held at 33 degrees Celsius throughout. A standardized stimulation is annotated at
+    1200 minutes.
+  lead_in: >-
+    Compared with a continuous and reactive background, what odds of an unfavorable
+    short-term outcome does this recording carry?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: An odds ratio of about 1.0, that is, no measurable difference
+    correct: false
+    rationale: >-
+      Loss of reactivity was not neutral. Children with a continuous but unreactive
+      background during hypothermia were far more likely to have an unfavorable outcome
+      than those with a reactive one.
+  - key: B
+    text: An odds ratio of about 3.6
+    correct: false
+    rationale: >-
+      3.63 is the odds of death per incrementally worse background category in a
+      different, non-cooled post-arrest cohort, not the reactivity comparison during
+      hypothermia.
+  - key: C
+    text: An odds ratio of about 10.7
+    correct: true
+    rationale: >-
+      In 35 children cooled after cardiac arrest, a continuous but unreactive recording
+      during hypothermia carried an odds ratio of 10.7 for unfavorable short-term outcome
+      compared with a continuous and reactive recording.
+  - key: D
+    text: An odds ratio of about 27
+    correct: false
+    rationale: >-
+      27 is the odds ratio for the same continuous but unreactive category measured after
+      return to normothermia, not during hypothermia.
+  - key: E
+    text: An odds ratio of about 35
+    correct: false
+    rationale: >-
+      35 is the odds ratio during hypothermia for the worst category, which requires
+      discontinuity, burst suppression or absent cerebral activity, none of which is
+      present here.
+
+explanation: >-
+  The correct answer is C. What the image shows: both aEEG channels carry a stable,
+  continuous band, the suppression-ratio trends stay low and flat, the FFT spectrograms
+  hold a narrow band of low-frequency power without interruption, and there is no change
+  in any trend at the annotated stimulation at 1200 minutes. The background is therefore
+  continuous but unreactive, which corresponds to the middle of a published three-tier
+  post-arrest scheme: category 1 continuous and reactive, category 2 continuous but
+  unreactive, category 3 any degree of discontinuity, burst suppression or absent
+  cerebral activity. Evidence: in a prospective cohort of 35 children managed with a
+  standard hypothermia algorithm after cardiac arrest, tracings obtained during
+  hypothermia in categories 2 and 3 carried odds ratios for unfavorable short-term
+  outcome, defined as a Pediatric Cerebral Performance Category of 4 to 6 at discharge,
+  of 10.7 (p equals 0.023) and 35 (p equals 0.004) respectively compared with category 1.
+  For tracings obtained during normothermia the corresponding odds ratios were 27 (p
+  equals 0.006) and 18 (p equals 0.02). This is a single-center cohort of 35 children, so
+  the confidence around each estimate is wide. Current guidance permits targeted
+  temperature management at 32 to 34 degrees followed by 36 to 37.5 degrees, or 36 to 37.5
+  degrees alone, so the reader must always record the temperature at which the EEG was
+  obtained. Bedside takeaway: document a stimulation trial and the core temperature with
+  every prognostic EEG read.
+
+key_points:
+  - Continuous but unreactive during hypothermia carried an odds ratio of 10.7 for unfavorable outcome.
+  - Any discontinuity or burst suppression during hypothermia carried an odds ratio of 35.
+  - Record core temperature and a documented stimulation trial with every prognostic read.
+
+references:
+  - pmid: "20890677"
+    doi: 10.1007/s12028-010-9450-2
+    citation: >-
+      Kessler SK, Topjian AA, Gutierrez-Colina AM, et al. Short-term outcome prediction by
+      electroencephalographic features in children treated with therapeutic hypothermia
+      after cardiac arrest. Neurocrit Care. 2011;14(1):37-43.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "27097270"
+    doi: 10.1097/PCC.0000000000000740
+    citation: >-
+      Topjian AA, Sanchez SM, Shults J, Berg RA, Dlugos DJ, Abend NS. Early
+      electroencephalographic background features predict outcomes in children
+      resuscitated from cardiac arrest. Pediatr Crit Care Med. 2016;17(6):547-57.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "31722551"
+    doi: 10.1161/CIR.0000000000000731
+    citation: >-
+      Duff JP, Topjian AA, Berg MD, et al. 2019 American Heart Association focused update
+      on pediatric advanced life support. Circulation. 2019;140(24):e904-14.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100005
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 1440
+    background:
+      type: continuous
+      dominant_hz: 2.5
+      amplitude_uv: 30
+      slow_fraction: 0.85
+      reactivity: absent
+    events:
+      - type: temperature_change
+        at_min: 0
+        from_c: 33.0
+        to_c: 33.0
+        over_min: 1440
+      - type: stimulation
+        at_min: 1200
+    annotations:
+      - { at_min: 1200, label: "Standardized stimulation" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

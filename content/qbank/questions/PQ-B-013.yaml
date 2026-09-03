@@ -1,0 +1,163 @@
+# Verification trail: content/qbank/sources/PQ-B-013.md
+id: PQ-B-013
+version: 1
+status: draft
+title: Finding the first seizure on a post-bypass neonatal trend panel
+domain: clinical_prognosis
+topics: [post-cardiac-surgery seizures, cardiopulmonary bypass, rhythmicity spectrogram, chest physiotherapy artifact]
+population: neonate
+setting: CICU
+difficulty: intermediate
+bloom: interpretation
+learning_objective: >-
+  Locate the first electrographic seizure on a postoperative neonatal trend panel and
+  separate it from a physiotherapy artifact, knowing that post-bypass seizures typically
+  begin many hours after return to the intensive care unit.
+
+stem:
+  vignette: >-
+    A term neonate returns to the cardiac intensive care unit on the fifth day of life
+    after an arterial switch operation with cardiopulmonary bypass and a period of deep
+    hypothermic circulatory arrest. The chest is left open with a planned delayed sternal
+    closure. Continuous EEG with a quantitative trend panel is applied on arrival per unit
+    protocol. He is receiving a fentanyl infusion, is not paralysed, and has had no
+    clinical seizure-like events. Chest physiotherapy was performed during the fifth hour
+    of the recording and is annotated on the panel.
+  image_caption: >-
+    Thirty-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right);
+    FFT spectrogram 0-20 Hz (left, right); relative asymmetry spectrogram; asymmetry
+    index; suppression ratio (left, right). Elapsed minutes on the time axis. Chest
+    physiotherapy is annotated at 300 minutes.
+  lead_in: >-
+    Locate the earliest electrographic seizure of the recording on the trend panel.
+
+question_type: point_to_feature
+options: []
+point_to_feature:
+  instruction: >-
+    Click the earliest electrographic seizure on the right rhythmicity spectrogram. Do
+    not click the physiotherapy artifact.
+  target_event: 1
+  target_panel: rhythmicity_R
+  tolerance: 0.03
+
+explanation: >-
+  The earliest true seizure is the discrete evolving band on the right rhythmicity
+  spectrogram at about 1200 minutes, roughly 20 hours after return to the unit. What the
+  image shows: at 300 minutes there is a broadband, non-evolving increase across all
+  displayed frequencies in both hemispheres, time-locked to the annotated chest
+  physiotherapy, with no change in the relative asymmetry spectrogram; that is artifact.
+  At about 1200 minutes a narrow band appears on the right that begins near 3 Hz and slows
+  over roughly 90 seconds, with a matching arch on the right FFT panel, a rightward
+  deflection of the asymmetry index, and a brief post-ictal rise in the right suppression
+  ratio. A stereotyped cluster of similar events follows over the next 7 hours. Evidence:
+  in a quality improvement cohort, 161 of 172 eligible neonates (94 percent) underwent
+  continuous EEG after cardiac surgery with cardiopulmonary bypass. Electrographic
+  seizures occurred in 13 (8 percent), beginning at a median of 20 hours after return to
+  the intensive care unit. Seizures were electroencephalogram only in 11 of the 13 (85
+  percent) and status epilepticus occurred in 8 (62 percent). Delayed sternal closure and
+  longer deep hypothermic circulatory arrest duration were each associated with increased
+  seizure risk, and mortality was higher among neonates with than without seizures, 38
+  percent versus 3 percent. Bedside takeaway: the highest-yield window is the second half
+  of the first postoperative day, and physiotherapy is the artifact to expect.
+
+key_points:
+  - Post-bypass neonatal seizures began at a median of 20 hours after return to the unit.
+  - Eleven of 13 neonates with seizures had no clinical correlate at all.
+  - Chest physiotherapy makes a broadband, non-evolving, bilateral rise, not an evolving band.
+
+references:
+  - pmid: "25957454"
+    doi: 10.1016/j.jtcvs.2015.03.045
+    citation: >-
+      Naim MY, Gaynor JW, Chen J, et al. Subclinical seizures identified by postoperative
+      electroencephalographic monitoring are common after neonatal cardiac surgery. J
+      Thorac Cardiovasc Surg. 2015;150(1):169-78.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "32738224"
+    doi: 10.1016/j.athoracsur.2020.05.157
+    citation: >-
+      Naim MY, Putt M, Abend NS, et al. Development and validation of a seizure prediction
+      model in neonates after cardiac surgery. Ann Thorac Surg. 2021;111(6):2041-8.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100013
+    age_group: neonate
+    sample_rate: 256
+    channels: neonatal_reduced
+    duration_min: 1800
+    background:
+      type: continuous
+      dominant_hz: 2.0
+      amplitude_uv: 35
+      slow_fraction: 0.8
+      reactivity: present
+    events:
+      - type: artifact
+        kind: chest_pt
+        at_min: 300
+        duration_s: 240
+        side: all
+        intensity: high
+      - type: seizure
+        onset_min: 1200.0
+        duration_s: 95
+        onset_region: right_temporal
+        evolution: { start_hz: 3.0, end_hz: 1.3, amplitude_start_uv: 55, amplitude_end_uv: 140 }
+        spread: hemispheric
+        postictal_attenuation_s: 60
+      - type: seizure_cluster
+        start_min: 1290
+        end_min: 1710
+        interval_min: 35
+        seizure:
+          duration_s: 95
+          onset_region: right_temporal
+          evolution: { start_hz: 3.0, end_hz: 1.3, amplitude_start_uv: 55, amplitude_end_uv: 140 }
+    annotations:
+      - { at_min: 300, label: "Chest physiotherapy" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

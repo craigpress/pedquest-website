@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { checkOrigin, truncate } from "@/lib/validation";
-import { getCaseById, getCaseStats } from "@/lib/cases-server";
+import { getCaseById, getCaseStats, getCaseReferences } from "@/lib/cases-server";
 import { isPointInRegion, type RevealResult } from "@/lib/cases";
 
 // Submit an answer to a case, grade it server-side, and return the reveal.
@@ -27,6 +27,8 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   if (!c || (c.status !== "published" && c.status !== "archived")) {
     return NextResponse.json({ error: "Case not found." }, { status: 404 });
   }
+  // Citations are part of the post-answer teaching payload for bank items.
+  const references = await getCaseReferences(id);
 
   // ----- resolve responder (member if a valid token is sent, else anonymous session) -----
   let userId: string | null = null;
@@ -111,6 +113,8 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     correctRegion: c.correctRegion,
     explanation: c.explanation,
     teachingPoints: c.teachingPoints,
+    keyPoints: c.keyPoints,
+    references,
     yourAnswer: { optionId: selectedOptionId, x: px, y: py },
     stats,
     alreadyAnswered,

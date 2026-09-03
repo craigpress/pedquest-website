@@ -1,0 +1,35 @@
+{
+  "id": "PQ-B-023",
+  "kind": "aeeg",
+  "width": 1600,
+  "height": 900,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "aeeg_C3-O1",
+      "y0": 0.07,
+      "y1": 0.309,
+      "x0": 0.075,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_C4-O2",
+      "y0": 0.364,
+      "y1": 0.603,
+      "x0": 0.075,
+      "x1": 0.984
+    },
+    {
+      "name": "raw_strip",
+      "y0": 0.713,
+      "y1": 0.863,
+      "x0": 0.075,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:acfd9b0f26f2a648cf01e866854c99ef38d7b60dea287f442dc4ab963763dc70",
+  "path": "public/images/qbank/PQ-B-023.png"
+}

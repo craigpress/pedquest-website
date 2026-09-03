@@ -9,7 +9,59 @@ export type ImageLicense =
   | "consortium"      // Tier 1: consortium-owned, de-identified
   | "cc0" | "cc-by" | "cc-by-sa" | "cc-by-nc" | "cc-by-nd"   // Tier 2: openly licensed
   | "public-domain"
-  | "ai-original";    // Tier 3: original synthetic image we generated
+  | "ai-original"          // Tier 3: original synthetic image we generated
+  | "synthetic-original"   // question bank: rendered from our own image.spec
+  | "dataset-derived";     // question bank: from an openly licensed raw dataset
+
+// ---------- question-bank taxonomy (content/qbank/schema/question.schema.json) ----------
+export type QbankDomain =
+  | "foundations" | "seizure_detection" | "background_terminology"
+  | "clinical_prognosis" | "monitoring_practice" | "special_populations_pitfalls";
+export type QbankPopulation = "neonate" | "infant" | "child" | "adolescent" | "mixed";
+export type QbankSetting = "NICU" | "PICU" | "CICU" | "ECMO" | "ED" | "EMU" | "OR" | "other";
+export type QbankBloom = "recall" | "interpretation" | "application" | "analysis";
+
+export const QBANK_DOMAINS: QbankDomain[] = [
+  "foundations", "seizure_detection", "background_terminology",
+  "clinical_prognosis", "monitoring_practice", "special_populations_pitfalls",
+];
+export const QBANK_DOMAIN_LABELS: Record<QbankDomain, string> = {
+  foundations: "Foundations",
+  seizure_detection: "Seizure detection",
+  background_terminology: "Background & terminology",
+  clinical_prognosis: "Clinical & prognosis",
+  monitoring_practice: "Monitoring practice",
+  special_populations_pitfalls: "Special populations & pitfalls",
+};
+export const QBANK_POPULATIONS: QbankPopulation[] = ["neonate", "infant", "child", "adolescent", "mixed"];
+export const QBANK_SETTINGS: QbankSetting[] = ["NICU", "PICU", "CICU", "ECMO", "ED", "EMU", "OR", "other"];
+export const QBANK_BLOOMS: QbankBloom[] = ["recall", "interpretation", "application", "analysis"];
+export const DIFFICULTIES: Difficulty[] = ["introductory", "intermediate", "advanced"];
+
+/** One citation backing an item. Public once the item is published. */
+export interface CaseReference {
+  id: string;
+  pmid: string | null;
+  doi: string | null;
+  url: string | null;
+  citation: string;
+  role: "primary" | "supporting";
+  verified: boolean;
+  verifiedBy: string | null;
+  openAccess: string | null;
+  memberAuthor: boolean;
+  sortOrder: number;
+}
+
+/** Answer-region + provenance sidecar written by the eeg-render worker. */
+export interface ImageSidecar {
+  answer_region?: Region | null;
+  width?: number;
+  height?: number;
+  spec_hash?: string;
+  renderer_version?: string;
+  [key: string]: unknown;
+}
 
 export interface RectRegion { kind: "rect"; x: number; y: number; w: number; h: number }
 export interface CircleRegion { kind: "circle"; cx: number; cy: number; r: number }
@@ -50,6 +102,26 @@ export interface EegCase {
   status: CaseStatus;
   createdAt: string;
   options: CaseOption[];
+  // ---- question-bank fields (null on legacy Case-of-the-Day rows) ----
+  qbankId: string | null;
+  domain: QbankDomain | null;
+  population: QbankPopulation | null;
+  setting: QbankSetting | null;
+  bloom: QbankBloom | null;
+  learningObjective: string | null;
+  leadIn: string | null;
+  imageCaption: string | null;
+  keyPoints: string[];
+  version: number;
+  /** the image.spec the renderer consumes (IMAGE_SPEC.md) */
+  spec: unknown | null;
+  specHash: string | null;
+  /** the whole YAML question, snapshotted for revision diffs */
+  content: unknown | null;
+  imageSidecar: ImageSidecar | null;
+  inBank: boolean;
+  createdBy: string | null;
+  reviewedBy: string | null;
 }
 
 /** What is safe to send to the browser BEFORE the user answers. */
@@ -66,6 +138,17 @@ export interface PublicCase {
   tags: string[];
   status: CaseStatus;
   options: PublicCaseOption[];
+  // ---- question-bank additions (safe pre-answer: no answers, no rationales) ----
+  qbankId: string | null;
+  domain: QbankDomain | null;
+  population: QbankPopulation | null;
+  setting: QbankSetting | null;
+  leadIn: string | null;
+  imageCaption: string | null;
+  imageLicense: ImageLicense | null;
+  imageAttribution: string | null;
+  imageSourceUrl: string | null;
+  inBank: boolean;
 }
 
 /** Aggregate community stats, safe for everyone once they've answered. */
@@ -84,6 +167,10 @@ export interface RevealResult {
   correctRegion: Region | null;
   explanation: string | null;
   teachingPoints: string[];
+  /** question-bank flashcard bullets; absent on legacy cached reveals */
+  keyPoints?: string[];
+  /** citations behind the explanation; absent on legacy cached reveals */
+  references?: CaseReference[];
   yourAnswer: { optionId?: string | null; x?: number | null; y?: number | null };
   stats: CaseStats;
   alreadyAnswered: boolean;
@@ -151,6 +238,39 @@ export function mapCase(r: any, options: any[] = []): EegCase {
     status: r.status,
     createdAt: r.created_at,
     options: options.map(mapOption).sort((a, b) => a.sortOrder - b.sortOrder),
+    qbankId: r.qbank_id ?? null,
+    domain: (r.domain as QbankDomain) ?? null,
+    population: (r.population as QbankPopulation) ?? null,
+    setting: (r.setting as QbankSetting) ?? null,
+    bloom: (r.bloom as QbankBloom) ?? null,
+    learningObjective: r.learning_objective ?? null,
+    leadIn: r.lead_in ?? null,
+    imageCaption: r.image_caption ?? null,
+    keyPoints: r.key_points ?? [],
+    version: r.version ?? 1,
+    spec: r.spec ?? null,
+    specHash: r.spec_hash ?? null,
+    content: r.content ?? null,
+    imageSidecar: (r.image_sidecar as ImageSidecar) ?? null,
+    inBank: !!r.in_bank,
+    createdBy: r.created_by ?? null,
+    reviewedBy: r.reviewed_by ?? null,
+  };
+}
+
+export function mapReference(r: Record<string, unknown>): CaseReference {
+  return {
+    id: String(r.id),
+    pmid: (r.pmid as string) ?? null,
+    doi: (r.doi as string) ?? null,
+    url: (r.url as string) ?? null,
+    citation: (r.citation as string) ?? "",
+    role: r.role === "primary" ? "primary" : "supporting",
+    verified: !!r.verified,
+    verifiedBy: (r.verified_by as string) ?? null,
+    openAccess: (r.open_access as string) ?? null,
+    memberAuthor: !!r.member_author,
+    sortOrder: Number(r.sort_order ?? 0),
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -168,7 +288,8 @@ export function caseImagePublishBlock(c: {
 }): string | null {
   if (!c.imageUrl || !c.imageUrl.trim()) return "an image";
   if (!c.imageLicense) return "an image license";
-  const exempt = c.imageLicense === "consortium" || c.imageLicense === "ai-original";
+  const exempt = c.imageLicense === "consortium" || c.imageLicense === "ai-original"
+    || c.imageLicense === "synthetic-original";
   if (!exempt && !(c.imageAttribution && c.imageAttribution.trim())) {
     return "an attribution/credit line (required for this license)";
   }
@@ -191,5 +312,32 @@ export function toPublicCase(c: EegCase): PublicCase {
     options: c.options
       .map((o) => ({ id: o.id, label: o.label, sortOrder: o.sortOrder }))
       .sort((a, b) => a.sortOrder - b.sortOrder),
+    qbankId: c.qbankId,
+    domain: c.domain,
+    population: c.population,
+    setting: c.setting,
+    leadIn: c.leadIn,
+    imageCaption: c.imageCaption,
+    imageLicense: c.imageLicense,
+    imageAttribution: c.imageAttribution,
+    imageSourceUrl: c.imageSourceUrl,
+    inBank: c.inBank,
   };
+}
+
+/**
+ * Attribution line for a case image, per docs/CASE_IMAGE_SOURCING_POLICY.md.
+ * Returns null when no credit line is required (our own synthetic renders).
+ */
+export function imageCreditLine(c: {
+  imageLicense: ImageLicense | null;
+  imageAttribution: string | null;
+  imageSourceUrl: string | null;
+}): string | null {
+  if (c.imageAttribution && c.imageAttribution.trim()) return c.imageAttribution.trim();
+  if (c.imageLicense === "synthetic-original" || c.imageLicense === "ai-original") {
+    return "Original synthetic figure rendered by PedQuEST — not a patient recording.";
+  }
+  if (c.imageLicense === "consortium") return "PedQuEST consortium, de-identified.";
+  return null;
 }

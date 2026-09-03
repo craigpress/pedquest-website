@@ -1,0 +1,70 @@
+{
+  "id": "PQ-B-007",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "seizure_probability",
+      "y0": 0.104,
+      "y1": 0.180269,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_L",
+      "y0": 0.186769,
+      "y1": 0.303032,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_R",
+      "y0": 0.309532,
+      "y1": 0.425796,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_L",
+      "y0": 0.432296,
+      "y1": 0.548559,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.555059,
+      "y1": 0.671323,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "asymmetry_index",
+      "y0": 0.677823,
+      "y1": 0.756882,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_L",
+      "y0": 0.763382,
+      "y1": 0.842441,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_R",
+      "y0": 0.848941,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:37c889144fd2cd491c90f66a93b541696a841a08d7fbc3794cc9566d6984eb03",
+  "path": "public/images/qbank/PQ-B-007.png"
+}

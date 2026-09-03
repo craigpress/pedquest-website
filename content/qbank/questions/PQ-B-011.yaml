@@ -1,0 +1,174 @@
+# Verification trail: content/qbank/sources/PQ-B-011.md
+id: PQ-B-011
+version: 1
+status: draft
+title: Seizure burden thresholds and outcome in neonatal hypoxic-ischemic encephalopathy
+domain: clinical_prognosis
+topics: [neonatal seizure burden, HIE, aEEG, outcome threshold, hourly burden]
+population: neonate
+setting: NICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  State the maximum hourly and total electrographic seizure burdens above which the odds
+  of an abnormal neurodevelopmental outcome rose in term neonates with hypoxic-ischemic
+  encephalopathy.
+
+stem:
+  vignette: >-
+    A term neonate with moderate hypoxic-ischemic encephalopathy is being cooled and has
+    been monitored with amplitude-integrated EEG and a raw display since 5 hours of life.
+    Recurrent electrographic seizures begin at 14 hours of life. Phenobarbital has been
+    loaded once. Over the 4-hour window shown the seizures recur about every 15 minutes
+    and each lasts about 3.5 minutes, so they occupy roughly 14 minutes of every hour.
+    The neonatology fellow asks whether this burden has crossed a published threshold for
+    worse outcome.
+  image_caption: >-
+    Four-hour, two-channel aEEG (C3-P3 and C4-P4) covering 14 to 18 hours of life, on the
+    semilog amplitude axis, linear from 0 to 10 microvolts and logarithmic from 10 to 100
+    microvolts. Hours of life are on the time axis. A 15-second raw EEG inset is shown.
+    The phenobarbital load is annotated.
+  lead_in: >-
+    Above what maximum hourly electrographic seizure burden did the odds of an abnormal
+    outcome rise about eightfold in this population?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: 1 minute per hour
+    correct: false
+    rationale: >-
+      The mere presence of seizures was not associated with abnormal outcome in this
+      cohort, so a threshold this low does not match the data.
+  - key: B
+    text: 5 minutes per hour
+    correct: false
+    rationale: >-
+      A plausible guess, but the reported inflection for maximum hourly burden was
+      substantially higher.
+  - key: C
+    text: 13 minutes per hour
+    correct: true
+    rationale: >-
+      A maximum hourly seizure burden of more than 13 minutes per hour carried an odds
+      ratio of 8.00 for abnormal outcome, independent of encephalopathy grade and cooling.
+  - key: D
+    text: 20 minutes per hour
+    correct: false
+    rationale: >-
+      Twenty percent of an hour, or 12 minutes, is the threshold reported in a mixed
+      pediatric intensive care cohort, not the neonatal hourly threshold of 13 minutes.
+  - key: E
+    text: 40 minutes per hour
+    correct: false
+    rationale: >-
+      Forty minutes is the reported threshold for total cumulative seizure burden across
+      the whole recording, not for burden within a single hour.
+
+explanation: >-
+  The correct answer is C. What the image shows: on both channels the band shows repeated
+  abrupt rises of the lower margin with narrowing of the band, each lasting about 3.5
+  minutes and recurring about every 15 minutes, on a discontinuous background; the raw
+  inset taken during one of these rises shows evolving rhythmic activity, confirming that
+  the rises are seizures rather than movement. Summing the ictal minutes gives roughly 14
+  minutes in the worst hour, which is above the 13-minute threshold. Evidence: in an
+  observational cohort of 47 term neonates with hypoxic-ischemic encephalopathy from both
+  the pre-hypothermia and hypothermia eras, monitored with continuous EEG for a median of
+  57.1 hours (interquartile range 33.5 to 80.5), 29 of 47 (62 percent) had electrographic
+  seizures and 25 of 47 (53 percent) had an abnormal outcome at 24 to 48 months. The
+  presence of seizures per se was not associated with abnormal outcome (p equals 0.126).
+  However, the odds of abnormal outcome rose more than ninefold, odds ratio 9.56 (95
+  percent confidence interval 2.43 to 37.67), with a total seizure burden of more than 40
+  minutes, and eightfold, odds ratio 8.00 (2.06 to 31.07), with a maximum hourly burden of
+  more than 13 minutes per hour. Controlling for electrographic encephalopathy grade or
+  hypothermia did not change the direction of these relationships. Bedside takeaway: count
+  ictal minutes per hour and cumulatively, and treat burden as the target.
+
+key_points:
+  - Maximum hourly burden above 13 minutes per hour carried an odds ratio of 8.00 for abnormal outcome.
+  - Total burden above 40 minutes carried an odds ratio of 9.56 in the same 47-neonate cohort.
+  - Presence of seizures alone was not associated with outcome; burden was.
+
+references:
+  - pmid: "27595841"
+    doi: 10.1111/dmcn.13215
+    citation: >-
+      Kharoshankaya L, Stevenson NJ, Livingstone V, et al. Seizure burden and
+      neurodevelopmental outcome in neonates with hypoxic-ischemic encephalopathy. Dev Med
+      Child Neurol. 2016;58(12):1242-8.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: false
+  - pmid: "24595203"
+    doi: 10.1093/brain/awu042
+    citation: >-
+      Payne ET, Zhao XY, Frndova H, et al. Seizure burden is independently associated with
+      short term outcome in critically ill children. Brain. 2014;137(Pt 5):1429-38.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100011
+    age_group: neonate
+    sample_rate: 256
+    duration_h: 4
+    channels: [C3-P3, C4-P4]
+    pattern: DNV
+    sleep_wake_cycling: absent
+    background:
+      type: discontinuous
+      dominant_hz: 1.8
+      amplitude_uv: 28
+      slow_fraction: 0.8
+      reactivity: present
+    seizures:
+      - { onset_h: 0.15, duration_min: 3.5 }
+      - { onset_h: 0.40, duration_min: 3.5 }
+      - { onset_h: 0.65, duration_min: 3.5 }
+      - { onset_h: 0.90, duration_min: 3.5 }
+      - { onset_h: 1.15, duration_min: 3.5 }
+      - { onset_h: 1.40, duration_min: 3.5 }
+      - { onset_h: 1.65, duration_min: 3.5 }
+      - { onset_h: 1.90, duration_min: 3.5 }
+      - { onset_h: 2.15, duration_min: 3.5 }
+      - { onset_h: 2.40, duration_min: 3.5 }
+      - { onset_h: 2.65, duration_min: 3.5 }
+      - { onset_h: 2.90, duration_min: 3.5 }
+      - { onset_h: 3.15, duration_min: 3.5 }
+      - { onset_h: 3.40, duration_min: 3.5 }
+      - { onset_h: 3.65, duration_min: 3.5 }
+      - { onset_h: 3.90, duration_min: 3.5 }
+    annotations:
+      - { at_min: 60, label: "Phenobarbital 20 mg/kg" }
+    raw_strip_at_h: 1.67
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

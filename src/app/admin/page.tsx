@@ -7,7 +7,7 @@ import { conferenceAbstracts, abstractCategories } from "@/data/abstracts";
 import { educationResources } from "@/data/education";
 import type { Publication } from "@/data/publications";
 import type { ConferenceAbstract } from "@/data/abstracts";
-import { useUser } from "@/lib/auth";
+import { useRole } from "@/lib/auth";
 import { members, type Member } from "@/data/members";
 import { supabase, getSupabase } from "@/lib/supabase";
 import { MEMBER_NAME_MAP, MEMBER_DISPLAY_NAMES, matchMemberAuthors } from "@/lib/memberMatch";
@@ -26,14 +26,6 @@ const TAB_TITLES: Record<AdminTab, string> = {
   "cv-importer": "CV importer",
   members: "Members",
 };
-
-// Admin emails — only these users can access the admin page
-const ADMIN_EMAILS = [
-  "pressca@chop.edu",
-  "craigpress@gmail.com",
-  "gbenedet@med.umich.edu",
-  "ajay.thomas@bcm.edu",
-];
 
 
 
@@ -168,7 +160,9 @@ function generateAbstractCode(abs: ConferenceAbstract): string {
 }
 
 function AdminPageInner() {
-  const { user, loading: authLoading } = useUser();
+  // Admin access is decided server-side: /api/me reads public.user_roles.
+  // Grant/revoke at /admin/users, never in code.
+  const { user, isAdmin, loading: authLoading } = useRole();
   const [tab, setTab] = useState<AdminTab>("dashboard");
 
   // ALL hooks must be called before any early returns (Rules of Hooks)
@@ -330,9 +324,7 @@ function AdminPageInner() {
     localStorage.setItem(STORAGE_KEY_ABSTRACTS, JSON.stringify(abs));
   }, []);
 
-  // Auth gate — only admin emails can access
-  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
-
+  // Auth gate — role is resolved by useRole() above.
   if (authLoading) {
     return (
       <main style={{ maxWidth: 900, margin: "0 auto", padding: "4rem 1.5rem", textAlign: "center" }}>
@@ -1404,7 +1396,9 @@ function AdminPageInner() {
             <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
                 <h2 style={{ fontSize: "1rem", fontFamily: "var(--heading-font)", margin: 0 }}>
-                  {addingMember ? "Add New Member" : `Editing: ${editingMember!.name}`}
+                  {addingMember
+                    ? "Add New Member"
+                    : `Editing: ${editingMember!.name}${(editingMember as AdminMemberRow).status !== "active" ? ` (${(editingMember as AdminMemberRow).status})` : ""}`}
                 </h2>
                 <button
                   onClick={() => { setEditingMember(null); setAddingMember(false); setMemberForm(null); setMemberPhotoPreview(null); setMemberSaved(false); }}
@@ -1656,28 +1650,50 @@ function AdminPageInner() {
                   >
                     Cancel
                   </button>
-                  {/* Delete button — only for existing members, not while adding */}
+                  {/* Status action: archive an active member, or restore one that isn't. */}
                   {editingMember && !addingMember && (
-                    <button
-                      onClick={async () => {
-                        if (!editingMember) return;
-                        if (!confirm(`Archive ${editingMember.name}? They come off the site at the next publish, and the record is kept.`)) return;
-                        const ok = await memberAction({ action: "archive", id: editingMember.id });
-                        if (ok) {
-                          setEditingMember(null);
-                          setMemberForm(null);
-                          setMemberPhotoPreview(null);
-                          setMemberSaved(false);
-                        }
-                      }}
-                      style={{
-                        marginLeft: "auto", fontSize: "0.85rem", padding: "0.6rem 1.5rem",
-                        borderRadius: 8, border: "1px solid #ef4444", background: "transparent",
-                        color: "#ef4444", cursor: "pointer", fontWeight: 600, fontFamily: "var(--body-font)",
-                      }}
-                    >
-                      Archive Member
-                    </button>
+                    (editingMember as AdminMemberRow).status === "active" ? (
+                      <button
+                        onClick={async () => {
+                          if (!editingMember) return;
+                          if (!confirm(`Archive ${editingMember.name}? They come off the site at the next publish, and the record is kept.`)) return;
+                          const ok = await memberAction({ action: "archive", id: editingMember.id });
+                          if (ok) {
+                            setEditingMember(null);
+                            setMemberForm(null);
+                            setMemberPhotoPreview(null);
+                            setMemberSaved(false);
+                          }
+                        }}
+                        style={{
+                          marginLeft: "auto", fontSize: "0.85rem", padding: "0.6rem 1.5rem",
+                          borderRadius: 8, border: "1px solid #ef4444", background: "transparent",
+                          color: "#ef4444", cursor: "pointer", fontWeight: 600, fontFamily: "var(--body-font)",
+                        }}
+                      >
+                        Archive Member
+                      </button>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          if (!editingMember) return;
+                          const ok = await memberAction({ action: "restore", id: editingMember.id });
+                          if (ok) {
+                            setEditingMember(null);
+                            setMemberForm(null);
+                            setMemberPhotoPreview(null);
+                            setMemberSaved(false);
+                          }
+                        }}
+                        style={{
+                          marginLeft: "auto", fontSize: "0.85rem", padding: "0.6rem 1.5rem",
+                          borderRadius: 8, border: "1px solid var(--accent-primary)", background: "transparent",
+                          color: "var(--accent-primary)", cursor: "pointer", fontWeight: 600, fontFamily: "var(--body-font)",
+                        }}
+                      >
+                        Restore to Site
+                      </button>
+                    )
                   )}
                   {memberSaved && (
                     <span style={{ color: "var(--accent-primary)", fontSize: "0.85rem", fontWeight: 600, fontFamily: "var(--body-font)" }}>

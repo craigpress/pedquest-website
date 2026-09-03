@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getSupabase } from "./supabase";
 import { members, type Member } from "@/data/members";
+import { hasRole, isRole, type Role } from "./roles";
 import type { User } from "@supabase/supabase-js";
 
 // ─── Hook: useUser ──────────────────────────────────────────────────────
@@ -64,6 +65,58 @@ export function useUser() {
   }, []);
 
   return { user, loading };
+}
+
+// ─── Hook: useRole ──────────────────────────────────────────────────────
+// Server-authoritative role for the signed-in user, from /api/me. The UI gates
+// on this; every write is independently authorized server-side by
+// requireRole(), so a tampered client gains nothing.
+//
+// Calling /api/me is also what registers a first-time member: the route upserts
+// the user_roles row and backfills user_id. That makes this hook the magic-link
+// login path's "upsert on login".
+export function useRole() {
+  const { user, loading: userLoading } = useUser();
+  const [role, setRole] = useState<Role | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (userLoading) return;
+    let mounted = true;
+
+    async function load() {
+      if (!user) {
+        if (mounted) { setRole(null); setLoading(false); }
+        return;
+      }
+      try {
+        const sb = getSupabase();
+        const token = sb ? (await sb.auth.getSession()).data.session?.access_token : null;
+        if (!token) {
+          if (mounted) { setRole(null); setLoading(false); }
+          return;
+        }
+        const res = await fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } });
+        const json = await res.json();
+        if (mounted) setRole(isRole(json?.role) ? json.role : null);
+      } catch {
+        if (mounted) setRole(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    void load();
+    return () => { mounted = false; };
+  }, [user, userLoading]);
+
+  return {
+    user,
+    role,
+    loading: userLoading || loading,
+    isAdmin: hasRole(role, "admin"),
+    isEditor: hasRole(role, "editor"),
+  };
 }
 
 // ─── Hook: useMember ────────────────────────────────────────────────────

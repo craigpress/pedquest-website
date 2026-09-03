@@ -1,0 +1,162 @@
+# Verification trail: content/qbank/sources/PQ-B-017.md
+id: PQ-B-017
+version: 1
+status: draft
+title: Locating the first electrographic seizure on a 24-hour trend panel
+domain: monitoring_practice
+topics: [time to first seizure, rhythmicity spectrogram, EMG artifact, screening workflow]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: interpretation
+learning_objective: >-
+  Find the first electrographic seizure on a screening trend panel and relate its timing
+  to published data on when seizures are first detected in critically ill children.
+
+stem:
+  vignette: >-
+    A 3-year-old boy is admitted to the PICU after a 40-minute convulsive seizure during a
+    febrile illness. He was intubated for airway protection and receives fentanyl only,
+    with no continuous sedative infusion and no neuromuscular blockade. Continuous EEG
+    with a quantitative trend panel is started 30 minutes after arrival and is screened by
+    the bedside nurse each hour. The recording shown covers the first 24 hours. A
+    levetiracetam load was given before the recording began, and no further medication was
+    given in this window.
+  image_caption: >-
+    Twenty-four-hour qEEG panel: seizure probability; rhythmicity spectrogram (left,
+    right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right);
+    suppression ratio (left, right). Elapsed minutes on the time axis. Suctioning is
+    annotated at 15 minutes. No medication annotations fall within this window.
+  lead_in: >-
+    Locate the first electrographic seizure of this recording on the trend panel.
+
+question_type: point_to_feature
+options: []
+point_to_feature:
+  instruction: >-
+    Click the first electrographic seizure on the left rhythmicity spectrogram. Do not
+    click the suctioning artifact.
+  target_event: 1
+  target_panel: rhythmicity_L
+  tolerance: 0.03
+
+explanation: >-
+  The first electrographic seizure is the discrete evolving band on the left rhythmicity
+  spectrogram at about 40 minutes into the recording. What the image shows: at 15 minutes,
+  time-locked to the annotated suctioning, there is a short, broadband, non-evolving rise
+  across all displayed frequencies with a matching spike in the seizure-probability trend
+  and no change in the asymmetry index; that is muscle and movement artifact. At about 40
+  minutes a narrow band appears on the left that starts near 4 Hz and slows to about 1.5
+  Hz over roughly 100 seconds, with a matching arch on the left FFT panel, a leftward
+  deflection of the asymmetry index, a rise of the left aEEG margins and a brief
+  post-ictal fall afterwards. Further stereotyped events follow through the night.
+  Evidence: in a prospective study of 100 critically ill non-neonatal children with acute
+  encephalopathy who underwent continuous EEG using predetermined monitoring indications,
+  electrographic seizures occurred in 46 and electrographic status epilepticus in 19, and
+  seizures were exclusively nonconvulsive in 32. Of the patients who had seizures, only 52
+  percent had one detected in the first hour of monitoring, whereas 87 percent were
+  detected within 24 hours. Younger age was the only clinical risk factor for seizure
+  occurrence. Bedside takeaway: a clean first hour excludes about half of the seizures you
+  will eventually find, so keep monitoring and keep screening.
+
+key_points:
+  - Only 52 percent of critically ill children with seizures had one in the first hour of monitoring.
+  - Eighty-seven percent of those with seizures had one detected within 24 hours.
+  - Suctioning makes a broadband, non-evolving rise; a seizure makes an evolving narrow band.
+
+references:
+  - pmid: "21307352"
+    doi: 10.1212/WNL.0b013e318211c19e
+    citation: >-
+      Abend NS, Gutierrez-Colina AM, Topjian AA, et al. Nonconvulsive seizures are common
+      in critically ill children. Neurology. 2011;76(12):1071-7.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "32690798"
+    doi: 10.1212/WNL.0000000000010421
+    citation: >-
+      Fung FW, Fan J, Vala L, et al. EEG monitoring duration to identify
+      electroencephalographic seizures in critically ill children. Neurology.
+      2020;95(11):e1599-608.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100017
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 1440
+    background:
+      type: continuous
+      dominant_hz: 4.5
+      amplitude_uv: 55
+      slow_fraction: 0.6
+      reactivity: present
+    events:
+      - type: artifact
+        kind: emg_chewing
+        at_min: 15
+        duration_s: 90
+        side: all
+        intensity: high
+      - type: seizure
+        onset_min: 40.0
+        duration_s: 100
+        onset_region: left_temporal
+        evolution: { start_hz: 4.0, end_hz: 1.5, amplitude_start_uv: 55, amplitude_end_uv: 160 }
+        spread: hemispheric
+        postictal_attenuation_s: 50
+      - type: seizure_cluster
+        start_min: 200
+        end_min: 1300
+        interval_min: 95
+        seizure:
+          duration_s: 100
+          onset_region: left_temporal
+          evolution: { start_hz: 4.0, end_hz: 1.5, amplitude_start_uv: 55, amplitude_end_uv: 160 }
+    annotations:
+      - { at_min: 15, label: "Tracheal suctioning" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

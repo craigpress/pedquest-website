@@ -1,0 +1,176 @@
+# Verification trail: content/qbank/sources/PQ-B-019.md
+id: PQ-B-019
+version: 1
+status: draft
+title: Who gets continuous EEG after neonatal cardiopulmonary bypass
+domain: monitoring_practice
+topics: [neonatal cardiac surgery, cardiopulmonary bypass, risk prediction model, monitoring policy]
+population: neonate
+setting: CICU
+difficulty: introductory
+bloom: application
+learning_objective: >-
+  Justify continuous EEG for all neonates after cardiopulmonary bypass rather than
+  risk-score-selected monitoring, using the external validation performance of a published
+  seizure prediction model.
+
+stem:
+  vignette: >-
+    A term neonate returns to the cardiac intensive care unit on the fourth day of life
+    after a Norwood procedure with cardiopulmonary bypass. There was no circulatory arrest
+    and the sternum was closed primarily. He has had no clinical seizure-like events, and
+    a locally implemented seizure prediction score places him in a low-risk band. The unit
+    has one spare EEG amplifier. The cardiac intensivist asks whether the score can be
+    used to decide who is monitored, and shows you the first 12 hours of trends from the
+    neonate already on the machine.
+  image_caption: >-
+    Twelve-hour qEEG panel from a monitored postoperative neonate: seizure probability;
+    rhythmicity spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right);
+    asymmetry index; aEEG (left, right); suppression ratio (left, right). Elapsed minutes
+    on the time axis. No medication annotations fall within this window.
+  lead_in: >-
+    What is the best monitoring recommendation for the neonate who has just returned from
+    bypass?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Continuous EEG for all neonates after cardiopulmonary bypass
+    correct: true
+    rationale: >-
+      When the seizure prediction model was externally validated it discriminated poorly,
+      with a c-statistic of 0.61 and no net benefit across the clinically relevant
+      threshold range, so the authors concluded that all such neonates should be monitored.
+  - key: B
+    text: Continuous EEG only for neonates who had deep hypothermic circulatory arrest
+    correct: false
+    rationale: >-
+      Longer circulatory arrest was one predictor among several, but seizures occurred in
+      neonates with all types of congenital heart disease and in those without arrest.
+  - key: C
+    text: Continuous EEG only when a validated risk score predicts a high seizure probability
+    correct: false
+    rationale: >-
+      This is exactly the strategy the validation study failed to support. Discrimination
+      was poor in the validation cohort, so a low-risk band cannot safely exclude a neonate.
+  - key: D
+    text: A single 1-hour EEG on the first postoperative day
+    correct: false
+    rationale: >-
+      Postoperative seizures begin at a median of 20 hours after return to the unit, so a
+      single short study on day one would miss most of them.
+  - key: E
+    text: EEG only if clinical seizure-like events are observed at the bedside
+    correct: false
+    rationale: >-
+      Most postoperative neonatal seizures have no clinical correlate, so a
+      bedside-triggered strategy would leave the majority undetected.
+
+explanation: >-
+  The correct answer is A. What the image shows, on the monitored neighbour, is why the
+  policy matters: through the first 12 hours the rhythmicity spectrograms are empty, the
+  seizure-probability trend is flat, the aEEG margins are stable and the suppression-ratio
+  trends are low, yet the published onset distribution means the high-risk window has not
+  yet been reached. A clean early panel is not a reason to remove the amplifier. Evidence:
+  in a multicenter prospective cohort in which all postoperative neonates who underwent
+  cardiopulmonary bypass also underwent continuous EEG, electrographic seizures occurred in
+  7.4 percent (78 of 1053). A prediction model using gestational age, head circumference,
+  single-ventricle defect, deep hypothermic circulatory arrest duration, cardiac arrest,
+  nitric oxide, extracorporeal membrane oxygenation and delayed sternal closure performed
+  well in the derivation cohort, with a c-statistic of 0.77 and net benefit above a 2
+  percent threshold probability, but in the validation cohort discrimination was poor, with
+  a c-statistic of 0.61 and no net benefit between threshold probabilities of 8 and 18
+  percent. The authors concluded that these findings support continuous EEG of all
+  neonates after bypass. In an earlier single-center cohort, seizures occurred in 8 percent
+  and were electroencephalogram only in 85 percent of those affected. Bedside takeaway:
+  monitor everyone after bypass; no current score is good enough to leave a neonate out.
+
+key_points:
+  - Electrographic seizures occurred in 7.4 percent of 1053 neonates monitored after bypass.
+  - The prediction model validated poorly, c-statistic 0.61, with no net benefit at 8 to 18 percent.
+  - The evidence supports monitoring all neonates after cardiopulmonary bypass.
+
+references:
+  - pmid: "32738224"
+    doi: 10.1016/j.athoracsur.2020.05.157
+    citation: >-
+      Naim MY, Putt M, Abend NS, et al. Development and validation of a seizure prediction
+      model in neonates after cardiac surgery. Ann Thorac Surg. 2021;111(6):2041-8.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "25957454"
+    doi: 10.1016/j.jtcvs.2015.03.045
+    citation: >-
+      Naim MY, Gaynor JW, Chen J, et al. Subclinical seizures identified by postoperative
+      electroencephalographic monitoring are common after neonatal cardiac surgery. J
+      Thorac Cardiovasc Surg. 2015;150(1):169-78.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "22146359"
+    doi: 10.1097/WNP.0b013e31823e96d7
+    citation: >-
+      Shellhaas RA, Chang T, Tsuchida T, et al. The American Clinical Neurophysiology
+      Society's guideline on continuous electroencephalography monitoring in neonates. J
+      Clin Neurophysiol. 2011;28(6):611-7.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100019
+    age_group: neonate
+    sample_rate: 256
+    channels: neonatal_reduced
+    duration_min: 720
+    background:
+      type: continuous
+      dominant_hz: 2.2
+      amplitude_uv: 38
+      slow_fraction: 0.78
+      reactivity: present
+    events: []
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

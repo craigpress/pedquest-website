@@ -4,6 +4,20 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 
+/** Register the freshly signed-in user in public.user_roles.
+ *  GET /api/me performs the upsert (creates a 'member' row, backfills
+ *  user_id). Failure is non-fatal — requireRole() repeats it on the next
+ *  authorized request. */
+async function registerMember(sb: NonNullable<ReturnType<typeof getSupabase>>) {
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) return;
+    await fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } });
+  } catch {
+    // ignore — not worth blocking the redirect
+  }
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
 
@@ -38,21 +52,23 @@ export default function AuthCallbackPage() {
       sb.auth.verifyOtp({
         token_hash: tokenHash,
         type: "magiclink",
-      }).then(({ error }) => {
+      }).then(async ({ error }) => {
         if (error) {
           console.error("[Auth Callback] verifyOtp failed:", error.message);
           router.replace(`/login?error=${encodeURIComponent(error.message)}`);
         } else {
+          await registerMember(sb);
           router.replace("/profile");
         }
       });
     } else if (code) {
       // Magic link flow: exchange code for session
-      sb.auth.exchangeCodeForSession(code).then(({ error }) => {
+      sb.auth.exchangeCodeForSession(code).then(async ({ error }) => {
         if (error) {
           console.error("[Auth Callback] Code exchange failed:", error.message);
           router.replace("/login?error=callback");
         } else {
+          await registerMember(sb);
           router.replace("/profile");
         }
       });

@@ -1,0 +1,173 @@
+id: PQ-A-001
+version: 1
+status: draft
+title: Why the aEEG display switches from a linear to a logarithmic scale
+domain: foundations
+topics: [aEEG, semilogarithmic display, amplitude scaling, neonatal monitoring, trend interpretation]
+population: neonate
+setting: NICU
+difficulty: introductory
+bloom: interpretation
+learning_objective: >-
+  Explain how the aEEG signal is filtered and displayed on a semilogarithmic amplitude
+  axis, and why that axis exaggerates changes at low voltage relative to changes at
+  high voltage.
+
+stem:
+  vignette: >-
+    A term neonate is admitted on day of life 1 with moderate hypoxic-ischemic
+    encephalopathy and is cooled to 33.5 C. A dual-channel aEEG is running from
+    homologous central-parietal derivations, with the raw EEG available on the same
+    monitor. Over the first 6 hours the recording is read by the bedside nurse each
+    hour. Between hour 1 and hour 3 the lower margin of the aEEG band rises from about
+    3 to about 7 microvolts; between hour 3 and hour 5 the upper margin rises from
+    about 40 to about 80 microvolts. On the screen, the first change moves the trace
+    a visibly greater distance up the vertical axis than the second change, even though
+    the second change is a much larger absolute voltage difference. The nurse asks why
+    the smaller change looks bigger.
+  image_caption: >-
+    Six-hour dual-channel aEEG from central-parietal derivations, with the vertical
+    axis labeled 0 to 100 microvolts and gridlines at 5, 10, 25, 50 and 100
+    microvolts. Time axis in hours from the start of recording.
+  lead_in: >-
+    Which property of the aEEG display best explains why the low-voltage change appears
+    larger on screen?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: The axis is linear from 0 to 10 microvolts and logarithmic from 10 to 100 microvolts
+    correct: true
+    rationale: >-
+      Semilogarithmic compression is used precisely because electrocortical amplitude
+      varies over an order of magnitude. The linear segment below 10 microvolts spreads
+      out small changes in the lower margin, while the logarithmic segment above
+      10 microvolts compresses large excursions of the upper margin.
+  - key: B
+    text: The axis is logarithmic from 0 to 10 microvolts and linear from 10 to 100 microvolts
+    correct: false
+    rationale: >-
+      This inverts the convention. A logarithmic segment at the bottom of the scale
+      would compress rather than expand the low-voltage range, and the low-voltage
+      change would then appear smaller, not larger.
+  - key: C
+    text: The signal is band-pass filtered to 2 to 20 hertz, which discounts low-voltage delta activity
+    correct: false
+    rationale: >-
+      The 2 to 20 hertz band-pass is a real step in building the aEEG and it does
+      attenuate very slow activity and some artifact, but filtering changes which
+      frequencies contribute to the trace, not how the amplitude axis is spaced.
+  - key: D
+    text: Each epoch is plotted as peak-to-peak amplitude on a single linear 0 to 100 microvolt axis
+    correct: false
+    rationale: >-
+      On a purely linear 0 to 100 microvolt axis a 4 microvolt change would occupy one
+      tenth of the screen distance of a 40 microvolt change, which is the opposite of
+      what is observed.
+  - key: E
+    text: Time compression to 6 hours per screen widens the band more at low than at high voltage
+    correct: false
+    rationale: >-
+      Time compression changes the horizontal resolution and can make brief events
+      harder to see, but it acts equally on all amplitudes and cannot differentially
+      magnify the lower margin.
+
+explanation: >-
+  The correct answer is A. The aEEG amplitude axis is semilogarithmic: linear from
+  0 to 10 microvolts and logarithmic from 10 to 100 microvolts, so a few microvolts of
+  change near the lower margin occupies far more screen distance than tens of
+  microvolts of change near the upper margin. What the image shows: the gridlines are
+  evenly spaced up to 10 microvolts and then progressively closer together at 25, 50
+  and 100 microvolts, which is the visual signature of the mixed scale. Evidence: a
+  pediatric neurocritical care review of qEEG trend construction describes the aEEG
+  pipeline as requiring at least three electrodes, usually homologous parietal or
+  central pairs plus a ground, with the signal filtered to amplify 2 to 20 hertz and
+  then displayed with semilogarithmic compression, the y-axis starting linearly from
+  0 to 10 microvolts and then logarithmically from 10 to 100 microvolts; the same
+  convention is described in the neonatal brain-function monitoring literature.
+  That design is deliberate, because the clinically decisive neonatal distinctions
+  (lower margin above versus below 5 microvolts, upper margin above versus below
+  10 microvolts) all sit inside the expanded linear segment. Bedside takeaway: read
+  the lower margin against the printed gridlines rather than by eye, and remember
+  that a visually dramatic move low on the axis may be only a few microvolts.
+
+key_points:
+  - aEEG amplitude axis is linear 0 to 10 microvolts, then logarithmic 10 to 100 microvolts.
+  - The linear segment expands the low voltages where neonatal cutoffs of 5 and 10 microvolts lie.
+  - aEEG is built from at least three electrodes, filtered to 2 to 20 hertz before display.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "17067863"
+    doi: 10.1016/j.siny.2006.07.011
+    citation: >-
+      Hellstrom-Westas L, Rosen I. Continuous brain-function monitoring: state of the
+      art in clinical practice. Semin Fetal Neonatal Med. 2006;11(6):503-11.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100101
+    age_group: neonate
+    sample_rate: 256
+    channels: [C3-P3, C4-P4]
+    duration_h: 6
+    pattern: DNV
+    sleep_wake_cycling: absent
+    seizures: []
+    raw_strip_at_h: null
+    background:
+      type: discontinuous
+      dominant_hz: 1.5
+      amplitude_uv: 35
+      slow_fraction: 0.8
+      reactivity: present
+    events:
+      - type: temperature_change
+        at_min: 0
+        from_c: 33.5
+        to_c: 33.5
+        over_min: 360
+    style:
+      amplitude_axis: semilog
+      amplitude_gridlines_uv: [5, 10, 25, 50, 100]
+      lower_margin_uv_at_h: [[1.0, 3], [3.0, 7], [5.0, 7]]
+      upper_margin_uv_at_h: [[1.0, 40], [3.0, 40], [5.0, 80]]
+      time_axis: elapsed
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

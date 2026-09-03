@@ -1,0 +1,180 @@
+id: PQ-A-012
+version: 1
+status: draft
+title: The solid flame signature of a seizure on the FFT spectrogram
+domain: seizure_detection
+topics: [FFT spectrogram, solid flame, arch on aEEG, envelope trend, ictal signature]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: recall
+learning_objective: >-
+  Name the characteristic appearance of an electrographic seizure on the FFT
+  spectrogram and on the aEEG, and state the amplitude and power behaviour that
+  produces each.
+
+stem:
+  vignette: >-
+    A 3-year-old girl is admitted to the PICU with meningoencephalitis and altered
+    mental status. Continuous EEG with a quantitative trend panel is running and the
+    charge nurse is being oriented to the display. She is asked to describe, in
+    trend language, what the team should expect to see when the patient has a
+    generalized electrographic seizure. During the displayed 2-hour window there are
+    two electrographic seizures, each about 90 seconds long. There is no artifact, no
+    respiratory treatment, and no medication change during the window; the patient is
+    not receiving neuromuscular blockade and no clinical movement was observed at
+    either event.
+  image_caption: >-
+    Two-hour qEEG panel, top to bottom: FFT spectrogram (left, right), 0 to 20 hertz
+    with a black-to-white color bar; aEEG (left, right) on a semilogarithmic axis;
+    envelope trend (left, right). Time axis in minutes from the start of the displayed
+    window.
+  lead_in: >-
+    What appearance should the team expect at each seizure on the FFT spectrogram and
+    on the aEEG?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: A solid flame on the spectrogram and an upward arch on the aEEG
+    correct: true
+    rationale: >-
+      Power increases abruptly, peaks and then attenuates across both fast and slow
+      frequencies, which draws a flame on the color spectrogram; the accompanying rise
+      in waveform amplitude lifts the aEEG band into a sudden arch.
+  - key: B
+    text: A vertical black stripe on the spectrogram and a downward notch on the aEEG
+    correct: false
+    rationale: >-
+      Loss of power and a falling aEEG band describe attenuation, which is what a
+      post-ictal period or an abrupt ischemic event looks like, not the seizure itself.
+  - key: C
+    text: A uniform horizontal band at one frequency and a flat aEEG band
+    correct: false
+    rationale: >-
+      A single unchanging frequency with no amplitude change is more typical of a
+      rhythmic artifact or a physiological rhythm such as spindles than of a seizure.
+  - key: D
+    text: A narrowing of the color scale on the spectrogram and a widening aEEG band
+    correct: false
+    rationale: >-
+      The color scale is a display setting and does not change with the patient; a
+      widening aEEG band alone occurs with any increase in amplitude variability.
+  - key: E
+    text: A gradual warming of the whole spectrogram and a slow rise in the aEEG lower margin
+    correct: false
+    rationale: >-
+      A slow global rise over many minutes fits emergence from sedation or a state
+      change rather than a discrete 90-second seizure.
+
+explanation: >-
+  The correct answer is A. Both trends respond to a seizure, but through different
+  quantities: the spectrogram to power and the aEEG to amplitude. What the image shows:
+  at each seizure, power rises abruptly across both slow and fast frequencies, peaks,
+  and then attenuates, producing the flame-shaped signature on the FFT spectrogram; at
+  the same times the aEEG band arches upward and the envelope trend peaks, because the
+  amplitude of the underlying waveform increases. Evidence: a pediatric neurocritical
+  care review of qEEG states that on the color density spectral array a seizure will
+  appear as a solid flame pattern, with power abruptly increasing, peaking and then
+  attenuating during a seizure typically for both fast and slow frequencies; that on an
+  aEEG, if the seizure involves the electrodes used in the aEEG algorithm, the seizure
+  appears as a sudden upward arched pattern because the amplitude of the EEG waveform
+  typically increases during the seizure; and that the envelope trend will also peak
+  during a seizure as another amplitude-focused trend. The same review notes that with
+  a focal seizure the asymmetry index and spectrogram add laterality. The conditional
+  matters: an aEEG arch requires that the seizure involve the derivation the aEEG is
+  built from. Bedside takeaway: expect a flame and an arch together, and be suspicious
+  of a flame without an arch or an arch without a flame.
+
+key_points:
+  - Seizure on the FFT spectrogram is a solid flame across fast and slow frequencies.
+  - Seizure on the aEEG is a sudden upward arch, if the derivation is involved.
+  - The envelope trend peaks with the seizure because it also tracks amplitude.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "34510096"
+    doi: 10.1097/WNP.0000000000000868
+    citation: >-
+      Lalgudi Ganesan S, Hahn CD. Spectrograms for Seizure Detection in Critically Ill
+      Children. J Clin Neurophysiol. 2022;39(3):195-206.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101212
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 120
+    background:
+      type: continuous
+      dominant_hz: 4.0
+      amplitude_uv: 55
+      slow_fraction: 0.65
+      reactivity: present
+    events:
+      - type: seizure
+        onset_min: 32.0
+        duration_s: 90
+        onset_region: generalized
+        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 70, amplitude_end_uv: 180 }
+        spread: generalized
+        postictal_attenuation_s: 45
+      - type: seizure
+        onset_min: 84.0
+        duration_s: 90
+        onset_region: generalized
+        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 70, amplitude_end_uv: 180 }
+        spread: generalized
+        postictal_attenuation_s: 45
+    annotations: []
+    panels:
+      - fft_L
+      - fft_R
+      - aeeg_L
+      - aeeg_R
+      - envelope_L
+      - envelope_R
+    time_axis: elapsed
+    style:
+      spectrogram_hz_range: [0, 20]
+      colorbar: black_blue_red_white
+      aeeg_axis: semilog
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

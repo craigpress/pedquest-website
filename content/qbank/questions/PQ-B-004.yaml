@@ -1,0 +1,189 @@
+# Verification trail: content/qbank/sources/PQ-B-004.md
+id: PQ-B-004
+version: 1
+status: draft
+title: Which finding after pediatric cardiac arrest carries the strongest outcome signal
+domain: clinical_prognosis
+topics: [cardiac arrest, background category, attenuation, suppression ratio, prognosis]
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  Weigh the components of an early post-arrest recording and identify the graded
+  background category as the feature most strongly associated with death at discharge.
+
+stem:
+  vignette: >-
+    A 3-year-old girl has a witnessed in-hospital cardiac arrest during a respiratory
+    illness, with 14 minutes of cardiopulmonary resuscitation before return of
+    spontaneous circulation. Targeted temperature management is set to 36.5 degrees
+    Celsius. She receives no sedative infusion and no neuromuscular blockade after the
+    first hour. Continuous EEG with a quantitative trend panel is started 4 hours after
+    return of spontaneous circulation. The panel and a raw page from the tenth hour are
+    shown. Two brief electrographic seizures were recorded earlier in the night and the
+    background did not change with tracheal suctioning.
+  image_caption: >-
+    Composite. Upper: 12-hour qEEG panel (seizure probability; rhythmicity L and R; FFT
+    0-20 Hz L and R; asymmetry index; suppression ratio L and R), elapsed minutes. Lower:
+    15-second raw page from hour 10, longitudinal bipolar, 7 microvolts per millimetre,
+    1-70 Hz, 60 Hz notch. Tracheal suctioning annotated at 360 minutes.
+  lead_in: >-
+    Which finding on this recording is most strongly associated with death before
+    hospital discharge?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: A markedly attenuated and largely featureless background
+    correct: true
+    rationale: >-
+      In post-arrest children the graded background category is the dominant EEG
+      predictor: each incrementally worse category raised the odds of death about
+      3.6-fold after adjustment for clinical covariates.
+  - key: B
+    text: The two brief electrographic seizures recorded overnight
+    correct: false
+    rationale: >-
+      Seizures were associated with a worse background category, so they travel with
+      severe injury, but the background itself carried the outcome signal in
+      multivariable analysis.
+  - key: C
+    text: Absence of a posterior dominant rhythm
+    correct: false
+    rationale: >-
+      Loss of a posterior dominant rhythm is expected in any encephalopathic child and
+      does not discriminate among the post-arrest background categories.
+  - key: D
+    text: Diffuse slowing with preserved continuity
+    correct: false
+    rationale: >-
+      A slow but continuous and disorganized background was the most common category
+      after arrest and sits at the favorable end of the graded scale, not the severe end.
+  - key: E
+    text: A single burst of generalized periodic discharges
+    correct: false
+    rationale: >-
+      An isolated periodic pattern is not the graded feature that drove the association
+      with mortality in these cohorts, and it is not what this panel is dominated by.
+
+explanation: >-
+  The correct answer is A. What the image shows: both suppression-ratio trends run high
+  and nearly flat across the whole 12 hours, the FFT spectrograms carry almost no power
+  above the delta band, the rhythmicity panels are empty apart from the two brief
+  overnight events, the asymmetry index sits near zero, and the raw page at hour 10 shows
+  a low-voltage, largely featureless tracing without change after the annotated
+  stimulation. Together these place the recording in the attenuated-flat category with
+  absent reactivity. Evidence: in 128 children monitored within one day of return of
+  spontaneous circulation and not treated with therapeutic hypothermia, the background was
+  normal in 4 (3 percent), slow and disorganized in 58 (45 percent), discontinuous or
+  burst suppression in 24 (19 percent) and attenuated-flat in 42 (33 percent); 46 (36
+  percent) had a reactive recording and 20 (15 percent) had a seizure. After adjustment
+  for covariates, each incrementally worse background score carried an odds of death of
+  3.63 (95 percent confidence interval 2.18 to 6.0) and an odds of unfavorable neurologic
+  outcome of 4.38 (2.51 to 7.17). Absence of reactivity and the presence of seizures were
+  themselves associated with a worse background category. Bedside takeaway: grade the
+  background first, and never prognosticate from a single feature or a single time point.
+
+key_points:
+  - Each incrementally worse post-arrest background category raised the odds of death 3.63-fold.
+  - Attenuated-flat was the most severe of four categories and occurred in 33 percent of 128 children.
+  - Seizures and absent reactivity track with a worse background rather than replacing it.
+
+references:
+  - pmid: "27097270"
+    doi: 10.1097/PCC.0000000000000740
+    citation: >-
+      Topjian AA, Sanchez SM, Shults J, Berg RA, Dlugos DJ, Abend NS. Early
+      electroencephalographic background features predict outcomes in children
+      resuscitated from cardiac arrest. Pediatr Crit Care Med. 2016;17(6):547-57.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's standardized critical care EEG terminology: 2021 version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: composite
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100004
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    layout: panel_over_page
+    qeeg_panel:
+      duration_min: 720
+      background:
+        type: suppressed
+        dominant_hz: 1.0
+        amplitude_uv: 8
+        slow_fraction: 0.95
+        reactivity: absent
+      events:
+        - type: seizure
+          onset_min: 210.0
+          duration_s: 35
+          onset_region: right_central
+          evolution: { start_hz: 2.0, end_hz: 1.2, amplitude_start_uv: 25, amplitude_end_uv: 40 }
+          spread: none
+        - type: seizure
+          onset_min: 275.0
+          duration_s: 30
+          onset_region: right_central
+          evolution: { start_hz: 2.0, end_hz: 1.2, amplitude_start_uv: 25, amplitude_end_uv: 40 }
+          spread: none
+        - type: stimulation
+          at_min: 360
+      annotations:
+        - { at_min: 360, label: "Tracheal suctioning" }
+      panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - asymmetry_index
+        - suppression_ratio_L
+        - suppression_ratio_R
+      time_axis: elapsed
+    eeg_page:
+      at_min: 600.0
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      highlight: null
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

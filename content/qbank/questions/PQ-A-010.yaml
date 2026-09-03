@@ -1,0 +1,175 @@
+id: PQ-A-010
+version: 1
+status: draft
+title: Why a propofol bolus lowers total power but spares the alpha-delta ratio
+domain: foundations
+topics: [alpha-delta ratio, total power, spectral edge frequency, sedation, ischemia]
+population: adolescent
+setting: PICU
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  Contrast the effect of a global amplitude change on total power and on the
+  alpha-delta ratio, and justify why a ratio-based trend is preferred when screening
+  a sedated patient for focal ischemia.
+
+stem:
+  vignette: >-
+    A 16-year-old boy is in the PICU after clipping of a ruptured aneurysm and is at
+    high risk of delayed cerebral ischemia. Continuous EEG with a quantitative trend
+    panel is running, displaying total power, the alpha-delta ratio and the asymmetry
+    spectrogram for each hemisphere. He is agitated and receives a propofol bolus, and
+    the neurointensivist wants to know which of the displayed trends remains usable
+    for ischemia surveillance in the hour afterwards. Immediately after the bolus,
+    total power falls sharply and symmetrically in both hemispheres, the alpha-delta
+    ratio is nearly unchanged bilaterally, and the asymmetry spectrogram stays near
+    neutral across all frequencies. There is no new focal deficit on examination.
+  image_caption: >-
+    Two-hour qEEG panel, top to bottom: total power (left, right) on a logarithmic
+    axis; alpha-delta ratio (left, right); asymmetry spectrogram, 0 to 20 hertz,
+    red-to-blue color bar. A propofol bolus is annotated at 60 minutes. Time axis in
+    minutes from the start of the displayed window.
+  lead_in: >-
+    Which mechanism best explains the divergent behaviour of the two line trends after
+    the bolus?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: The bolus blunted alpha and delta power similarly, so their ratio changed little
+    correct: true
+    rationale: >-
+      A ratio cancels a change that scales both of its terms. A sedative that reduces
+      amplitude broadly lowers alpha and delta power together, so total power falls
+      while the alpha-delta ratio is largely preserved.
+  - key: B
+    text: The bolus selectively suppressed delta power, which raised the ratio numerator
+    correct: false
+    rationale: >-
+      Selective delta suppression would drive the alpha-delta ratio upward, which is
+      not what the panel shows; the ratio is nearly unchanged.
+  - key: C
+    text: Total power is plotted on a logarithmic axis, which exaggerates a small change
+    correct: false
+    rationale: >-
+      Axis scaling can change how a fall looks, but it cannot create a divergence in
+      direction between two trends computed from the same data.
+  - key: D
+    text: The alpha-delta ratio is a running average over hours, so it has not yet responded
+    correct: false
+    rationale: >-
+      The ratio is averaged over time, but not over hours; a genuine change in relative
+      alpha and delta power moves it on the same timescale as total power.
+  - key: E
+    text: Propofol produces beta activity that masked the fall in the alpha-delta ratio
+    correct: false
+    rationale: >-
+      Propofol can add faster activity, but beta lies outside both terms of the
+      alpha-delta ratio and so cannot mask a change in it.
+
+explanation: >-
+  The correct answer is A. Total power is an absolute measure and falls whenever
+  amplitude falls, from any cause; the alpha-delta ratio is relative and is insensitive
+  to any process that scales both bands together. That difference is the reason
+  ratio-based trends are the preferred ischemia screen in a patient whose sedation is
+  changing. What the image shows: a sharp symmetric fall in total power at
+  60 minutes with the alpha-delta ratio flat in both hemispheres and a neutral
+  asymmetry spectrogram, a triad that says global amplitude change without regional
+  redistribution. Evidence: a pediatric neurocritical care review of qEEG trends
+  describes the alpha-delta ratio as a power ratio of faster alpha over slower delta
+  frequencies averaged over time and displayed as a line graph, and notes that
+  sedation would blunt alpha and delta amplitudes similarly, often without a
+  noticeable change in the ratio. Ischemia behaves differently and regionally: in
+  11 children monitored within the first 24 hours after unilateral anterior
+  circulation stroke, all 5 with acute ischemic stroke had lower alpha and beta power
+  and lower spectral edge frequency over the injured compared with the uninjured
+  regions, while the 6 with hemorrhagic stroke showed no consistent pattern and instead
+  demonstrated a negative association between total power and arterial blood pressure
+  within injured regions. That study is small, and pediatric validation of ischemia
+  trends is limited. Bedside takeaway: when sedation is in flux, follow the ratio and
+  the asymmetry trends, and treat a fall in total power alone as uninterpretable.
+
+key_points:
+  - Total power falls with any global amplitude change, including sedation.
+  - The alpha-delta ratio cancels changes that scale alpha and delta together.
+  - In 5 children with acute ischemic stroke, injured regions lost alpha and beta power.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "33417384"
+    doi: 10.1097/WNP.0000000000000813
+    citation: >-
+      Appavu BL, Temkit MH, Foldes ST, et al. Quantitative Electroencephalography After
+      Pediatric Anterior Circulation Stroke. J Clin Neurophysiol. 2022;39(7):610-615.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 101010
+    age_group: adolescent
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 120
+    background:
+      type: continuous
+      dominant_hz: 7.0
+      amplitude_uv: 55
+      slow_fraction: 0.45
+      reactivity: present
+    events:
+      - type: sedation_change
+        at_min: 60.0
+        direction: increase
+        agent: propofol
+        effect: { beta_boost: true, ramp_min: 2 }
+    annotations:
+      - { at_min: 60, label: "Propofol 1 mg/kg bolus" }
+    panels:
+      - total_power_L
+      - total_power_R
+      - alpha_delta_ratio_L
+      - alpha_delta_ratio_R
+      - asymmetry_relative
+    time_axis: elapsed
+    style:
+      total_power_axis: log
+      alpha_delta_ratio_axis: [0, 2]
+      asymmetry_spectrogram_hz_range: [0, 20]
+      asymmetry_colorbar: blue_left_red_right
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

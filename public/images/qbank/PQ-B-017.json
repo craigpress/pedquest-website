@@ -1,0 +1,91 @@
+{
+  "id": "PQ-B-017",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": {
+    "kind": "rect",
+    "x": 0.136778,
+    "y": 0.169662,
+    "w": 0.030991,
+    "h": 0.090186,
+    "panel": "rhythmicity_L"
+  },
+  "panels": [
+    {
+      "name": "seizure_probability",
+      "y0": 0.104,
+      "y1": 0.163162,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_L",
+      "y0": 0.169662,
+      "y1": 0.259848,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "rhythmicity_R",
+      "y0": 0.266348,
+      "y1": 0.356534,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_L",
+      "y0": 0.363034,
+      "y1": 0.453221,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_R",
+      "y0": 0.459721,
+      "y1": 0.549907,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "asymmetry_index",
+      "y0": 0.556407,
+      "y1": 0.617733,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_L",
+      "y0": 0.624233,
+      "y1": 0.70504,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_R",
+      "y0": 0.71154,
+      "y1": 0.792347,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_L",
+      "y0": 0.798847,
+      "y1": 0.860173,
+      "x0": 0.128,
+      "x1": 0.984
+    },
+    {
+      "name": "suppression_ratio_R",
+      "y0": 0.866673,
+      "y1": 0.928,
+      "x0": 0.128,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.2.0",
+  "spec_hash": "sha256:2e1ffc98fd7adf6446d91bad22376aca8ffc099987180a9f5356254b2870c724",
+  "path": "public/images/qbank/PQ-B-017.png"
+}

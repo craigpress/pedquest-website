@@ -1,0 +1,161 @@
+# Verification trail: content/qbank/sources/PQ-B-002.md
+id: PQ-B-002
+version: 1
+status: draft
+title: Applying aEEG amplitude criteria to an encephalopathic term newborn
+domain: background_terminology
+topics: [aEEG, voltage criteria, upper margin, lower margin, continuous low voltage]
+population: neonate
+setting: NICU
+difficulty: introductory
+bloom: interpretation
+learning_objective: >-
+  Apply the published aEEG amplitude criteria, which depend on both margins of the band,
+  and separate the voltage classification from the continuity of the tracing.
+
+stem:
+  vignette: >-
+    A 38-week neonate is transferred at 4 hours of life after an unexpected collapse
+    shortly after birth. The cord gas was not obtained. On examination the infant is
+    lethargic with reduced spontaneous movement and an incomplete Moro response.
+    Two-channel amplitude-integrated EEG is applied while the cooling decision is being
+    made. No sedative or antiseizure medication has been given and core temperature is
+    36.8 degrees Celsius. A fellow reports the background as normal because the tracing
+    is unbroken, with no interburst intervals, and asks you to confirm before the team
+    documents its assessment.
+  image_caption: >-
+    Four-hour, two-channel aEEG (C3-P3 and C4-P4) on the conventional semilog amplitude
+    axis, linear from 0 to 10 microvolts and logarithmic from 10 to 100 microvolts, with
+    gridlines drawn at 5 and 10 microvolts. Hours from the start of recording are on the
+    time axis. A 15-second raw EEG inset is shown. No annotations fall in this window.
+  lead_in: >-
+    Using the published aEEG amplitude criteria, how should this background be
+    classified?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Suppressed amplitude, because the upper margin is below 10 and the lower margin below 5 microvolts
+    correct: true
+    rationale: >-
+      The entire band, top and bottom, sits below the 10-microvolt gridline with the
+      lower margin under 5 microvolts. That combination is the published definition of a
+      suppressed amplitude background.
+  - key: B
+    text: Normal amplitude, because the tracing is continuous with no interburst intervals
+    correct: false
+    rationale: >-
+      Continuity and voltage are separate features. A continuous tracing can still be
+      severely low in amplitude, which is exactly the continuous extremely low voltage
+      pattern shown here.
+  - key: C
+    text: Normal amplitude, because both margins are above their thresholds of 10 and 5 microvolts
+    correct: false
+    rationale: >-
+      Neither margin meets that description. The band top does not reach 10 microvolts,
+      so the criteria for a normal amplitude background are not satisfied.
+  - key: D
+    text: Moderately abnormal amplitude, because only the lower margin is below its 5-microvolt threshold
+    correct: false
+    rationale: >-
+      Moderately abnormal amplitude requires a preserved upper margin above 10
+      microvolts. Here the upper margin is also depressed, which moves the tracing into
+      the suppressed category.
+  - key: E
+    text: Burst suppression, because the lower margin approaches the isoelectric line
+    correct: false
+    rationale: >-
+      Burst suppression requires discrete high-voltage bursts alternating with
+      essentially isoelectric interburst segments. This tracing has no bursts at all.
+
+explanation: >-
+  The correct answer is A: both margins lie below their thresholds, so this is a
+  suppressed amplitude background, and by pattern it is continuous extremely low voltage.
+  What the image shows: a narrow, unbroken band on both channels that runs entirely
+  within the linear part of the axis, with the top of the band under the 10-microvolt
+  gridline and the bottom under the 5-microvolt gridline for the whole window; the raw
+  inset confirms low-amplitude activity rather than a flat, artifact-free channel. The
+  fellow's error is to equate continuity with normality. Evidence: al Naqeeb and
+  colleagues studied 56 consecutive infants with neonatal encephalopathy plus 14 healthy
+  term infants and defined normal amplitude as an upper margin above 10 microvolts with a
+  lower margin above 5 microvolts, moderately abnormal amplitude as an upper margin above
+  10 microvolts with a lower margin at or below 5 microvolts, and suppressed amplitude as
+  an upper margin below 10 microvolts with a lower margin below 5 microvolts. In the
+  healthy infants the median upper margin was 37.5 microvolts and the median lower margin
+  8 microvolts. Interobserver agreement for amplitude was excellent, with a kappa of
+  0.85, and the aEEG predicted outcome at 18 to 24 months with a sensitivity of 0.93 and
+  a specificity of 0.70. Bedside takeaway: name both margins in your note, and never let
+  an unbroken tracing substitute for a voltage measurement.
+
+key_points:
+  - Suppressed amplitude means the upper margin is below 10 and the lower margin below 5 microvolts.
+  - Continuity and voltage are independent; a continuous band can be severely low voltage.
+  - Healthy term infants had a median upper margin of 37.5 and lower margin of 8 microvolts.
+
+references:
+  - pmid: "10353940"
+    doi: 10.1542/peds.103.6.1263
+    citation: >-
+      al Naqeeb N, Edwards AD, Cowan FM, Azzopardi D. Assessment of neonatal
+      encephalopathy by amplitude-integrated electroencephalography. Pediatrics.
+      1999;103(6 Pt 1):1263-71.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+  - pmid: "10375357"
+    doi: 10.1136/fn.81.1.f19
+    citation: >-
+      Toet MC, Hellstrom-Westas L, Groenendaal F, Eken P, de Vries LS. Amplitude
+      integrated EEG 3 and 6 hours after birth in full term neonates with
+      hypoxic-ischaemic encephalopathy. Arch Dis Child Fetal Neonatal Ed.
+      1999;81(1):F19-23.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: false
+
+image:
+  kind: aeeg
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100002
+    age_group: neonate
+    sample_rate: 256
+    duration_h: 4
+    channels: [C3-P3, C4-P4]
+    pattern: CLV
+    sleep_wake_cycling: absent
+    background:
+      type: low_voltage
+      dominant_hz: 1.5
+      amplitude_uv: 7
+      slow_fraction: 0.85
+      reactivity: absent
+    seizures: []
+    raw_strip_at_h: 1.50
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

@@ -1,0 +1,195 @@
+# Verification trail: content/qbank/sources/PQ-B-012.md
+id: PQ-B-012
+version: 1
+status: draft
+title: Next step for electrographic-only seizures in a cooled neonate with encephalopathy
+domain: clinical_prognosis
+topics: [neonatal seizures, electroclinical uncoupling, seizure burden, antiseizure medication]
+population: neonate
+setting: NICU
+difficulty: intermediate
+bloom: application
+learning_objective: >-
+  Choose EEG-guided escalation of antiseizure medication for electrographic-only neonatal
+  seizures, using trial and registry evidence that treating them lowers seizure burden.
+
+stem:
+  vignette: >-
+    A term neonate with moderate hypoxic-ischemic encephalopathy is on the second day of
+    therapeutic hypothermia. Continuous video EEG was started at 5 hours of life. Rhythmic
+    right-arm jerking at 12 hours of life prompted a phenobarbital load of 20 milligrams
+    per kilogram, after which the movements stopped. The 6-hour window shown begins 1 hour
+    after that load. The bedside examination is unchanged and no further movements have
+    been seen, yet the trend panel and raw page show recurrent right-hemispheric
+    electrographic seizures. Core temperature is 33.5 degrees Celsius.
+  image_caption: >-
+    Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT
+    0-20 Hz L and R; asymmetry index; aEEG L and R), elapsed minutes; the phenobarbital
+    load is annotated at minus 60 minutes relative to the window. Lower: 15-second raw
+    page from minute 95, neonatal reduced montage, 7 microvolts per millimetre, 1-70 Hz.
+  lead_in: >-
+    What is the best next step in the management of this infant's seizure burden?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Give a second antiseizure medication load and continue EEG-guided titration
+    correct: true
+    rationale: >-
+      Two-thirds of neonates have an incomplete response to the first load, and a
+      randomized trial showed that treating electrographic seizures rather than clinical
+      seizures alone substantially reduced cumulative seizure burden.
+  - key: B
+    text: Observe without further medication because the seizures have no clinical correlate
+    correct: false
+    rationale: >-
+      Electroclinical uncoupling after a load is expected, not reassuring. Most neonatal
+      seizures during cooling are electrographic only, and burden still tracks with
+      injury and outcome.
+  - key: C
+    text: Observe because seizure burden does not affect outcome in cooled infants
+    correct: false
+    rationale: >-
+      Higher burden was associated with more severe MRI injury and lower Bayley III
+      scores, and the burden-outcome relationship persisted after controlling for
+      hypothermia.
+  - key: D
+    text: Discontinue cooling so that the background can recover
+    correct: false
+    rationale: >-
+      Cooling is the only established neuroprotective therapy here and should be
+      completed. Stopping it does not treat seizures and removes a proven benefit.
+  - key: E
+    text: Replace continuous EEG with two 1-hour recordings each day
+    correct: false
+    rationale: >-
+      Intermittent recording would miss most of this burden, and the point of monitoring
+      is to titrate treatment against the seizures that are actually occurring.
+
+explanation: >-
+  The correct answer is A. What the image shows: the right rhythmicity spectrogram carries
+  repeated discrete bands that begin near 2.5 Hz and slow over about 2 minutes, the
+  seizure-probability trend rises with each, the asymmetry index deflects to the right
+  during each event and returns to baseline between them, the right aEEG margins rise
+  while the left is unchanged, and the raw page from minute 95 shows evolving rhythmic
+  sharp activity in the right central chain. The left-sided trends are quiet, so this is
+  focal right-hemispheric ictal activity, not artifact and not a global change. Evidence:
+  in a randomized trial of 69 neonates at or beyond 36 weeks with moderate or severe
+  hypoxic-ischemic encephalopathy, 35 (51 percent) developed seizures. Excluding infants
+  with status epilepticus, median cumulative seizure burden was 449 seconds
+  (interquartile range 113 to 2070) in the group in which electrographic seizures were
+  treated versus 2226 seconds (760 to 7654) in the group in which only clinical seizures
+  were treated (p equals 0.02), with fewer seizures and shorter time to treatment.
+  Increasing burden was associated with higher brain injury scores on MRI and lower scores
+  across all three Bayley III domains. In the Neonatal Seizure Registry, 66 percent of 534
+  neonates with acute symptomatic seizures had an incomplete response to the initial
+  loading dose, and response did not differ by gestational age, sex, medication or dose.
+  Bedside takeaway: expect the first load to fail, and let the EEG, not the examination,
+  decide the second.
+
+key_points:
+  - Treating electrographic seizures cut median burden from 2226 to 449 seconds in a randomized trial.
+  - Two-thirds of 534 neonates had an incomplete response to the first antiseizure medication load.
+  - Higher neonatal seizure burden tracked with worse MRI injury and lower Bayley III scores.
+
+references:
+  - pmid: "26482675"
+    doi: 10.1542/peds.2014-3777
+    citation: >-
+      Srinivasakumar P, Zempel J, Trivedi S, et al. Treating EEG seizures in hypoxic
+      ischemic encephalopathy: a randomized controlled trial. Pediatrics.
+      2015;136(5):e1302-9.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: false
+  - pmid: "30790268"
+    doi: 10.1111/epi.14671
+    citation: >-
+      Glass HC, Soul JS, Chu CJ, et al. Response to antiseizure medications in neonates
+      with acute symptomatic seizures. Epilepsia. 2019;60(3):e20-4.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "37966836"
+    doi: 10.1001/jamanetworkopen.2023.43429
+    citation: >-
+      Variane GFT, Dahlen A, Pietrobom RFR, et al. Remote monitoring for seizures during
+      therapeutic hypothermia in neonates with hypoxic-ischemic encephalopathy. JAMA Netw
+      Open. 2023;6(11):e2343429.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: cc-by
+    member_author: false
+
+image:
+  kind: composite
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100012
+    age_group: neonate
+    sample_rate: 256
+    channels: neonatal_reduced
+    layout: panel_over_page
+    qeeg_panel:
+      duration_min: 360
+      background:
+        type: discontinuous
+        dominant_hz: 1.8
+        amplitude_uv: 30
+        slow_fraction: 0.8
+        reactivity: present
+      events:
+        - type: seizure_cluster
+          start_min: 25
+          end_min: 340
+          interval_min: 22
+          seizure:
+            duration_s: 120
+            onset_region: right_central
+            evolution: { start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 120 }
+      annotations:
+        - { at_min: -60, label: "Phenobarbital 20 mg/kg" }
+      panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - asymmetry_index
+        - aeeg_L
+        - aeeg_R
+      time_axis: elapsed
+    eeg_page:
+      at_min: 95.0
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: neonatal_reduced
+      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      highlight: null
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

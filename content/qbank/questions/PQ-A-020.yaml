@@ -1,0 +1,218 @@
+id: PQ-A-020
+version: 1
+status: draft
+title: Trading detector sensitivity against false alarms in the PICU
+domain: seizure_detection
+topics: [automated seizure detection, false-positive rate, alarm fatigue, algorithm selection, reader comparison]
+population: child
+setting: PICU
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  Compare published sensitivities and daily false-positive rates of commercial seizure
+  detection algorithms in critically ill children, and justify an algorithm choice for
+  a unit implementing bedside alarms.
+
+stem:
+  vignette: >-
+    A PICU is enabling an automated seizure detector to alarm at the bedside overnight,
+    with the on-call fellow reviewing the trend panel and raw EEG at each alarm. The
+    unit monitors about six children on continuous EEG at any time. The quality
+    committee is choosing between two configurations: one with the highest published
+    sensitivity in children, and one with the best published balance of sensitivity
+    against false alarms. The committee's stated priority is that the fellow must
+    still be able to respond to every alarm during a night shift while covering the
+    unit. A neurophysiologist reads the raw EEG each morning regardless of the
+    configuration chosen.
+  image_caption: >-
+    Eight-hour qEEG panel, top to bottom: automated detector marks on an event strip;
+    rhythmicity spectrogram (left, right); FFT spectrogram (left, right); aEEG (left,
+    right). Two true seizures and numerous detector marks coinciding with movement and
+    respiratory-therapy artifact are present. Time axis in hours from the start of the
+    displayed window.
+  lead_in: >-
+    Which configuration best meets the committee's stated priority, and why?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: The 92.3 percent sensitivity detector, because missing seizures is the greater harm
+    correct: false
+    rationale: >-
+      That detector averaged 126.3 false-positive detections per day across recordings.
+      With six monitored patients, no single fellow could respond to every alarm, so the
+      configuration fails the committee's stated priority.
+  - key: B
+    text: The 75.9 percent sensitivity detector, because it averaged 5.1 false positives daily
+    correct: true
+    rationale: >-
+      This configuration had the best trade-off between sensitivity and false-positive
+      rate, with sensitivity comparable to EEG experts reading trends and a daily
+      false-positive rate low enough that every alarm can realistically be reviewed.
+  - key: C
+    text: The 36.9 percent sensitivity detector, because it had the lowest false-positive rate
+    correct: false
+    rationale: >-
+      Its daily false-positive rate of 4.7 was similar to the better-balanced option,
+      but it detected only about a third of seizures, so the low alarm burden is bought
+      at an unacceptable cost in missed events.
+  - key: D
+    text: The 74.4 percent sensitivity detector, because it detected the greatest seizure burden
+    correct: false
+    rationale: >-
+      This detector did display the highest sensitivity for seizure count and seizure
+      burden, but its daily false-positive rate of 15.5 was three times that of the
+      better-balanced option, and its overall sensitivity was not higher.
+  - key: E
+    text: Neither, because algorithms should not alarm without concurrent expert review
+    correct: false
+    rationale: >-
+      Some commercial algorithms performed comparably to EEG experts reading
+      quantitative displays, and the authors proposed them as early warning systems
+      that prompt review; the unit has built exactly that review step into the workflow.
+
+explanation: >-
+  The correct answer is B. Sensitivity alone cannot select a detector for a bedside
+  alarm, because an alarm that cannot be answered is not a safety intervention. The
+  right comparison is sensitivity against the daily false-positive burden that the
+  responding clinician must absorb, multiplied by the number of monitored patients.
+  What the image shows: two true seizures with evolving rhythmicity bands, solid flames
+  and arched aEEG rises, embedded among many more detector marks that align with
+  movement and respiratory-therapy artifact rather than with any change in the
+  amplitude trends. Evidence: in 19 continuous EEG recordings from critically ill
+  children containing 379 seizures identified on raw EEG, four commercial algorithms
+  detected 36.9, 92.3, 75.9 and 74.4 percent of seizures, with daily false-positive
+  rates averaged across all recordings of 4.7, 126.3, 5.1 and 15.5 respectively; over
+  the same recordings, six EEG experts identified 76.5 percent of seizures using color
+  density spectral array and 73.7 percent using aEEG, with daily false-positive rates
+  of 1.7 and 1.5. Two of the algorithms had sensitivity comparable to that of EEG
+  experts using these displays, and the best trade-off between sensitivity and
+  false-positive rate belonged to the algorithm detecting 75.9 percent. Bedside
+  takeaway: choose the detector by the alarm burden your unit can actually review, and
+  keep a scheduled expert read regardless of which one you enable.
+
+key_points:
+  - Detector sensitivities in children ranged from 36.9 to 92.3 percent.
+  - The 92.3 percent detector averaged 126.3 false-positive detections per day.
+  - EEG experts reading trends detected 76.5 percent with 1.7 daily false positives.
+
+references:
+  - pmid: "32205601"
+    doi: 10.1097/CCM.0000000000004180
+    citation: >-
+      Din F, Lalgudi Ganesan S, Akiyama T, et al. Seizure Detection Algorithms in
+      Critically Ill Children: A Comparative Evaluation. Crit Care Med.
+      2020;48(4):545-552.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "30188384"
+    doi: 10.1097/CCM.0000000000003385
+    citation: >-
+      Lalgudi Ganesan S, Stewart CP, Atenafu EG, et al. Seizure Identification by
+      Critical Care Providers Using Quantitative Electroencephalography. Crit Care Med.
+      2018;46(12):e1105-e1111.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 102020
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 480
+    background:
+      type: continuous
+      dominant_hz: 5.0
+      amplitude_uv: 50
+      slow_fraction: 0.55
+      reactivity: present
+    events:
+      - type: seizure
+        onset_min: 95.0
+        duration_s: 110
+        onset_region: right_central
+        evolution: { start_hz: 4.5, end_hz: 1.5, amplitude_start_uv: 60, amplitude_end_uv: 150 }
+        spread: hemispheric
+        postictal_attenuation_s: 45
+      - type: seizure
+        onset_min: 355.0
+        duration_s: 100
+        onset_region: right_central
+        evolution: { start_hz: 4.5, end_hz: 1.5, amplitude_start_uv: 60, amplitude_end_uv: 145 }
+        spread: hemispheric
+        postictal_attenuation_s: 45
+      - type: artifact
+        kind: movement
+        at_min: 40.0
+        duration_s: 240
+        side: all
+        intensity: high
+      - type: artifact
+        kind: chest_pt
+        at_min: 130.0
+        duration_s: 600
+        side: all
+        intensity: high
+      - type: artifact
+        kind: movement
+        at_min: 215.0
+        duration_s: 180
+        side: all
+        intensity: medium
+      - type: artifact
+        kind: chest_pt
+        at_min: 290.0
+        duration_s: 600
+        side: all
+        intensity: high
+      - type: artifact
+        kind: electrode_pop
+        at_min: 420.0
+        duration_s: 60
+        channels: [P4]
+        intensity: high
+    annotations: []
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - aeeg_L
+      - aeeg_R
+    time_axis: elapsed
+    style:
+      show_detector_event_strip: true
+      detector_marks_at_min: [40, 95, 130, 215, 290, 355, 420]
+      rhythmicity_hz_range: [1, 25]
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

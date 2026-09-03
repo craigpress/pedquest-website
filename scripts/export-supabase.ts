@@ -56,8 +56,8 @@ async function main() {
       const outPath = path.join(backupDir, `${table}.json`);
       fs.writeFileSync(outPath, JSON.stringify(rows, null, 2));
       console.log(`${table.padEnd(30)}${rows.length}`);
-    } catch (err: any) {
-      console.error(`${table.padEnd(30)}ERROR: ${err.message}`);
+    } catch (err) {
+      console.error(`${table.padEnd(30)}ERROR: ${(err as Error).message}`);
     }
   }
 

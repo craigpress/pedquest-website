@@ -1,0 +1,154 @@
+id: PQ-A-007
+version: 1
+status: draft
+title: Locating the pentobarbital effect on the suppression-ratio panel
+domain: foundations
+topics: [suppression ratio, pentobarbital, trend timing, point to feature, burst suppression]
+population: child
+setting: PICU
+difficulty: introductory
+bloom: interpretation
+learning_objective: >-
+  Locate on a multi-trend panel the point at which an anesthetic dose change takes
+  effect, using the suppression ratio as the trend that responds.
+
+stem:
+  vignette: >-
+    A 6-year-old boy with refractory status epilepticus has been on a pentobarbital
+    infusion in the PICU for 18 hours. Continuous EEG with a quantitative trend panel
+    is running. Overnight the team increased the infusion once, but the paper record of
+    the time of that change was lost during a handoff and the annotation was never
+    entered on the EEG. The attending asks you to establish from the trend panel alone
+    when the higher rate began to take effect, so that the timing can be reconciled
+    with the pharmacy record before rounds. No antiseizure medication boluses, imaging
+    trips, or respiratory treatments occurred during the displayed window, and the
+    electrode impedances were stable throughout.
+  image_caption: >-
+    Six-hour qEEG panel, top to bottom: suppression ratio (left, right), 0 to 100
+    percent; aEEG (left, right); FFT spectrogram (left, right), 0 to 20 hertz. Time
+    axis in minutes from the start of the displayed window. No medication annotations
+    are shown.
+  lead_in: >-
+    Click the point on the left suppression-ratio panel where the increased
+    pentobarbital rate begins to take effect.
+
+question_type: point_to_feature
+options: []
+point_to_feature:
+  instruction: >-
+    Click on the left suppression-ratio trace at the onset of the sustained rise
+    toward the new plateau.
+  target_event: 0
+  target_panel: suppression_ratio_L
+  tolerance: 0.04
+
+explanation: >-
+  The expected region is the onset of the sustained rise in the left suppression-ratio
+  trace, which begins at 150 minutes and ramps over about 15 minutes to a new plateau
+  near 70 percent. What the image shows: before 150 minutes the suppression ratio sits
+  at a stable low plateau while the aEEG band is comparatively wide and the FFT
+  spectrograms show continuous power; from 150 minutes the suppression ratio climbs
+  bilaterally and symmetrically, the aEEG margins fall and narrow, and the spectrograms
+  break up into intermittent columns of power separated by dark interburst intervals.
+  The suppression ratio is the trend that answers this question because it is defined
+  as the percentage of time the EEG signal is below a prespecified amplitude consistent
+  with suppression, displayed as a running average, so a deepening anesthetic effect
+  moves it directly and in a single direction. The aEEG and the spectrogram change too,
+  but both are also moved by seizures, state change and artifact, so neither
+  localises a dose effect as cleanly. Evidence: a pediatric neurocritical care review
+  of qEEG in the ICU states that the suppression ratio can be used to assess the degree
+  of burst suppression and to titrate anesthetic infusions to a specific target for
+  super-refractory status epilepticus and for refractory intracranial hypertension.
+  Because the running average is computed over an epoch, the trend inflection lags the
+  true dose change by the length of that epoch plus the pharmacokinetic ramp. Bedside
+  takeaway: annotate infusion changes on the EEG in real time; reconstructing them
+  from a trend gives an approximate time at best.
+
+key_points:
+  - The suppression ratio is the trend that tracks depth of pharmacologic suppression.
+  - A deepening anesthetic raises the suppression ratio while aEEG margins fall.
+  - Trend inflections lag the real dose change by the epoch length plus drug ramp.
+
+references:
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's Standardized Critical Care EEG Terminology: 2021 Version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 100707
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 360
+    background:
+      type: burst_suppression
+      dominant_hz: 2.0
+      amplitude_uv: 80
+      slow_fraction: 0.65
+      reactivity: absent
+      burst_suppression:
+        burst_s: 4.0
+        ibi_s: 4.0
+    events:
+      - type: sedation_change
+        at_min: 150.0
+        direction: increase
+        agent: pentobarbital
+        effect: { suppression_ratio_target_pct: 70, ramp_min: 15 }
+    annotations: []
+    panels:
+      - suppression_ratio_L
+      - suppression_ratio_R
+      - aeeg_L
+      - aeeg_R
+      - fft_L
+      - fft_R
+    time_axis: elapsed
+    show_cursor_at_min: null
+    style:
+      suppression_threshold_uv: 5
+      suppression_ratio_axis_pct: [0, 100]
+      spectrogram_hz_range: [0, 20]
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

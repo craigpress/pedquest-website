@@ -1,0 +1,180 @@
+# Verification trail: content/qbank/sources/PQ-B-009.md
+id: PQ-B-009
+version: 1
+status: draft
+title: Long-term epilepsy risk after electrographic status epilepticus in the PICU
+domain: clinical_prognosis
+topics: [electrographic status epilepticus, long-term outcome, epilepsy risk, counselling]
+population: child
+setting: PICU
+difficulty: advanced
+bloom: application
+learning_objective: >-
+  Quantify the increase in the odds of a subsequently diagnosed epilepsy after
+  electrographic status epilepticus in children who were neurodevelopmentally normal
+  before PICU admission.
+
+stem:
+  vignette: >-
+    A 4-year-old girl who was typically developing and had no prior seizures is admitted
+    with acute disseminated encephalomyelitis and encephalopathy. Continuous EEG with a
+    quantitative trend panel identifies near-continuous ictal activity for most of the
+    first day, which resolves after two antiseizure medication loads and a midazolam
+    infusion. She survives and is discharged home. At the follow-up visit the parents ask
+    specifically about the chance that she will develop epilepsy, given what the monitor
+    showed during the admission.
+  image_caption: >-
+    Twelve-hour qEEG panel from the first PICU day: seizure probability; rhythmicity
+    spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index;
+    aEEG (left, right); suppression ratio (left, right). Elapsed minutes on the time axis.
+    Two medication loads and the start of a midazolam infusion are annotated.
+  lead_in: >-
+    Approximately what increase in the odds of a subsequently diagnosed epilepsy does
+    this recording carry?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: No measurable increase
+    correct: false
+    rationale: >-
+      Among children without a prior epilepsy diagnosis, electrographic status
+      epilepticus was strongly associated with a later epilepsy diagnosis.
+  - key: B
+    text: About 1.3-fold
+    correct: false
+    rationale: >-
+      1.3 is the odds ratio for mortality associated with isolated electrographic
+      seizures in a different analysis, not the epilepsy risk after status.
+  - key: C
+    text: About 6.4-fold
+    correct: false
+    rationale: >-
+      6.36 is the odds ratio for an unfavorable global outcome category in the same
+      cohort, not for a subsequent epilepsy diagnosis.
+  - key: D
+    text: About 13-fold
+    correct: true
+    rationale: >-
+      Among children without a prior epilepsy diagnosis, electrographic status
+      epilepticus was associated with an odds ratio of 13.3 for subsequently diagnosed
+      epilepsy.
+  - key: E
+    text: About 35-fold
+    correct: false
+    rationale: >-
+      35 is the odds ratio for the worst EEG category during hypothermia in a post-arrest
+      cohort and has nothing to do with later epilepsy.
+
+explanation: >-
+  The correct answer is D. What the image shows: the rhythmicity spectrograms carry an
+  unbroken evolving band across roughly the first 9 hours with only short interruptions,
+  the seizure-probability trend is saturated through that period, both aEEG channels show
+  elevated and narrowed margins during the ictal run, and after the annotated loads and
+  the start of the midazolam infusion the rhythmicity bands disappear while the
+  suppression-ratio trends rise. That is electrographic status epilepticus that responded
+  to escalation. Evidence: 300 children with an acute neurologic condition and
+  encephalopathy underwent clinically indicated EEG monitoring in a prospective
+  observational study; 137 had been neurodevelopmentally normal before PICU admission and
+  follow-up data were obtained for 60 of them at a median of 2.7 years. Electrographic
+  seizures occurred in 12 (20 percent) and electrographic status epilepticus in 14 (23
+  percent). In multivariable analysis adjusting for neurologic disorder category, EEG
+  background category and age, status epilepticus was associated with an unfavorable
+  extended pediatric Glasgow Outcome Scale category, odds ratio 6.36, with Pediatric
+  Quality of Life Inventory scores 23 points lower, and, among those without a prior
+  epilepsy diagnosis, with subsequently diagnosed epilepsy, odds ratio 13.3.
+  Electrographic seizures were not associated with worse outcomes. Only 60 of 137 eligible
+  children were followed, so the estimates are imprecise. Bedside takeaway: put the
+  epilepsy risk in the discharge summary and arrange neurology follow-up.
+
+key_points:
+  - Electrographic status epilepticus carried an odds ratio of 13.3 for later diagnosed epilepsy.
+  - The same exposure was linked to unfavorable global outcome, odds ratio 6.36.
+  - Quality-of-life scores were 23 points lower; isolated seizures showed no association.
+
+references:
+  - pmid: "24384638"
+    doi: 10.1212/WNL.0000000000000082
+    citation: >-
+      Wagenman KL, Blake TP, Sanchez SM, et al. Electrographic status epilepticus and
+      long-term outcome in critically ill children. Neurology. 2014;82(5):396-404.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+  - pmid: "23164815"
+    doi: 10.1097/CCM.0b013e3182668035
+    citation: >-
+      Topjian AA, Gutierrez-Colina AM, Sanchez SM, et al. Electrographic status epilepticus
+      is associated with mortality and worse short-term outcome in critically ill
+      children. Crit Care Med. 2013;41(1):215-23.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 8100009
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 720
+    background:
+      type: continuous
+      dominant_hz: 4.0
+      amplitude_uv: 55
+      slow_fraction: 0.7
+      reactivity: present
+    events:
+      - type: status_epilepticus
+        onset_min: 15
+        duration_min: 520
+        onset_region: generalized
+      - type: sedation_change
+        at_min: 540
+        direction: increase
+        agent: midazolam
+        effect: { suppression_ratio_target_pct: 35, beta_boost: false, ramp_min: 20 }
+    annotations:
+      - { at_min: 60, label: "Levetiracetam load" }
+      - { at_min: 300, label: "Fosphenytoin load" }
+      - { at_min: 540, label: "Midazolam infusion start" }
+    panels:
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+    time_axis: elapsed
+
+metadata:
+  author: Writer B (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

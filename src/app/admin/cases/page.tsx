@@ -2,11 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useUser } from "@/lib/auth";
+import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import type { EegCase, QuestionType, Difficulty } from "@/lib/cases";
-
-const ADMIN_EMAILS = ["pressca@chop.edu", "craigpress@gmail.com", "gbenedet@med.umich.edu", "ajay.thomas@bcm.edu"];
 
 type AdminCase = EegCase & { responseCount: number };
 
@@ -63,8 +61,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminCasesPage() {
-  const { user, loading: userLoading } = useUser();
-  const isAdmin = !!user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+  // Role comes from the server (/api/me -> user_roles), never a hardcoded list.
+  const { user, isAdmin, loading: userLoading } = useRole();
   const [cases, setCases] = useState<AdminCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);

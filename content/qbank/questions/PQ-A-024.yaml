@@ -1,0 +1,186 @@
+id: PQ-A-024
+version: 1
+status: draft
+title: Classifying lateralized rhythmic delta activity on the ictal-interictal continuum
+domain: background_terminology
+topics: [ACNS 2021 terminology, LRDA, ictal-interictal continuum, electrographic seizure, fluctuation]
+population: adolescent
+setting: PICU
+difficulty: advanced
+bloom: analysis
+learning_objective: >-
+  Apply the ACNS 2021 criteria to decide whether a lateralized rhythmic delta pattern
+  qualifies as an electrographic seizure, as a pattern on the ictal-interictal
+  continuum, or as neither.
+
+stem:
+  vignette: >-
+    A 16-year-old girl is admitted to the PICU with autoimmune encephalitis and
+    fluctuating alertness. She is not intubated and is on no sedative infusion.
+    Continuous EEG with a quantitative trend panel is running. For the past 3 hours the
+    left hemisphere shows continuous rhythmic delta activity at an average of
+    1.5 hertz. It is present in runs lasting 3 to 8 minutes at a time, does not evolve
+    in frequency, location or morphology, and shows repeated quantifiable changes in
+    frequency and amplitude that do not qualify as evolution. There are no superimposed
+    fast activity or sharp waves. No antiseizure medication has been given during the
+    displayed window and her examination is unchanged.
+  image_caption: >-
+    Fifteen-second raw EEG page in longitudinal bipolar montage at 7 microvolts per
+    millimetre, low-frequency filter 1 hertz, high-frequency filter 70 hertz,
+    60 hertz notch on, taken from within one run, with a 4-hour rhythmicity
+    spectrogram strip for both hemispheres displayed above the page.
+  lead_in: >-
+    How should this pattern be classified under the ACNS 2021 terminology?
+
+question_type: multiple_choice
+options:
+  - key: A
+    text: Electrographic seizure, because a rhythmic pattern persists beyond 10 seconds
+    correct: false
+    rationale: >-
+      An electrographic seizure requires either epileptiform discharges averaging more
+      than 2.5 hertz for at least 10 seconds or any pattern with definite evolution
+      lasting at least 10 seconds. This pattern is 1.5 hertz and does not evolve.
+  - key: B
+    text: Electrographic status epilepticus, because the pattern occupies most of the hour
+    correct: false
+    rationale: >-
+      Electrographic status epilepticus is defined as an electrographic seizure for at
+      least 10 continuous minutes or for at least 20 percent of any 60-minute period;
+      because this pattern is not a seizure, the duration criteria do not apply.
+  - key: C
+    text: A pattern on the ictal-interictal continuum, given the fluctuation
+    correct: true
+    rationale: >-
+      Any lateralized rhythmic delta activity averaging more than 1 hertz for at least
+      10 seconds with a plus modifier or fluctuation, and not qualifying as a seizure or
+      status, is on the ictal-interictal continuum; fluctuation is present here.
+  - key: D
+    text: Lateralized rhythmic delta activity only, since it is under 2.5 hertz
+    correct: false
+    rationale: >-
+      Naming the pattern is correct but incomplete. Once fluctuation is present in
+      lateralized rhythmic delta activity above 1 hertz, the terminology places it on
+      the ictal-interictal continuum, which carries different management implications.
+  - key: E
+    text: Brief potentially ictal rhythmic discharges, because runs are self-limited
+    correct: false
+    rationale: >-
+      All brief potentially ictal rhythmic discharges are shorter than 10 seconds by
+      definition; runs of several minutes are far too long to qualify.
+
+explanation: >-
+  The correct answer is C. The decision proceeds in a fixed order: first ask whether
+  the pattern is an electrographic seizure or status, and only if it is neither ask
+  whether it sits on the ictal-interictal continuum. What the image shows: continuous
+  1.5 hertz rhythmic delta confined to the left hemisphere, with a dense sustained band
+  on the left rhythmicity spectrogram and a quiet right side, and repeated changes in
+  frequency and amplitude across the run without the ordered, sequential change in
+  frequency, morphology or location that would constitute evolution. Evidence: the ACNS
+  2021 terminology defines an electrographic seizure as epileptiform discharges
+  averaging more than 2.5 hertz for at least 10 seconds, that is more than 25
+  discharges in 10 seconds, or any pattern with definite evolution lasting at least
+  10 seconds; electrographic status epilepticus as an electrographic seizure for at
+  least 10 continuous minutes or for a total duration of at least 20 percent of any
+  60-minute period, the 20 percent threshold lowered from the previous 50 percent
+  partly on the basis of a study in critically ill children in whom the risk of
+  neurological decline was significantly greater when the maximum hourly seizure burden
+  exceeded 20 percent. It then lists among the ictal-interictal continuum patterns any
+  lateralized rhythmic delta activity averaging more than 1 hertz for at least 10
+  seconds with a plus modifier or fluctuation, explicitly including LRDA, BIRDA, UIRDA
+  and MfRDA but not generalized rhythmic delta activity, provided the pattern does not
+  qualify as a seizure or status. The continuum is a purely electrographic term and not
+  a diagnosis, and it often warrants a diagnostic trial of a parenteral antiseizure
+  medication. Bedside takeaway: LRDA with fluctuation is a reason to consider a
+  diagnostic drug trial, not a reason to call the record ictal.
+
+key_points:
+  - Electrographic seizure needs over 2.5 hertz for 10 seconds or definite evolution.
+  - LRDA over 1 hertz with a plus modifier or fluctuation lies on the ictal-interictal continuum.
+  - GRDA is excluded from the continuum criteria; only lateralized RDA counts.
+
+references:
+  - pmid: "33475321"
+    doi: 10.1097/WNP.0000000000000806
+    citation: >-
+      Hirsch LJ, Fong MWK, Leitinger M, et al. American Clinical Neurophysiology
+      Society's Standardized Critical Care EEG Terminology: 2021 Version. J Clin
+      Neurophysiol. 2021;38(1):1-29.
+    role: primary
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: unknown
+    member_author: true
+  - pmid: "36949358"
+    doi: 10.1007/s12028-023-01686-5
+    citation: >-
+      Benedetti GM, Guerriero RM, Press CA. Review of Noninvasive Neuromonitoring
+      Modalities in Children II: EEG, qEEG. Neurocrit Care. 2023;39(3):618-638.
+    role: supporting
+    verified: true
+    verified_by: pubmed-mcp get_article_metadata 2026-09-03
+    open_access: none
+    member_author: true
+
+image:
+  kind: eeg_page
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 102424
+    age_group: adolescent
+    sample_rate: 256
+    channels: standard_19
+    montage: longitudinal_bipolar
+    at_min: 138.0
+    window_s: 15
+    sensitivity_uv_mm: 7
+    filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+    highlight: null
+    background:
+      type: continuous
+      dominant_hz: 7.0
+      amplitude_uv: 45
+      slow_fraction: 0.45
+      reactivity: present
+      asymmetry:
+        side: left
+        attenuation_pct: 0
+        slowing_hz: 4.0
+    events:
+      - type: rhythmic_pattern
+        onset_min: 20.0
+        duration_min: 180
+        pattern: LRDA
+        side: left
+        frequency_hz: 1.5
+        run_duration_s: 300
+        modifier: fluctuation
+        evolution: none
+        plus_modifier: none
+    annotations: []
+    style:
+      show_trend_strip: true
+      trend_strip_panels: [rhythmicity_L, rhythmicity_R]
+      trend_strip_duration_min: 240
+
+metadata:
+  author: Writer A (claude-opus)
+  model: claude-opus-5[1m]
+  created: "2026-09-03"
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null
