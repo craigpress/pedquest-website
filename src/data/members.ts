@@ -554,7 +554,7 @@ export const members: Member[] = [
     city: "Los Angeles, CA",
     lat: 34.0969,
     lng: -118.2884,
-    photoUrl: "/images/bradley-de-souza.webp",
+    photoUrl: "/images/bradley-de-souza.png",
     bio: "Attending physician at CHLA and Clinical Assistant Professor of Pediatrics at Keck School of Medicine of USC. Trained at University College Dublin, Hospital for Sick Children (Toronto), and Boston Children's Hospital. Specializes in pediatric critical care and neurocritical care medicine.",
     interests: ["Pediatric Critical Care Medicine","Neurocritical Care Medicine"],
     email: "bdesouza@chla.usc.edu",
