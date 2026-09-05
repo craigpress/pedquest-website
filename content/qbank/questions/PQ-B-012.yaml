@@ -23,10 +23,10 @@ stem:
     been seen, yet the trend panel and raw page show recurrent right-hemispheric
     electrographic seizures. Core temperature is 33.5 degrees Celsius.
   image_caption: >-
-    Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT
-    0-20 Hz L and R; asymmetry index; aEEG L and R), elapsed minutes; the phenobarbital
-    load is annotated at minus 60 minutes relative to the window. Lower: 15-second raw
-    page from minute 95, neonatal reduced montage, 7 microvolts per millimetre, 1-70 Hz.
+    Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT 0-20 Hz L and
+    R; asymmetry index; aEEG L and R), elapsed time (hours:minutes); the phenobarbital load occurred
+    60 minutes before the displayed window. Lower: 15-second raw page from minute 93, neonatal
+    reduced montage, 7 microvolts per millimetre, 1-70 Hz.
   lead_in: >-
     What is the best next step in the management of this infant's seizure burden?
 
@@ -36,7 +36,7 @@ options:
     text: Give a second antiseizure medication load and continue EEG-guided titration
     correct: true
     rationale: >-
-      Two-thirds of neonates have an incomplete response to the first load, and a
+      In a registry, two-thirds of neonates had an incomplete response to the first load, and a
       randomized trial showed that treating electrographic seizures rather than clinical
       seizures alone substantially reduced cumulative seizure burden.
   - key: B
@@ -71,7 +71,7 @@ explanation: >-
   repeated discrete bands that begin near 2.5 Hz and slow over about 2 minutes, the
   seizure-probability trend rises with each, the asymmetry index deflects to the right
   during each event and returns to baseline between them, the right aEEG margins rise
-  while the left is unchanged, and the raw page from minute 95 shows evolving rhythmic
+  while the left is unchanged, and the raw page from minute 93 shows evolving rhythmic
   sharp activity in the right central chain. The left-sided trends are quiet, so this is
   focal right-hemispheric ictal activity, not artifact and not a global change. Evidence:
   in a randomized trial of 69 neonates at or beyond 36 weeks with moderate or severe
@@ -84,8 +84,8 @@ explanation: >-
   across all three Bayley III domains. In the Neonatal Seizure Registry, 66 percent of 534
   neonates with acute symptomatic seizures had an incomplete response to the initial
   loading dose, and response did not differ by gestational age, sex, medication or dose.
-  Bedside takeaway: expect the first load to fail, and let the EEG, not the examination,
-  decide the second.
+  Bedside takeaway: clinical cessation may reflect electroclinical uncoupling; use ongoing
+  EEG burden and the infant's condition to guide additional treatment.
 
 key_points:
   - Treating electrographic seizures cut median burden from 2226 to 449 seconds in a randomized trial.
@@ -145,32 +145,40 @@ image:
         slow_fraction: 0.8
         reactivity: present
       events:
-        - type: seizure_cluster
-          start_min: 25
-          end_min: 340
-          interval_min: 22
-          seizure:
-            duration_s: 120
-            onset_region: right_central
-            evolution: { start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 120 }
+      - type: seizure_cluster
+        start_min: 25
+        end_min: 340
+        interval_min: 22
+        seizure:
+          duration_s: 120
+          onset_region: right_central
+          evolution:
+            start_hz: 2.5
+            end_hz: 1.2
+            amplitude_start_uv: 45
+            amplitude_end_uv: 120
       annotations:
-        - { at_min: -60, label: "Phenobarbital 20 mg/kg" }
+      - at_min: -60
+        label: Phenobarbital 20 mg/kg
       panels:
-        - seizure_probability
-        - rhythmicity_L
-        - rhythmicity_R
-        - fft_L
-        - fft_R
-        - asymmetry_index
-        - aeeg_L
-        - aeeg_R
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_index
+      - aeeg_L
+      - aeeg_R
       time_axis: elapsed
     eeg_page:
-      at_min: 95.0
+      at_min: 93
       window_s: 15
       sensitivity_uv_mm: 7
       montage: neonatal_reduced
-      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      filters:
+        lf_hz: 1
+        hf_hz: 70
+        notch_hz: 60
       highlight: null
 
 metadata:

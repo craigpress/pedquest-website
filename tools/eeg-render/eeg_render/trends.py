@@ -254,6 +254,7 @@ def compute_trends(
 
     aeeg_taps = aeeg_filter(fs)
     sos_sr = _sos_band(fs, 0.5, 30.0)
+    sos_env = _sos_band(fs, 2.0, 20.0)
     aeeg_pairs = {s: pick_aeeg_derivation(synth, [], s) for s in SIDES}
 
     out = Trends(t=t_grid, hop_s=hop_s, freqs=freqs_disp, rhy_freqs=RHY_FREQS)
@@ -375,7 +376,10 @@ def compute_trends(
                 pp_ep = blocks.max(axis=-1) - blocks.min(axis=-1)      # (n_ch, n_ep)
                 pooled_pp = pp_ep.mean(axis=0)
                 sr_flags[side].append((pooled_pp < sr_threshold_uv).astype(float))
-                sr_pp[side].append(pooled_pp)
+                env_sig = sps.sosfiltfilt(sos_env, sig, axis=-1)
+                env_blocks = np.lib.stride_tricks.sliding_window_view(
+                    env_sig, sr_epoch_n, axis=-1)[:, sr_local, :]
+                sr_pp[side].append((env_blocks.max(axis=-1) - env_blocks.min(axis=-1)).mean(axis=0))
             else:
                 sr_flags[side].append(np.zeros(0))
                 sr_pp[side].append(np.zeros(0))
@@ -396,8 +400,7 @@ def compute_trends(
         rolling = np.convolve(pad, kern, mode="valid")[: flags.size] * 100.0
         out.sr[side] = np.interp(t_grid, sr_t[: flags.size], rolling)
 
-        # envelope trend: a robust amplitude statistic of the same 0.5 s
-        # peak-to-peak series the suppression ratio thresholds, over 1 min
+        # Envelope amplitude uses its own 2–20 Hz filter, independent of SR.
         amps = np.concatenate(sr_pp[side]) if sr_pp[side] else np.zeros(0)
         if amps.size:
             amps = amps[: sr_t.size]
@@ -445,10 +448,10 @@ def compute_trends(
 def seizure_probability(tr: Trends) -> np.ndarray:
     """Heuristic ictal-likelihood trend (NOT a validated seizure detector).
 
-    ``score = rhythmicity * power_rise^0.7``, eroded over 10 s to demand
-    persistence, then squashed by a logistic.  ``rhythmicity`` is the peak of
-    the 1.5-12 Hz rhythmicity over either hemisphere; ``power_rise`` compares
-    1.5-12 Hz power with a *trailing* 20 min median.
+    Rhythmicity and power are compared with the initial five minutes, then
+    persistence is required. The reference is fixed so prolonged seizures
+    cannot become their own background. An initially abnormal reference is
+    a known limitation of this illustrative detector.
 
     The product form matters: a healthy posterior dominant rhythm is genuinely
     rhythmic, so an estimator built on rhythmicity alone flags every awake
@@ -466,18 +469,23 @@ def seizure_probability(tr: Trends) -> np.ndarray:
     band_p = (tr.freqs >= 1.5) & (tr.freqs <= 12.0)
     pw = np.maximum(tr.psd["left"][band_p].sum(axis=0), tr.psd["right"][band_p].sum(axis=0))
 
-    # Both terms are referenced to the 40th percentile of the displayed epoch,
-    # i.e. this is a *within-page relative* measure - what changed against this
-    # patient's own background, not an absolute scale.  A steady posterior
-    # dominant rhythm is genuinely rhythmic and genuinely powerful, so only the
-    # excess over the page baseline can separate it from an ictal run.
-    rhy_base = float(np.percentile(rhy, 40))
-    pw_base = float(np.percentile(pw, 40))
+    baseline = tr.t < min(300.0, float(tr.t[-1]))
+    rhy_base = float(np.median(rhy[baseline]))
+    pw_base = float(np.median(pw[baseline]))
     rhy_new = np.clip((rhy - max(rhy_base, 0.10) - 0.08) / 0.50, 0.0, 1.0)
     ratio = np.log2((pw + 1e-9) / (pw_base + 1e-9))
     rise = np.clip((ratio - 1.0) / 2.0, 0.0, 1.0)   # credit from ~2x, full at ~8x
 
-    raw = rhy_new * np.power(rise, 0.6)
+    slow_r = (rf >= 1.0) & (rf <= 4.0)
+    slow_p = (tr.freqs >= 1.0) & (tr.freqs <= 4.0)
+    slow_rhy = np.maximum(tr.rhy["left"][slow_r].max(axis=0), tr.rhy["right"][slow_r].max(axis=0))
+    slow_power = np.maximum(tr.psd["left"][slow_p].sum(axis=0), tr.psd["right"][slow_p].sum(axis=0))
+    slow_power *= float(tr.freqs[1] - tr.freqs[0])
+    # Strong sustained slow rhythmic activity remains a screening candidate
+    # even when present at recording onset; rhythmic artifact can trigger it.
+    stationary = np.clip((slow_rhy - 0.45) / 0.35, 0.0, 1.0)
+    stationary *= np.clip(np.log2((slow_power + 1e-9) / 12.5) / 4.0, 0.0, 1.0)
+    raw = np.maximum(rhy_new * np.power(rise, 0.6), stationary)
     raw = ndimage.uniform_filter1d(raw, size=max(1, int(round(8.0 / hop))))
     raw = ndimage.minimum_filter1d(raw, size=max(1, int(round(10.0 / hop))))
     p = 1.0 / (1.0 + np.exp(-(raw - 0.28) / 0.055))
@@ -538,6 +546,8 @@ def pick_aeeg_derivation(synth: Synthesizer, wanted: Sequence[str], side: str) -
         if a in synth._idx and b in synth._idx:
             if side == "any" or (mt.side_of(a) == side or mt.side_of(b) == side):
                 return a, b
+    if wanted:
+        raise ValueError(f"Requested aEEG derivation unavailable: {', '.join(wanted)}")
     chains = mt.trend_chains(synth.scalp)
     prefs = {
         "left": [("C3", "P3"), ("C3", "O1"), ("T3", "C3")],

@@ -24,10 +24,10 @@ stem:
     used to decide who is monitored, and shows you the first 12 hours of trends from the
     neonate already on the machine.
   image_caption: >-
-    Twelve-hour qEEG panel from a monitored postoperative neonate: seizure probability;
-    rhythmicity spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right);
-    asymmetry index; aEEG (left, right); suppression ratio (left, right). Elapsed minutes
-    on the time axis. No medication annotations fall within this window.
+    Twelve-hour qEEG panel from a monitored postoperative neonate: seizure probability; rhythmicity
+    spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left,
+    right); suppression ratio (left, right). Elapsed time (hours:minutes) on the time axis. No
+    medication annotations fall within this window.
   lead_in: >-
     What is the best monitoring recommendation for the neonate who has just returned from
     bypass?
@@ -80,10 +80,11 @@ explanation: >-
   well in the derivation cohort, with a c-statistic of 0.77 and net benefit above a 2
   percent threshold probability, but in the validation cohort discrimination was poor, with
   a c-statistic of 0.61 and no net benefit between threshold probabilities of 8 and 18
-  percent. The authors concluded that these findings support continuous EEG of all
+  percent. The authors concluded that this model's external-validation findings support continuous EEG of all
   neonates after bypass. In an earlier single-center cohort, seizures occurred in 8 percent
   and were electroencephalogram only in 85 percent of those affected. Bedside takeaway:
-  monitor everyone after bypass; no current score is good enough to leave a neonate out.
+  the cited model did not support withholding monitoring from a low-scoring neonate;
+  monitoring policy should follow current local resources and guidance.
 
 key_points:
   - Electrographic seizures occurred in 7.4 percent of 1053 neonates monitored after bypass.

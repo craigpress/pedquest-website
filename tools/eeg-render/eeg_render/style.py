@@ -156,7 +156,7 @@ def aeeg_forward(v: np.ndarray | float, semilog: bool = True,
     if not semilog:
         return np.clip(v, 0.0, vmax) / vmax
     lin = np.clip(v, 0.0, 10.0) / 10.0 * AEEG_LIN_FRACTION
-    hi = np.log10(np.clip(v, 10.0, AEEG_MAX) / 10.0) / np.log10(AEEG_MAX / 10.0)
+    hi = np.log10(np.clip(v, 10.0, vmax) / 10.0) / np.log10(vmax / 10.0)
     return np.where(v <= 10.0, lin, AEEG_LIN_FRACTION + hi * (1.0 - AEEG_LIN_FRACTION))
 
 

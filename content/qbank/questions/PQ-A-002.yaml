@@ -25,10 +25,9 @@ stem:
     darker color higher up, but she has not yet been taught what each axis of the
     panel encodes and asks you to name them before she tries to interpret any change.
   image_caption: >-
-    Four-hour qEEG panel showing FFT spectrograms for the left and right hemispheres.
-    The vertical axis of each spectrogram is labeled 0 to 20 with tick marks at 4, 8,
-    12, 16 and 20; the horizontal axis is labeled in minutes; a color bar runs from
-    black through dark blue to red and white.
+    Four-hour qEEG panel showing FFT spectrograms for the left and right hemispheres. The vertical
+    axis of each spectrogram is labeled 0 to 20 with tick marks at 4, 8, 12, 16 and 20; the
+    horizontal axis is labeled in hours:minutes; spectral power is color encoded.
   lead_in: >-
     On each FFT spectrogram panel, what do the vertical axis and the color respectively
     represent?
@@ -80,9 +79,9 @@ explanation: >-
   the broad band of warm color low on the panel is high delta power and the narrow
   darker strip above it is the comparatively small contribution of faster frequencies.
   Evidence: a pediatric neurocritical care review of trend construction states that
-  frequency-based trends rely on the fast Fourier transform, that frequency power is
-  the area under the FFT amplitude curve for each frequency and is displayed as the
-  square of the amplitude in square microvolts, and that on the FFT spectrogram or
+  frequency-based trends rely on the fast Fourier transform and that spectral power is
+  derived from the squared magnitude of the Fourier coefficients; depending on the
+  display it may be shown as power or power spectral density. On the FFT spectrogram or
   CDSA frequencies are displayed on the y-axis, time on the x-axis, and power as a
   color spectrogram in which warm colors such as red, pink and white represent high
   power while dark blue to black represents low power. Earlier ICU trend literature
@@ -93,7 +92,7 @@ explanation: >-
 
 key_points:
   - "FFT spectrogram: frequency on the y-axis, time on the x-axis, power as color."
-  - Power is the square of amplitude, reported in square microvolts.
+  - Spectral power is derived from squared Fourier magnitude; units depend on whether power or power spectral density is displayed.
   - Warm colors conventionally mean high power; the color scale is user-adjustable.
 
 references:

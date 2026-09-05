@@ -34,7 +34,7 @@ stem:
 question_type: multiple_choice
 options:
   - key: A
-    text: Defer prognostication and reassess whether the background has normalized by 48 hours of life
+    text: Defer a definitive prognosis and reassess the background serially through at least 48 hours
     correct: true
     rationale: >-
       Under hypothermia the positive predictive value of an abnormal 3-to-6-hour pattern
@@ -83,7 +83,8 @@ explanation: >-
   cooled infants, 10 of 15 with a burst-suppression pattern or worse at 6 hours had a
   normal outcome at 1 year, and only abnormalities persisting at and beyond 24 hours
   carried a poor prognosis. Bedside takeaway: under cooling, the clock for aEEG
-  prognostication runs to 48 hours, not 6.
+  prognostication should not end at 6 hours. These cohort time points are not universal
+  deadlines; use serial EEG with the full multimodal assessment.
 
 key_points:
   - Under hypothermia the positive predictive value of an abnormal 3-to-6-hour aEEG fell to 59 percent.
@@ -135,7 +136,9 @@ image:
     age_group: neonate
     sample_rate: 256
     duration_h: 3
-    channels: [C3-P3, C4-P4]
+    channels:
+    - C3-P3
+    - C4-P4
     pattern: BS
     sleep_wake_cycling: absent
     background:
@@ -143,17 +146,21 @@ image:
       dominant_hz: 1.5
       amplitude_uv: 40
       slow_fraction: 0.9
-      burst_suppression: { burst_s: 2.0, ibi_s: 11.0 }
+      burst_suppression:
+        burst_s: 2.0
+        ibi_s: 11.0
       reactivity: absent
     events:
-      - type: temperature_change
-        at_min: 0
-        from_c: 33.5
-        to_c: 33.5
-        over_min: 180
+    - type: temperature_change
+      at_min: 0
+      from_c: 33.5
+      to_c: 33.5
+      over_min: 180
     seizures: []
-    raw_strip_at_h: 1.50
-    time_axis: elapsed
+    raw_strip_at_h: 1.5
+    time_axis: hours_of_life
+    raw_strip_window_s: 15
+    start_h: 3
 
 metadata:
   author: Writer B (claude-opus)

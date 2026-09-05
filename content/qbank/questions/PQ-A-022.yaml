@@ -24,10 +24,10 @@ stem:
     about 0.4 seconds. The team is preparing the daily EEG report and must describe the
     bursts using ACNS 2021 terminology.
   image_caption: >-
-    Four-hour qEEG panel, top to bottom: suppression ratio (left, right), 0 to 100
-    percent, threshold 10 microvolts; aEEG (left, right); FFT spectrogram (left,
-    right) with intermittent narrow columns of power. Time axis in minutes from the
-    start of the displayed window.
+    Composite. Upper: 4-hour qEEG, suppression ratio L/R (0-100%, threshold 10 microvolts),
+    aEEG L/R and FFT L/R; elapsed time (hours:minutes). Lower: 20-second raw EEG from
+    minute 120, longitudinal bipolar montage, 7 microvolts per millimetre, filters
+    1-70 Hz with a 60 Hz notch.
   lead_in: >-
     How should the bursts be described in the report?
 
@@ -120,48 +120,65 @@ references:
     member_author: true
 
 image:
-  kind: qeeg_panel
+  kind: composite
   license: synthetic-original
   attribution: null
   spec:
     seed: 102222
-    age_group: child
-    sample_rate: 256
-    channels: standard_19
-    duration_min: 240
-    background:
-      type: burst_suppression
-      dominant_hz: 2.0
-      amplitude_uv: 95
-      slow_fraction: 0.55
-      reactivity: absent
-      burst_suppression:
-        burst_s: 1.6
-        ibi_s: 3.7
-    events:
+    layout: panel_over_page
+    qeeg_panel:
+      seed: 102222
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 240
+      background:
+        type: burst_suppression
+        dominant_hz: 2.0
+        amplitude_uv: 95
+        slow_fraction: 0.55
+        reactivity: absent
+        burst_suppression:
+          burst_s: 1.6
+          ibi_s: 3.7
+          phases: 6
+          epileptiform_discharges: 3
+          interpeak_latency_s: 0.4
+          highly_epileptiform_fraction: 0.8
+      events:
       - type: sedation_change
         at_min: 0
         direction: increase
         agent: pentobarbital
-        effect: { suppression_ratio_target_pct: 70, ramp_min: 5 }
-    annotations:
-      - { at_min: 0, label: "Pentobarbital infusion at target" }
-    panels:
+        effect:
+          suppression_ratio_target_pct: 70
+          ramp_min: 5
+      annotations:
+      - at_min: 0
+        label: Pentobarbital infusion at target
+      panels:
       - suppression_ratio_L
       - suppression_ratio_R
       - aeeg_L
       - aeeg_R
       - fft_L
       - fft_R
-    time_axis: elapsed
-    style:
-      suppression_threshold_uv: 10
-      suppression_ratio_axis_pct: [0, 100]
-      suppression_ratio_mean_pct: 70
-      burst_phases: 6
-      burst_epileptiform_discharges: 3
-      burst_interpeak_latency_s: 0.4
-      burst_fraction_highly_epileptiform: 0.8
+      time_axis: elapsed
+      style:
+        suppression_threshold_uv: 10
+        suppression_ratio_axis_pct:
+        - 0
+        - 100
+    eeg_page:
+      at_min: 120
+      window_s: 20
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      filters:
+        lf_hz: 1
+        hf_hz: 70
+        notch_hz: 60
+      highlight: null
 
 metadata:
   author: Writer A (claude-opus)

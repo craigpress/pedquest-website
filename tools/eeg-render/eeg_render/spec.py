@@ -48,7 +48,7 @@ BACKGROUND_PRESETS: Dict[str, Dict[str, float]] = {
     "discontinuous":             {"suppression_fraction": 0.35, "cycle_s": 16.0, "ibi_floor": 0.22, "amp_scale": 1.00},
     "excessively_discontinuous": {"suppression_fraction": 0.70, "cycle_s": 22.0, "ibi_floor": 0.10, "amp_scale": 1.00},
     "trace_alternant":           {"suppression_fraction": 0.48, "cycle_s": 11.0, "ibi_floor": 0.42, "amp_scale": 1.00},
-    "burst_suppression":         {"suppression_fraction": 0.75, "cycle_s": 10.0, "ibi_floor": 0.04, "amp_scale": 1.10},
+    "burst_suppression":         {"suppression_fraction": 0.75, "cycle_s": 10.0, "ibi_floor": 0.005, "amp_scale": 1.10},
     "suppressed":                {"suppression_fraction": 0.00, "cycle_s": 12.0, "ibi_floor": 1.00, "amp_scale": 0.06},
     "low_voltage":               {"suppression_fraction": 0.00, "cycle_s": 12.0, "ibi_floor": 1.00, "amp_scale": 0.28},
 }
@@ -252,6 +252,11 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         s["aeeg_channels"] = aeeg_derivations
     default_channels = "neonatal_9" if age == "neonate" else "standard_19"
     s["channels"] = s.get("channels", default_channels)
+    if kind == "aeeg" and any(
+        electrode in ("P3", "P4", "F3", "F4", "T5", "T6")
+        for pair in s["aeeg_channels"] for electrode in pair.split("-")
+    ):
+        s["channels"] = "standard_19"
     if s["channels"] == "neonatal_reduced":
         s["channels"] = "neonatal_9"
 
@@ -327,11 +332,14 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
             {
                 "onset_h": float(z["onset_h"]),
                 "duration_min": float(z.get("duration_min", 4.0)),
-                "onset_region": z.get("onset_region", "left_central"),
+                **({"onset_region": z["onset_region"]} if z.get("onset_region") else {}),
+                **({"evolution": dict(z["evolution"])} if z.get("evolution") else {}),
             }
             for z in (s.get("seizures") or [])
         ]
         s["raw_strip_at_h"] = s.get("raw_strip_at_h")
+        s["raw_strip_window_s"] = float(s.get("raw_strip_window_s", 15.0))
+        s["start_h"] = float(s.get("start_h", 0.0))
 
     if "source" in s and s["source"]:
         src = dict(s["source"])

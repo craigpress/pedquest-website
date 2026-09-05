@@ -263,7 +263,8 @@ class Synthesizer:
             post, common=0.6,
         )
         self.st_beta = self._mk("beta", band_shape(f, 17.5, 4.0, order=1.0), ant, common=0.4)
-        self.st_spindle = self._mk("spindle", band_shape(f, 13.0, 1.0), cen, common=0.7)
+        spindle_hz = float((self.spec.get("style") or {}).get("spindle_hz", 13.0))
+        self.st_spindle = self._mk("spindle", band_shape(f, spindle_hz, 0.65), cen, common=0.7)
         self.st_brush = self._mk("brush", band_shape(f, 13.0, 4.5, order=1.0), cen * 0.6 + temp * 0.5, common=0.35)
         self.st_theta = self._mk("theta", band_shape(f, 5.0, 1.8, order=1.0), temp * 0.6 + cen * 0.5, common=0.5)
         self.st_emg = self._mk("emg", hp_lp_shape(f, 22.0, 95.0), temp, common=0.15)
@@ -381,7 +382,8 @@ class Synthesizer:
 
         # sedation -----------------------------------------------------
         sed_t: List[float] = [0.0]
-        sed_sf: List[float] = [0.0]
+        bs = self.bg["burst_suppression"]
+        sed_sf: List[float] = [float(bs["ibi_s"]) / max(float(bs["ibi_s"]) + float(bs["burst_s"]), 1e-6)]
         sed_beta: List[float] = [0.10 if self.age != "neonate" else 0.05]
         sed_amp: List[float] = [1.0]
         for ev in spec["events"]:
@@ -431,8 +433,7 @@ class Synthesizer:
         temp = self.temperature_at(t)
         cold = 0.22 * np.clip((35.0 - temp) / 2.5, 0.0, 1.6)
         sleep = 0.05 * self._sleep_at(t) if self.age == "neonate" else 0.0
-        # sedation sets a floor rather than adding, so "SR target 60 %" means 60 %
-        out = np.maximum(base, 1.08 * sed) + cold + sleep
+        out = (sed if len(self._sed_t) > 1 else base) + cold + sleep
         return np.clip(out, 0.0, 0.96)
 
     def _build_burst_schedule(self) -> None:
@@ -466,7 +467,11 @@ class Synthesizer:
         """Interburst residual amplitude; sedation drives it toward true flat."""
         sed = _piecewise(self._sed_t, self._sed_sf, t) if len(self._sed_t) > 1 else np.zeros_like(t)
         deep = np.clip(sed / 0.25, 0.0, 1.0)
-        return self._ibi_floor0 * (1.0 - deep) + 0.035 * deep
+        floor = self._ibi_floor0 * (1.0 - deep) + 0.005 * deep
+        points = self.bg.get("ibi_floor_at_h")
+        if points:
+            floor = np.interp(t / 3600.0, [p[0] for p in points], [p[1] for p in points])
+        return floor
 
     def burst_envelope(self, t: np.ndarray) -> np.ndarray:
         """Smoothed 0..1 burst indicator lifted by the interburst floor."""
@@ -831,7 +836,7 @@ class Synthesizer:
             return base * chew * 26.0 * gain
 
         if kind in ("patting", "chest_pt"):
-            f0 = 1.9 if kind == "patting" else 2.9
+            f0 = float(ev.get("frequency_hz", 1.9 if kind == "patting" else 2.9))
             ph = 2 * np.pi * f0 * t
             w = (np.sin(ph) + 0.45 * np.sin(2 * ph + 0.4) + 0.2 * np.sin(3 * ph + 1.1))
             amp = 34.0 if kind == "patting" else 55.0
@@ -981,7 +986,12 @@ class Synthesizer:
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :]
 
         if self.age != "neonate":
-            x += self._stream_signal(self.st_spindle, i0, n) * (0.55 * sleep)[None, :]
+            spindle_phase = np.mod(t, 3.7)
+            spindle_gate = np.where(spindle_phase < 1.2, np.sin(np.pi * spindle_phase / 1.2) ** 2, 0.0)
+            train_s = (self.spec.get("style") or {}).get("spindle_train_s")
+            if train_s is not None:
+                spindle_gate *= np.mod(t - 300.0, 1800.0) < float(train_s)
+            x += self._stream_signal(self.st_spindle, i0, n) * (1.5 * sleep * spindle_gate)[None, :]
         if self.bg.get("delta_brushes") and self.age == "neonate":
             brush_gate = np.clip(self._oa(self.st_delta, i0 + 4242, n, 1)[0], 0, None)
             brush_gate = brush_gate / (brush_gate.std() + _SMOOTH_EPS)
@@ -1008,6 +1018,9 @@ class Synthesizer:
         env = env * self.postictal_envelope(t)
         env = env * np.clip(0.70 + 0.09 * (temp - 33.0), 0.55, 1.06)
         env = env * amp_w
+        gain_points = self.bg.get("amplitude_gain_at_h")
+        if gain_points:
+            env *= np.interp(t / 3600.0, [p[0] for p in gain_points], [p[1] for p in gain_points])
         for at, dur, side, depth in self._atten:
             if at + dur < t[0] or at > t[-1]:
                 continue
@@ -1019,6 +1032,26 @@ class Synthesizer:
                                 for e in self.electrodes])
             x *= (1.0 - depth * lat[:, None] * shape[None, :])
         x *= env[None, :]
+
+        bs = self.bg["burst_suppression"]
+        discharge_count = int(bs.get("epileptiform_discharges", 0))
+        if discharge_count:
+            signal = np.zeros_like(t)
+            fraction = float(bs.get("highly_epileptiform_fraction", 1.0))
+            spacing = float(bs.get("interpeak_latency_s", 0.4))
+            phases = int(bs.get("phases", 6))
+            for index in np.flatnonzero((self._burst_end >= t[0]) & (self._burst_start <= t[-1])):
+                if np.floor((index + 1) * fraction + 1e-9) == np.floor(index * fraction + 1e-9):
+                    continue
+                start, end = self._burst_start[index], self._burst_end[index]
+                run_spacing = min(spacing, (end - start) / (discharge_count + 1))
+                for j in range(discharge_count):
+                    centre = start + (j + 1) * run_spacing
+                    u = (t - centre) / min(0.14, run_spacing * 0.40)
+                    gate = np.where(np.abs(u) <= 1, np.cos(np.pi * u / 2) ** 2, 0.0)
+                    signal += gate * np.cos(np.pi * phases * u / 2)
+            field = self._gen_weights("F3") + self._gen_weights("F4")
+            x += field[:, None] * signal[None, :] * float(self.bg["amplitude_uv"])
 
         # --- stimulation reactivity ---------------------------------------
         reactive = self.bg.get("reactivity", "present") == "present"
@@ -1035,7 +1068,7 @@ class Synthesizer:
         x += self._seizure_block(t)
 
         # --- always-present ECG contamination + artifacts ------------------
-        sensor_rms_uv = max(0.35, min(1.5, self.amp_rms * 0.10))
+        sensor_rms_uv = 0.25
         x += self._stream_signal(self.st_sensor, i0, n) * sensor_rms_uv
         ecg_uv = float(self.bg.get("baseline_ecg_uv", 0.0))
         if ecg_uv > 0:

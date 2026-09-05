@@ -23,10 +23,10 @@ stem:
     levetiracetam load was given before the recording began, and no further medication was
     given in this window.
   image_caption: >-
-    Twenty-four-hour qEEG panel: seizure probability; rhythmicity spectrogram (left,
-    right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right);
-    suppression ratio (left, right). Elapsed minutes on the time axis. Suctioning is
-    annotated at 15 minutes. No medication annotations fall within this window.
+    Twenty-four-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
+    spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right); suppression ratio (left,
+    right). Elapsed time (hours:minutes) on the time axis. Suctioning is annotated at 15 minutes. No
+    medication annotations fall within this window.
   lead_in: >-
     Locate the first electrographic seizure of this recording on the trend panel.
 
@@ -56,8 +56,10 @@ explanation: >-
   seizures were exclusively nonconvulsive in 32. Of the patients who had seizures, only 52
   percent had one detected in the first hour of monitoring, whereas 87 percent were
   detected within 24 hours. Younger age was the only clinical risk factor for seizure
-  occurrence. Bedside takeaway: a clean first hour excludes about half of the seizures you
-  will eventually find, so keep monitoring and keep screening.
+  occurrence. The 52 percent denominator is seizure-positive patients; it does not mean a
+  clean first hour excludes half of all possible seizures or halves an individual child's
+  risk. Bedside takeaway: continue monitoring when the indication persists and screen the
+  full recording.
 
 key_points:
   - Only 52 percent of critically ill children with seizures had one in the first hour of monitoring.

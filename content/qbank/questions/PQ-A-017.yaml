@@ -19,7 +19,7 @@ stem:
     A single-channel aEEG derived across the central electrodes has been running since
     admission and has shown two arched deflections, both confirmed as seizures on the
     raw trace and treated with phenobarbital. The team wants to know whether upgrading
-    to an eight-channel aEEG display would let them quantify seizure burden accurately
+    to a four-channel aEEG display would let them quantify seizure burden accurately
     enough to titrate a second antiseizure medication, or whether it would mainly help
     them decide which infants have any seizures at all. Conventional EEG is available
     but is read only twice daily by the on-call neurophysiologist.
@@ -127,16 +127,28 @@ image:
     seed: 101717
     age_group: neonate
     sample_rate: 256
-    channels: [C3-C4, C3-T3, C4-T4, T3-T4]
+    channels:
+    - C3-C4
+    - C3-T3
+    - C4-T4
+    - T3-T4
     montage: neonatal_reduced
     duration_h: 4
     pattern: DNV
     sleep_wake_cycling: absent
     seizures:
-      - { onset_h: 0.8, duration_min: 1.0 }
-      - { onset_h: 2.1, duration_min: 1.2 }
-      - { onset_h: 2.9, duration_min: 0.7 }
-      - { onset_h: 3.4, duration_min: 0.8 }
+    - onset_h: 0.8
+      duration_min: 1.0
+      onset_region: right_temporal
+    - onset_h: 2.1
+      duration_min: 1.2
+      onset_region: right_temporal
+    - onset_h: 2.9
+      duration_min: 0.7
+      onset_region: left_temporal
+    - onset_h: 3.4
+      duration_min: 0.8
+      onset_region: right_frontal
     raw_strip_at_h: 2.1
     background:
       type: discontinuous
@@ -145,18 +157,19 @@ image:
       slow_fraction: 0.75
       reactivity: present
     events:
-      - type: temperature_change
-        at_min: 0
-        from_c: 33.5
-        to_c: 33.5
-        over_min: 240
+    - type: temperature_change
+      at_min: 0
+      from_c: 33.5
+      to_c: 33.5
+      over_min: 240
     annotations:
-      - { at_min: 50, label: "Phenobarbital 20 mg/kg" }
+    - at_min: 50
+      label: Phenobarbital 20 mg/kg
     style:
       layout: side_by_side_single_vs_multichannel
       single_channel: C3-C4
-      seizure_onset_region_by_index: [right_temporal, right_temporal, left_temporal, right_frontal]
       amplitude_axis: semilog
+    raw_strip_window_s: 15
 
 metadata:
   author: Writer A (claude-opus)

@@ -8,13 +8,41 @@
     {
       "name": "aeeg_C3-C4",
       "y0": 0.07,
-      "y1": 0.603,
+      "y1": 0.663,
       "x0": 0.075,
+      "x1": 0.43
+    },
+    {
+      "name": "aeeg_C3-C4",
+      "y0": 0.07,
+      "y1": 0.177,
+      "x0": 0.575,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_C3-T3",
+      "y0": 0.232,
+      "y1": 0.339,
+      "x0": 0.575,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_C4-T4",
+      "y0": 0.394,
+      "y1": 0.501,
+      "x0": 0.575,
+      "x1": 0.984
+    },
+    {
+      "name": "aeeg_T3-T4",
+      "y0": 0.556,
+      "y1": 0.663,
+      "x0": 0.575,
       "x1": 0.984
     },
     {
       "name": "raw_strip",
-      "y0": 0.713,
+      "y0": 0.773,
       "y1": 0.863,
       "x0": 0.075,
       "x1": 0.984
@@ -22,7 +50,7 @@
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.2.0",
-  "spec_hash": "sha256:abcadf1c9a916bed0ac78a39d3b7f60765b885f44c78506720d0da90b51e662b",
+  "renderer_version": "0.3.0",
+  "spec_hash": "sha256:705f4f114d9597d89140abe1c27b29a5f65672a9f8b88089f5fd7d16ba557b91",
   "path": "public/images/qbank/PQ-A-017.png"
 }

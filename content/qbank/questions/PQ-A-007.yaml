@@ -24,10 +24,9 @@ stem:
     trips, or respiratory treatments occurred during the displayed window, and the
     electrode impedances were stable throughout.
   image_caption: >-
-    Six-hour qEEG panel, top to bottom: suppression ratio (left, right), 0 to 100
-    percent; aEEG (left, right); FFT spectrogram (left, right), 0 to 20 hertz. Time
-    axis in minutes from the start of the displayed window. No medication annotations
-    are shown.
+    Six-hour qEEG panel, top to bottom: suppression ratio (left, right), 0 to 100 percent; aEEG
+    (left, right); FFT spectrogram (left, right), 0 to 20 hertz. Time axis in hours:minutes from the
+    start of the displayed window. No medication annotations are shown.
   lead_in: >-
     Click the point on the left suppression-ratio panel where the increased
     pentobarbital rate begins to take effect.

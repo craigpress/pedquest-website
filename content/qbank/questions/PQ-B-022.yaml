@@ -25,10 +25,10 @@ stem:
     infarct. The bedside nurse reports that the seizure-probability trend has been
     elevated since cannulation.
   image_caption: >-
-    Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT
-    0-20 Hz L and R; relative asymmetry spectrogram; asymmetry index; suppression ratio L
-    and R), elapsed minutes; circuit running is annotated from minute 0. Lower: 15-second
-    raw page from minute 182, longitudinal bipolar, 7 microvolts per millimetre, 1-70 Hz.
+    Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT 0-20 Hz L and
+    R; relative asymmetry spectrogram; asymmetry index; suppression ratio L and R), elapsed time
+    (hours:minutes); circuit running is annotated from minute 0. Lower: 15-second raw page from
+    minute 180.5, longitudinal bipolar, 7 microvolts per millimetre, 1-70 Hz.
   lead_in: >-
     Locate the electrographic seizure on the trend panel, distinguishing it from the
     circuit artifact.
@@ -49,10 +49,10 @@ explanation: >-
   runs across both rhythmicity spectrograms and both FFT panels at a fixed frequency, does
   not change over 6 hours, is present bilaterally and does not deflect the asymmetry
   index. That is the circuit pump artifact, and it is what has been holding the
-  seizure-probability trend high since cannulation. At about 180 minutes a separate band
+  seizure-probability trend elevated since cannulation. At about 180 minutes a separate band
   appears only on the right, starting near 3.5 Hz and slowing to about 1.5 Hz over roughly
   100 seconds, with a rightward deflection of the asymmetry index and a brief post-ictal
-  rise in the right suppression ratio; the raw page at minute 182 confirms evolving
+  rise in the right suppression ratio; the raw page at minute 180.5 confirms evolving
   rhythmic activity over the right hemisphere. Evidence: in 201
   children monitored with continuous EEG during the first 24 hours of extracorporeal
   support, electrographic seizures occurred in 33 (16 percent) at a median of 3.2 hours
@@ -115,45 +115,54 @@ image:
           slowing_hz: 1.5
         reactivity: present
       events:
-        - type: artifact
-          kind: ecmo_pump
-          at_min: 0
-          duration_s: 21600
-          side: all
-          intensity: medium
-        - type: seizure
-          onset_min: 180.0
-          duration_s: 100
-          onset_region: right_hemisphere
-          evolution: { start_hz: 3.5, end_hz: 1.5, amplitude_start_uv: 50, amplitude_end_uv: 145 }
-          spread: none
-          postictal_attenuation_s: 60
-        - type: artifact
-          kind: patting
-          at_min: 300
-          duration_s: 120
-          side: all
-          intensity: medium
+      - type: artifact
+        kind: ecmo_pump
+        at_min: 0
+        duration_s: 21600
+        side: all
+        intensity: medium
+      - type: seizure
+        onset_min: 180.0
+        duration_s: 100
+        onset_region: right_hemisphere
+        evolution:
+          start_hz: 3.5
+          end_hz: 1.5
+          amplitude_start_uv: 50
+          amplitude_end_uv: 145
+        spread: none
+        postictal_attenuation_s: 60
+      - type: artifact
+        kind: patting
+        at_min: 300
+        duration_s: 120
+        side: all
+        intensity: medium
       annotations:
-        - { at_min: 0, label: "ECMO circuit running" }
-        - { at_min: 300, label: "Caregiver patting" }
+      - at_min: 0
+        label: ECMO circuit running
+      - at_min: 300
+        label: Caregiver patting
       panels:
-        - seizure_probability
-        - rhythmicity_L
-        - rhythmicity_R
-        - fft_L
-        - fft_R
-        - asymmetry_relative
-        - asymmetry_index
-        - suppression_ratio_L
-        - suppression_ratio_R
+      - seizure_probability
+      - rhythmicity_L
+      - rhythmicity_R
+      - fft_L
+      - fft_R
+      - asymmetry_relative
+      - asymmetry_index
+      - suppression_ratio_L
+      - suppression_ratio_R
       time_axis: elapsed
     eeg_page:
-      at_min: 182.0
+      at_min: 180.5
       window_s: 15
       sensitivity_uv_mm: 7
       montage: longitudinal_bipolar
-      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      filters:
+        lf_hz: 1
+        hf_hz: 70
+        notch_hz: 60
       highlight: null
 
 metadata:

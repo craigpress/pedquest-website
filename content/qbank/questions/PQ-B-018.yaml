@@ -37,8 +37,8 @@ options:
     correct: true
     rationale: >-
       Persistent unexplained altered mental status after convulsive status epilepticus is
-      the archetypal setting for this recommendation, and the page confirms ongoing
-      evolving ictal activity.
+      the archetypal setting for this recommendation, and the page confirms an
+      electrographic seizure requiring assessment of duration and burden.
   - key: B
     text: Assessment of the efficacy of therapy for seizures and status epilepticus
     correct: false
@@ -70,8 +70,9 @@ explanation: >-
   frequency and field across the 15 seconds, spreading anteriorly, with relative
   attenuation of the contralateral chains. That evolution over a single page identifies an
   electrographic seizure rather than a periodic pattern or a burst-suppression background,
-  and the clinical picture of persistent unresponsiveness with eye deviation after
-  convulsive status epilepticus is nonconvulsive status epilepticus. Evidence: the
+  while the clinical picture raises concern for possible nonconvulsive status. A 15-second
+  page does not establish status duration or burden; that requires review of the continuous
+  record and electroclinical correlation. Evidence: the
   American Clinical Neurophysiology Society critical care continuous EEG task force
   developed expert consensus recommendations for adults and children. The panel recommends
   continuous EEG for the diagnosis of nonconvulsive seizures, nonconvulsive status

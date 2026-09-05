@@ -25,10 +25,10 @@ stem:
     ratio is nearly unchanged bilaterally, and the asymmetry spectrogram stays near
     neutral across all frequencies. There is no new focal deficit on examination.
   image_caption: >-
-    Two-hour qEEG panel, top to bottom: total power (left, right) on a logarithmic
-    axis; alpha-delta ratio (left, right); asymmetry spectrogram, 0 to 20 hertz,
-    red-to-blue color bar. A propofol bolus is annotated at 60 minutes. Time axis in
-    minutes from the start of the displayed window.
+    Two-hour qEEG panel, top to bottom: total power (left, right) on a logarithmic axis; alpha-delta
+    ratio (left, right); asymmetry spectrogram, 0 to 20 hertz, blue-to-red asymmetry encoding. A
+    propofol bolus is annotated at 60 minutes. Time axis in minutes from the start of the displayed
+    window.
   lead_in: >-
     Which mechanism best explains the divergent behaviour of the two line trends after
     the bolus?
@@ -69,10 +69,10 @@ options:
 
 explanation: >-
   The correct answer is A. Total power is an absolute measure and falls whenever
-  amplitude falls, from any cause; the alpha-delta ratio is relative and is insensitive
-  to any process that scales both bands together. That difference is the reason
-  ratio-based trends are the preferred ischemia screen in a patient whose sedation is
-  changing. What the image shows: a sharp symmetric fall in total power at
+  amplitude falls; the alpha-delta ratio remains stable when a process scales alpha
+  and delta power equally, as specified in this simulation. This conditional cancellation
+  can help distinguish a global amplitude change from regional spectral redistribution.
+  What the image shows: a sharp symmetric fall in total power at
   60 minutes with the alpha-delta ratio flat in both hemispheres and a neutral
   asymmetry spectrogram, a triad that says global amplitude change without regional
   redistribution. Evidence: a pediatric neurocritical care review of qEEG trends
@@ -86,12 +86,12 @@ explanation: >-
   regions, while the 6 with hemorrhagic stroke showed no consistent pattern and instead
   demonstrated a negative association between total power and arterial blood pressure
   within injured regions. That study is small, and pediatric validation of ischemia
-  trends is limited. Bedside takeaway: when sedation is in flux, follow the ratio and
-  the asymmetry trends, and treat a fall in total power alone as uninterpretable.
+  trends is limited. Bedside takeaway: when sedation is in flux, interpret total power,
+  ratios, asymmetry, raw EEG and clinical context together.
 
 key_points:
-  - Total power falls with any global amplitude change, including sedation.
-  - The alpha-delta ratio cancels changes that scale alpha and delta together.
+  - Total power can fall with a global amplitude change, including sedation.
+  - The alpha-delta ratio remains stable only when alpha and delta power scale together.
   - In 5 children with acute ischemic stroke, injured regions lost alpha and beta power.
 
 references:
@@ -133,24 +133,33 @@ image:
       slow_fraction: 0.45
       reactivity: present
     events:
-      - type: sedation_change
-        at_min: 60.0
-        direction: increase
-        agent: propofol
-        effect: { beta_boost: true, ramp_min: 2 }
+    - type: sedation_change
+      at_min: 60.0
+      direction: increase
+      agent: propofol
+      effect:
+        beta_boost: false
+        ramp_min: 2
+        amplitude_pct: 50
+        suppression_ratio_target_pct: 0
     annotations:
-      - { at_min: 60, label: "Propofol 1 mg/kg bolus" }
+    - at_min: 60
+      label: Propofol 1 mg/kg bolus
     panels:
-      - total_power_L
-      - total_power_R
-      - alpha_delta_ratio_L
-      - alpha_delta_ratio_R
-      - asymmetry_relative
+    - total_power_L
+    - total_power_R
+    - alpha_delta_ratio_L
+    - alpha_delta_ratio_R
+    - asymmetry_relative
     time_axis: elapsed
     style:
       total_power_axis: log
-      alpha_delta_ratio_axis: [0, 2]
-      asymmetry_spectrogram_hz_range: [0, 20]
+      alpha_delta_ratio_axis:
+      - 0
+      - 2
+      asymmetry_spectrogram_hz_range:
+      - 0
+      - 20
       asymmetry_colorbar: blue_left_red_right
 
 metadata:

@@ -68,7 +68,7 @@ options:
 explanation: >-
   The correct answer is A. An aEEG reports amplitude from the specific derivation it is
   built from, so a focal seizure that never involves those electrodes produces no
-  amplitude change and the trace can look entirely normal. What the image shows: a
+  sufficient amplitude change and the trace can look normal. What the image shows: a
   continuous aEEG band with a stable lower margin and no arched upward deflections,
   while the annotation strip marks nine conventional-EEG seizures underneath, making
   the mismatch between the trend and the reference standard explicit. Evidence: in a
@@ -83,11 +83,11 @@ explanation: >-
   cross-central derivations perform as well as they do and why frontal-only events are
   the classic miss. A pediatric review makes the general point that abnormalities
   occurring far from the electrodes used to build the aEEG may not be detected.
-  Bedside takeaway: know which electrodes your aEEG is derived from, and never accept
-  a normal aEEG as excluding a focal seizure remote from that derivation.
+  Bedside takeaway: know which electrodes your aEEG is derived from, and do not use
+  a normal limited-channel aEEG to exclude a focal seizure outside or weakly represented in that derivation.
 
 key_points:
-  - An aEEG can only show events involving the electrodes it is derived from.
+  - An aEEG is most sensitive to events that produce a sufficient amplitude change in its derivation.
   - 78 percent of 851 neonatal seizures appeared in a single C3 to C4 channel.
   - 68 percent of neonatal seizure patterns in term HIE were centrotemporal, not frontal.
 
@@ -133,7 +133,8 @@ image:
     seed: 100606
     age_group: neonate
     sample_rate: 256
-    channels: [C3-C4]
+    channels:
+    - C3-C4
     montage: neonatal_reduced
     duration_h: 6
     pattern: CNV
@@ -147,21 +148,24 @@ image:
       slow_fraction: 0.6
       reactivity: present
     events:
-      - type: seizure_cluster
-        start_min: 45
-        end_min: 320
-        interval_min: 34
-        seizure:
-          duration_s: 55
-          onset_region: right_frontal
-          evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45 }
-          spread: none
-    annotations:
-      - { at_min: 45, label: "cEEG seizure 1" }
-      - { at_min: 320, label: "cEEG seizure 9" }
+    - type: seizure_cluster
+      start_min: 45
+      end_min: 320
+      interval_min: 34
+      seizure:
+        duration_s: 55
+        onset_region: right_frontal
+        evolution:
+          start_hz: 3.0
+          end_hz: 1.5
+          amplitude_start_uv: 30
+          amplitude_end_uv: 45
+        spread: none
+    annotations: []
     style:
       show_reference_seizure_strip: true
       amplitude_axis: semilog
+    raw_strip_window_s: 15
 
 metadata:
   author: Writer A (claude-opus)

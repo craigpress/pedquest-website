@@ -92,12 +92,13 @@ explanation: >-
   96, for individual seizures when aEEG was read with the raw trace, but only
   39 percent, range 25 to 80, without it, and concluded that aEEG cannot be
   recommended as the mainstay for diagnosis and management of neonatal seizures.
-  Bedside takeaway: a normal single-channel aEEG does not exclude neonatal seizures,
-  and reading it with the raw trace roughly doubles sensitivity.
+  Bedside takeaway: a normal single-channel aEEG does not exclude neonatal seizures.
+  Across studies in the cited systematic review, median sensitivity was higher when
+  readers also used the corresponding raw trace; this does not establish that adding raw EEG alone doubles sensitivity.
 
 key_points:
   - Neonatologists detected only 12 to 38 percent of 851 individual neonatal seizures.
-  - Reading aEEG with the raw trace raised median sensitivity from 39 to 76 percent.
+  - Across cited studies, median sensitivity was 39 percent for aEEG alone and 76 percent with raw trace; study differences limit causal inference.
   - Brief, low-amplitude and infrequent seizures are the ones aEEG misses.
 
 references:
@@ -142,19 +143,12 @@ image:
     seed: 101616
     age_group: neonate
     sample_rate: 256
-    channels: [C3-C4]
+    channels:
+    - C3-C4
     montage: neonatal_reduced
     duration_h: 6
     pattern: CNV
     sleep_wake_cycling: immature
-    seizures:
-      - { onset_h: 0.6, duration_min: 0.5 }
-      - { onset_h: 1.1, duration_min: 0.6 }
-      - { onset_h: 1.9, duration_min: 0.4 }
-      - { onset_h: 2.4, duration_min: 0.7 }
-      - { onset_h: 3.2, duration_min: 0.5 }
-      - { onset_h: 4.1, duration_min: 0.6 }
-      - { onset_h: 5.0, duration_min: 0.5 }
     raw_strip_at_h: 2.4
     background:
       type: continuous
@@ -163,10 +157,164 @@ image:
       slow_fraction: 0.6
       reactivity: present
     style:
-      seizure_amplitude_uv: 25
       show_reference_seizure_strip: true
-      reference_seizure_count: 14
       amplitude_axis: semilog
+    raw_strip_window_s: 15
+    events:
+    - type: seizure
+      onset_min: 36.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 51.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 66.0
+      duration_s: 36.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 90.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 114.0
+      duration_s: 24.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 129.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 144.0
+      duration_s: 42.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 168.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 192.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 219.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 246.0
+      duration_s: 36.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 273.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 300.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
+    - type: seizure
+      onset_min: 327.0
+      duration_s: 30.0
+      onset_region: left_central
+      evolution:
+        start_hz: 2.2
+        end_hz: 1.4
+        amplitude_start_uv: 25
+        amplitude_end_uv: 25
+      spread: none
+      postictal_attenuation_s: 0
 
 metadata:
   author: Writer A (claude-opus)

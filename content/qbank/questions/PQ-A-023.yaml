@@ -25,10 +25,10 @@ stem:
     seconds, holds for about 8 minutes, and then returns abruptly to the prior
     amplitude; the aEEG lower margin during it stays above 10 microvolts.
   image_caption: >-
-    Six-hour qEEG panel, top to bottom: aEEG (left, right) on a semilogarithmic axis
-    with a 10 microvolt gridline; envelope trend (left, right); suppression ratio
-    (left, right), threshold 10 microvolts; relative asymmetry spectrogram. Time axis
-    in minutes from the start of the displayed window; a midazolam bolus is annotated.
+    Six-hour qEEG panel, top to bottom: aEEG (left, right) on a semilogarithmic axis with a 10
+    microvolt gridline; envelope trend (left, right); suppression ratio (left, right), threshold 10
+    microvolts; relative asymmetry spectrogram. Time axis in hours:minutes from the start of the
+    displayed window; a midazolam bolus is annotated.
   lead_in: >-
     Click the abrupt diffuse attenuation on the left aEEG panel.
 
@@ -55,20 +55,21 @@ explanation: >-
   separates these two magnitudes explicitly. Attenuation means periods in which the
   lower voltage is at least 10 microvolts but less than 50 percent of the higher
   voltage background; suppression means periods in which the lower voltage is below
-  10 microvolts. Because the lower margin here remains above 10 microvolts, this
-  episode is an attenuation and not a suppression, which is why a suppression ratio
-  configured at a 10 microvolt threshold barely moves. The terminology also notes that
+  10 microvolts. The aEEG lower margin is a compressed trend measure and is not
+  interchangeable with raw-EEG voltage. The stable suppression-ratio trend suggests
+  that little activity crossed the configured threshold, but the raw EEG is required
+  to classify the episode as attenuation or suppression. The terminology also notes that
   when attenuations or suppressions are stimulus-induced they are labelled
   SI-attenuation or SI-suppression, and a pediatric review notes that persistent
   changes in asymmetry spectrograms may reflect cerebral perfusion or extracerebral
-  causes. Bedside takeaway: an abrupt attenuation that recovers abruptly and is not
-  explained by drug or post-ictal state warrants immediate evaluation for a perfusion
-  event.
+  causes. Bedside takeaway: an abrupt bilateral amplitude change warrants immediate
+  raw-EEG review, technical checks and clinical assessment for medication, systemic,
+  cerebral and extracerebral causes.
 
 key_points:
-  - ACNS attenuation is at least 10 microvolts; suppression is below 10 microvolts.
+  - ACNS attenuation and suppression are raw-EEG voltage definitions; an aEEG margin alone cannot assign them.
   - Post-ictal falls follow a seizure and recover gradually over about a minute.
-  - A suppression ratio set at 10 microvolts will not register an attenuation.
+  - A suppression ratio set at 10 microvolts measures time below that threshold and does not quantify attenuation above it.
 
 references:
   - pmid: "33475321"
@@ -106,42 +107,58 @@ image:
     background:
       type: continuous
       dominant_hz: 6.0
-      amplitude_uv: 50
+      amplitude_uv: 220
       slow_fraction: 0.5
       reactivity: present
     events:
-      - type: seizure
-        onset_min: 60.0
-        duration_s: 100
-        onset_region: left_central
-        evolution: { start_hz: 4.0, end_hz: 1.5, amplitude_start_uv: 55, amplitude_end_uv: 145 }
-        spread: hemispheric
-        postictal_attenuation_s: 60
-      - type: sedation_change
-        at_min: 180.0
-        direction: increase
-        agent: midazolam
-        effect: { ramp_min: 8 }
-      - type: attenuation_transient
-        at_min: 300.0
-        duration_min: 8
-        side: both
-        depth_pct: 60
+    - type: seizure
+      onset_min: 60.0
+      duration_s: 100
+      onset_region: left_central
+      evolution:
+        start_hz: 4.0
+        end_hz: 1.5
+        amplitude_start_uv: 55
+        amplitude_end_uv: 145
+      spread: hemispheric
+      postictal_attenuation_s: 60
+    - type: sedation_change
+      at_min: 180.0
+      direction: increase
+      agent: midazolam
+      effect:
+        ramp_min: 8
+        amplitude_pct: 75
+        suppression_ratio_target_pct: 0
+        beta_boost: false
+    - type: attenuation_transient
+      at_min: 300.0
+      duration_min: 8
+      side: both
+      depth_pct: 60
     annotations:
-      - { at_min: 180, label: "Midazolam 0.1 mg/kg bolus" }
+    - at_min: 180
+      label: Midazolam 0.1 mg/kg bolus
     panels:
-      - aeeg_L
-      - aeeg_R
-      - envelope_L
-      - envelope_R
-      - suppression_ratio_L
-      - suppression_ratio_R
-      - asymmetry_relative
+    - aeeg_L
+    - aeeg_R
+    - envelope_L
+    - envelope_R
+    - suppression_ratio_L
+    - suppression_ratio_R
+    - asymmetry_relative
     time_axis: elapsed
     style:
       aeeg_axis: semilog
-      aeeg_gridlines_uv: [5, 10, 25, 50, 100]
-      attenuation_nadir_lower_margin_uv: 12
+      aeeg_gridlines_uv:
+      - 5
+      - 10
+      - 25
+      - 50
+      - 100
+      - 250
+      - 500
+      envelope_axis_uv: [0, 300]
       suppression_threshold_uv: 10
 
 metadata:

@@ -1,7 +1,7 @@
 id: PQ-A-013
 version: 1
 status: draft
-title: Which spectrogram is most sensitive for detecting a focal seizure
+title: Focal-seizure sensitivity in a published spectrogram comparison
 domain: seizure_detection
 topics: [asymmetry spectrogram, FFT spectrogram, seizure detection trend, focal seizures, sensitivity]
 population: adolescent
@@ -9,9 +9,8 @@ setting: EMU
 difficulty: intermediate
 bloom: application
 learning_objective: >-
-  Select the qEEG trend with the highest published sensitivity for focal-onset
-  seizures, and state the sensitivity figures and study population that support the
-  choice.
+  Identify which qEEG trend had the highest focal-seizure sensitivity in the specified
+  mixed-age study and state the population that limits its application.
 
 stem:
   vignette: >-
@@ -25,12 +24,12 @@ stem:
     placed at the top of the panel as the primary screening trend. The team asks which
     single trend gives the best chance of catching her events.
   image_caption: >-
-    Four-hour qEEG panel showing, in unlabeled order, a seizure-detection probability
-    trend, FFT spectrograms (left, right), a relative asymmetry spectrogram, and
-    rhythmicity spectrograms (left, right). Three brief right frontocentral seizures
-    occur during the window. Time axis in minutes from the start of recording.
+    Four-hour qEEG panel showing, in unlabeled order, a seizure-detection probability trend, FFT
+    spectrograms (left, right), a relative asymmetry spectrogram, and rhythmicity spectrograms
+    (left, right). Three brief right frontocentral seizures occur during the window. Time axis in
+    hours:minutes from the start of recording.
   lead_in: >-
-    Which trend has the highest published sensitivity for focal-onset seizures?
+    In the mixed-age 562-seizure study described in the explanation, which trend had the highest sensitivity for focal seizures?
 
 question_type: multiple_choice
 options:

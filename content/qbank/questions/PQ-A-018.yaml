@@ -26,10 +26,10 @@ stem:
     over the left hemisphere, an arched rise in the left aEEG, a leftward asymmetry
     deflection, and a brief fall in left amplitude afterward.
   image_caption: >-
-    Four-hour qEEG panel, top to bottom: seizure probability; rhythmicity spectrogram
-    (left, right); FFT spectrogram (left, right); relative asymmetry spectrogram and
-    asymmetry index; aEEG (left, right). Scheduled chest physiotherapy is annotated at
-    70 minutes. Time axis in minutes from the start of recording.
+    Four-hour qEEG panel, top to bottom: seizure probability; rhythmicity spectrogram (left, right);
+    FFT spectrogram (left, right); relative asymmetry spectrogram and asymmetry index; aEEG (left,
+    right). Scheduled chest physiotherapy is annotated at 70 minutes. Time axis in hours:minutes
+    from the start of recording.
   lead_in: >-
     Click the electrographic seizure on the left rhythmicity spectrogram panel.
 
@@ -110,36 +110,45 @@ image:
       slow_fraction: 0.6
       reactivity: present
     events:
-      - type: artifact
-        kind: chest_pt
-        at_min: 70.0
-        duration_s: 600
-        side: all
-        intensity: high
-      - type: seizure
-        onset_min: 150.0
-        duration_s: 90
-        onset_region: left_central
-        evolution: { start_hz: 4.0, end_hz: 1.5, amplitude_start_uv: 60, amplitude_end_uv: 155 }
-        spread: hemispheric
-        postictal_attenuation_s: 45
+    - type: artifact
+      kind: chest_pt
+      at_min: 70.0
+      duration_s: 600
+      side: all
+      intensity: high
+      frequency_hz: 3
+    - type: seizure
+      onset_min: 150.0
+      duration_s: 90
+      onset_region: left_central
+      evolution:
+        start_hz: 4.0
+        end_hz: 1.5
+        amplitude_start_uv: 60
+        amplitude_end_uv: 155
+      spread: hemispheric
+      postictal_attenuation_s: 45
     annotations:
-      - { at_min: 70, label: "Chest physiotherapy" }
+    - at_min: 70
+      label: Chest physiotherapy
     panels:
-      - seizure_probability
-      - rhythmicity_L
-      - rhythmicity_R
-      - fft_L
-      - fft_R
-      - asymmetry_relative
-      - asymmetry_index
-      - aeeg_L
-      - aeeg_R
+    - seizure_probability
+    - rhythmicity_L
+    - rhythmicity_R
+    - fft_L
+    - fft_R
+    - asymmetry_relative
+    - asymmetry_index
+    - aeeg_L
+    - aeeg_R
     time_axis: elapsed
     style:
-      artifact_band_hz: 3.0
-      rhythmicity_hz_range: [1, 25]
-      spectrogram_hz_range: [0, 20]
+      rhythmicity_hz_range:
+      - 1
+      - 25
+      spectrogram_hz_range:
+      - 0
+      - 20
 
 metadata:
   author: Writer A (claude-opus)

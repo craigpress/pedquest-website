@@ -25,10 +25,9 @@ stem:
     left amplitude afterward. His examination is unchanged, and no clinical events have
     been observed or documented at any of these times.
   image_caption: >-
-    Twelve-hour qEEG panel, top to bottom: seizure probability; rhythmicity
-    spectrogram (left, right); FFT spectrogram (left, right); relative asymmetry
-    spectrogram and asymmetry index; aEEG (left, right). Time axis in hours from the
-    start of the displayed window.
+    Twelve-hour qEEG panel, top to bottom: seizure probability; rhythmicity spectrogram (left,
+    right); FFT spectrogram (left, right); relative asymmetry spectrogram and asymmetry index; aEEG
+    (left, right). Time axis in hours:minutes from the start of the displayed window.
   lead_in: >-
     What is the best interpretation of the repeating events on this panel?
 
@@ -71,9 +70,9 @@ options:
       frequency evolution.
 
 explanation: >-
-  The correct answer is A. The features that separate cyclic seizures from state
+  The correct answer is A. In this simulation, the features favoring cyclic seizures over state
   cycling are stereotypy, frequency evolution within each event, lateralisation, and
-  post-ictal attenuation. What the image shows: 36 nearly identical events at a fixed
+  postictal attenuation; raw EEG must confirm ictal classification. What the image shows: 36 nearly identical events at a fixed
   20-minute interval, each with a left rhythmicity band slowing from 5 to 2 hertz, a
   solid flame on the left FFT spectrogram, an arched rise in the left aEEG, a leftward
   asymmetry deflection, and a brief post-ictal fall in left amplitude; the
@@ -92,7 +91,7 @@ explanation: >-
   clock, quantify the burden across the whole panel before adjusting therapy.
 
 key_points:
-  - Cyclic seizures are stereotyped, evolving, lateralised events at a fixed interval.
+  - Stereotyped recurrence supports recognition of cyclic seizures, but ictal classification depends on each event's raw-EEG features.
   - State cycling is gradual, bilateral, and lacks evolution or post-ictal attenuation.
   - In 100 critically ill children, seizures were exclusively nonconvulsive in 32.
 

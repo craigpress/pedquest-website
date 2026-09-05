@@ -81,9 +81,10 @@ def render_qeeg_panel(
             fig = plt.figure(figsize=(st["width"] / st["dpi"], st["height"] / st["dpi"]),
                              dpi=st["dpi"])
         rx, ry, rw, rh = rect
+        right_margin = 0.06 if st.get("show_colorbar") else RIGHT_MARGIN
         geo = PanelGeometry(st["width"], st["height"], duration_min)
         geo.x0 = rx + LEFT * rw
-        geo.x1 = rx + (1.0 - RIGHT_MARGIN) * rw
+        geo.x1 = rx + (1.0 - right_margin) * rw
 
         panels = list(spec["panels"])
         weights = [S.PANEL_WEIGHT.get(p, 1.0) for p in panels]
@@ -96,7 +97,7 @@ def render_qeeg_panel(
             h = unit * w
             y -= h
             ax = fig.add_axes([rx + LEFT * rw, ry + y * rh,
-                               (1.0 - LEFT - RIGHT_MARGIN) * rw, h * rh])
+                               (1.0 - LEFT - right_margin) * rw, h * rh])
             axes.append((name, ax))
             geo.add(name, ry + y * rh, h * rh)
             y -= GAP
@@ -273,7 +274,7 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
         lo, hi = float(rng[0]), float(rng[1])
         mid = (lo + hi) / 2.0
         _line_panel(ax, t_min, tr.env[side], theme.aeeg, theme, lo, hi,
-                    [lo, mid, hi], [f"{lo:g}", f"{mid:g}", f"{hi:g}"])
+                    [lo, mid, hi], [f"{lo:g}", f"{mid:g}", f"{hi:g}"], fill=False)
 
     elif name in ("total_power_L", "total_power_R"):
         log = st.get("total_power_axis", "log") == "log"

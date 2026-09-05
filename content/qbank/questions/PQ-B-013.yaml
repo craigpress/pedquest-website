@@ -24,10 +24,10 @@ stem:
     clinical seizure-like events. Chest physiotherapy was performed during the fifth hour
     of the recording and is annotated on the panel.
   image_caption: >-
-    Thirty-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right);
-    FFT spectrogram 0-20 Hz (left, right); relative asymmetry spectrogram; asymmetry
-    index; suppression ratio (left, right). Elapsed minutes on the time axis. Chest
-    physiotherapy is annotated at 300 minutes.
+    Thirty-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
+    spectrogram 0-20 Hz (left, right); relative asymmetry spectrogram; asymmetry index; suppression
+    ratio (left, right). Elapsed time (hours:minutes) on the time axis. Chest physiotherapy is
+    annotated at 300 minutes.
   lead_in: >-
     Locate the earliest electrographic seizure of the recording on the trend panel.
 
@@ -58,8 +58,9 @@ explanation: >-
   percent) and status epilepticus occurred in 8 (62 percent). Delayed sternal closure and
   longer deep hypothermic circulatory arrest duration were each associated with increased
   seizure risk, and mortality was higher among neonates with than without seizures, 38
-  percent versus 3 percent. Bedside takeaway: the highest-yield window is the second half
-  of the first postoperative day, and physiotherapy is the artifact to expect.
+  percent versus 3 percent. The 20-hour value is a cohort median, not a boundary for an
+  individual infant's risk. Bedside takeaway: monitor across the postoperative interval
+  and distinguish evolving seizures from annotated physiotherapy artifact.
 
 key_points:
   - Post-bypass neonatal seizures began at a median of 20 hours after return to the unit.

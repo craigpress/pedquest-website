@@ -23,13 +23,13 @@ stem:
     ictal-interictal continuum patterns. The intensivist needs the EEG machine for another
     admission and asks whether monitoring can stop now.
   image_caption: >-
-    Six-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
-    spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right); suppression
-    ratio (left, right). Elapsed minutes on the time axis. A caregiver-patting artifact is
-    annotated at 150 minutes. No medication annotations fall within this window.
+    Six-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT spectrogram
+    0-20 Hz (left, right); asymmetry index; aEEG (left, right); suppression ratio (left, right).
+    Elapsed time (hours:minutes) on the time axis. A caregiver-patting artifact is annotated at 150
+    minutes. No medication annotations fall within this window.
   lead_in: >-
-    What is the shortest monitoring duration after which her residual risk of an
-    electrographic seizure falls below 5 percent?
+    In the cited multistate model, after what duration did this risk profile reach a
+    modeled residual electrographic-seizure risk below 5 percent?
 
 question_type: multiple_choice
 options:
@@ -80,9 +80,12 @@ explanation: >-
   they were 1 year or older without prior seizures or EEG risk factors; 1 day if under 1
   year without prior seizures or EEG risks, or 1 year or older with either; 2 days if 1
   year or older with both, or under 1 year with EEG risks but no prior seizures; and 2.5
-  days if under 1 year with prior seizures. For a residual risk below 2 percent, only the
+  days if under 1 year with prior seizures. These modeled estimates assume that expert
+  raw EEG review confirms the stated absence of epileptiform and ictal-interictal patterns;
+  trends alone cannot establish that. For a residual risk below 2 percent, only the
   no-risk-factor groups needed longer, at 1.5 days under 1 year and 1 day at 1 year or
-  older. Bedside takeaway: record the four risk factors explicitly, then set the stop time.
+  older. Bedside takeaway: use the model to inform duration alongside the indication,
+  evolving clinical state and expert EEG interpretation.
 
 key_points:
   - Age 1 year or older with no prior seizures and no EEG risk factors reached under 5 percent risk at 6 hours.

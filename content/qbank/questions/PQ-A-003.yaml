@@ -25,10 +25,10 @@ stem:
     maximum amplitude in every channel stays below 5 microvolts. The bedside nurse
     asks whether the infusion should be increased before the attending arrives.
   image_caption: >-
-    Three-hour qEEG panel: suppression ratio (left, right) with the vertical axis
-    0 to 100 percent and a horizontal reference band drawn at 60 to 80 percent; aEEG
-    (left, right); FFT spectrogram (left, right). Pentobarbital rate increases are
-    annotated at 40 and 95 minutes. Time axis in minutes from the start of recording.
+    Three-hour qEEG panel: suppression ratio (left, right) with the vertical axis 0 to 100 percent
+    and a horizontal reference band drawn at 60 to 80 percent; aEEG (left, right); FFT spectrogram
+    (left, right). Pentobarbital rate increases are annotated at 40 and 95 minutes. Time axis in
+    hours:minutes from the start of recording.
   lead_in: >-
     What suppression ratio corresponds to the repeating 10-second pattern described?
 
@@ -136,8 +136,8 @@ image:
       slow_fraction: 0.6
       reactivity: absent
       burst_suppression:
-        burst_s: 2.0
-        ibi_s: 8.0
+        burst_s: 7.5
+        ibi_s: 2.5
     events:
       - type: sedation_change
         at_min: 40

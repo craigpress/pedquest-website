@@ -7,9 +7,18 @@ import { requireRole } from "@/lib/admin-auth";
 // GET /api/admin/qbank/render?jobId=<uuid>
 //
 // The renderer is a Python worker (tools/eeg-render) that polls
-// eeg_case_render_jobs, writes the PNG and fills in image_url + sidecar. When a
-// job reports 'done' this route also copies the result onto the case, so the
-// editor console does not need a second write path.
+// eeg_case_render_jobs, writes the PNG and fills in image_url + sidecar. This
+// route only polls and reports the worker's result; the worker is the sole
+// writer of case image attachments.
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  return `{${Object.entries(value as Record<string, unknown>)
+    .filter(([, child]) => child !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, child]) => `${JSON.stringify(key)}:${canonicalJson(child)}`)
+    .join(",")}}`;
+}
 export async function GET(request: NextRequest) {
   const auth = await requireRole(request, "editor");
   if (!auth.ok) return auth.response;
@@ -20,25 +29,29 @@ export async function GET(request: NextRequest) {
   const supabase = createServerClient()!;
   const { data, error } = await supabase
     .from("eeg_case_render_jobs")
-    .select("id,case_id,status,image_url,sidecar,error")
+    .select("id,case_id,status,image_url,sidecar,error,spec")
     .eq("id", jobId)
     .maybeSingle();
   if (error || !data) return NextResponse.json({ error: "Job not found." }, { status: 404 });
 
   if (data.status === "done" && data.case_id && data.image_url) {
-    const sidecar = data.sidecar as Record<string, unknown> | null;
-    const patch: Record<string, unknown> = {
-      image_url: data.image_url,
-      image_sidecar: sidecar,
-    };
-    if (sidecar) {
-      if (typeof sidecar.width === "number") patch.image_width = sidecar.width;
-      if (typeof sidecar.height === "number") patch.image_height = sidecar.height;
-      const region = sidecar.answer_region ?? sidecar.region;
-      if (region && typeof region === "object") patch.correct_region = region;
+    const { data: current, error: currentErr } = await supabase
+      .from("eeg_cases")
+      .select("image_url,spec")
+      .eq("id", data.case_id)
+      .maybeSingle();
+    const currentMatches = !currentErr && current
+      && current.image_url === data.image_url
+      && canonicalJson(current.spec) === canonicalJson(data.spec);
+    if (!currentMatches) {
+      return NextResponse.json({
+        success: false,
+        status: "superseded",
+        imageUrl: current?.image_url ?? null,
+        sidecar: data.sidecar ?? null,
+        error: "Render job superseded by a newer image attachment or specification.",
+      }, { status: 409 });
     }
-    const { error: applyErr } = await supabase.from("eeg_cases").update(patch).eq("id", data.case_id);
-    if (applyErr) console.error("[Qbank] could not apply render result:", applyErr.message);
   }
 
   return NextResponse.json({

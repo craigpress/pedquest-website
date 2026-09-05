@@ -69,9 +69,9 @@ explanation: >-
   a lower margin above the 5-microvolt gridline and early cyclical broadening, so the
   background itself is reassuring. There is one abrupt narrowing and elevation of the band
   lasting about 2 minutes; the raw inset taken at that moment is equivocal, showing
-  rhythmic activity that could be ictal or movement-related. Nothing in a two-channel
-  display can resolve that, and nothing in it can detect a seizure that never reaches the
-  central derivation. Evidence: 851 neonatal seizures from 125 conventional EEGs in infants
+  rhythmic activity that could be ictal or movement-related. This limited montage cannot
+  resolve the event confidently or detect activity outside its spatial coverage. Evidence:
+  851 neonatal seizures from 125 conventional EEGs in infants
   of 34 to 50 weeks conceptional age were reviewed against the single C3 to C4 channel
   from which aEEG is derived. At least one seizure was visible in that channel on 94
   percent of the records, and 78 percent of all individual seizures appeared in it, but
@@ -122,19 +122,28 @@ image:
     age_group: neonate
     sample_rate: 256
     duration_h: 6
-    channels: [C3-P3, C4-P4]
+    channels:
+    - C3-P3
+    - C4-P4
     pattern: CNV
     sleep_wake_cycling: immature
     background:
       type: continuous
       dominant_hz: 4.0
-      amplitude_uv: 45
+      amplitude_uv: 50
       slow_fraction: 0.55
       reactivity: present
+      burst_suppression:
+        burst_s: 10
+        ibi_s: 2
+        ibi_floor: 1
+      ibi_floor_at_h: [[0, 1], [0.75, 1], [1.5, 0.6], [2.25, 0.6], [3, 1], [3.75, 1], [4.5, 0.6], [5.25, 0.6], [6, 1]]
     seizures:
-      - { onset_h: 3.20, duration_min: 2 }
+    - onset_h: 3.2
+      duration_min: 2
     raw_strip_at_h: 3.22
     time_axis: elapsed
+    raw_strip_window_s: 15
 
 metadata:
   author: Writer B (claude-opus)

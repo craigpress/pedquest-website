@@ -98,7 +98,7 @@ def process_one(db: Supabase) -> bool:
         if not case_id:
             raise RuntimeError("render job has no case_id")
         rows = db.request(
-            f"/rest/v1/eeg_cases?id=eq.{quote(case_id)}&select=id,qbank_id,content&limit=1"
+            f"/rest/v1/eeg_cases?id=eq.{quote(case_id)}&select=id,qbank_id,content,spec,version&limit=1"
         )
         if not rows:
             raise RuntimeError("case not found")
@@ -107,13 +107,17 @@ def process_one(db: Supabase) -> bool:
         image = dict(content.get("image") or {})
         if not image.get("kind"):
             raise RuntimeError("case content has no image.kind")
+        current_spec = case.get("spec") or image.get("spec")
+        if current_spec != job["spec"]:
+            raise RuntimeError("Render superseded by a newer image specification")
         image["spec"] = job["spec"]
         ident = case.get("qbank_id") or f"case-{case_id[:8]}"
         point = content.get("point_to_feature") if content.get("question_type") == "point_to_feature" else None
 
         with tempfile.TemporaryDirectory(prefix="pedquest-render-") as directory:
             png, sidecar = render_image(ident, image, directory, point)
-            public_url = db.upload_png(f"qbank/{ident}.png", png)
+            digest = sidecar["spec_hash"].split(":")[-1][:16]
+            public_url = db.upload_png(f"qbank/{ident}/{case['version']}-{digest}.png", png)
 
         sidecar["path"] = public_url
         case_patch: dict[str, Any] = {
@@ -124,7 +128,12 @@ def process_one(db: Supabase) -> bool:
         }
         if sidecar.get("answer_region") is not None:
             case_patch["correct_region"] = sidecar["answer_region"]
-        db.request(f"/rest/v1/eeg_cases?id=eq.{quote(case_id)}", "PATCH", case_patch)
+        updated = db.request(
+            f"/rest/v1/eeg_cases?id=eq.{quote(case_id)}&version=eq.{case['version']}",
+            "PATCH", case_patch, extra={"Prefer": "return=representation"},
+        )
+        if not updated:
+            raise RuntimeError("Render superseded while the image was being generated")
         db.request(
             f"/rest/v1/eeg_case_render_jobs?id=eq.{quote(job_id)}",
             "PATCH",

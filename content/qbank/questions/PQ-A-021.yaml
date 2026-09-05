@@ -24,10 +24,9 @@ stem:
     which all activity is below 10 microvolts alternate with periods of higher voltage
     mixed-frequency activity, and each low-voltage period lasts 2 to 4 seconds.
   image_caption: >-
-    Composite display. Upper panel: 3-hour qEEG panel with suppression ratio (left,
-    right), 0 to 100 percent, threshold set at 10 microvolts, and aEEG (left, right).
-    Lower panel: 15-second raw EEG page in longitudinal bipolar montage at
-    7 microvolts per millimetre. Time axis in minutes.
+    Composite display. Upper panel: 3-hour qEEG panel with suppression ratio (left, right), 0 to 100
+    percent, threshold set at 10 microvolts, and aEEG (left, right). Lower panel: 15-second raw EEG
+    page in longitudinal bipolar montage at 7 microvolts per millimetre. Time axis in hours:minutes.
   lead_in: >-
     Which ACNS 2021 background continuity category does this recording meet?
 
@@ -87,14 +86,15 @@ explanation: >-
   suppression, in which the lower-voltage periods are below 10 microvolts, and notes
   explicitly that this voltage cutoff differs from the ACNS neonatal terminology. That
   last note matters here: the trend's threshold is user-configurable, so a suppression
-  ratio only maps onto the ACNS categories when the threshold is set to match.
+  ratio can approximate the fraction of suppression when its threshold is 10 microvolts,
+  but raw EEG review is still required because attenuation also contributes to the ACNS continuity category.
   Bedside takeaway: check the configured suppression threshold before you translate a
   trend percentage into a terminology category.
 
 key_points:
   - Nearly continuous is 1 to 9 percent, discontinuous 10 to 49, burst suppression 50 to 99.
   - ACNS suppression means below 10 microvolts; attenuation means at least 10 microvolts.
-  - A suppression ratio maps to these categories only if its threshold is set to 10 microvolts.
+  - A 10-microvolt suppression ratio does not measure attenuation; assign continuity from the raw EEG.
 
 references:
   - pmid: "33475321"
@@ -140,22 +140,27 @@ image:
         burst_suppression:
           burst_s: 7.0
           ibi_s: 3.0
+          ibi_floor: 0.005
       events: []
       panels:
-        - suppression_ratio_L
-        - suppression_ratio_R
-        - aeeg_L
-        - aeeg_R
+      - suppression_ratio_L
+      - suppression_ratio_R
+      - aeeg_L
+      - aeeg_R
       time_axis: elapsed
       style:
         suppression_threshold_uv: 10
-        suppression_ratio_axis_pct: [0, 100]
-        suppression_ratio_mean_pct: 30
+        suppression_ratio_axis_pct:
+        - 0
+        - 100
     eeg_page:
       at_min: 90.0
       window_s: 15
       sensitivity_uv_mm: 7
-      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      filters:
+        lf_hz: 1
+        hf_hz: 70
+        notch_hz: 60
       montage: longitudinal_bipolar
       highlight: null
 

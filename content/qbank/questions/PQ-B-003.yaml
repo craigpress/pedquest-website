@@ -20,21 +20,21 @@ stem:
     discontinuous on the first day and no cyclical variation was present. The window
     shown covers 24 to 36 hours of life. Sedation was stopped 12 hours ago and no
     antiseizure medication has been given. Core temperature has been held at 33.5 degrees
-    Celsius throughout. The attending neonatologist is preparing to speak with the family
-    and asks how the tracing changes the expected trajectory.
+    Celsius throughout. The team asks how this timing relates to outcomes reported in a
+    historical cohort.
   image_caption: >-
     Twelve-hour, two-channel aEEG (C3-P3 and C4-P4) covering 24 to 36 hours of life, on
     the semilog amplitude axis, linear from 0 to 10 microvolts and logarithmic from 10 to
     100 microvolts. Hours of life are on the time axis. A 15-second raw EEG inset is
     shown. No medication marks fall within this window.
   lead_in: >-
-    Compared with an infant whose cycling first appears after 36 hours of life, what
-    outcome difference is expected?
+    In the cited 171-infant cohort, what group-level association was reported for cycling
+    beginning before rather than after 36 hours of life?
 
 question_type: multiple_choice
 options:
   - key: A
-    text: A developmental quotient about 8.5 points higher at follow-up
+    text: A median developmental quotient about 8.5 points higher at follow-up
     correct: true
     rationale: >-
       In a cohort of 171 term infants with hypoxic-ischemic encephalopathy, the median
@@ -68,9 +68,9 @@ options:
 explanation: >-
   The correct answer is A. What the image shows: over the 24-to-36-hour window the
   previously featureless band begins to broaden and narrow in a slow, repeating rhythm,
-  with the lower margin rising during the broad phases; this is immature but definite
-  sleep-wake cycling, and the raw inset shows the corresponding alternation between more
-  and less continuous activity. Nothing else in the window has changed, and no medication
+  with the lower margin falling during the broad phases; this is immature but definite
+  sleep-wake cycling. The 15-second raw inset samples the background at 30 hours of life;
+  the hours-long cycling is visible in the compressed trend. Nothing else in the window has changed, and no medication
   was given, so the change reflects recovering background organization rather than a drug
   effect. Evidence: in 171 term newborns with hypoxic-ischemic encephalopathy, cycling was
   seen in 95.4 percent of survivors but in only 8.1 percent of those who died. The median
@@ -80,9 +80,11 @@ explanation: >-
   onset and a normal cycling pattern; the median Griffiths developmental quotient differed
   by 8.5 points between infants who started cycling before versus after 36 hours, and the
   36-hour cutoff classified good versus poor outcome correctly in 82 percent. In a
-  separate cohort of 74 cooled and non-cooled infants, never developing cycling always
-  predicted poor outcome. Bedside takeaway: record the hour of life at which cycling
-  first appears, and treat it as prognostic data.
+  separate cohort of 74 cooled and non-cooled infants, absence of cycling was associated
+  with poor outcome. These are group-level observational findings and do not predict an
+  individual cooled infant's developmental quotient. Bedside takeaway: record the hour
+  of life at which cycling first appears and interpret it with serial examination,
+  imaging and other prognostic data.
 
 key_points:
   - Sleep-wake cycling appeared in 95.4 percent of survivors and 8.1 percent of infants who died.
@@ -122,7 +124,9 @@ image:
     age_group: neonate
     sample_rate: 256
     duration_h: 12
-    channels: [C3-P3, C4-P4]
+    channels:
+    - C3-P3
+    - C4-P4
     pattern: DNV
     sleep_wake_cycling: immature
     background:
@@ -131,19 +135,23 @@ image:
       amplitude_uv: 30
       slow_fraction: 0.75
       reactivity: present
+      amplitude_gain_at_h: [[0, 1.4], [2, 1.4], [3, 1.5], [5, 1.5], [6, 1.4], [8, 1.4], [9, 1.5], [12, 1.5]]
+      ibi_floor_at_h: [[0, 0.5], [2, 0.5], [3, 0.18], [5, 0.18], [6, 0.5], [8, 0.5], [9, 0.18], [12, 0.18]]
     events:
-      - type: state_change
-        at_min: 150
-        to: sleep
-      - type: state_change
-        at_min: 330
-        to: wake
-      - type: state_change
-        at_min: 510
-        to: sleep
+    - type: state_change
+      at_min: 150
+      to: sleep
+    - type: state_change
+      at_min: 330
+      to: wake
+    - type: state_change
+      at_min: 510
+      to: sleep
     seizures: []
-    raw_strip_at_h: 6.00
-    time_axis: elapsed
+    raw_strip_at_h: 6.0
+    time_axis: hours_of_life
+    raw_strip_window_s: 15
+    start_h: 24
 
 metadata:
   author: Writer B (claude-opus)

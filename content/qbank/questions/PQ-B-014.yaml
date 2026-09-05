@@ -20,9 +20,9 @@ stem:
     extracorporeal membrane oxygenation. Amplitude-integrated EEG with a raw display is
     applied within the first hour of cannulation and is scored in 3-hour blocks over the
     first day. She receives a fentanyl infusion and intermittent rocuronium boluses for
-    circuit safety. Over the first 24 hours the aEEG background score is severely
-    abnormal in every block. No electrographic seizures have occurred. The team asks how
-    confidently this recording identifies an unfavorable outcome at discharge.
+    circuit safety. Over the first 24 hours the aEEG background score is above 17. No
+    electrographic seizures have occurred. The team asks how the published score
+    performed for unfavorable outcome at discharge.
   image_caption: >-
     Twenty-four-hour, two-channel aEEG (C3-P3 and C4-P4) from the first day of
     extracorporeal membrane oxygenation, on the semilog amplitude axis, linear from 0 to
@@ -63,22 +63,22 @@ options:
     text: About 97 percent
     correct: true
     rationale: >-
-      A 24-hour aEEG background score above the reported threshold identified unfavorable
+      A 24-hour aEEG background score above 17 identified unfavorable
       outcome with a specificity of 97 percent, making a severely abnormal score highly
       specific but insensitive.
 
 explanation: >-
-  The correct answer is E. What the image shows: both channels carry a narrow, depressed
-  band with long, essentially isoelectric stretches interrupted by sparse low-voltage
-  bursts, no cyclical variation over the 24 hours, and a raw inset confirming a suppressed
-  tracing; a regular, narrow-band artifact from the circuit pump runs through the whole
-  recording without altering the envelope. This is a severely abnormal background rather
-  than a pump-driven display problem. Evidence: in a retrospective cohort of 73 neonates
+  The correct answer is E. What the image shows: both channels carry a low-amplitude
+  band without cyclical variation, with regular circuit-pump artifact visible in the raw
+  inset. The artifact contributes to the displayed aEEG envelope; this contaminated
+  excerpt alone cannot confirm an artifact-free suppressed background. The test
+  characteristics below apply to the expert-assessed background score given in the
+  vignette, after assessment of artifact. Evidence: in a retrospective cohort of 73 neonates
   and children supported with extracorporeal membrane oxygenation and monitored with
   amplitude-integrated EEG, background was summarized as a score determined in 3-hour
   blocks within the first 24 hours. Thirty-two patients had a favorable and 41 an
   unfavorable neurologic outcome by Pediatric Cerebral Performance Category at discharge.
-  A 24-hour background score above the reported threshold was associated with an
+  A 24-hour background score above 17 was associated with an
   unfavorable outcome with a sensitivity of 44 percent, a specificity of 97 percent, a
   positive predictive value of 95 percent and a negative predictive value of 57 percent,
   and in multivariable analysis with a hazard ratio of 6.1 (95 percent confidence interval
@@ -86,7 +86,8 @@ explanation: >-
   A separate cohort of 201 children on this support found a severely abnormal conventional
   background in 12 percent, again highly specific but insensitive for death, at 0.97 and
   0.23. Bedside takeaway: a severely abnormal early aEEG on ECMO is meaningful when
-  present and reassures no one when absent.
+  present in this cohort but cannot determine an individual outcome; low sensitivity also
+  means a score below threshold does not exclude unfavorable outcome.
 
 key_points:
   - A severely abnormal 24-hour aEEG background on ECMO was 97 percent specific, 44 percent sensitive.
@@ -125,7 +126,9 @@ image:
     age_group: infant
     sample_rate: 256
     duration_h: 24
-    channels: [C3-P3, C4-P4]
+    channels:
+    - C3-P3
+    - C4-P4
     pattern: BS
     sleep_wake_cycling: absent
     background:
@@ -133,20 +136,24 @@ image:
       dominant_hz: 1.2
       amplitude_uv: 20
       slow_fraction: 0.92
-      burst_suppression: { burst_s: 1.0, ibi_s: 16.0 }
+      burst_suppression:
+        burst_s: 1.0
+        ibi_s: 16.0
       reactivity: absent
     events:
-      - type: artifact
-        kind: ecmo_pump
-        at_min: 0
-        duration_s: 86400
-        side: all
-        intensity: low
+    - type: artifact
+      kind: ecmo_pump
+      at_min: 0
+      duration_s: 86400
+      side: all
+      intensity: low
     annotations:
-      - { at_min: 0, label: "ECMO circuit running" }
+    - at_min: 0
+      label: ECMO circuit running
     seizures: []
-    raw_strip_at_h: 12.00
+    raw_strip_at_h: 12.0
     time_axis: elapsed
+    raw_strip_window_s: 15
 
 metadata:
   author: Writer B (claude-opus)

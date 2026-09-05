@@ -23,10 +23,9 @@ stem:
     but that one is drawn as a filled band with an upper and a lower margin while the
     other is drawn as a single line, and asks what is actually different between them.
   image_caption: >-
-    Ten-hour qEEG panel: aEEG (left, right) drawn as a filled band on a
-    semilogarithmic amplitude axis, above envelope trend (left, right) drawn as a
-    single running line on a linear microvolt axis. Time axis in hours from the start
-    of recording.
+    Ten-hour qEEG panel: aEEG (left, right) drawn as a filled band on a semilogarithmic amplitude
+    axis, above envelope trend (left, right) drawn as a single running line on a linear microvolt
+    axis. Time axis in hours:minutes from the start of recording.
   lead_in: >-
     Which statement correctly describes how the envelope trend differs from the aEEG?
 
@@ -129,28 +128,32 @@ image:
       slow_fraction: 0.6
       reactivity: present
     events:
-      - type: state_change
-        at_min: 180
-        to: sleep
-      - type: state_change
-        at_min: 300
-        to: arousal
-      - type: sedation_change
-        at_min: 420
-        direction: decrease
-        agent: midazolam
-        effect: { ramp_min: 30 }
+    - type: state_change
+      at_min: 180
+      to: sleep
+    - type: state_change
+      at_min: 300
+      to: arousal
+    - type: sedation_change
+      at_min: 420
+      direction: decrease
+      agent: midazolam
+      effect:
+        ramp_min: 30
     annotations:
-      - { at_min: 420, label: "Midazolam weaned" }
+    - at_min: 420
+      label: Midazolam weaned
     panels:
-      - aeeg_L
-      - aeeg_R
-      - envelope_L
-      - envelope_R
+    - aeeg_L
+    - aeeg_R
+    - envelope_L
+    - envelope_R
     time_axis: elapsed
     style:
       aeeg_axis: semilog
-      envelope_axis_uv: [0, 100]
+      envelope_axis_uv:
+      - 0
+      - 100
       envelope_statistic: median
 
 metadata:

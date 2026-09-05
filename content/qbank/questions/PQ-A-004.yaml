@@ -25,10 +25,10 @@ stem:
     A resident covering the unit overnight is asked to state, from the trend panel
     alone, which hemisphere carries more power before opening the raw EEG.
   image_caption: >-
-    Three-hour qEEG panel: relative asymmetry index with the vertical axis labeled
-    minus 100 to plus 100 percent and a zero line, above an asymmetry spectrogram
-    with a frequency axis of 0 to 20 hertz and a red-to-blue color bar. Time axis in
-    minutes from the start of recording.
+    Three-hour qEEG panel: relative asymmetry index with the vertical axis labeled minus 100 to plus
+    100 percent and a zero line, above an asymmetry spectrogram with a frequency axis of 0 to 20
+    hertz and blue-to-red asymmetry encoding. Time axis in hours:minutes from the start of
+    recording.
   lead_in: >-
     Which hemisphere has the greater relative power, and which display feature
     establishes it?
@@ -78,9 +78,9 @@ explanation: >-
   color meaning greater asymmetry. What the image shows: a flat index at about minus
   35 percent and a uniformly blue asymmetry spectrogram across 0 to 20 hertz, both
   pointing to the left hemisphere; the absence of evolving bands and the absence of
-  change after stimulation mark this as a persistent, structural asymmetry rather than
-  an ictal or post-ictal one, which fits attenuation over the operated right
-  hemisphere. Evidence: a pediatric neurocritical care review of trend construction
+  evolution establish a persistent asymmetry. The trend establishes laterality, but
+  raw EEG and clinical correlation are needed to distinguish cerebral dysfunction,
+  postictal change and extracerebral attenuation. Evidence: a pediatric neurocritical care review of trend construction
   states that the absolute asymmetry index graphs the absolute difference, 0 to 100
   percent, between the hemispheres as a running average, that the relative asymmetry
   index displays index values from minus 100 to plus 100 percent with negative values

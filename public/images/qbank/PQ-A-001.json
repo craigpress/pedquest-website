@@ -6,14 +6,14 @@
   "answer_region": null,
   "panels": [
     {
-      "name": "aeeg_C3-O1",
+      "name": "aeeg_C3-P3",
       "y0": 0.07,
       "y1": 0.4665,
       "x0": 0.075,
       "x1": 0.984
     },
     {
-      "name": "aeeg_C4-O2",
+      "name": "aeeg_C4-P4",
       "y0": 0.5215,
       "y1": 0.918,
       "x0": 0.075,
@@ -22,7 +22,7 @@
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.2.0",
-  "spec_hash": "sha256:a6d86f0b706eb5aa6abd9f475930459ccb7fff1ef8ed2d3fae6498a3f8fc272a",
+  "renderer_version": "0.3.0",
+  "spec_hash": "sha256:5a6a7043c55171561e88813f9bae481b738356ce3098378f0ae7f8147de584c8",
   "path": "public/images/qbank/PQ-A-001.png"
 }

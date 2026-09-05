@@ -23,9 +23,9 @@ stem:
     intensivist asks whether the burden has crossed the threshold at which published
     pediatric data show a steep rise in the risk of neurologic decline.
   image_caption: >-
-    Six-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
-    spectrogram 0-20 Hz (left, right); asymmetry index; suppression ratio (left, right).
-    Elapsed minutes on the time axis. The levetiracetam load is annotated at 30 minutes.
+    Six-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT spectrogram
+    0-20 Hz (left, right); asymmetry index; suppression ratio (left, right). Elapsed time
+    (hours:minutes) on the time axis. The levetiracetam load is annotated at 30 minutes.
   lead_in: >-
     Above what maximum hourly electrographic seizure burden did the probability and
     magnitude of neurologic decline rise sharply?
@@ -78,10 +78,11 @@ explanation: >-
   with neurologic decline had a mean maximum hourly seizure burden of 15.7 percent
   compared with 1.8 percent in those without decline. Above a maximum burden of 20 percent
   per hour, equal to 12 minutes, both the probability and the magnitude of decline rose
-  sharply across all diagnostic categories, and each 1 percent increase in maximum hourly
+  sharply across diagnostic categories in this cohort, and each 1 percent increase in maximum hourly
   burden raised the odds of decline by 1.13 (95 percent confidence interval 1.05 to 1.21).
-  Seizure burden was not associated with mortality. Bedside takeaway: quantify minutes of
-  seizure per hour and escalate treatment before the 12-minute mark.
+  Seizure burden was not associated with mortality. This observational inflection is a
+  potential therapeutic target, not proof of a universal treatment deadline. Bedside
+  takeaway: quantify burden and treat electrographic seizures promptly in clinical context.
 
 key_points:
   - Above 20 percent of an hour, or 12 minutes, neurologic decline rose sharply in 259 children.

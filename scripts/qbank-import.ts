@@ -22,6 +22,7 @@
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, basename } from "node:path";
+import { spawnSync } from "node:child_process";
 import { load } from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
 import { loadEnvLocal, supabaseCredentials } from "./_env";
@@ -82,6 +83,7 @@ async function main() {
 
   // ---- load + basic gate ----
   const questions: QbankQuestion[] = [];
+  const questionFiles: string[] = [];
   for (const file of files) {
     let doc: unknown;
     try {
@@ -97,11 +99,22 @@ async function main() {
     }
     if (only && q.id !== only) continue;
     questions.push(q);
+    questionFiles.push(file);
   }
   if (questions.length === 0) {
     console.log("No questions selected.");
     return;
   }
+
+  const images = spawnSync(process.env.PYTHON || "python", [
+    "tools/eeg-render/verify_sidecars.py",
+    ...questionFiles,
+  ], { encoding: "utf8" });
+  if (images.status !== 0) {
+    console.error("Image verification failed:", images.stderr || images.error?.message);
+    process.exit(1);
+  }
+  console.log(images.stdout.trim());
 
   const { url, key } = supabaseCredentials();
   const supabase = createClient(url, key, { auth: { persistSession: false } });
@@ -110,7 +123,7 @@ async function main() {
   const ids = questions.map((q) => q.id);
   const { data: existingRows, error: existingErr } = await supabase
     .from("eeg_cases")
-    .select("id,qbank_id,status,version,spec_hash")
+    .select("id,qbank_id,status,version,spec_hash,source")
     .in("qbank_id", ids);
   if (existingErr) {
     // A dry run should still be usable before the migration lands — report the
@@ -125,13 +138,14 @@ async function main() {
       process.exit(1);
     }
   }
-  const existing = new Map<string, { id: string; status: string; version: number; spec_hash: string | null }>();
+  const existing = new Map<string, { id: string; status: string; version: number; spec_hash: string | null; source: string }>();
   for (const r of existingRows ?? []) {
     existing.set(r.qbank_id as string, {
       id: r.id as string,
       status: r.status as string,
       version: (r.version as number) ?? 1,
       spec_hash: (r.spec_hash as string) ?? null,
+      source: r.source as string,
     });
   }
 
@@ -191,6 +205,7 @@ async function main() {
     // ---- write ----
     const caseRow: Record<string, unknown> = {
       ...rows.case,
+      source: prev?.source ?? rows.case.source,
       status: targetStatus,
       image_url: imagePathForId(q.id),
       spec_hash: specHash(q.image.spec),
@@ -211,9 +226,10 @@ async function main() {
       // into eeg_case_revisions whenever content-bearing columns change, and
       // honours a version we set ourselves.
       caseRow.version = Math.max(q.version, prev.version + 1);
-      const { error } = await supabase.from("eeg_cases").update(caseRow).eq("id", prev.id);
-      if (error) {
-        console.error(`FAIL ${q.id}: update — ${error.message}`);
+      const { data: updated, error } = await supabase.from("eeg_cases")
+        .update(caseRow).eq("id", prev.id).eq("version", prev.version).select("id").maybeSingle();
+      if (error || !updated) {
+        console.error(`FAIL ${q.id}: update — ${error?.message ?? "case changed during import; refresh before retrying"}`);
         failures++;
         continue;
       }
@@ -221,7 +237,8 @@ async function main() {
     }
 
     // options + references are replaced wholesale — the YAML is the source of truth
-    await supabase.from("eeg_case_options").delete().eq("case_id", caseId);
+    const { error: optionsDeleteError } = await supabase.from("eeg_case_options").delete().eq("case_id", caseId);
+    if (optionsDeleteError) { console.error(`FAIL ${q.id}: options — ${optionsDeleteError.message}`); failures++; continue; }
     if (rows.options.length) {
       const { error } = await supabase
         .from("eeg_case_options")
@@ -229,7 +246,8 @@ async function main() {
       if (error) { console.error(`FAIL ${q.id}: options — ${error.message}`); failures++; continue; }
     }
 
-    await supabase.from("eeg_case_references").delete().eq("case_id", caseId);
+    const { error: referencesDeleteError } = await supabase.from("eeg_case_references").delete().eq("case_id", caseId);
+    if (referencesDeleteError) { console.error(`FAIL ${q.id}: references — ${referencesDeleteError.message}`); failures++; continue; }
     if (rows.references.length) {
       const { error } = await supabase
         .from("eeg_case_references")

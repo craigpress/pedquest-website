@@ -20,14 +20,15 @@ stem:
     during a febrile illness. He was intubated for airway protection and is receiving a
     low-dose midazolam infusion. Continuous EEG with a quantitative trend panel is started
     2 hours after arrival. At the 4-hour mark the bedside nurse, who screens the trend panel
-    hourly, pages you because the seizure-probability trend rose twice: once at about
-    70 minutes and again at about 95 minutes. She has not reviewed the raw EEG. A dose of
+    hourly, pages you because two candidate events are visible: broadband activity at
+    about 70 minutes and an evolving rhythmic pattern at about 95 minutes. She has not
+    reviewed the raw EEG. A dose of
     lorazepam was given at 100 minutes for a suspected clinical event.
   image_caption: >-
-    Four-hour qEEG panel, top to bottom: seizure probability; rhythmicity spectrogram
-    (left, right); FFT spectrogram 0–20 Hz (left, right); relative asymmetry spectrogram
-    and asymmetry index; aEEG (left, right); suppression ratio (left, right). Time axis in
-    minutes from the start of recording; the lorazepam dose is annotated at 100 minutes.
+    Four-hour qEEG panel, top to bottom: seizure probability; rhythmicity spectrogram (left, right);
+    FFT spectrogram 0–20 Hz (left, right); relative asymmetry spectrogram and asymmetry index; aEEG
+    (left, right); suppression ratio (left, right). Time axis in hours:minutes from the start of
+    recording; the lorazepam dose is annotated at 100 minutes.
   lead_in: >-
     Which feature of the panel best identifies the event at 95 minutes as an electrographic
     seizure rather than artifact?
@@ -65,12 +66,13 @@ options:
     text: The rise in seizure probability alone, which is sufficient without reviewing the raw EEG
     correct: false
     rationale: >-
-      Seizure-probability trends flag candidates; both events raised it. Published pediatric
+      Seizure-probability trends flag candidates; the probability panel in this synthetic
+      illustration is a heuristic, not a validated clinical detector. Published pediatric
       accuracy data describe trend displays as screening tools that require correlation with
       the raw EEG.
 
 explanation: >-
-  The correct answer is B. The 95-minute event shows the classic trend signature of an
+  The correct answer is B. In this simulation, the 95-minute event shows a trend signature of an
   evolving focal seizure: a discrete band on the left rhythmicity spectrogram that starts
   near 4 Hz and slows to about 1.5 Hz over roughly two minutes, accompanied by a rise in the
   left aEEG margins and a transient deflection of the asymmetry index toward the left, then a

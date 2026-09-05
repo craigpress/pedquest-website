@@ -28,8 +28,9 @@ stem:
   image_caption: >-
     Composite display. Upper panel: 6-hour qEEG panel with aEEG (left, right), FFT
     spectrogram (left, right) and suppression ratio (left, right). Lower panel:
-    15-second raw EEG page from 04:10 in longitudinal bipolar montage at 7 microvolts
-    per millimetre. Time axis in clock time.
+    15-second raw EEG page starting 4 hours 10 minutes after recording onset (01:50
+    clock time), in longitudinal bipolar montage at 7 microvolts per millimetre.
+    Upper-panel time axis is clock time; raw-page seconds are relative to the excerpt start.
   lead_in: >-
     What is the best statement about the accuracy of this bedside trend screen?
 
@@ -71,8 +72,8 @@ options:
 
 explanation: >-
   The correct answer is A. Bedside trend screening after cardiac arrest performs like a
-  rule-out test with a moderate ceiling: good negative predictive value, poor positive
-  predictive value, and sensitivity well short of the level that would justify deferring
+  screening test with a moderate ceiling: in the cited image-classification cohorts it
+  had higher negative than positive predictive value, and sensitivity well short of the level that would justify deferring
   expert review. What the image shows: an aEEG with narrow bands, spectrograms with
   intermittent columns of power, and a suppression ratio near 50 percent, a
   configuration that is easy to read as quiescent; the raw page beneath, from a time
@@ -97,7 +98,7 @@ explanation: >-
 
 key_points:
   - Post-arrest bedside trend screening reached 70 to 77 percent sensitivity in children.
-  - Negative predictive value was 86 to 89 percent; positive predictive value only 46 to 49.
+  - In these post-arrest image-classification cohorts, NPV was 86 to 89 percent and PPV 46 to 49 percent; both depend on prevalence and setting.
   - Adding CDSA to aEEG raised confidence but not measured seizure detection.
 
 references:

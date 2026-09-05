@@ -25,12 +25,12 @@ stem:
     repeated electrographic seizures appear. Intracranial pressure has been 12 to 22
     millimetres of mercury.
   image_caption: >-
-    Twenty-four-hour qEEG panel covering roughly 30 to 54 hours after injury: seizure
-    probability; rhythmicity spectrogram (left, right); FFT spectrogram 0-20 Hz (left,
-    right); relative asymmetry spectrogram; asymmetry index; suppression ratio (left,
-    right). Elapsed minutes from the start of the window on the time axis.
+    Twenty-four-hour qEEG panel covering roughly 30 to 54 hours after injury: seizure probability;
+    rhythmicity spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right); relative asymmetry
+    spectrogram; asymmetry index; suppression ratio (left, right). Elapsed time (hours:minutes) from
+    the start of the window on the time axis.
   lead_in: >-
-    How does the timing of these seizures relate to this child's risk of later
+    In the cited 61-child cohort, which seizure-timing subgroup was associated with later
     post-traumatic epilepsy?
 
 question_type: multiple_choice
@@ -87,8 +87,10 @@ explanation: >-
   Among children with early seizures, more time in seizure on surface EEG raised the odds
   further, 7.28 (2.05 to 73.14). Epileptiform discharges, odds ratio 8.06, abnormal sleep
   spindles, 4.88, raised intracranial pressure, 1.25, and impaired cerebrovascular
-  pressure reactivity were also associated. Bedside takeaway: seizures on day two to seven
-  are the ones to document, quantify and follow.
+  pressure reactivity were also associated. The significance of one subgroup and not
+  another does not itself prove that the subgroup effects differ. Bedside takeaway:
+  document, quantify and follow all early post-traumatic seizures while recognizing the
+  uncertainty in this small cohort.
 
 key_points:
   - Seizures 24 to 168 hours after pediatric TBI carried an odds ratio of 21.47 for later epilepsy.

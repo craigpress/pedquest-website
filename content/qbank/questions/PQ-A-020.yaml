@@ -25,11 +25,10 @@ stem:
     unit. A neurophysiologist reads the raw EEG each morning regardless of the
     configuration chosen.
   image_caption: >-
-    Eight-hour qEEG panel, top to bottom: automated detector marks on an event strip;
-    rhythmicity spectrogram (left, right); FFT spectrogram (left, right); aEEG (left,
-    right). Two true seizures and numerous detector marks coinciding with movement and
-    respiratory-therapy artifact are present. Time axis in hours from the start of the
-    displayed window.
+    Eight-hour qEEG panel, top to bottom: automated detector marks on an event strip; rhythmicity
+    spectrogram (left, right); FFT spectrogram (left, right); aEEG (left, right). Two true seizures
+    and numerous detector marks coinciding with movement and respiratory-therapy artifact are
+    present. Time axis in hours:minutes from the start of the displayed window.
   lead_in: >-
     Which configuration best meets the committee's stated priority, and why?
 
@@ -87,9 +86,9 @@ explanation: >-
   density spectral array and 73.7 percent using aEEG, with daily false-positive rates
   of 1.7 and 1.5. Two of the algorithms had sensitivity comparable to that of EEG
   experts using these displays, and the best trade-off between sensitivity and
-  false-positive rate belonged to the algorithm detecting 75.9 percent. Bedside
-  takeaway: choose the detector by the alarm burden your unit can actually review, and
-  keep a scheduled expert read regardless of which one you enable.
+  false-positive rate in that historical comparison belonged to the algorithm detecting
+  75.9 percent. Bedside takeaway: local detector selection should use current validation,
+  the reviewable alarm burden and scheduled expert EEG interpretation.
 
 key_points:
   - Detector sensitivities in children ranged from 36.9 to 92.3 percent.

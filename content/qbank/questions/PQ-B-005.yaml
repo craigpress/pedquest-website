@@ -21,17 +21,16 @@ stem:
     return of spontaneous circulation. He is receiving fentanyl but no neuromuscular
     blockade and no continuous sedative infusion. At 20 hours, while still at 33 degrees,
     the technologist performs a standardized noxious stimulus at the bedside and
-    documents it on the tracing. The intensivist asks how this recording changes the
-    prognostic estimate before the family meeting.
+    documents it on the tracing. The team reviews how a historical study categorized
+    this recording.
   image_caption: >-
-    Twenty-four-hour qEEG panel: seizure probability; rhythmicity spectrogram (left,
-    right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right);
-    suppression ratio (left, right). Elapsed minutes on the time axis. Core temperature
-    was held at 33 degrees Celsius throughout. A standardized stimulation is annotated at
-    1200 minutes.
+    Composite. Upper: 24-hour qEEG (seizure probability, rhythmicity L/R, FFT L/R, asymmetry, aEEG
+    L/R, suppression ratio L/R); elapsed hours:minutes. Lower: 30-second raw EEG spanning
+    stimulation at minute 1200, with 10 seconds before onset; longitudinal bipolar, 7 microvolts per
+    millimetre, 1-70 Hz, 60 Hz notch. Core temperature 33 degrees Celsius.
   lead_in: >-
-    Compared with a continuous and reactive background, what odds of an unfavorable
-    short-term outcome does this recording carry?
+    In the cited 35-child cohort, what odds ratio was associated with a continuous but
+    unreactive background during hypothermia, compared with a reactive background?
 
 question_type: multiple_choice
 options:
@@ -71,7 +70,7 @@ options:
       present here.
 
 explanation: >-
-  The correct answer is C. What the image shows: both aEEG channels carry a stable,
+  The correct answer is C as a study-level estimate. What the image shows: both aEEG channels carry a stable,
   continuous band, the suppression-ratio trends stay low and flat, the FFT spectrograms
   hold a narrow band of low-frequency power without interruption, and there is no change
   in any trend at the annotated stimulation at 1200 minutes. The background is therefore
@@ -85,11 +84,11 @@ explanation: >-
   of 10.7 (p equals 0.023) and 35 (p equals 0.004) respectively compared with category 1.
   For tracings obtained during normothermia the corresponding odds ratios were 27 (p
   equals 0.006) and 18 (p equals 0.02). This is a single-center cohort of 35 children, so
-  the confidence around each estimate is wide. Current guidance permits targeted
-  temperature management at 32 to 34 degrees followed by 36 to 37.5 degrees, or 36 to 37.5
-  degrees alone, so the reader must always record the temperature at which the EEG was
-  obtained. Bedside takeaway: document a stimulation trial and the core temperature with
-  every prognostic EEG read.
+  the confidence around each estimate is wide. The odds ratio is not an individual's
+  probability of poor outcome. Current pediatric post-arrest guidance recommends delayed,
+  multimodal assessment and does not support using absent EEG reactivity alone to predict
+  unfavorable outcome. Bedside takeaway: document the stimulus, temperature and sedating
+  medications, and integrate serial EEG with the rest of the prognostic assessment.
 
 key_points:
   - Continuous but unreactive during hypothermia carried an odds ratio of 10.7 for unfavorable outcome.
@@ -129,24 +128,39 @@ references:
     verified_by: pubmed-mcp get_article_metadata 2026-09-03
     open_access: unknown
     member_author: true
+  - pmid: "41122885"
+    doi: 10.1161/CIR.0000000000001368
+    citation: >-
+      Lasa JJ, Dhillon GS, Duff JP, et al. Part 8: Pediatric Advanced Life Support: 2025
+      American Heart Association and American Academy of Pediatrics Guidelines for
+      Cardiopulmonary Resuscitation and Emergency Cardiovascular Care. Circulation.
+      2025;152(16 Suppl 2):S479-S537.
+    role: supporting
+    verified: true
+    verified_by: PubMed 2026-09-04
+    open_access: unknown
+    member_author: false
 
 image:
-  kind: qeeg_panel
+  kind: composite
   license: synthetic-original
   attribution: null
   spec:
     seed: 8100005
-    age_group: child
-    sample_rate: 256
-    channels: standard_19
-    duration_min: 1440
-    background:
-      type: continuous
-      dominant_hz: 2.5
-      amplitude_uv: 30
-      slow_fraction: 0.85
-      reactivity: absent
-    events:
+    layout: panel_over_page
+    qeeg_panel:
+      seed: 8100005
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 1440
+      background:
+        type: continuous
+        dominant_hz: 2.5
+        amplitude_uv: 30
+        slow_fraction: 0.85
+        reactivity: absent
+      events:
       - type: temperature_change
         at_min: 0
         from_c: 33.0
@@ -154,9 +168,10 @@ image:
         over_min: 1440
       - type: stimulation
         at_min: 1200
-    annotations:
-      - { at_min: 1200, label: "Standardized stimulation" }
-    panels:
+      annotations:
+      - at_min: 1200
+        label: Standardized stimulation
+      panels:
       - seizure_probability
       - rhythmicity_L
       - rhythmicity_R
@@ -167,7 +182,17 @@ image:
       - aeeg_R
       - suppression_ratio_L
       - suppression_ratio_R
-    time_axis: elapsed
+      time_axis: elapsed
+    eeg_page:
+      at_min: 1199.8333333333333
+      window_s: 30
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      filters:
+        lf_hz: 1
+        hf_hz: 70
+        notch_hz: 60
+      highlight: null
 
 metadata:
   author: Writer B (claude-opus)

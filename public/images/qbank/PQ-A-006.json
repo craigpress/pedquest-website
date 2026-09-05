@@ -8,14 +8,14 @@
     {
       "name": "aeeg_C3-C4",
       "y0": 0.07,
-      "y1": 0.918,
+      "y1": 0.838,
       "x0": 0.075,
       "x1": 0.984
     }
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.2.0",
-  "spec_hash": "sha256:f54edacef7ff019fa693db127503e0177addf3134a3ed756e83c8c756cb707c2",
+  "renderer_version": "0.3.0",
+  "spec_hash": "sha256:c7eeb8244fbf04357bdbeaa0d11f05bc05fda7d291931dc735324bb4907cd540",
   "path": "public/images/qbank/PQ-A-006.png"
 }

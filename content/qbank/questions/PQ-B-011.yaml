@@ -81,8 +81,10 @@ explanation: >-
   percent confidence interval 2.43 to 37.67), with a total seizure burden of more than 40
   minutes, and eightfold, odds ratio 8.00 (2.06 to 31.07), with a maximum hourly burden of
   more than 13 minutes per hour. Controlling for electrographic encephalopathy grade or
-  hypothermia did not change the direction of these relationships. Bedside takeaway: count
-  ictal minutes per hour and cumulatively, and treat burden as the target.
+  hypothermia did not change the direction of these relationships. The thresholds describe
+  observational associations in this small cohort, not proven causal treatment cutoffs.
+  Bedside takeaway: quantify hourly and cumulative burden and use it with the full clinical
+  picture to guide timely treatment.
 
 key_points:
   - Maximum hourly burden above 13 minutes per hour carried an odds ratio of 8.00 for abnormal outcome.
@@ -121,7 +123,9 @@ image:
     age_group: neonate
     sample_rate: 256
     duration_h: 4
-    channels: [C3-P3, C4-P4]
+    channels:
+    - C3-P3
+    - C4-P4
     pattern: DNV
     sleep_wake_cycling: absent
     background:
@@ -131,26 +135,61 @@ image:
       slow_fraction: 0.8
       reactivity: present
     seizures:
-      - { onset_h: 0.15, duration_min: 3.5 }
-      - { onset_h: 0.40, duration_min: 3.5 }
-      - { onset_h: 0.65, duration_min: 3.5 }
-      - { onset_h: 0.90, duration_min: 3.5 }
-      - { onset_h: 1.15, duration_min: 3.5 }
-      - { onset_h: 1.40, duration_min: 3.5 }
-      - { onset_h: 1.65, duration_min: 3.5 }
-      - { onset_h: 1.90, duration_min: 3.5 }
-      - { onset_h: 2.15, duration_min: 3.5 }
-      - { onset_h: 2.40, duration_min: 3.5 }
-      - { onset_h: 2.65, duration_min: 3.5 }
-      - { onset_h: 2.90, duration_min: 3.5 }
-      - { onset_h: 3.15, duration_min: 3.5 }
-      - { onset_h: 3.40, duration_min: 3.5 }
-      - { onset_h: 3.65, duration_min: 3.5 }
-      - { onset_h: 3.90, duration_min: 3.5 }
+    - onset_h: 0.15
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 0.4
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 0.65
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 0.9
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 1.15
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 1.4
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 1.65
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 1.9
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 2.15
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 2.4
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 2.65
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 2.9
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 3.15
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 3.4
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 3.65
+      duration_min: 3.5
+      onset_region: generalized
+    - onset_h: 3.9
+      duration_min: 3.5
+      onset_region: generalized
     annotations:
-      - { at_min: 60, label: "Phenobarbital 20 mg/kg" }
+    - at_min: 60
+      label: Phenobarbital 20 mg/kg
     raw_strip_at_h: 1.67
-    time_axis: elapsed
+    time_axis: hours_of_life
+    raw_strip_window_s: 15
+    start_h: 14
 
 metadata:
   author: Writer B (claude-opus)

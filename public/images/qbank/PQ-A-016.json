@@ -8,21 +8,21 @@
     {
       "name": "aeeg_C3-C4",
       "y0": 0.07,
-      "y1": 0.603,
+      "y1": 0.523,
       "x0": 0.075,
       "x1": 0.984
     },
     {
       "name": "raw_strip",
-      "y0": 0.713,
-      "y1": 0.863,
+      "y0": 0.633,
+      "y1": 0.783,
       "x0": 0.075,
       "x1": 0.984
     }
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.2.0",
-  "spec_hash": "sha256:14450b23ceb3bdcd820316cec65a2f69d88e99ff09daba8b34166263627a5385",
+  "renderer_version": "0.3.0",
+  "spec_hash": "sha256:261fc5b4f37536817fd4c4ce622b5f834e646fa2ba4535724e62a539552b91be",
   "path": "public/images/qbank/PQ-A-016.png"
 }

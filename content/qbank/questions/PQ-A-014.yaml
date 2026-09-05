@@ -61,7 +61,7 @@ explanation: >-
   false-positive rates of 1.7 and 1.5. The authors concluded that such algorithms may
   serve as early warning systems that prompt review of quantitative or raw EEG tracings.
   Bedside takeaway: treat every detector mark and every trend alarm as a pointer to a
-  page of raw EEG, and require evolution and a plausible field before you call it ictal.
+  page of raw EEG, then assess whether ACNS seizure criteria and a plausible field are present.
 
 key_points:
   - Ictal onset is the chain with the earliest evolving rhythmic discharge and spread.

@@ -25,9 +25,9 @@ stem:
     prognostic discussion and asks which way to categorize the recording.
   image_caption: >-
     Four-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
-    spectrogram 0-20 Hz (left, right); relative asymmetry spectrogram; asymmetry index;
-    suppression ratio (left, right). Elapsed minutes on the time axis. No medication
-    annotations fall within this window.
+    spectrogram 0-20 Hz (left, right); relative asymmetry spectrogram; asymmetry index; suppression
+    ratio (left, right). Elapsed time (hours:minutes) on the time axis. No medication annotations
+    fall within this window.
   lead_in: >-
     Which categorization of this recording is independently associated with mortality in
     critically ill children?
@@ -83,9 +83,10 @@ explanation: >-
   status, sex and EEG background category, electrographic status epilepticus was
   associated with mortality, with an odds ratio of 5.1 (95 percent confidence interval 1.4
   to 18), and with category worsening, with an odds ratio of 17.3 (3.7 to 80).
-  Electrographic seizures were associated with neither. Bedside takeaway: say explicitly
-  in the note whether the recording is seizures or status; the two carry different
-  prognoses.
+  Electrographic seizures were associated with neither. These observational associations
+  do not establish that status causes mortality or that the same estimate applies across
+  etiologies. Bedside takeaway: document seizure burden and status explicitly and
+  interpret prognosis in the context of the underlying illness.
 
 key_points:
   - Electrographic status epilepticus carried an odds ratio of 5.1 for mortality in 200 PICU children.

@@ -69,8 +69,9 @@ options:
       essentially isoelectric interburst segments. This tracing has no bursts at all.
 
 explanation: >-
-  The correct answer is A: both margins lie below their thresholds, so this is a
-  suppressed amplitude background, and by pattern it is continuous extremely low voltage.
+  The correct answer is A: in the al Naqeeb amplitude system, both margins lie below
+  their thresholds, so this is a suppressed-amplitude background. In the separate
+  five-pattern system, its continuous morphology is termed continuous low voltage.
   What the image shows: a narrow, unbroken band on both channels that runs entirely
   within the linear part of the axis, with the top of the band under the 10-microvolt
   gridline and the bottom under the 5-microvolt gridline for the whole window; the raw
@@ -126,7 +127,9 @@ image:
     age_group: neonate
     sample_rate: 256
     duration_h: 4
-    channels: [C3-P3, C4-P4]
+    channels:
+    - C3-P3
+    - C4-P4
     pattern: CLV
     sleep_wake_cycling: absent
     background:
@@ -136,8 +139,9 @@ image:
       slow_fraction: 0.85
       reactivity: absent
     seizures: []
-    raw_strip_at_h: 1.50
+    raw_strip_at_h: 1.5
     time_axis: elapsed
+    raw_strip_window_s: 15
 
 metadata:
   author: Writer B (claude-opus)

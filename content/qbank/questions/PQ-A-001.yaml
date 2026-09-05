@@ -138,6 +138,8 @@ image:
       amplitude_uv: 35
       slow_fraction: 0.8
       reactivity: present
+      amplitude_gain_at_h: [[1.0, 1.640301], [3.0, 2.654695], [5.0, 3.174276]]
+      ibi_floor_at_h: [[1.0, 0.164394], [3.0, 0.414789], [5.0, 0.227317]]
     events:
       - type: temperature_change
         at_min: 0
@@ -147,8 +149,6 @@ image:
     style:
       amplitude_axis: semilog
       amplitude_gridlines_uv: [5, 10, 25, 50, 100]
-      lower_margin_uv_at_h: [[1.0, 3], [3.0, 7], [5.0, 7]]
-      upper_margin_uv_at_h: [[1.0, 40], [3.0, 40], [5.0, 80]]
       time_axis: elapsed
 
 metadata:

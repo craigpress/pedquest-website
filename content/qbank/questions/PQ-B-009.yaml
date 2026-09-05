@@ -24,13 +24,13 @@ stem:
     specifically about the chance that she will develop epilepsy, given what the monitor
     showed during the admission.
   image_caption: >-
-    Twelve-hour qEEG panel from the first PICU day: seizure probability; rhythmicity
-    spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index;
-    aEEG (left, right); suppression ratio (left, right). Elapsed minutes on the time axis.
-    Two medication loads and the start of a midazolam infusion are annotated.
+    Twelve-hour qEEG panel from the first PICU day: seizure probability; rhythmicity spectrogram
+    (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right);
+    suppression ratio (left, right). Elapsed time (hours:minutes) on the time axis. Two medication
+    loads and the start of a midazolam infusion are annotated.
   lead_in: >-
-    Approximately what increase in the odds of a subsequently diagnosed epilepsy does
-    this recording carry?
+    In the cited follow-up cohort, what adjusted association was reported between
+    electrographic status epilepticus and subsequently diagnosed epilepsy?
 
 question_type: multiple_choice
 options:
@@ -84,8 +84,9 @@ explanation: >-
   Quality of Life Inventory scores 23 points lower, and, among those without a prior
   epilepsy diagnosis, with subsequently diagnosed epilepsy, odds ratio 13.3.
   Electrographic seizures were not associated with worse outcomes. Only 60 of 137 eligible
-  children were followed, so the estimates are imprecise. Bedside takeaway: put the
-  epilepsy risk in the discharge summary and arrange neurology follow-up.
+  children were followed, so selection bias and imprecision limit individual prediction;
+  an odds ratio is not an absolute probability. Bedside takeaway: document the exposure,
+  explain the uncertainty and arrange neurology follow-up.
 
 key_points:
   - Electrographic status epilepticus carried an odds ratio of 13.3 for later diagnosed epilepsy.

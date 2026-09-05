@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eeg-render"
-version = "0.2.0"
+version = "0.3.0"
 description = "Deterministic renderer for PedQuEST qEEG question-bank images (image.spec DSL -> PNG + JSON sidecar)"
 requires-python = ">=3.10"
 dependencies = [

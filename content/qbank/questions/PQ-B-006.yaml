@@ -11,8 +11,8 @@ difficulty: intermediate
 bloom: application
 learning_objective: >-
   Identify continuous background activity within the first 12 hours after return of
-  spontaneous circulation as the EEG observation associated with good short-term outcome,
-  and recognize that serial change in background score has not been.
+  spontaneous circulation as an EEG observation associated with good short-term outcome
+  in a retrospective cohort.
 
 stem:
   vignette: >-
@@ -71,8 +71,8 @@ explanation: >-
   The correct answer is A. What the image shows: at hour 10 the page carries continuous,
   moderately slow cerebral activity across all chains, without interburst intervals,
   burst suppression or generalized attenuation, and without periodic patterns. Continuity
-  at this early time point, not the later trajectory, is the observation with published
-  prognostic value. Evidence: in a retrospective cohort of non-neonatal children with a
+  at this early time point was associated with favorable outcome in the cited cohort.
+  Evidence: in a retrospective cohort of non-neonatal children with a
   cardiac arrest lasting more than 2 minutes who were monitored within 72 hours of return
   of spontaneous circulation, multivariable analysis of 73 children found that an arrest
   duration under 20 minutes or continuous background activity within 12 hours of return of
@@ -82,8 +82,9 @@ explanation: >-
   EEG segments reduced standardized features to two factors, background and intermittent,
   and found that factor scores did not change significantly across 12-hour epochs to 72
   hours, although heat maps showed that some individual children with intermediate initial
-  scores did shift. Bedside takeaway: capture and grade the background early, and do not
-  promise a family that a later trajectory will change the estimate.
+  scores did shift. Failure to detect a trajectory association in these data does not show
+  that later evolution is generally uninformative. Bedside takeaway: document the early
+  background and continue serial, multimodal assessment through the prognostic window.
 
 key_points:
   - Continuous background within 12 hours of return of spontaneous circulation predicted good outcome.
@@ -112,6 +113,18 @@ references:
     verified_by: pubmed-mcp get_article_metadata 2026-09-03
     open_access: unknown
     member_author: true
+  - pmid: "41122885"
+    doi: 10.1161/CIR.0000000000001368
+    citation: >-
+      Lasa JJ, Dhillon GS, Duff JP, et al. Part 8: Pediatric Advanced Life Support: 2025
+      American Heart Association and American Academy of Pediatrics Guidelines for
+      Cardiopulmonary Resuscitation and Emergency Cardiovascular Care. Circulation.
+      2025;152(16 Suppl 2):S479-S537.
+    role: supporting
+    verified: true
+    verified_by: PubMed 2026-09-04
+    open_access: unknown
+    member_author: false
 
 image:
   kind: eeg_page

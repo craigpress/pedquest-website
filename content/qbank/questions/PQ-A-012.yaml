@@ -25,10 +25,9 @@ stem:
     not receiving neuromuscular blockade and no clinical movement was observed at
     either event.
   image_caption: >-
-    Two-hour qEEG panel, top to bottom: FFT spectrogram (left, right), 0 to 20 hertz
-    with a black-to-white color bar; aEEG (left, right) on a semilogarithmic axis;
-    envelope trend (left, right). Time axis in minutes from the start of the displayed
-    window.
+    Two-hour qEEG panel, top to bottom: FFT spectrogram (left, right), 0 to 20 hertz with
+    color-encoded spectral power; aEEG (left, right) on a semilogarithmic axis; envelope trend
+    (left, right). Time axis in minutes from the start of the displayed window.
   lead_in: >-
     What appearance should the team expect at each seizure on the FFT spectrogram and
     on the aEEG?
@@ -83,12 +82,12 @@ explanation: >-
   during a seizure as another amplitude-focused trend. The same review notes that with
   a focal seizure the asymmetry index and spectrogram add laterality. The conditional
   matters: an aEEG arch requires that the seizure involve the derivation the aEEG is
-  built from. Bedside takeaway: expect a flame and an arch together, and be suspicious
-  of a flame without an arch or an arch without a flame.
+  built from. Bedside takeaway: this simulated seizure produces a flame and an arch
+  together; real seizures may lack either trend signature, so confirm candidates on raw EEG.
 
 key_points:
-  - Seizure on the FFT spectrogram is a solid flame across fast and slow frequencies.
-  - Seizure on the aEEG is a sudden upward arch, if the derivation is involved.
+  - In this simulation, the seizure produces a flame-shaped FFT power increase.
+  - An involved aEEG derivation may show a sudden upward arch during a seizure.
   - The envelope trend peaks with the seizure because it also tracks amplitude.
 
 references:

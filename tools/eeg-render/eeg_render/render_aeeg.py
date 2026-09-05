@@ -49,7 +49,8 @@ def synth_spec_for_aeeg(spec: Dict) -> Dict:
             "duration_s": dur_s,
             "onset_region": region or "left_central",
             "evolution": {"start_hz": 2.2, "end_hz": 1.4,
-                          "amplitude_start_uv": 90.0, "amplitude_end_uv": 150.0},
+                          "amplitude_start_uv": 90.0, "amplitude_end_uv": 150.0,
+                          **(z.get("evolution") or {})},
             "spread": "none",
             "postictal_attenuation_s": min(120.0, dur_s * 0.5),
         })
@@ -60,7 +61,7 @@ def synth_spec_for_aeeg(spec: Dict) -> Dict:
 def aeeg_derivations(spec: Dict, synth: Synthesizer) -> List[Tuple[str, str]]:
     wanted = list(spec.get("aeeg_channels") or ["C3-P3", "C4-P4"])
     single = (spec.get("style") or {}).get("single_channel")
-    if single:
+    if single and (spec.get("style") or {}).get("layout") != "side_by_side_single_vs_multichannel":
         wanted = [single]
     out: List[Tuple[str, str]] = []
     for i, item in enumerate(wanted[:4]):
@@ -96,6 +97,9 @@ def render_aeeg(
     raw_at = spec.get("raw_strip_at_h")
     n_rows = len(pairs)
     strip = raw_at is not None
+    comparison = st.get("layout") == "side_by_side_single_vs_multichannel"
+    reference_strip = st.get("show_reference_seizure_strip", False)
+    start_h = float(spec.get("start_h", 0.0))
 
     geo: Dict[str, object] = {"width": st["width"], "height": st["height"],
                               "panels": [], "duration_h": duration_h,
@@ -104,8 +108,9 @@ def render_aeeg(
     with plt.rc_context(S.apply_rc(theme)):
         fig = plt.figure(figsize=(st["width"] / st["dpi"], st["height"] / st["dpi"]),
                          dpi=st["dpi"])
-        gap = GAP if n_rows <= 2 else GAP_TIGHT
-        usable = 1.0 - TOP - BOTTOM - gap * (n_rows - 1 + (1 if strip else 0))
+        gap = GAP
+        reference_frac = 0.08 if reference_strip else 0.0
+        usable = 1.0 - TOP - BOTTOM - reference_frac - gap * (n_rows - 1 + (1 if strip else 0))
         strip_frac = (0.26 if n_rows <= 2 else 0.20) if strip else 0.0
         row_h = (usable - strip_frac) / n_rows
 
@@ -115,9 +120,19 @@ def render_aeeg(
         vmax = max(grid_uv)
         fwd = lambda a: S.aeeg_forward(a, semilog, vmax)  # noqa: E731
 
-        for i, ((a, b), (t, lo, hi)) in enumerate(zip(pairs, margins)):
-            y -= row_h
-            ax = fig.add_axes([LEFT, y, 1.0 - LEFT - RIGHT, row_h])
+        slots = [(i, LEFT, 1.0 - LEFT - RIGHT, 1.0 - TOP - (i + 1) * row_h - i * gap, row_h)
+                 for i in range(n_rows)]
+        if comparison:
+            slots = [(i, 0.575, 1.0 - 0.575 - RIGHT, sy, sh) for i, sx, sw, sy, sh in slots]
+            single_pair = pick_aeeg_derivation(synth, [st["single_channel"]], "any")
+            single_index = pairs.index(single_pair)
+            total_h = n_rows * row_h + (n_rows - 1) * gap
+            slots.insert(0, (single_index, LEFT, 0.43 - LEFT, 1.0 - TOP - total_h, total_h))
+            fig.text(0.25, 0.945, "Single derivation", color=theme.muted, fontsize=9, ha="center")
+            fig.text(0.76, 0.945, "Multiple derivations — same recording", color=theme.muted, fontsize=9, ha="center")
+        for slot_number, (i, panel_x, panel_w, y, panel_h) in enumerate(slots):
+            (a, b), (t, lo, hi) = pairs[i], margins[i]
+            ax = fig.add_axes([panel_x, y, panel_w, panel_h])
             t_h = t / 3600.0
             ax.fill_between(t_h, fwd(lo), fwd(hi), color=theme.aeeg_fill,
                             alpha=0.9, linewidth=0)
@@ -134,32 +149,51 @@ def render_aeeg(
             ax.grid(axis="x", color=theme.grid, linewidth=0.5, alpha=0.5)
             step = 1.0 if duration_h <= 12 else 2.0
             ax.xaxis.set_major_locator(FixedLocator(list(np.arange(0, duration_h + 1e-6, step))))
-            if i == n_rows - 1:
-                ax.set_xlabel("Elapsed (h)", fontsize=8, color=theme.muted, labelpad=2)
+            show_time = i == n_rows - 1 or (comparison and slot_number == 0)
+            if show_time:
+                label = "Age (hours of life)" if spec.get("time_axis") == "hours_of_life" else "Elapsed (h)"
+                ax.set_xlabel(label, fontsize=8, color=theme.muted, labelpad=2)
                 ax.tick_params(labelsize=7)
             else:
                 ax.set_xticklabels([])
-            ax.text(-0.010, 0.5, f"aEEG  {a}-{b}\n(uV)", transform=ax.transAxes,
+            ax.text(-0.025 / panel_w, 0.5, f"aEEG  {a}-{b}\n(uV)", transform=ax.transAxes,
                     ha="right", va="center", fontsize=7.6, color=theme.text,
                     linespacing=1.3)
             for sp in ax.spines.values():
                 sp.set_color(theme.spine)
-            _annotate(ax, spec, theme, duration_h, i == 0)
-            geo["panels"].append({"name": f"aeeg_{a}-{b}", "y0": round(1.0 - (y + row_h), 6),
-                                  "y1": round(1.0 - y, 6), "x0": LEFT, "x1": 1.0 - RIGHT})
-            y -= gap
+            if start_h:
+                ticks = ax.get_xticks()
+                ax.set_xticklabels([f"{v + start_h:g}" for v in ticks] if show_time else [])
+            _annotate(ax, spec, theme, duration_h, slot_number == 0)
+            geo["panels"].append({"name": f"aeeg_{a}-{b}", "y0": round(1.0 - (y + panel_h), 6),
+                                  "y1": round(1.0 - y, 6), "x0": panel_x, "x1": panel_x + panel_w})
+
+        y = min(slot[3] for slot in slots) - gap
 
         if strip:
             y -= max(0.0, strip_frac - row_h) * 0.0
             ax = fig.add_axes([LEFT, y - strip_frac + gap, 1.0 - LEFT - RIGHT,
                                strip_frac - gap])
-            _raw_strip(ax, spec, synth, pairs[0], float(raw_at), theme, st)
+            _raw_strip(ax, spec, synth, pairs[0], float(raw_at), theme, st,
+                       window_s=float(spec["raw_strip_window_s"]))
             geo["panels"].append({
                 "name": "raw_strip",
                 "y0": round(1.0 - (y - gap), 6),
                 "y1": round(1.0 - (y - strip_frac + gap), 6),
                 "x0": LEFT, "x1": 1.0 - RIGHT,
             })
+
+        if reference_strip:
+            ax = fig.add_axes([LEFT, 0.025, 1.0 - LEFT - RIGHT, 0.035])
+            for seizure in synth.seizures:
+                ax.axvspan(seizure.t0 / 3600.0, seizure.t1 / 3600.0, color=theme.accent)
+                ax.axvline(seizure.t0 / 3600.0, color=theme.accent, linewidth=0.8)
+            ax.set_xlim(0.0, duration_h)
+            ax.set_ylim(0, 1)
+            ax.set_yticks([])
+            ax.set_xticks([])
+            ax.set_facecolor(theme.axes)
+            ax.set_title("Events confirmed on the full raw EEG", fontsize=7, color=theme.muted, loc="left")
 
         _header(fig, spec, theme, st, header_note)
         fig.savefig(out_png, dpi=st["dpi"], facecolor=theme.figure,
@@ -177,9 +211,9 @@ def _annotate(ax, spec: Dict, theme: S.Theme, duration_h: float, labelled: bool)
                    linestyle=(0, (5, 3)), zorder=5)
         if labelled:
             ax.annotate(ann["label"], xy=(at_h, 1.0), xycoords=("data", "axes fraction"),
-                        xytext=(at_h, 1.06 + 0.30 * (k % 2)),
+                        xytext=(at_h, 0.97 - 0.13 * (k % 2)),
                         textcoords=("data", "axes fraction"),
-                        fontsize=7.2, color=theme.annotation, ha="center", va="bottom",
+                        fontsize=7.2, color=theme.annotation, ha="center", va="top",
                         annotation_clip=False,
                         arrowprops=dict(arrowstyle="-", color=theme.annotation,
                                         alpha=0.6, linewidth=0.6),
@@ -202,7 +236,8 @@ def _raw_strip(ax, spec: Dict, synth: Synthesizer, pair: Tuple[str, str],
     ax.set_yticks([])
     ax.set_xticks(np.arange(0, window_s + 1e-6, 2.0))
     ax.tick_params(labelsize=6.5)
-    ax.set_xlabel(f"raw {pair[0]}-{pair[1]} at {at_h:g} h  (s)", fontsize=7.4,
+    raw_time = at_h + float(spec.get("start_h", 0.0))
+    ax.set_xlabel(f"raw {pair[0]}-{pair[1]} at {raw_time:g} h  (s)", fontsize=7.4,
                   color=theme.muted, labelpad=1)
     ax.grid(axis="x", color=theme.grid, linewidth=0.4, alpha=0.5)
     for sp in ax.spines.values():
@@ -220,8 +255,6 @@ def _header(fig, spec: Dict, theme: S.Theme, st: Dict, note: str) -> None:
              va="center", ha="left", weight="bold")
     bits = [
         f"{spec['duration_h']:g} h",
-        f"pattern {spec['pattern']}",
-        f"cycling {spec['sleep_wake_cycling']}",
         f"seed {spec['seed']}",
     ]
     right = "SYNTHETIC - not patient data  |  " + "  |  ".join(bits)

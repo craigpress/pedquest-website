@@ -70,8 +70,8 @@ options:
       be removed is too strong.
 
 explanation: >-
-  The correct answer is C. Rhythmic mechanical artifact is the artifact class that
-  survives standard processing and is therefore the one that most often reaches a
+  The correct answer is C. With the processing described in this item, rhythmic mechanical artifact is the artifact class most likely to
+  survive and therefore reach a
   bedside reader as a false seizure. What the image shows: on the raw page the
   13 hertz activity is present across widely separated chains without a physiological
   field, does not evolve in frequency, and starts and stops abruptly with the therapy;
@@ -89,8 +89,8 @@ explanation: >-
   compare it against the nursing flowsheet before you compare it against a seizure.
 
 key_points:
-  - Artifact reduction removes line-frequency and myogenic artifact reliably.
-  - Rhythmic patting and respiratory therapy artifact usually persists after processing.
+  - Artifact-reduction performance depends on the software and configuration; line-frequency and myogenic artifact may be attenuated rather than eliminated.
+  - Rhythmic patting and respiratory therapy artifact may persist after processing.
   - A rhythmic band recurring on a care schedule should be checked against the flowsheet.
 
 references:
@@ -129,7 +129,10 @@ image:
     at_min: 305.0
     window_s: 15
     sensitivity_uv_mm: 7
-    filters: { lf_hz: 1, hf_hz: 70, notch_hz: null }
+    filters:
+      lf_hz: 1
+      hf_hz: 70
+      notch_hz: null
     highlight: null
     background:
       type: continuous
@@ -138,26 +141,31 @@ image:
       slow_fraction: 0.5
       reactivity: present
     events:
-      - type: artifact
-        kind: sixty_hz
-        at_min: 0
-        duration_s: 28800
-        side: all
-        intensity: medium
-      - type: artifact
-        kind: chest_pt
-        at_min: 300
-        duration_s: 1200
-        side: all
-        intensity: high
-      - type: artifact
-        kind: emg_chewing
-        at_min: 302
-        duration_s: 20
-        channels: [T3, T5, F7]
-        intensity: medium
+    - type: artifact
+      kind: sixty_hz
+      at_min: 0
+      duration_s: 28800
+      side: all
+      intensity: medium
+    - type: artifact
+      kind: chest_pt
+      at_min: 300
+      duration_s: 1200
+      side: all
+      intensity: high
+      frequency_hz: 13
+    - type: artifact
+      kind: emg_chewing
+      at_min: 302
+      duration_s: 20
+      channels:
+      - T3
+      - T5
+      - F7
+      intensity: medium
     annotations:
-      - { at_min: 300, label: "Oscillation vest therapy" }
+    - at_min: 300
+      label: Oscillation vest therapy
 
 metadata:
   author: Writer A (claude-opus)

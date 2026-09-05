@@ -23,10 +23,10 @@ stem:
     intensive care EEGs per day. The medical director asks which gap most commonly limits
     programs like this one.
   image_caption: >-
-    Eight-hour qEEG panel as displayed at the bedside: seizure probability; rhythmicity
-    spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index;
-    aEEG (left, right); suppression ratio (left, right). Elapsed minutes on the time axis.
-    No annotations or medication marks are present.
+    Eight-hour qEEG panel as displayed at the bedside: seizure probability; rhythmicity spectrogram
+    (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right);
+    suppression ratio (left, right). Elapsed time (hours:minutes) on the time axis. No annotations
+    or medication marks are present.
   lead_in: >-
     Which gap in this program was the most frequently reported barrier in a North
     American survey?
@@ -65,7 +65,7 @@ options:
       already has one, so it cannot be the gap in question.
 
 explanation: >-
-  The correct answer is A. What the image shows: a complete, well-formed trend panel with
+  The correct answer is A for the cited cross-sectional survey. What the image shows: a complete, well-formed trend panel with
   a stable continuous background, empty rhythmicity spectrograms, a symmetric FFT and a
   flat suppression ratio; the display itself is not the problem. The problem is that
   nobody in the workflow has defined who is trained to read it, against what threshold, or
@@ -81,8 +81,9 @@ explanation: >-
   neurologic injury, while 22 of 26, 85 percent, identified lack of qEEG training as a
   barrier. Review and reporting were not standardized at most institutions: training was
   required at only 3 of 22, 14 percent, and 7 of 22, 32 percent, had an established
-  curriculum. Bedside takeaway: build the training and the report template before you turn
-  the trends on.
+  curriculum. These prevalence data identify reported barriers; they do not establish
+  which intervention will improve outcomes. Bedside takeaway: define training,
+  interpretation thresholds and reporting responsibilities when implementing a program.
 
 key_points:
   - Lack of qEEG training was a barrier for 85 percent of pediatric intensive care users surveyed.

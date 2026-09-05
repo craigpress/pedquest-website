@@ -171,6 +171,13 @@ def render_eeg_page(
         ax.set_xlim(t0, t0 + win)
         ax.set_ylim(-total_uv + row_uv * 0.2, row_uv * 0.4)
         ax.set_yticks([])
+        for event in spec.get("events", []):
+            if event["type"] == "stimulation":
+                at = float(event["at_min"]) * 60.0
+                if t0 <= at <= t0 + win:
+                    ax.axvline(at, color="#0097a7", linewidth=0.9, linestyle="--", zorder=4)
+                    ax.text(at, 1.015, "Stimulus", transform=ax.get_xaxis_transform(),
+                            fontsize=7, color="#007783", ha="center", va="bottom")
         ax.set_xticks(np.arange(t0, t0 + win + 1e-9, 1.0))
         ax.set_xticklabels([f"{k}" for k in range(int(win) + 1)], fontsize=7)
         ax.set_xlabel(f"seconds from {_hhmmss(t0)} (elapsed)", fontsize=8, color=PAGE_MUTED,

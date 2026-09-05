@@ -26,10 +26,9 @@ stem:
     2 minutes, with a simultaneous rise in the left aEEG margins and a transient
     leftward deflection of the asymmetry index.
   image_caption: >-
-    Three-hour qEEG panel, top to bottom: rhythmicity spectrogram (left, right); FFT
-    spectrogram (left, right); relative asymmetry spectrogram and asymmetry index;
-    aEEG (left, right). Time axis in minutes from the start of recording. Oral care is
-    annotated at 55 minutes.
+    Three-hour qEEG panel, top to bottom: rhythmicity spectrogram (left, right); FFT spectrogram
+    (left, right); relative asymmetry spectrogram and asymmetry index; aEEG (left, right). Time axis
+    in hours:minutes from the start of recording. Oral care is annotated at 55 minutes.
   lead_in: >-
     Click the onset of the electrographic seizure on the left rhythmicity spectrogram
     panel.
@@ -54,8 +53,8 @@ explanation: >-
   over about 2 minutes, and is accompanied by a rise in the left aEEG margins, a
   transient leftward deflection of the asymmetry index, and a solid flame on the left
   FFT spectrogram, followed by a brief post-ictal fall in left amplitude. Evolution in
-  frequency plus a concordant lateralised amplitude rise is the trend signature of a
-  focal electrographic seizure. Evidence: in a pediatric ICU study of 27 continuous EEG
+  frequency plus a concordant lateralised amplitude rise identifies a candidate focal
+  seizure for confirmation on raw EEG. Evidence: in a pediatric ICU study of 27 continuous EEG
   recordings containing 553 seizures over 487 hours, neurophysiologists blinded to the
   raw EEG identified seizures with a median sensitivity of 83.3 percent using color
   density spectral array and 81.5 percent using aEEG, with sensitivity lowest for
@@ -66,7 +65,7 @@ explanation: >-
   raw EEG at that time and look for evolution.
 
 key_points:
-  - Frequency evolution over 1 to 2 minutes marks a seizure on the rhythmicity trend.
+  - Frequency evolution over 1 to 2 minutes marks a candidate seizure on the rhythmicity trend; confirm it on raw EEG.
   - Broadband non-evolving power confined to one chain and tied to care is artifact.
   - Blinded pediatric readers reached about 83 percent median sensitivity on CDSA.
 

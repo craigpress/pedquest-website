@@ -110,9 +110,12 @@ public/images/qbank/<ID>.png/.json ↗
   trigger write a revision) and a `changes_requested` review note "needs
   re-review" is filed so an editor sees it in the queue. `--dry-run` prints the
   plan and writes nothing; `--only <ID>` and `--dir <path>` narrow it.
-* A `point_to_feature` item without `public/images/qbank/<ID>.json` is skipped,
-  not failed — its answer region comes from the renderer's sidecar, so it is
-  simply not ready yet.
+* A `point_to_feature` item's answer region comes from its verified renderer
+  sidecar. Render missing images before importing question content.
+* Before any database access, import verifies every selected PNG/sidecar against
+  the current Python renderer and question specification. This requires the
+  renderer's Python dependencies locally. Existing case source classification is
+  preserved, and concurrent version changes abort that case's update.
 * An unverified reference blocks the item: the publish gate needs a verified
   one, so importing it would only create something that cannot be approved.
 
@@ -130,10 +133,10 @@ these columns.**
 | `error` | worker | why it failed |
 
 The worker polls for `status = 'pending'`, claims the row, renders from `spec`,
-and writes the result back. The editor console polls
-`GET /api/admin/qbank/render?jobId=…`; when a job reports `done` that route
-copies `image_url`, `image_sidecar`, the dimensions and the answer region onto
-the case.
+and writes the result back, including the case image attachment. The editor
+console polls `GET /api/admin/qbank/render?jobId=…`; that route is read-only and
+reports `done` only when the completed job's image URL and specification are
+still attached to the case. A stale completed job is reported as superseded.
 
 ## 6. Generation pipeline
 

@@ -23,10 +23,10 @@ stem:
     electrographic seizure appears. The charge nurse asks whether monitoring should
     routinely continue through rewarming in infants who have had no seizures.
   image_caption: >-
-    Six-hour, two-channel aEEG (C3-P3 and C4-P4) spanning rewarming from 33.5 to 36.5
-    degrees Celsius, on the semilog amplitude axis, linear from 0 to 10 microvolts and
-    logarithmic from 10 to 100 microvolts. Hours from the start of rewarming are on the
-    time axis. A 15-second raw EEG inset is shown. Temperature steps are annotated.
+    Six-hour, two-channel aEEG (C3-P3 and C4-P4) spanning rewarming from 33.5 to 36.5 degrees
+    Celsius, on the semilog amplitude axis, linear from 0 to 10 microvolts and logarithmic from 10
+    to 100 microvolts. Hours from the start of rewarming are on the time axis. A 15-second raw EEG
+    inset is shown. The starting and ending temperatures are annotated.
   lead_in: >-
     Approximately what proportion of cooled neonates with electrographic seizures have
     their seizure onset during rewarming?
@@ -76,13 +76,15 @@ explanation: >-
   raw tracing and video, with remote neurologist support. Electrographic seizures were
   identified in 296 (33.9 percent), and were electrographic only in 213 of those (71.9
   percent). Seizure onset was most frequent between 6 and 24 hours of life, in 181 (61.1
-  percent), but seizure onset occurred during rewarming in 34 (11.5 percent). Early
+  percent), but seizure onset occurred during rewarming in 34 of the 296 seizure-positive
+  infants (11.5 percent). Early
   abnormal background carried a strong association with seizures: infants with a flat trace
   had the highest seizure rate, 68.2 percent, with an odds ratio of 12.90 (95 percent
   confidence interval 7.57 to 22.22) compared with continuous normal voltage, and absence
   of sleep-wake cycling carried an odds ratio of 2.22 (1.67 to 2.96). A single antiseizure
   medication controlled seizures in 192 (64.9 percent). Bedside takeaway: leave the
-  monitor on through rewarming, including for infants who never seized while cold.
+  monitor on through rewarming, including for infants who have not seized while cold;
+  11.5 percent describes the seizure-positive subgroup, not all cooled infants.
 
 key_points:
   - Seizure onset occurred during rewarming in 11.5 percent of 296 cooled neonates with seizures.
@@ -122,7 +124,9 @@ image:
     age_group: neonate
     sample_rate: 256
     duration_h: 6
-    channels: [C3-P3, C4-P4]
+    channels:
+    - C3-P3
+    - C4-P4
     pattern: DNV
     sleep_wake_cycling: immature
     background:
@@ -131,19 +135,25 @@ image:
       amplitude_uv: 32
       slow_fraction: 0.75
       reactivity: present
+      ibi_floor_at_h: [[0, 0.4], [0.5, 0.4], [1.25, 0.2], [2, 0.2], [2.75, 0.4], [3.5, 0.4], [4.25, 0.2], [5, 0.2], [6, 0.4]]
     events:
-      - type: temperature_change
-        at_min: 0
-        from_c: 33.5
-        to_c: 36.5
-        over_min: 360
+    - type: temperature_change
+      at_min: 0
+      from_c: 33.5
+      to_c: 36.5
+      over_min: 360
     annotations:
-      - { at_min: 0, label: "Rewarming start 33.5 C" }
-      - { at_min: 360, label: "36.5 C reached" }
+    - at_min: 0
+      label: Rewarming start 33.5 C
+    - at_min: 360
+      label: 36.5 C reached
     seizures:
-      - { onset_h: 4.30, duration_min: 3 }
+    - onset_h: 4.3
+      duration_min: 3
+      onset_region: generalized
     raw_strip_at_h: 4.32
     time_axis: elapsed
+    raw_strip_window_s: 15
 
 metadata:
   author: Writer B (claude-opus)

@@ -24,10 +24,10 @@ stem:
     deteriorating neurologically and whether the family should be told the prognosis has
     changed. Core temperature and blood pressure have been stable.
   image_caption: >-
-    Ten-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT
-    spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left, right); suppression
-    ratio (left, right). Elapsed minutes on the time axis. The start of the pentobarbital
-    infusion is annotated at 180 minutes.
+    Ten-hour qEEG panel: seizure probability; rhythmicity spectrogram (left, right); FFT spectrogram
+    0-20 Hz (left, right); asymmetry index; aEEG (left, right); suppression ratio (left, right).
+    Elapsed time (hours:minutes) on the time axis. The start of the pentobarbital infusion is
+    annotated at 180 minutes.
   lead_in: >-
     Locate the point on the trend panel that explains the change the resident describes.
 
@@ -49,11 +49,10 @@ explanation: >-
   disappear, the FFT panels lose almost all power above delta, the aEEG margins fall
   together on both sides, and both suppression-ratio trends ramp symmetrically over about
   20 minutes to a plateau near the titration target and stay there. The change is
-  bilateral, symmetric, monotonic, time-locked to the infusion and unaccompanied by any
-  asymmetry-index deflection, which is the signature of a pharmacologic effect rather than
-  a new structural injury; a new ischemic event would be lateralized and would deflect the
-  asymmetry index, and a metabolic deterioration would not begin at a single documented
-  minute. Evidence: the American Clinical Neurophysiology Society consensus statement
+  bilateral, symmetric, monotonic and time-locked to the infusion, which supports a
+  pharmacologic contribution. It does not independently exclude global ischemic,
+  metabolic or other causes, so the EEG change still requires clinical correlation.
+  Evidence: the American Clinical Neurophysiology Society consensus statement
   suggests continuous EEG specifically for assessment of the level of consciousness in
   patients receiving intravenous sedation or a pharmacologically induced coma, which is
   precisely the use here; the trend is the titration instrument, not a prognostic
@@ -64,8 +63,8 @@ explanation: >-
   medication annotation line.
 
 key_points:
-  - A bilateral, symmetric suppression-ratio rise time-locked to an infusion change is pharmacologic.
-  - A new structural injury lateralizes and deflects the asymmetry index; a drug effect does not.
+  - A bilateral suppression-ratio rise time-locked to an infusion change supports a pharmacologic contribution.
+  - Bilaterality and timing do not independently exclude global ischemic, metabolic or other causes.
   - Document the sedative exposure and dose alongside every background-based prognostic read.
 
 references:

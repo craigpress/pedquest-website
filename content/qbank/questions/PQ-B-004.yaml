@@ -24,13 +24,13 @@ stem:
     shown. Two brief electrographic seizures were recorded earlier in the night and the
     background did not change with tracheal suctioning.
   image_caption: >-
-    Composite. Upper: 12-hour qEEG panel (seizure probability; rhythmicity L and R; FFT
-    0-20 Hz L and R; asymmetry index; suppression ratio L and R), elapsed minutes. Lower:
-    15-second raw page from hour 10, longitudinal bipolar, 7 microvolts per millimetre,
-    1-70 Hz, 60 Hz notch. Tracheal suctioning annotated at 360 minutes.
+    Composite. Upper: 12-hour qEEG panel (seizure probability; rhythmicity L and R; FFT 0-20 Hz L
+    and R; asymmetry index; suppression ratio L and R), elapsed time (hours:minutes). Lower:
+    15-second raw page from hour 10, longitudinal bipolar, 7 microvolts per millimetre, 1-70 Hz, 60
+    Hz notch. Tracheal suctioning annotated at 360 minutes.
   lead_in: >-
-    Which finding on this recording is most strongly associated with death before
-    hospital discharge?
+    In the cited 2016 cohort, which EEG finding was most strongly associated with death
+    before hospital discharge?
 
 question_type: multiple_choice
 options:
@@ -82,8 +82,10 @@ explanation: >-
   for covariates, each incrementally worse background score carried an odds of death of
   3.63 (95 percent confidence interval 2.18 to 6.0) and an odds of unfavorable neurologic
   outcome of 4.38 (2.51 to 7.17). Absence of reactivity and the presence of seizures were
-  themselves associated with a worse background category. Bedside takeaway: grade the
-  background first, and never prognosticate from a single feature or a single time point.
+  themselves associated with a worse background category. This cohort association does
+  not make one early EEG determinative for an individual child. Bedside takeaway: grade
+  the background serially and integrate it with examination, imaging and other clinical
+  data before prognostic counseling.
 
 key_points:
   - Each incrementally worse post-arrest background category raised the odds of death 3.63-fold.
@@ -113,6 +115,18 @@ references:
     verified_by: pubmed-mcp get_article_metadata 2026-09-03
     open_access: unknown
     member_author: true
+  - pmid: "41122885"
+    doi: 10.1161/CIR.0000000000001368
+    citation: >-
+      Lasa JJ, Dhillon GS, Duff JP, et al. Part 8: Pediatric Advanced Life Support: 2025
+      American Heart Association and American Academy of Pediatrics Guidelines for
+      Cardiopulmonary Resuscitation and Emergency Cardiovascular Care. Circulation.
+      2025;152(16 Suppl 2):S479-S537.
+    role: supporting
+    verified: true
+    verified_by: PubMed 2026-09-04
+    open_access: unknown
+    member_author: false
 
 image:
   kind: composite
