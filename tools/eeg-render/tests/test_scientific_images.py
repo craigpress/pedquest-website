@@ -168,3 +168,29 @@ def test_worker_attaches_immutable_image_only_to_matching_version(monkeypatch, c
     assert '&version=eq.2' in attachment[0]
     assert attachment[3]['extra']['Prefer'] == 'return=representation'
     assert calls[-1][2]['status'] == ('error' if changed_during_render else 'done')
+
+
+def test_raw_page_rows_are_separated_at_chain_boundaries():
+    from eeg_render import montage as mt
+    from eeg_render.render_page import chain_breaks, row_offsets, CHAIN_GAP_ROWS
+
+    pairs = mt.montage_pairs('longitudinal_bipolar', mt.STANDARD_19)
+    breaks = chain_breaks(pairs)
+    # temporal L | temporal R | parasagittal L | parasagittal R | midline
+    assert breaks == [4, 8, 12, 16]
+
+    offsets = row_offsets(len(pairs), breaks, 10.0)
+    pitch = offsets[0] - offsets[1]
+    assert pitch == pytest.approx(10.0)
+    assert offsets[3] - offsets[4] == pytest.approx(10.0 * (1 + CHAIN_GAP_ROWS))
+    assert offsets[4] - offsets[5] == pytest.approx(10.0)
+
+    neonatal = chain_breaks(mt.montage_pairs('neonatal_reduced', ['Fp1', 'Fp2', 'T3', 'T4', 'C3', 'C4', 'Cz', 'O1', 'O2']))
+    assert neonatal == [2, 4, 6, 8]
+
+    # an appended ECG row is its own group; referential rows split by hemisphere
+    assert chain_breaks(list(pairs) + [('A1', 'A2')])[-1] == len(pairs)
+    ref = mt.montage_pairs('referential', mt.STANDARD_19)
+    ref_breaks = chain_breaks(ref)
+    sides = [mt.side_of(a) for a, _ in ref]
+    assert ref_breaks == [i for i in range(1, len(ref)) if sides[i] != sides[i - 1]]

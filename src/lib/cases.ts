@@ -149,6 +149,30 @@ export interface PublicCase {
   imageAttribution: string | null;
   imageSourceUrl: string | null;
   inBank: boolean;
+  /** Renderer image kind (qeeg_panel, eeg_page, aeeg, composite) — drives the viewer's palette tools. */
+  imageKind: string | null;
+  /** Panel geometry from the render sidecar, in image fractions (origin top-left). */
+  imagePanels: ImagePanel[];
+}
+
+/** One panel/row of a rendered image, as recorded by the renderer sidecar. */
+export interface ImagePanel {
+  name?: string;
+  label?: string;
+  x0?: number;
+  x1?: number;
+  y0?: number;
+  y1?: number;
+}
+
+/**
+ * Which items learners may open. Approval puts a bank item in front of
+ * learners; "published" additionally places it in the Case-of-the-Day
+ * rotation (publish_date). Archived cases stay reachable via their permalink.
+ */
+export function isLearnerVisible(c: { status: CaseStatus; inBank: boolean }): boolean {
+  if (c.status === "published" || c.status === "archived") return true;
+  return c.status === "approved" && c.inBank;
 }
 
 /** Aggregate community stats, safe for everyone once they've answered. */
@@ -322,6 +346,12 @@ export function toPublicCase(c: EegCase): PublicCase {
     imageAttribution: c.imageAttribution,
     imageSourceUrl: c.imageSourceUrl,
     inBank: c.inBank,
+    imageKind: (c.imageSidecar?.kind as string | undefined) ?? null,
+    imagePanels: Array.isArray(c.imageSidecar?.panels)
+      ? (c.imageSidecar!.panels as ImagePanel[]).map((p) => ({
+          name: p.name, label: p.label, x0: p.x0, x1: p.x1, y0: p.y0, y1: p.y1,
+        }))
+      : [],
   };
 }
 

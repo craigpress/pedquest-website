@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useUser, useMember } from "@/lib/auth";
+import { useUser, useMember, useRole } from "@/lib/auth";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -53,6 +53,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { user, loading: userLoading } = useUser();
   const { member } = useMember();
+  const { isEditor } = useRole();
 
   const userInitials = member
     ? member.name
@@ -180,6 +181,24 @@ export default function Navbar() {
 
           {/* Right side: CTA + hamburger */}
           <div className="flex items-center gap-3">
+            {/* Editor console — editors and admins */}
+            {!userLoading && user && isEditor && (
+              <Link
+                href="/admin/qbank"
+                className="hidden lg:flex items-center no-underline transition-all duration-200"
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  fontFamily: "var(--body-font)",
+                  color: "var(--text-secondary)",
+                  padding: "0.45rem 0.85rem",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                }}
+              >
+                Editor console
+              </Link>
+            )}
             {/* Profile button — shown when logged in */}
             {!userLoading && user && (
               <Link
@@ -222,6 +241,24 @@ export default function Navbar() {
               </Link>
             )}
 
+            {/* Log in — desktop only, hidden when logged in */}
+            {!userLoading && !user && (
+              <Link
+                href="/login"
+                className="hidden lg:flex items-center no-underline transition-all duration-200"
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  fontFamily: "var(--body-font)",
+                  color: "var(--text-secondary)",
+                  padding: "0.45rem 0.85rem",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                }}
+              >
+                Log in
+              </Link>
+            )}
             {/* Join CTA - desktop only, hidden when logged in */}
             {!user && (
               <Link
@@ -314,6 +351,25 @@ export default function Navbar() {
                   </li>
                 );
               })}
+              {/* Mobile editor console — editors and admins */}
+              {!userLoading && user && isEditor && (
+                <li className="mt-3">
+                  <Link
+                    href="/admin/qbank"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      color: "var(--text-secondary)",
+                      border: "1px solid var(--border)",
+                      background: "transparent",
+                    }}
+                  >
+                    Editor console
+                  </Link>
+                </li>
+              )}
               {/* Mobile profile link — when logged in */}
               {!userLoading && user && (
                 <li className="mt-3">
@@ -330,6 +386,25 @@ export default function Navbar() {
                     }}
                   >
                     <UserIcon /> My Profile
+                  </Link>
+                </li>
+              )}
+              {/* Mobile log in — hidden when logged in */}
+              {!userLoading && !user && (
+                <li className="mt-3">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      color: "var(--text-secondary)",
+                      border: "1px solid var(--border)",
+                      background: "transparent",
+                    }}
+                  >
+                    Log in
                   </Link>
                 </li>
               )}

@@ -228,7 +228,7 @@ export default function Footer() {
               Privacy
             </Link>
             <Link
-              href="/admin"
+              href="/login"
               className="text-xs no-underline"
               style={{
                 color: "var(--text-muted)",
@@ -236,7 +236,7 @@ export default function Footer() {
                 opacity: 0.5,
               }}
             >
-              Admin
+              Log in
             </Link>
           </div>
         </div>

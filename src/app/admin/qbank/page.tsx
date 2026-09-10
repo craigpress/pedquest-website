@@ -198,9 +198,9 @@ export default function AdminQbankQueuePage() {
         <span style={eyebrow}>Question bank</span>
         <h1 style={{ ...h1, marginTop: 6 }}>Review queue</h1>
         <p style={{ color: "var(--text-secondary)", marginTop: 8, maxWidth: "62ch" }}>
-          Nothing here is visible to learners until an editor approves it and it is published.
-          Approval needs an image license, at least one verified reference, and a reviewer who is
-          not the item&apos;s author.
+          Nothing here is visible to learners until an editor approves it. Approval opens the item in the
+          question bank; featuring it as Case of the Day is a separate, optional step. Approval needs an
+          image license, at least one verified reference, and a reviewer who is not the item&apos;s author.
         </p>
         <button
           type="button"
@@ -369,7 +369,7 @@ export default function AdminQbankQueuePage() {
                 </div>
                 <div className="qb-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
                   <Link href={`/admin/qbank/${i.id}`} style={mini}>Review</Link>
-                  {i.status === "published" && (
+                  {(i.status === "published" || i.status === "approved") && (
                     <Link href={`/education/question-bank/${i.id}`} target="_blank" style={mini}>View ↗</Link>
                   )}
                 </div>

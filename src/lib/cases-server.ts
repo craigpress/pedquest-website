@@ -3,7 +3,7 @@
 // NEVER import this from a "use client" module.
 import { createServerClient } from "@/lib/supabase";
 import {
-  mapCase, mapReference, toPublicCase,
+  isLearnerVisible, mapCase, mapReference, toPublicCase,
   type CaseReference, type EegCase, type PublicCase, type CaseStats,
 } from "@/lib/cases";
 
@@ -56,8 +56,8 @@ export async function getTodaysPublicCase(): Promise<PublicCase | null> {
 export async function getPublicCaseById(id: string): Promise<PublicCase | null> {
   const c = await getCaseById(id);
   if (!c) return null;
-  // only expose cases that have been published/archived to the public page
-  if (c.status !== "published" && c.status !== "archived") return null;
+  // published/archived cases, plus approved bank items (not yet in the CoTD rotation)
+  if (!isLearnerVisible(c)) return null;
   return toPublicCase(c);
 }
 

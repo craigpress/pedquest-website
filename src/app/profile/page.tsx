@@ -178,13 +178,14 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
 
   const isAuthenticated = !!user;
   const effectiveEmail = user?.email || null;
-  const { isAdmin } = useRole();
+  const { isAdmin, isEditor } = useRole();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -299,6 +300,7 @@ export default function ProfilePage() {
   async function handleSave() {
     if (!profile || !member) return;
     setSaving(true);
+    setSaveError(null);
 
     // Try Supabase first
     try {
@@ -320,6 +322,8 @@ export default function ProfilePage() {
         setSaving(false);
         return;
       }
+      // Say so rather than silently keeping the edit in this browser only.
+      setSaveError(error.message);
     } catch {
       // Supabase not available
     }
@@ -451,9 +455,9 @@ export default function ProfilePage() {
           My Profile
         </h1>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          {isAdmin && (
+          {isEditor && (
             <Link
-              href="/admin"
+              href={isAdmin ? "/admin" : "/admin/qbank"}
               style={{
                 padding: "0.55rem 1.25rem",
                 borderRadius: 8,
@@ -468,7 +472,7 @@ export default function ProfilePage() {
                 transition: "opacity 0.2s",
               }}
             >
-              Admin Panel
+              {isAdmin ? "Admin Panel" : "Editor console"}
             </Link>
           )}
           <button
@@ -738,7 +742,12 @@ export default function ProfilePage() {
                 fontFamily: "var(--body-font)",
               }}
             >
-              Changes saved!
+              {saveError ? "Saved in this browser only" : "Changes saved!"}
+            </span>
+          )}
+          {saveError && (
+            <span role="alert" style={{ color: "var(--accent-secondary)", fontSize: "0.85rem", fontFamily: "var(--body-font)" }}>
+              Could not save to the directory: {saveError}
             </span>
           )}
         </div>

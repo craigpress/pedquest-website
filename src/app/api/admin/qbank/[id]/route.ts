@@ -204,7 +204,10 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     if (reviewErr) return dbError(reviewErr, "Could not record the review.");
 
     const patch: Record<string, unknown> = { reviewed_by: auth.userId };
-    if (decision === "approved") patch.status = "approved";
+    // Approval is what puts an item in front of learners (as a bank item);
+    // scheduling as Case of the Day is a separate, later step. Make sure an
+    // approved item is actually in the bank, otherwise it would stall unseen.
+    if (decision === "approved") { patch.status = "approved"; patch.in_bank = true; }
     if (decision === "changes_requested") patch.status = "pending_review";
     if (decision === "rejected") patch.status = "archived";
 
@@ -299,7 +302,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     return NextResponse.json({ success: true, jobId: data.id });
   }
 
-  // ---------------- schedule as Case of the Day ----------------
+  // ---------------- schedule as Case of the Day (status=published) ----------------
   if (action === "schedule") {
     const publishDate = typeof body.publishDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.publishDate)
       ? body.publishDate

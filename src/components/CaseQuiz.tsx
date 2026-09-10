@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { imageCreditLine, type CaseReference, type PublicCase, type RevealResult, type Region } from "@/lib/cases";
+import EegViewer from "@/components/EegViewer";
 
 const SESSION_KEY = "pedquest_eeg_session";
 function getSessionId(): string {
@@ -90,21 +91,28 @@ export default function CaseQuiz({
         </p>
       )}
 
-      {/* image / interactive tracing */}
-      {caseData.questionType === "point_to_feature" ? (
-        <PointImage
+      {/* image / interactive tracing — zoomable frame with heat-map palette picker */}
+      {caseData.imageUrl && (
+        <EegViewer
           src={caseData.imageUrl}
-          alt={caseData.title}
-          point={answered ? (reveal!.yourAnswer.x != null ? { x: reveal!.yourAnswer.x!, y: reveal!.yourAnswer.y! } : point) : point}
-          onPick={answered ? undefined : setPoint}
-          reveal={answered ? reveal! : null}
-        />
-      ) : (
-        caseData.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={caseData.imageUrl} alt={caseData.title}
-            style={{ width: "100%", borderRadius: 14, border: "1px solid var(--border)", background: "var(--bg-card)" }} />
-        )
+          kind={caseData.imageKind}
+          panels={caseData.imagePanels ?? []}
+          allowDragPan={caseData.questionType !== "point_to_feature"}
+        >
+          {(displaySrc) => caseData.questionType === "point_to_feature" ? (
+            <PointImage
+              src={displaySrc}
+              alt={caseData.title}
+              point={answered ? (reveal!.yourAnswer.x != null ? { x: reveal!.yourAnswer.x!, y: reveal!.yourAnswer.y! } : point) : point}
+              onPick={answered ? undefined : setPoint}
+              reveal={answered ? reveal! : null}
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={displaySrc} alt={caseData.title} draggable={false}
+              style={{ width: "100%", display: "block", borderRadius: 14, border: "1px solid var(--border)", background: "var(--bg-card)", userSelect: "none" }} />
+          )}
+        </EegViewer>
       )}
 
       {/* image caption + credit line (question-bank items carry both) */}

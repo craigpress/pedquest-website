@@ -420,13 +420,15 @@ export default function AdminQbankItemPage() {
                   type="button"
                   style={btnGhost}
                   disabled={busy}
-                  onClick={() => post({ action: "schedule", publishDate }, "Published.")}
+                  onClick={() => post({ action: "schedule", publishDate }, "Scheduled as Case of the Day.")}
                 >
-                  Publish on this date
+                  Feature as Case of the Day on this date
                 </button>
               </div>
               <p style={{ ...meta, marginTop: 8 }}>
-                Publishing runs the database gate: license, a verified reference, and a reviewer other than the author.
+                Optional. An approved bank item is already open to learners in the question bank; this
+                additionally puts it in the Case-of-the-Day rotation. The database gate (license, a verified
+                reference, a reviewer other than the author) applies to approval and scheduling alike.
               </p>
             </div>
 

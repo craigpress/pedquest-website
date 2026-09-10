@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { checkOrigin, truncate } from "@/lib/validation";
 import { getCaseById, getCaseStats, getCaseReferences } from "@/lib/cases-server";
-import { isPointInRegion, type RevealResult } from "@/lib/cases";
+import { isPointInRegion, type RevealResult, isLearnerVisible } from "@/lib/cases";
 
 // Submit an answer to a case, grade it server-side, and return the reveal.
 export async function POST(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   if (!supabase) return NextResponse.json({ error: "Server not configured." }, { status: 503 });
 
   const c = await getCaseById(id);
-  if (!c || (c.status !== "published" && c.status !== "archived")) {
+  if (!c || !isLearnerVisible(c)) {
     return NextResponse.json({ error: "Case not found." }, { status: 404 });
   }
   // Citations are part of the post-answer teaching payload for bank items.

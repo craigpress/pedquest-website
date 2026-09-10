@@ -8,7 +8,7 @@ same millimetre.  So a 15 s page is 450 mm wide, and at 7 uV/mm a row that is
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import matplotlib
 matplotlib.use("Agg")
@@ -22,6 +22,10 @@ from .synth import Synthesizer  # noqa: E402
 
 PAPER_MM_PER_S = 30.0
 
+#: extra vertical space (in row pitches) inserted between electrode chains so
+#: a reader can see where one chain ends and the next begins.
+CHAIN_GAP_ROWS = 0.55
+
 LEFT = 0.062
 RIGHT = 0.010
 TOP = 0.072
@@ -32,6 +36,38 @@ PAGE_INK = "#111111"
 PAGE_GRID = "#e2b8b8"      # the faint red 1 s rule of clinical EEG paper
 PAGE_GRID_MINOR = "#f0dada"
 PAGE_MUTED = "#4a4a4a"
+
+
+def chain_breaks(pairs) -> List[int]:
+    """Row indices that start a new electrode chain (a gap is drawn above them).
+
+    Bipolar chains are continuous: each derivation's first electrode is the
+    previous derivation's second (Fp1-F7, F7-T3, ...). A row that does not
+    continue the chain starts a new one. Referential/average rows (second
+    electrode ``None``) are grouped by hemisphere instead. An appended ECG row
+    always starts its own group.
+    """
+    breaks: List[int] = []
+    for i in range(1, len(pairs)):
+        (pa, pb), (ca, cb) = pairs[i - 1], pairs[i]
+        if pb is None or cb is None:
+            if mt.side_of(pa) != mt.side_of(ca) or (pb is None) != (cb is None):
+                breaks.append(i)
+        elif ca != pb:
+            breaks.append(i)
+    return breaks
+
+
+def row_offsets(n_rows: int, breaks: Sequence[int], row_uv: float) -> np.ndarray:
+    """Baseline offsets (uV, negative downward) with chain gaps inserted."""
+    out = []
+    pos = 0.8
+    for i in range(n_rows):
+        if i in breaks:
+            pos += CHAIN_GAP_ROWS
+        out.append(-pos * row_uv)
+        pos += 1.0
+    return np.array(out)
 
 
 class PageGeometry:
@@ -149,11 +185,13 @@ def render_eeg_page(
         px_per_mm = plot_w_px / (win * PAPER_MM_PER_S)
         uv_per_px = sens / px_per_mm
         n_rows = len(labels)
-        row_px = plot_h_px / (n_rows + 1.7)
+        breaks = chain_breaks(pairs)
+        n_slots = n_rows + CHAIN_GAP_ROWS * len(breaks)
+        row_px = plot_h_px / (n_slots + 1.7)
         row_uv = row_px * uv_per_px
-        total_uv = row_uv * (n_rows + 1.7)
+        total_uv = row_uv * (n_slots + 1.7)
 
-        offsets = np.array([-(i + 0.8) * row_uv for i in range(n_rows)])
+        offsets = row_offsets(n_rows, breaks, row_uv)
 
         # --- grid ----------------------------------------------------------
         for k in range(int(np.floor(win)) + 1):

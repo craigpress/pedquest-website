@@ -11,7 +11,7 @@ import {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ---------------------------------------------------------------------------
-// Learner-facing reads (published bank items only)
+// Learner-facing reads (approved or published bank items)
 // ---------------------------------------------------------------------------
 
 export interface BankFilters {
@@ -58,7 +58,10 @@ function mapSummary(r: any): BankSummary {
   };
 }
 
-/** Every published item that is part of the bank, newest first. */
+/** Statuses a bank item may carry and still be open to learners. */
+const LEARNER_STATUSES = ["approved", "published"];
+
+/** Every approved/published item that is part of the bank, newest first. */
 export async function listBankItems(filters: BankFilters = {}): Promise<BankSummary[]> {
   const supabase = createServerClient();
   if (!supabase) return [];
@@ -66,7 +69,7 @@ export async function listBankItems(filters: BankFilters = {}): Promise<BankSumm
     .from("eeg_cases")
     .select(SUMMARY_COLUMNS)
     .eq("in_bank", true)
-    .eq("status", "published");
+    .in("status", LEARNER_STATUSES);
   if (filters.domain) q = q.eq("domain", filters.domain);
   if (filters.difficulty) q = q.eq("difficulty", filters.difficulty);
   if (filters.population) q = q.eq("population", filters.population);
@@ -96,7 +99,7 @@ export async function getBankFacets(): Promise<BankFacets> {
     .from("eeg_cases")
     .select("domain,difficulty,population,setting")
     .eq("in_bank", true)
-    .eq("status", "published");
+    .in("status", LEARNER_STATUSES);
   if (error || !data) return empty;
   const facets: BankFacets = { total: data.length, byDomain: {}, byDifficulty: {}, byPopulation: {}, bySetting: {} };
   for (const r of data as any[]) {
@@ -108,13 +111,13 @@ export async function getBankFacets(): Promise<BankFacets> {
   return facets;
 }
 
-/** Answer-stripped item for the learner page. Published bank items only. */
+/** Answer-stripped item for the learner page. Approved/published bank items only. */
 export async function getPublicBankItem(id: string): Promise<PublicCase | null> {
   const supabase = createServerClient();
   if (!supabase) return null;
   const { data: rows } = await supabase.from("eeg_cases").select("*").eq("id", id).limit(1);
   const row = rows?.[0];
-  if (!row || row.status !== "published" || !row.in_bank) return null;
+  if (!row || !row.in_bank || !LEARNER_STATUSES.includes(row.status)) return null;
   const { data: opts } = await supabase
     .from("eeg_case_options").select("*").eq("case_id", row.id).order("sort_order");
   return toPublicCase(mapCase(row, opts ?? []));
@@ -163,7 +166,7 @@ export async function getBankProgress(userId: string): Promise<BankProgress> {
     .from("eeg_cases")
     .select("id,domain")
     .eq("in_bank", true)
-    .eq("status", "published");
+    .in("status", LEARNER_STATUSES);
   if (!items || items.length === 0) return empty;
 
   const domainById = new Map<string, string>();
