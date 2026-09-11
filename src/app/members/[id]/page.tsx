@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { members } from "@/data/members";
+import { getPublicMember } from "@/lib/members-live";
 import { publications } from "@/data/publications";
 import { conferenceAbstracts } from "@/data/abstracts";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -23,13 +23,13 @@ function highlightOwnName(authors: string[], memberName: string) {
   });
 }
 
-export function generateStaticParams() {
-  return members.map((m) => ({ id: m.id }));
-}
+// Rendered per request from the table, so a profile edit is public without a
+// redeploy and a member added after the last deploy resolves too.
+export const dynamic = "force-dynamic";
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const member = members.find((m) => m.id === id);
+  const member = await getPublicMember(id);
   if (!member) notFound();
 
   const memberPubs = publications.filter((p) => p.memberAuthorIds.includes(id));

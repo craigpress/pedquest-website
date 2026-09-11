@@ -4,9 +4,11 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { rowToMember, memberToRow, type MemberRow } from "@/lib/members-server";
 
 /**
- * Admin CRUD for members. The Supabase table is the source of truth;
- * src/data/members.generated.ts is rebuilt from it by `prebuild`, so an edit
- * here reaches the site on the next deploy (see POST action "publish" on
+ * Admin CRUD for members. The Supabase table is the source of truth.
+ * /members and /members/[id] render per request, so an edit here is public
+ * immediately. The other consumers (homepage, /about, /publications) read
+ * src/data/members.generated.ts, which `prebuild` rebuilds from the table, so
+ * they update on the next deploy (see POST action "publish" on
  * /api/admin/publish).
  */
 

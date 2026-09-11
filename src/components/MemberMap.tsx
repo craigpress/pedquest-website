@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { members, institutions } from "@/data/members";
+import { members as snapshotMembers, institutions } from "@/data/members";
 import type { Member } from "@/data/members";
 import Link from "next/link";
 
 // Group members by institution
-function getMembersByInstitution(): Map<string, Member[]> {
+function getMembersByInstitution(members: Member[]): Map<string, Member[]> {
   const map = new Map<string, Member[]>();
   for (const m of members) {
     const existing = map.get(m.institution) || [];
@@ -33,7 +33,8 @@ function createPinIcon(color: string) {
   });
 }
 
-export default function MemberMap() {
+/** `members` defaults to the build-time snapshot; /members passes the live rows. */
+export default function MemberMap({ members = snapshotMembers }: { members?: Member[] }) {
   const [pinColor, setPinColor] = useState("#d4603a");
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function MemberMap() {
     if (color) setPinColor(color);
   }, []);
 
-  const membersByInstitution = getMembersByInstitution();
+  const membersByInstitution = getMembersByInstitution(members);
   const icon = createPinIcon(pinColor);
 
   return (
