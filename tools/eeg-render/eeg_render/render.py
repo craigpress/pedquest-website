@@ -168,6 +168,11 @@ def _render_composite(spec: Dict[str, Any], out_png: str, note: str):
         panel_spec = dict(panel_spec)
         panel_spec["style"] = dict(panel_spec["style"])
         panel_spec["style"].update({"width": width, "height": height, "dpi": dpi})
+        # A composite pairs trends with a raw page cut from one moment inside
+        # them.  Mark that moment on the trends unless the author pinned their
+        # own cursor - otherwise the reader cannot place the page in time.
+        if page_spec is not None and panel_spec.get("show_cursor_at_min") is None:
+            panel_spec["show_cursor_at_min"] = float(page_spec["at_min"])
         dur_s = float(panel_spec["duration_min"]) * 60.0
         synth = Synthesizer(panel_spec, dur_s)
         trends = compute_trends(synth, dur_s, panel_spec)

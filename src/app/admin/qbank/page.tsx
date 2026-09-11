@@ -34,6 +34,16 @@ interface QueueItem {
 
 const STATUSES = ["pending_review", "draft", "approved", "published", "archived"];
 
+interface AttachmentRow {
+  id: string;
+  kind: "pdf" | "image";
+  filename: string;
+  byteSize: number;
+  note: string | null;
+  textChars: number | null;
+  warning?: string | null;
+}
+
 export default function AdminQbankQueuePage() {
   const { isEditor, loading: roleLoading } = useRole();
   const [items, setItems] = useState<QueueItem[]>([]);
@@ -54,6 +64,14 @@ export default function AdminQbankQueuePage() {
   const [generating, setGenerating] = useState(false);
   const [generateMessage, setGenerateMessage] = useState<string | null>(null);
   const [generatedId, setGeneratedId] = useState<string | null>(null);
+  // Attachments are uploaded before the job exists, so they are tied to a
+  // client-generated batch id that the generate call passes along.
+  const [attachBatch] = useState(() =>
+    (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `b${Date.now()}${Math.random()}`)
+      .replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32));
+  const [attachments, setAttachments] = useState<AttachmentRow[]>([]);
+  const [attachBusy, setAttachBusy] = useState(false);
+  const [attachNote, setAttachNote] = useState("");
 
   const authHeaders = useCallback(async () => {
     const sb = getSupabase();
@@ -82,6 +100,45 @@ export default function AdminQbankQueuePage() {
     }
   }, [authHeaders, status, domain, difficulty, population, source]);
 
+  async function uploadAttachment(file: File) {
+    setAttachBusy(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("batch", attachBatch);
+      if (attachNote.trim()) form.append("note", attachNote.trim());
+      const headers = await authHeaders();
+      // let the browser set the multipart boundary
+      delete (headers as Record<string, string>)["Content-Type"];
+      const res = await fetch("/api/admin/qbank/attachments", { method: "POST", headers, body: form });
+      const json = await res.json();
+      if (!res.ok || !json.success) { setError(json.error || "Upload failed."); return; }
+      setAttachments((a) => [...a, {
+        id: json.id, kind: json.kind, filename: json.filename,
+        byteSize: file.size, note: attachNote.trim() || null,
+        textChars: json.textChars ?? null, warning: json.warning ?? null,
+      }]);
+      setAttachNote("");
+    } catch {
+      setError("Upload failed.");
+    } finally {
+      setAttachBusy(false);
+    }
+  }
+
+  async function removeAttachment(id: string) {
+    setAttachBusy(true);
+    try {
+      await fetch(`/api/admin/qbank/attachments?id=${encodeURIComponent(id)}`, {
+        method: "DELETE", headers: await authHeaders(),
+      });
+      setAttachments((a) => a.filter((x) => x.id !== id));
+    } finally {
+      setAttachBusy(false);
+    }
+  }
+
   async function generateQuestion(event: FormEvent) {
     event.preventDefault();
     setGenerating(true);
@@ -92,7 +149,11 @@ export default function AdminQbankQueuePage() {
       const res = await fetch("/api/admin/qbank/generate", {
         method: "POST",
         headers: await authHeaders(),
-        body: JSON.stringify({ domain: generateDomain, prompt: generatePrompt }),
+        body: JSON.stringify({
+          domain: generateDomain,
+          prompt: generatePrompt,
+          ...(attachments.length ? { attachmentBatch: attachBatch } : {}),
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -241,6 +302,59 @@ export default function AdminQbankQueuePage() {
               />
             </label>
           </div>
+          <div style={{ borderTop: "1px solid var(--border)", marginTop: 14, paddingTop: 12 }}>
+            <div style={eyebrow}>Source material (optional)</div>
+            <p style={{ ...meta, marginTop: 6, marginBottom: 10, lineHeight: 1.55 }}>
+              Attach a PDF to ground the item on, or a figure to base a synthetic version on.
+              A reference image is never published — the item still gets an original rendered
+              figure. You can also name a paper in the prompt (&ldquo;use PMID 34510095&rdquo; or a DOI)
+              and it will be fetched and added to the evidence.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                type="text"
+                value={attachNote}
+                onChange={(e) => setAttachNote(e.target.value)}
+                placeholder="How to use the next file, e.g. make a synthetic version of this"
+                maxLength={400}
+                disabled={generating || attachBusy}
+                style={{ ...inp, flex: "1 1 280px" }}
+              />
+              <label style={{ ...mini, cursor: attachBusy ? "wait" : "pointer", display: "inline-flex", alignItems: "center" }}>
+                {attachBusy ? "Uploading…" : "Attach PDF or image"}
+                <input
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/gif,image/webp"
+                  disabled={generating || attachBusy}
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (f) void uploadAttachment(f);
+                  }}
+                />
+              </label>
+            </div>
+            {attachments.length > 0 && (
+              <ul style={{ listStyle: "none", padding: 0, margin: "10px 0 0", display: "flex", flexDirection: "column", gap: 6 }}>
+                {attachments.map((a) => (
+                  <li key={a.id} style={{ ...meta, display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                    <span style={{ fontFamily: "var(--mono-font)" }}>{a.kind === "pdf" ? "PDF" : "IMG"}</span>
+                    <span style={{ color: "var(--text)" }}>{a.filename}</span>
+                    {a.note && <span>— {a.note}</span>}
+                    {a.kind === "pdf" && a.textChars != null && (
+                      <span>{a.textChars.toLocaleString()} characters read</span>
+                    )}
+                    {a.warning && <span style={{ color: "var(--accent-secondary)" }}>{a.warning}</span>}
+                    <button type="button" style={mini} disabled={attachBusy} onClick={() => void removeAttachment(a.id)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
             <button type="submit" style={btnPrimary} disabled={generating || generatePrompt.trim().length < 15}>
               {generating ? "Generating…" : "Create draft"}

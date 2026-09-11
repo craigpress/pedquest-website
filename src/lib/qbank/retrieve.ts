@@ -118,6 +118,17 @@ function parseArticle(xml: string): RetrievedArticle | null {
 }
 
 /**
+ * Every ``<PubmedArticle>`` in an efetch response, keeping only those whose
+ * abstract reaches ``minAbstract`` characters. Pass 0 to keep them all - a
+ * paper the editor named by PMID counts even with a one-line abstract.
+ */
+export function parseArticles(xml: string, minAbstract = 200): RetrievedArticle[] {
+  return [...xml.matchAll(/<PubmedArticle>([\s\S]*?)<\/PubmedArticle>/gi)]
+    .map((m) => parseArticle(m[1]))
+    .filter((a): a is RetrievedArticle => !!a && a.abstract.length >= minAbstract);
+}
+
+/**
  * esearch + efetch for one (domain, topic). `retmax` caps how many abstracts
  * reach the model — more context is not better here, it dilutes the numbers we
  * want the item anchored to.
@@ -126,7 +137,13 @@ export async function retrieveEvidence(
   domain: string,
   topic: string,
   retmax = 6,
+  /** articles the editor named explicitly; always kept, and listed first */
+  pinned: RetrievedArticle[] = [],
 ): Promise<RetrievalResult> {
+  const merge = (found: RetrievedArticle[]): RetrievedArticle[] => {
+    const seen = new Set(pinned.map((a) => a.pmid));
+    return [...pinned, ...found.filter((a) => !seen.has(a.pmid))];
+  };
   const queries = buildQueries(domain, topic);
   let lastError = "no PubMed hits";
   let lastQuery = queries[0];
@@ -149,17 +166,21 @@ export async function retrieveEvidence(
       if (!fetchRes.ok) { lastError = `efetch returned ${fetchRes.status}`; continue; }
       const xml = await fetchRes.text();
 
-      const articles = [...xml.matchAll(/<PubmedArticle>([\s\S]*?)<\/PubmedArticle>/gi)]
-        .map((m) => parseArticle(m[1]))
-        .filter((a): a is RetrievedArticle => !!a && a.abstract.length > 200);
+      const articles = parseArticles(xml, 200);
 
       if (articles.length === 0) { lastError = "hits had no usable abstracts"; continue; }
-      return { query, pmids, articles };
+      return { query, pmids, articles: merge(articles) };
     } catch (e) {
-      return { query, pmids: [], articles: [], error: `PubMed unreachable: ${(e as Error).message}` };
+      // A named paper we already hold is still usable evidence even if the
+      // topic search could not run.
+      return pinned.length
+        ? { query, pmids: pinned.map((a) => a.pmid), articles: pinned }
+        : { query, pmids: [], articles: [], error: `PubMed unreachable: ${(e as Error).message}` };
     }
   }
-  return { query: lastQuery, pmids: [], articles: [], error: lastError };
+  return pinned.length
+    ? { query: lastQuery, pmids: pinned.map((a) => a.pmid), articles: pinned }
+    : { query: lastQuery, pmids: [], articles: [], error: lastError };
 }
 
 /** Compact abstract block for the draft prompt. */

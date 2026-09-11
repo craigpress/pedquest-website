@@ -6,7 +6,7 @@
 // The only facts it may use are the abstracts retrieve.ts fetched.
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { chat, extractJson, providerModel, selectProvider } from "./provider";
+import { chat, extractJson, providerModel, selectProvider, type ChatImage } from "./provider";
 import { formatEvidence, type RetrievedArticle } from "./retrieve";
 import type { QbankQuestion } from "./question";
 
@@ -89,6 +89,8 @@ export function buildUserPrompt(input: {
   domain: string;
   topic: string;
   articles: RetrievedArticle[];
+  /** editor-attached PDFs / reference images, already rendered to text */
+  attachmentBlock?: string;
 }): string {
   return [
     `Write item ${input.id}.`,
@@ -104,6 +106,7 @@ export function buildUserPrompt(input: {
     "=== EVIDENCE ===",
     formatEvidence(input.articles),
     "",
+    ...(input.attachmentBlock ? [input.attachmentBlock, ""] : []),
     `Set id to exactly "${input.id}", version to 1 and status to "draft".`,
     "Your response must begin with { and end with }. Do not use tools, create files,",
     "or describe what you would write; return the JSON object itself.",
@@ -127,13 +130,17 @@ export async function draftQuestion(input: {
   domain: string;
   topic: string;
   articles: RetrievedArticle[];
+  /** rendered description of what the editor attached (see attachments.ts) */
+  attachmentBlock?: string;
+  /** reference images to put in front of the model */
+  images?: ChatImage[];
   timeoutMs?: number;
 }): Promise<DraftResult> {
   const ctx = await loadPromptContext();
   const system = buildSystemPrompt(ctx);
   const user = buildUserPrompt(input);
 
-  const result = await chat({ system, user, timeoutMs: input.timeoutMs });
+  const result = await chat({ system, user, images: input.images, timeoutMs: input.timeoutMs });
   let raw: unknown;
   try {
     raw = extractJson(result.text);

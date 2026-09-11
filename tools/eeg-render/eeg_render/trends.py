@@ -41,9 +41,19 @@ BLOCK_S = 300.0
 MARGIN_S = 12.0
 FMAX_DISPLAY = 20.0
 RHY_FREQS = np.arange(0.5, 20.01, 0.5)
-SR_THRESHOLD_UV = 5.0
+SR_THRESHOLD_UV = 3.0
 SR_WINDOW_S = 60.0
 SR_EPOCH_S = 0.5
+#: Suppression has to be SUSTAINED to count.  With a hard threshold sitting
+#: close to the background level - exactly what an attenuated post-ictal
+#: record produces - ordinary fluctuation dips under it for isolated half
+#: second epochs.  On PQ-B-025 that chatter put a 42% suppression-ratio spike
+#: in the middle of a smooth 55 min attenuation the aEEG showed as an
+#: unremarkable continuous 11 uV band: two panels of the same record
+#: disagreeing.  Requiring 1 s of continuous sub-threshold signal matches how
+#: burst suppression is actually scored (inter-burst intervals are seconds,
+#: not single epochs) and keeps the two panels telling one story.
+SR_MIN_SUPPRESSION_S = 2.0
 AEEG_PP_WIN_S = 0.5
 AEEG_DISPLAY_WIN_S = 60.0     # span whose amplitude min/max become the margins
 
@@ -210,6 +220,21 @@ def hemisphere_chains(synth: Synthesizer, spec: Dict) -> Dict[str, List[Tuple[st
     return chains
 
 
+def _drop_short_runs(flags: np.ndarray, min_len: int) -> np.ndarray:
+    """Zero out runs of set flags shorter than ``min_len`` epochs."""
+    if min_len <= 1 or flags.size == 0:
+        return flags
+    out = flags.astype(float).copy()
+    padded = np.concatenate([[0.0], out, [0.0]])
+    edges = np.diff(padded)
+    starts = np.flatnonzero(edges > 0)
+    ends = np.flatnonzero(edges < 0)
+    for a, b in zip(starts, ends):
+        if b - a < min_len:
+            out[a:b] = 0.0
+    return out
+
+
 def compute_trends(
     synth: Synthesizer,
     duration_s: float,
@@ -222,6 +247,7 @@ def compute_trends(
     _style = spec.get("style") or {}
     if sr_threshold_uv is None:
         sr_threshold_uv = float(_style.get("suppression_threshold_uv", SR_THRESHOLD_UV))
+    sr_min_s = float(_style.get("suppression_min_duration_s", SR_MIN_SUPPRESSION_S))
     envelope_statistic = str(_style.get("envelope_statistic", "median"))
     fs = synth.fs
     hop_s = float(hop_s or default_hop_s(duration_s))
@@ -395,6 +421,7 @@ def compute_trends(
         if flags.size == 0 or sr_t.size == 0:
             continue
         flags = flags[: sr_t.size]
+        flags = _drop_short_runs(flags, max(1, int(round(sr_min_s / SR_EPOCH_S))))
         kern = np.ones(win_ep) / win_ep
         pad = np.concatenate([np.full(win_ep, flags[0]), flags])
         rolling = np.convolve(pad, kern, mode="valid")[: flags.size] * 100.0

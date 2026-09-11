@@ -81,24 +81,41 @@ def spectrogram_cmap(name: str):
 def asymmetry_cmap(name: str, theme: Theme):
     """Diverging map for the relative-asymmetry spectrogram.
 
-    ``RdBu_r`` and friends put *white* at zero, which on a dark panel reads as
-    a bright block of "something happening" exactly where nothing is.  The
-    default here keeps the panel background at zero and saturates outward.
+    Anchored on WHITE at zero, on a white panel background.  Two earlier dark
+    variants both failed: a wide dark core buried real asymmetry in black, and
+    a narrow one turned the estimator's own +/-12% scatter into loud red and
+    blue.  White-at-zero is also the convention a reader already has from
+    bedside trend software - "no colour" reads as "no asymmetry" without
+    having to be learned.
+
+    Scale reference: after the 1 Hz x 30 s integration a record specified as
+    symmetric scatters about +/-12% of the +/-85 axis, a real hemispheric
+    asymmetry runs 30% or more.  The near-white core covers the former; the
+    ramp saturates across the latter.
     """
     import matplotlib
     from matplotlib.colors import LinearSegmentedColormap
-    if name and name not in ("asym_dark", "RdBu_r"):
+    if name and name not in ("asym_dark", "asym_white", "RdBu_r"):
         try:
             return matplotlib.colormaps[name]
         except (KeyError, ValueError):  # pragma: no cover - fall through
             pass
-    mid = theme.axes
-    if theme is LIGHT:
-        return matplotlib.colormaps["RdBu_r"]
     return LinearSegmentedColormap.from_list(
-        "asym_dark",
-        ["#7fc0ff", "#3f86e0", "#1b4670", mid, "#6d221c", "#cf4133", "#ff8f7f"],
+        "asym_white",
+        [
+            (0.00, "#08306b"), (0.14, "#2171b5"), (0.28, "#6baed6"),
+            (0.40, "#c6dbef"), (0.46, "#eaf2fb"),
+            (0.50, "#ffffff"),
+            (0.54, "#fdeee7"), (0.60, "#fcbba1"), (0.72, "#fb6a4a"),
+            (0.86, "#cb181d"), (1.00, "#67000d"),
+        ],
     )
+
+
+#: The asymmetry panel is drawn on white regardless of the figure theme, so
+#: that zero reads as blank paper rather than as a coloured block.
+ASYM_PANEL_BG = "#ffffff"
+ASYM_PANEL_INK = "#333b44"
 
 
 # --------------------------------------------------------------------------
@@ -117,6 +134,14 @@ PANEL_LABELS: Dict[str, str] = {
     "aeeg_R": "aEEG\nRIGHT  (uV)",
     "suppression_ratio_L": "Suppression\nratio L  (%)",
     "suppression_ratio_R": "Suppression\nratio R  (%)",
+    # EXTRA_PANELS need labels too - without an entry the panel is titled
+    # with its raw spec key ("total_power_L"), which is how it shipped.
+    "envelope_L": "Envelope\nLEFT  (uV)",
+    "envelope_R": "Envelope\nRIGHT  (uV)",
+    "total_power_L": "Total power\nLEFT  (uV^2)",
+    "total_power_R": "Total power\nRIGHT  (uV^2)",
+    "alpha_delta_ratio_L": "Alpha/delta\nratio LEFT",
+    "alpha_delta_ratio_R": "Alpha/delta\nratio RIGHT",
 }
 
 #: relative vertical weight of each panel

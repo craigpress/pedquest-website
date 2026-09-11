@@ -204,7 +204,7 @@ def render_eeg_page(
             ax.plot(t, row + offsets[i], color=PAGE_INK, linewidth=0.52,
                     solid_joinstyle="round", zorder=3)
             ax.text(t0 - win * 0.006, offsets[i], lbl, ha="right", va="center",
-                    fontsize=7.4, color=PAGE_INK, family="DejaVu Sans")
+                    fontsize=9.6, color=PAGE_INK, family="DejaVu Sans")
 
         ax.set_xlim(t0, t0 + win)
         ax.set_ylim(-total_uv + row_uv * 0.2, row_uv * 0.4)
@@ -217,8 +217,8 @@ def render_eeg_page(
                     ax.text(at, 1.015, "Stimulus", transform=ax.get_xaxis_transform(),
                             fontsize=7, color="#007783", ha="center", va="bottom")
         ax.set_xticks(np.arange(t0, t0 + win + 1e-9, 1.0))
-        ax.set_xticklabels([f"{k}" for k in range(int(win) + 1)], fontsize=7)
-        ax.set_xlabel(f"seconds from {_hhmmss(t0)} (elapsed)", fontsize=8, color=PAGE_MUTED,
+        ax.set_xticklabels([f"{k}" for k in range(int(win) + 1)], fontsize=9.4)
+        ax.set_xlabel(f"seconds from {_hhmmss(t0)} (elapsed)", fontsize=10.4, color=PAGE_MUTED,
                       labelpad=2)
         for sp in ("top", "right"):
             ax.spines[sp].set_visible(False)
@@ -320,9 +320,9 @@ def _trend_strip(fig, spec: Dict, st: Dict, trends, rx, ry, rw, rh, strip_h,
         ax.set_ylim(0, 20)
         ax.yaxis.set_major_locator(FixedLocator([0, 10, 20]))
         ax.set_yticklabels(["0", "10", ""], fontsize=5.6)
-        ax.text(-0.022, 0.5, S.PANEL_LABELS.get(name, name),
-                transform=ax.transAxes, ha="right", va="center", fontsize=6.1,
-                linespacing=1.15, color=PAGE_INK)
+        ax.text(-0.020, 0.5, S.PANEL_LABELS.get(name, name),
+                transform=ax.transAxes, ha="right", va="center", fontsize=8.4,
+                fontweight="semibold", linespacing=1.15, color=PAGE_INK)
         ax.axvline(t0_s / 60.0, color="#0097a7", linewidth=1.2)
         if i == 0:
             ax.set_xticks(np.arange(0, dur_min + 1e-6, S.tick_step_min(dur_min)))

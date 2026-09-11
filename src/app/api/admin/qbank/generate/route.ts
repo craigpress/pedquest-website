@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireRole(request, "editor");
   if (!auth.ok) return auth.response;
 
-  let body: { domain?: unknown; prompt?: unknown };
+  let body: { domain?: unknown; prompt?: unknown; attachmentBatch?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -20,6 +20,10 @@ export async function POST(request: NextRequest) {
 
   const domain = String(body.domain ?? "").trim();
   const prompt = String(body.prompt ?? "").trim();
+  const attachmentBatch = String(body.attachmentBatch ?? "").trim();
+  if (attachmentBatch && !/^[A-Za-z0-9_-]{8,64}$/.test(attachmentBatch)) {
+    return NextResponse.json({ error: "Invalid attachment batch id." }, { status: 400 });
+  }
   if (!QBANK_DOMAINS.includes(domain as (typeof QBANK_DOMAINS)[number])) {
     return NextResponse.json({ error: "Choose a valid question-bank domain." }, { status: 400 });
   }
@@ -41,6 +45,7 @@ export async function POST(request: NextRequest) {
       domain,
       topic: prompt,
       requestedBy: auth.userId,
+      attachmentBatch: attachmentBatch || undefined,
       budgetMs: 260_000,
       timeoutMs: 120_000,
     });

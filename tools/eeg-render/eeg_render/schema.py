@@ -217,6 +217,10 @@ _STYLE = {
         "colorbar": {"type": "string"},
         "show_colorbar": {"type": "boolean"},
         "suppression_threshold_uv": {"type": "number", "minimum": 1, "maximum": 50},
+        "suppression_min_duration_s": {"type": "number", "minimum": 0.5, "maximum": 10},
+        # fixed dB window for the FFT spectrogram; [-10, 25] is the published
+        # atlas convention and makes colour comparable across items
+        "fft_db_range": _RANGE,
         "suppression_ratio_axis_pct": _RANGE,
         "suppression_ratio_target_band_pct": _RANGE,
         "aeeg_axis": {"enum": ["semilog", "linear"]},

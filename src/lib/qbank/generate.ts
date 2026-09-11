@@ -11,6 +11,8 @@ import { coverageGaps, loadBlueprint, planTopics } from "./blueprint";
 import { critique, type CriticReport } from "./critic";
 import { describeProvider, draftQuestion, PROMPT_VERSION } from "./draft";
 import { citationFor, retrieveEvidence, type RetrievedArticle } from "./retrieve";
+import { fetchCitedArticles } from "./cited";
+import { formatAttachments, imagesForPrompt, loadAttachments } from "./attachments";
 import { questionToRows, type QbankQuestion } from "./question";
 import { verifyPmids } from "./verify";
 
@@ -33,6 +35,8 @@ export interface GenerateOptions {
   topic?: string;
   /** authenticated editor who requested the draft */
   requestedBy?: string;
+  /** upload batch holding PDFs / reference images the editor attached */
+  attachmentBatch?: string;
 }
 
 export interface GenerateItemResult {
@@ -198,9 +202,26 @@ export async function generateDrafts(
       });
     };
 
+    // ---- editor-supplied source material ----
+    // A paper named in the prompt has to be fetched explicitly: the topic
+    // search will not find it reliably, and the reference guard rejects any
+    // PMID that was not retrieved, so "use PMID x" used to fail the draft.
+    const cited = await fetchCitedArticles(plan.topic);
+    if (cited.unresolved.length) {
+      notes.push(`could not fetch ${cited.unresolved.join(", ")} — check the identifier`);
+    }
+    const attachments = opts.attachmentBatch
+      ? await loadAttachments(supabase, { batch: opts.attachmentBatch })
+      : [];
+    const attachmentBlock = formatAttachments(attachments);
+    const images = attachments.length ? await imagesForPrompt(supabase, attachments) : [];
+
     // ---- retrieve ----
-    const retrieval = await retrieveEvidence(plan.domain, plan.topic);
-    if (retrieval.articles.length === 0) {
+    const retrieval = await retrieveEvidence(plan.domain, plan.topic, 6, cited.articles);
+    const hasDocEvidence = attachments.some(
+      (a) => a.kind === "pdf" && (a.extractedText?.length ?? 0) >= 200,
+    );
+    if (retrieval.articles.length === 0 && !hasDocEvidence) {
       await fail(`no usable evidence: ${retrieval.error ?? "no abstracts"}`, { retrieval });
       continue;
     }
@@ -213,7 +234,10 @@ export async function generateDrafts(
     try {
       const drafted = await draftQuestion({
         id, domain: plan.domain, topic: plan.topic,
-        articles: retrieval.articles, timeoutMs: opts.timeoutMs,
+        articles: retrieval.articles,
+        attachmentBlock: attachmentBlock || undefined,
+        images: images.length ? images : undefined,
+        timeoutMs: opts.timeoutMs,
       });
       question = drafted.question;
     } catch (e) {

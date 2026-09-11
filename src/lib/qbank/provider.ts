@@ -15,12 +15,31 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export type ProviderName = "openwebui" | "anthropic" | "mock";
 
+/** An image put in front of the model as REFERENCE material. */
+export interface ChatImage {
+  /** image/png, image/jpeg, image/gif or image/webp */
+  mediaType: string;
+  /** raw base64, no data: prefix */
+  base64: string;
+  /** shown to the model so it can refer to the picture by name */
+  label?: string;
+}
+
 export interface ChatRequest {
   system: string;
   user: string;
+  /** Reference images (an editor's example figure, say). Both real providers
+   *  support them; the mock ignores them. */
+  images?: ChatImage[];
   /** Soft cap; both providers are asked for JSON only. */
   maxTokens?: number;
   timeoutMs?: number;
+}
+
+const IMAGE_MEDIA_TYPES = new Set(["image/png", "image/jpeg", "image/gif", "image/webp"]);
+
+export function isSupportedImageType(mediaType: string): boolean {
+  return IMAGE_MEDIA_TYPES.has(mediaType.toLowerCase());
 }
 
 export interface ChatResult {
@@ -69,7 +88,18 @@ async function chatOpenWebUi(req: ChatRequest): Promise<ChatResult> {
         temperature: 0.3,
         messages: [
           { role: "system", content: req.system },
-          { role: "user", content: req.user },
+          {
+            role: "user",
+            content: req.images?.length
+              ? [
+                  { type: "text", text: req.user },
+                  ...req.images.map((img) => ({
+                    type: "image_url",
+                    image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
+                  })),
+                ]
+              : req.user,
+          },
         ],
       }),
       signal: controller.signal,
@@ -97,7 +127,20 @@ async function chatAnthropic(req: ChatRequest): Promise<ChatResult> {
     thinking: { type: "adaptive" },
     output_config: { effort: "medium" },
     system: req.system,
-    messages: [{ role: "user", content: req.user }],
+    messages: [
+      {
+        role: "user",
+        content: req.images?.length
+          ? [
+              ...req.images.map((img) => ({
+                type: "image" as const,
+                source: { type: "base64" as const, media_type: img.mediaType as "image/png", data: img.base64 },
+              })),
+              { type: "text" as const, text: req.user },
+            ]
+          : req.user,
+      },
+    ],
   });
   if (response.stop_reason === "refusal") {
     throw new Error(
