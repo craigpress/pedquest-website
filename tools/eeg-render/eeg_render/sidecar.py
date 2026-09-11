@@ -34,6 +34,12 @@ def _event_time_min(ev: Dict[str, Any]) -> Optional[float]:
 
 
 def _event_duration_min(ev: Dict[str, Any]) -> float:
+    # A ramped event is only *identifiable* while it is building: an
+    # attenuation that ramps over an hour and then persists for seven should
+    # be answered in that first hour, not anywhere along the plateau.
+    ramp = float(ev.get("ramp_min", 0.0) or 0.0)
+    if ramp > 0:
+        return ramp
     if "duration_min" in ev:
         return float(ev["duration_min"])
     if "duration_s" in ev:
