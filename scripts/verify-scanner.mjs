@@ -6,7 +6,7 @@
 //   1. publications table is reachable AND has rows (basic read).
 //   2. publication_update_log has a `scan_completed` entry within the last 96h.
 //   3. Recent auto_discovered PMIDs are also present in `publications` (writes lined up).
-//   4. Every auto_discovered row has a member_id that resolves to a member in src/data/members.ts.
+//   4. Every auto_discovered row has a member_id that resolves to the generated member snapshot.
 //   5. No PMID has been auto_discovered more than once (dedup working).
 //   6. Discord webhook is reachable (sends a single status message).
 //
@@ -118,13 +118,16 @@ let autoRows = [];
 
 // ----- 4. every auto_discovered row has a known member_id ---------------
 {
-  // Parse member ids from src/data/members.ts (cheap regex over export array)
-  const membersTs = fs.readFileSync(path.join(repoRoot, "src/data/members.ts"), "utf8");
+  // Parse member ids from the generated member snapshot (cheap regex over export array)
+  const membersTs = fs.readFileSync(
+    path.join(repoRoot, "src/data/members.generated.ts"),
+    "utf8",
+  );
   const ids = new Set();
   // Match `id: "some-id"` in member object literals
   for (const m of membersTs.matchAll(/\bid:\s*["']([a-z0-9-]+)["']/g)) ids.add(m[1]);
   if (ids.size === 0) {
-    fail("members_parsed", "could not extract any member ids from src/data/members.ts");
+    fail("members_parsed", "could not extract any member ids from src/data/members.generated.ts");
   } else {
     pass("members_parsed", `${ids.size} member ids loaded`);
     if (autoRows.length > 0) {
