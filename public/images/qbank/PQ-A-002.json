@@ -8,21 +8,21 @@
     {
       "name": "fft_L",
       "y0": 0.104,
-      "y1": 0.51275,
-      "x0": 0.128,
+      "y1": 0.51025,
+      "x0": 0.225,
       "x1": 0.94
     },
     {
       "name": "fft_R",
-      "y0": 0.51925,
+      "y0": 0.52175,
       "y1": 0.928,
-      "x0": 0.128,
+      "x0": 0.225,
       "x1": 0.94
     }
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.3.1",
-  "spec_hash": "sha256:2ca9f32a2e8b8b5f488ba3f6f8bf4108f7ead202f205d7f9f89f75495894e1ba",
+  "renderer_version": "0.3.2",
+  "spec_hash": "sha256:a807ee7b8d85d2d3d429005a32f3e63fdafc89d0ee7e289fa5242de6b5811eb4",
   "path": "public/images/qbank/PQ-A-002.png"
 }

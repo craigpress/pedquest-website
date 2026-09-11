@@ -8,42 +8,42 @@
     {
       "name": "total_power_L",
       "y0": 0.104,
-      "y1": 0.2552,
-      "x0": 0.128,
+      "y1": 0.251411,
+      "x0": 0.225,
       "x1": 0.984
     },
     {
       "name": "total_power_R",
-      "y0": 0.2617,
-      "y1": 0.4129,
-      "x0": 0.128,
+      "y0": 0.262911,
+      "y1": 0.410321,
+      "x0": 0.225,
       "x1": 0.984
     },
     {
       "name": "alpha_delta_ratio_L",
-      "y0": 0.4194,
-      "y1": 0.5706,
-      "x0": 0.128,
+      "y0": 0.421821,
+      "y1": 0.569232,
+      "x0": 0.225,
       "x1": 0.984
     },
     {
       "name": "alpha_delta_ratio_R",
-      "y0": 0.5771,
-      "y1": 0.7283,
-      "x0": 0.128,
+      "y0": 0.580732,
+      "y1": 0.728142,
+      "x0": 0.225,
       "x1": 0.984
     },
     {
       "name": "asymmetry_relative",
-      "y0": 0.7348,
+      "y0": 0.739642,
       "y1": 0.928,
-      "x0": 0.128,
+      "x0": 0.225,
       "x1": 0.984
     }
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.3.1",
-  "spec_hash": "sha256:49c1715c45aa6a49b3c060dda60d2fd794c5daa5f6c3797d5017309883a7f251",
+  "renderer_version": "0.3.2",
+  "spec_hash": "sha256:36719401738bb2eb587e2f4cac4da7ab0e32a71ed59a62b83dc7c28a8ca99faa",
   "path": "public/images/qbank/PQ-A-010.png"
 }
