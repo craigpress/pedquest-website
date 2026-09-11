@@ -25,6 +25,7 @@ export default function EegViewer({
   kind,
   panels,
   allowDragPan = true,
+  protect = false,
   children,
 }: {
   src: string;
@@ -32,6 +33,13 @@ export default function EegViewer({
   panels: ImagePanel[] | undefined;
   /** drag to pan when zoomed in; off for click-to-mark images */
   allowDragPan?: boolean;
+  /**
+   * Deter casual copying on learner pages (right-click, drag-off, long-press
+   * save). Deterrence only — a screenshot or devtools still gets the pixels,
+   * and nothing in a browser can prevent that. Off in the editor console,
+   * where saving a figure is legitimate.
+   */
+  protect?: boolean;
   children: (displaySrc: string) => ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -191,7 +199,17 @@ export default function EegViewer({
           touchAction: zoom > 1 ? "pan-x pan-y" : undefined,
         }}
       >
-        <div style={{ width: `${zoom * 100}%`, minWidth: "100%" }}>
+        <div
+          style={{
+            width: `${zoom * 100}%`, minWidth: "100%",
+            ...(protect
+              ? { userSelect: "none" as const, WebkitUserSelect: "none" as const,
+                  WebkitTouchCallout: "none" as const }
+              : {}),
+          }}
+          onContextMenu={protect ? (e) => e.preventDefault() : undefined}
+          onDragStart={protect ? (e) => e.preventDefault() : undefined}
+        >
           {children(displaySrc)}
         </div>
       </div>

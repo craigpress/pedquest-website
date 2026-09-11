@@ -192,6 +192,64 @@ export interface ReferenceRowFields {
   sort_order: number;
 }
 
+/** 32-bit string hash (FNV-1a) — the seed for an item's option order. */
+function seedFrom(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/**
+ * mulberry32 — small, fast, and identical in every runtime.
+ *
+ * Warmed up before use: item ids differ by one character (PQ-A-001,
+ * PQ-A-002 …), which gives near-neighbour seeds, and this generator's first
+ * outputs are correlated across those. Without the warm-up the "shuffle"
+ * pushed the correct answer off A far too uniformly (1 of 42 rather than the
+ * ~8 chance would give) — structure, not randomness.
+ */
+function rngFrom(seed: number): () => number {
+  let a = seed || 1;
+  const next = () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let i = 0; i < 16; i++) next();
+  return next;
+}
+
+/**
+ * Fix an item's answer order.
+ *
+ * Writers list the correct answer first, so before this the key sat at
+ * position A in 31 of 42 live items - a learner could score well by never
+ * reading past the first option. The shuffle is SEEDED BY THE ITEM ID, which
+ * matters for two reasons: re-importing the same YAML cannot reshuffle an
+ * item under a learner who has already answered it, and the displayed letter
+ * is always position-derived, so the order on screen and the stored key can
+ * never drift apart.
+ */
+export function shuffleOptions<T>(id: string, options: T[]): T[] {
+  if (options.length < 2) return [...options];
+  const out = [...options];
+  const rnd = rngFrom(seedFrom(id));
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/** A, B, C … for the option at a display position. */
+export function optionLetter(index: number): string {
+  return String.fromCharCode(65 + index);
+}
+
 /** The answer region for a point_to_feature item, taken from the sidecar the
  *  renderer produced. The writer never hand-draws it (STYLE_GUIDE §6). */
 export function regionFromSidecar(sidecar: unknown): unknown | null {
@@ -255,7 +313,7 @@ export function questionToRows(
       source: q.metadata.source_method === "ai-generated-pipeline" ? "ai" : "team",
       version: q.version,
     },
-    options: q.options.map((o, i) => ({
+    options: shuffleOptions(q.id, q.options).map((o, i) => ({
       label: o.text,
       is_correct: o.correct,
       option_explanation: o.rationale,

@@ -6,6 +6,7 @@ import { useUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import {
   DIFFICULTIES, QBANK_DOMAINS, QBANK_DOMAIN_LABELS, QBANK_POPULATIONS, QBANK_SETTINGS,
+  classificationLabel,
 } from "@/lib/cases";
 
 interface Item {
@@ -44,6 +45,10 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
   const [difficulty, setDifficulty] = useState("");
   const [population, setPopulation] = useState("");
   const [setting, setSetting] = useState("");
+  // `query` is what the box shows; `search` is what the server has been asked
+  // for. Debounced so typing does not fire a request per keystroke.
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [hideAnswered, setHideAnswered] = useState(false);
 
   const authHeaders = useCallback(async (): Promise<Record<string, string>> => {
@@ -62,6 +67,7 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
       if (difficulty) p.set("difficulty", difficulty);
       if (population) p.set("population", population);
       if (setting) p.set("setting", setting);
+      if (search.trim()) p.set("q", search.trim());
       const headers = await authHeaders();
       const [itemsRes, progressRes] = await Promise.all([
         fetch(`/api/qbank/items?${p.toString()}`, { headers }),
@@ -84,7 +90,12 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
     } finally {
       setLoading(false);
     }
-  }, [user, domain, difficulty, population, setting, authHeaders]);
+  }, [user, domain, difficulty, population, setting, search, authHeaders]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -157,6 +168,14 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
       )}
 
       <div className="qb-controls">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search questions, answers, rationales, references"
+          aria-label="Search the question bank"
+          style={{ minWidth: 0, flex: "1 1 260px" }}
+        />
         <select value={domain} onChange={(e) => setDomain(e.target.value)} aria-label="Domain">
           <option value="">All domains</option>
           {QBANK_DOMAINS.map((d) => (
@@ -166,19 +185,19 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
         <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} aria-label="Difficulty">
           <option value="">Any difficulty</option>
           {DIFFICULTIES.map((d) => (
-            <option key={d} value={d}>{d} ({facets.byDifficulty[d] ?? 0})</option>
+            <option key={d} value={d}>{classificationLabel(d)} ({facets.byDifficulty[d] ?? 0})</option>
           ))}
         </select>
         <select value={population} onChange={(e) => setPopulation(e.target.value)} aria-label="Population">
           <option value="">Any age</option>
           {QBANK_POPULATIONS.map((p) => (
-            <option key={p} value={p}>{p} ({facets.byPopulation[p] ?? 0})</option>
+            <option key={p} value={p}>{classificationLabel(p)} ({facets.byPopulation[p] ?? 0})</option>
           ))}
         </select>
         <select value={setting} onChange={(e) => setSetting(e.target.value)} aria-label="Setting">
           <option value="">Any setting</option>
           {QBANK_SETTINGS.map((s) => (
-            <option key={s} value={s}>{s} ({facets.bySetting[s] ?? 0})</option>
+            <option key={s} value={s}>{classificationLabel(s)} ({facets.bySetting[s] ?? 0})</option>
           ))}
         </select>
         <label className="qb-check">
@@ -197,7 +216,7 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
       ) : visible.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>
           {items.length === 0
-            ? "No published items match these filters yet."
+            ? (search.trim() ? `Nothing matches “${search.trim()}” with these filters.` : "No published items match these filters yet.")
             : "You have answered everything that matches these filters."}
         </p>
       ) : (
@@ -206,16 +225,16 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
             <Link className="qb-card" href={`/education/question-bank/${i.id}`} key={i.id}>
               {i.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img className="qb-card-img" src={i.imageUrl} alt="" loading="lazy" />
+                <img className="qb-card-img" draggable={false} onContextMenu={(e) => e.preventDefault()} src={i.imageUrl} alt="" loading="lazy" />
               ) : (
                 <div className="qb-card-img qb-card-noimg">no figure</div>
               )}
               <div className="qb-card-body">
                 <div className="qb-card-meta">
                   {i.domain && <span>{QBANK_DOMAIN_LABELS[i.domain as keyof typeof QBANK_DOMAIN_LABELS] ?? i.domain}</span>}
-                  <span>{i.difficulty}</span>
-                  {i.population && <span>{i.population}</span>}
-                  {i.setting && <span>{i.setting}</span>}
+                  <span>{classificationLabel(i.difficulty)}</span>
+                  {i.population && <span>{classificationLabel(i.population)}</span>}
+                  {i.setting && <span>{classificationLabel(i.setting)}</span>}
                   {answered.has(i.id) && <span className="qb-done">answered</span>}
                 </div>
                 <h3 className="qb-card-title">{i.title}</h3>

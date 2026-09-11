@@ -4,8 +4,9 @@ import type { Metadata } from "next";
 import CaseQuiz from "@/components/CaseQuiz";
 import SignedInGate from "@/components/SignedInGate";
 import ResearchDisclaimer from "@/components/ResearchDisclaimer";
+import ShareCase from "@/components/ShareCase";
 import { getPublicBankItem } from "@/lib/qbank-server";
-import { QBANK_DOMAIN_LABELS, type QbankDomain } from "@/lib/cases";
+import { QBANK_DOMAIN_LABELS, classificationLabel, type QbankDomain } from "@/lib/cases";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +33,9 @@ export default async function QuestionBankItemPage(
 
   const chips = [
     item.domain ? QBANK_DOMAIN_LABELS[item.domain as QbankDomain] ?? item.domain : null,
-    item.difficulty,
-    item.population,
-    item.setting,
+    classificationLabel(item.difficulty),
+    classificationLabel(item.population),
+    classificationLabel(item.setting),
   ].filter(Boolean) as string[];
 
   return (
@@ -72,6 +73,8 @@ export default async function QuestionBankItemPage(
           <CaseQuiz caseData={item} />
         </SignedInGate>
       </article>
+
+      <ShareCase path={`/education/question-bank/${item.id}`} title={item.title} summary={item.leadIn} />
 
       <div style={{ marginTop: 32, display: "flex", gap: 14, flexWrap: "wrap", fontFamily: "var(--mono-font)", fontSize: 13 }}>
         <Link href="/education/question-bank/practice">Practice mode →</Link>

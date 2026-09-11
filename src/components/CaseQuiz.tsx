@@ -98,6 +98,7 @@ export default function CaseQuiz({
           kind={caseData.imageKind}
           panels={caseData.imagePanels ?? []}
           allowDragPan={caseData.questionType !== "point_to_feature"}
+          protect
         >
           {(displaySrc) => caseData.questionType === "point_to_feature" ? (
             <PointImage
@@ -152,7 +153,7 @@ export default function CaseQuiz({
       {/* multiple choice */}
       {caseData.questionType === "multiple_choice" && (
         <div role="radiogroup" aria-label="Answer choices" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {caseData.options.map((o) => {
+          {caseData.options.map((o, idx) => {
             const rev = reveal?.optionExplanations[o.id];
             const isChosen = (answered ? reveal!.yourAnswer.optionId : selected) === o.id;
             const isCorrect = rev?.isCorrect;
@@ -176,7 +177,11 @@ export default function CaseQuiz({
                 )}
                 <span style={{ position: "relative", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
                   <span style={{ fontWeight: isChosen || isCorrect ? 600 : 500 }}>
-                    {answered && isCorrect ? "✓ " : answered && isChosen ? "✗ " : ""}{o.label}
+                    {answered && isCorrect ? "✓ " : answered && isChosen ? "✗ " : ""}
+                    <span style={{ fontFamily: "var(--mono-font, monospace)", color: "var(--text-muted)", marginRight: 8 }}>
+                      {String.fromCharCode(65 + idx)}.
+                    </span>
+                    {o.label}
                   </span>
                   {answered && <span style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-muted)" }}>{pct}% · {count}</span>}
                 </span>

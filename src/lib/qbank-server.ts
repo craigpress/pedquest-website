@@ -19,7 +19,17 @@ export interface BankFilters {
   difficulty?: Difficulty | null;
   population?: QbankPopulation | null;
   setting?: QbankSetting | null;
+  /** free text, matched against the whole item (see the search_tsv column) */
+  q?: string | null;
   limit?: number;
+}
+
+/** Apply the free-text filter to a PostgREST query, if one was given. */
+function withSearch(query: any, q?: string | null) {
+  const term = (q ?? "").trim();
+  if (!term) return query;
+  // websearch syntax: quoted phrases and -exclusions behave as a user expects
+  return query.textSearch("search_tsv", term, { type: "websearch", config: "english" });
 }
 
 /** Lightweight card for the browse grid — no answers, no explanation. */
@@ -74,6 +84,7 @@ export async function listBankItems(filters: BankFilters = {}): Promise<BankSumm
   if (filters.difficulty) q = q.eq("difficulty", filters.difficulty);
   if (filters.population) q = q.eq("population", filters.population);
   if (filters.setting) q = q.eq("setting", filters.setting);
+  q = withSearch(q, filters.q);
   const { data, error } = await q
     .order("publish_date", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
@@ -249,6 +260,7 @@ export async function listEditorQueue(filters: EditorQueueFilters = {}): Promise
   if (filters.difficulty) q = q.eq("difficulty", filters.difficulty);
   if (filters.population) q = q.eq("population", filters.population);
   if (filters.setting) q = q.eq("setting", filters.setting);
+  q = withSearch(q, filters.q);
 
   const { data, error } = await q
     .order("updated_at", { ascending: false, nullsFirst: false })
@@ -362,3 +374,49 @@ export async function getEditorItem(id: string): Promise<EditorItem | null> {
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+
+// ---------------------------------------------------------------------------
+// Generation jobs
+// ---------------------------------------------------------------------------
+
+export interface GenerationJob {
+  id: string;
+  status: string;
+  mode: string | null;
+  domain: string | null;
+  topic: string | null;
+  model: string | null;
+  caseId: string | null;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * The AI generation queue.
+ *
+ * Without this the console shows nothing at all about a submitted prompt, so
+ * a job that is running, one that failed a minute later, and one that was
+ * never submitted all look identical to the editor who asked for it.
+ */
+export async function listGenerationJobs(limit = 15): Promise<GenerationJob[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("eeg_case_generation_jobs")
+    .select("id,status,mode,domain,topic,model,case_id,error,created_at,updated_at")
+    .order("created_at", { ascending: false })
+    .limit(Math.min(limit, 50));
+  if (error || !data) return [];
+  const rows = data as unknown as {
+    id: string; status: string; mode: string | null; domain: string | null;
+    topic: string | null; model: string | null; case_id: string | null;
+    error: string | null; created_at: string; updated_at: string;
+  }[];
+  return rows.map((r) => ({
+    id: r.id, status: r.status, mode: r.mode ?? null, domain: r.domain ?? null,
+    topic: r.topic ?? null, model: r.model ?? null, caseId: r.case_id ?? null,
+    error: r.error || null, createdAt: r.created_at, updatedAt: r.updated_at,
+  }));
+}

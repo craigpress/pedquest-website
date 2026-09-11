@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
@@ -34,6 +34,27 @@ interface QueueItem {
 
 const STATUSES = ["pending_review", "draft", "approved", "published", "archived"];
 
+interface GenerationJobRow {
+  id: string;
+  status: string;
+  mode: string | null;
+  domain: string | null;
+  topic: string | null;
+  model: string | null;
+  caseId: string | null;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function relativeAge(iso: string): string {
+  const secs = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (secs < 90) return `${Math.round(secs)}s ago`;
+  if (secs < 5400) return `${Math.round(secs / 60)}m ago`;
+  if (secs < 172800) return `${Math.round(secs / 3600)}h ago`;
+  return `${Math.round(secs / 86400)}d ago`;
+}
+
 interface AttachmentRow {
   id: string;
   kind: "pdf" | "image";
@@ -48,6 +69,9 @@ export default function AdminQbankQueuePage() {
   const { isEditor, loading: roleLoading } = useRole();
   const [items, setItems] = useState<QueueItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [jobs, setJobs] = useState<GenerationJobRow[]>([]);
+  // what the server has been asked for, debounced off `query`
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,16 +113,17 @@ export default function AdminQbankQueuePage() {
       if (difficulty) p.set("difficulty", difficulty);
       if (population) p.set("population", population);
       if (source) p.set("source", source);
+      if (search.trim()) p.set("q", search.trim());
       const res = await fetch(`/api/admin/qbank?${p.toString()}`, { headers: await authHeaders() });
       const json = await res.json();
-      if (res.ok && json.success) { setItems(json.items); setCounts(json.counts ?? {}); }
+      if (res.ok && json.success) { setItems(json.items); setCounts(json.counts ?? {}); setJobs(json.jobs ?? []); }
       else setError(json.error || "Could not load the queue.");
     } catch {
       setError("Network error loading the queue.");
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, status, domain, difficulty, population, source]);
+  }, [authHeaders, status, domain, difficulty, population, source, search]);
 
   async function uploadAttachment(file: File) {
     setAttachBusy(true);
@@ -197,14 +222,10 @@ export default function AdminQbankQueuePage() {
 
   useEffect(() => { if (isEditor) void load(); }, [isEditor, load]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((i) =>
-      i.title.toLowerCase().includes(q) ||
-      (i.qbankId ?? "").toLowerCase().includes(q) ||
-      i.tags.some((t) => t.toLowerCase().includes(q)));
-  }, [items, query]);
+  // The server now does the searching, across the whole item (vignette,
+  // options, rationales, references) rather than just the titles and tags
+  // that happened to be on this page.
+  const filtered = items;
 
   if (roleLoading) {
     return <div style={adminShellWide}><p style={{ color: "var(--text-muted)" }}>Loading…</p></div>;
@@ -365,6 +386,51 @@ export default function AdminQbankQueuePage() {
         </form>
       )}
 
+      {jobs.length > 0 && (
+        <details style={{ ...card, padding: "12px 16px", marginBottom: 16 }}>
+          <summary style={{ cursor: "pointer", fontSize: 14, fontWeight: 600, color: "var(--text)" }}>
+            AI generation queue
+            {jobs.some((j) => j.status === "running" || j.status === "queued") && (
+              <span style={{ ...meta, marginLeft: 8, color: "var(--accent-tertiary)" }}>
+                {jobs.filter((j) => j.status === "running" || j.status === "queued").length} in progress
+              </span>
+            )}
+            {jobs.some((j) => j.status === "failed") && (
+              <span style={{ ...meta, marginLeft: 8, color: "var(--accent-secondary)" }}>
+                {jobs.filter((j) => j.status === "failed").length} failed
+              </span>
+            )}
+          </summary>
+          <ul style={{ listStyle: "none", padding: 0, margin: "10px 0 0", display: "flex", flexDirection: "column", gap: 8 }}>
+            {jobs.map((j) => (
+              <li key={j.id} style={{ borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                  <span style={{
+                    fontFamily: "var(--mono-font)", fontSize: 11, textTransform: "uppercase",
+                    letterSpacing: ".05em",
+                    color: j.status === "failed" ? "var(--accent-secondary)"
+                      : j.status === "drafted" ? "var(--accent-tertiary)" : "var(--text-muted)",
+                  }}>
+                    {j.status}
+                  </span>
+                  <span style={{ color: "var(--text)", fontSize: 13 }}>
+                    {j.topic ?? j.domain ?? "(no topic)"}
+                  </span>
+                  <span style={meta}>{relativeAge(j.createdAt)}</span>
+                  {j.model && <span style={meta}>{j.model}</span>}
+                  {j.caseId && <Link href={`/admin/qbank/${j.caseId}`} style={mini}>Open</Link>}
+                </div>
+                {j.error && (
+                  <div style={{ ...meta, color: "var(--accent-secondary)", marginTop: 4, lineHeight: 1.5 }}>
+                    {j.error}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       <div className="qb-counts" style={{ marginBottom: 16 }}>
         {["all", ...STATUSES].map((s) => (
           <button
@@ -407,7 +473,7 @@ export default function AdminQbankQueuePage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search title, ID, tag"
+            placeholder="Search all text — stem, options, rationales, references"
             style={inp}
             aria-label="Search items"
           />

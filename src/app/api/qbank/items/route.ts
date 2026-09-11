@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       difficulty: (p.get("difficulty") as Difficulty) || null,
       population: (p.get("population") as QbankPopulation) || null,
       setting: (p.get("setting") as QbankSetting) || null,
+      q: p.get("q"),
     }),
     getBankFacets(),
   ]);

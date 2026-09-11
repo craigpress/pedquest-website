@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/admin-auth";
-import { getQueueCounts, listEditorQueue } from "@/lib/qbank-server";
+import { getQueueCounts, listEditorQueue, listGenerationJobs } from "@/lib/qbank-server";
 import type { Difficulty, QbankDomain, QbankPopulation, QbankSetting } from "@/lib/cases";
 
 // Editor review queue. Editor or admin.
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!auth.ok) return auth.response;
 
   const p = request.nextUrl.searchParams;
-  const [items, counts] = await Promise.all([
+  const [items, counts, jobs] = await Promise.all([
     listEditorQueue({
       status: p.get("status") || null,
       source: p.get("source") || null,
@@ -21,10 +21,12 @@ export async function GET(request: NextRequest) {
       population: (p.get("population") as QbankPopulation) || null,
       setting: (p.get("setting") as QbankSetting) || null,
       inBankOnly: p.get("bank") === "1",
+      q: p.get("q"),
       limit: Number(p.get("limit") ?? 300),
     }),
     getQueueCounts(),
+    listGenerationJobs(12),
   ]);
 
-  return NextResponse.json({ success: true, items, counts, role: auth.role });
+  return NextResponse.json({ success: true, items, counts, jobs, role: auth.role });
 }

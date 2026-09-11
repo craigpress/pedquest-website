@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import CaseQuiz from "@/components/CaseQuiz";
 import ResearchDisclaimer from "@/components/ResearchDisclaimer";
+import ShareCase from "@/components/ShareCase";
 import { getPublicCaseById } from "@/lib/cases-server";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ export default async function ArchivedCasePage({ params }: { params: Promise<{ i
             ))}
           </div>
           <CaseQuiz caseData={c} archived />
+          <ShareCase path={`/education/case-of-the-day/${c.id}`} title={c.title} summary={c.clinicalVignette} />
         </article>
       )}
       <ResearchDisclaimer />

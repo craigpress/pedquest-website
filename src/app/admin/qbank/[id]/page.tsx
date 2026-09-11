@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import EegViewer from "@/components/EegViewer";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import {
   DIFFICULTIES, QBANK_BLOOMS, QBANK_DOMAINS, QBANK_DOMAIN_LABELS,
-  QBANK_POPULATIONS, QBANK_SETTINGS,
+  QBANK_POPULATIONS, QBANK_SETTINGS, classificationLabel,
   type CaseReference, type EegCase, type Region,
+  type ImagePanel,
 } from "@/lib/cases";
 import {
   adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, h2, inp, meta, mini, STATUS_COLORS,
@@ -95,6 +97,10 @@ export default function AdminQbankItemPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // "Request changes" on an AI item runs a model call and a re-render behind
+  // one click. Without a running commentary the button just sits disabled and
+  // the editor assumes the click was lost.
+  const [progress, setProgress] = useState<string | null>(null);
   const [showRegion, setShowRegion] = useState(true);
   const [reviewNotes, setReviewNotes] = useState("");
   const [publishDate, setPublishDate] = useState("");
@@ -175,7 +181,13 @@ export default function AdminQbankItemPage() {
       return;
     }
     const notes = reviewNotes.trim();
-    const result = await post({ action: "review", decision, notes: notes || null }, `Recorded: ${decision.replace("_", " ")}.`);
+    setProgress("Recording your review…");
+    let result;
+    try {
+      result = await post({ action: "review", decision, notes: notes || null }, `Recorded: ${decision.replace("_", " ")}.`);
+    } finally {
+      if (!result) setProgress(null);
+    }
     if (!result) return;
     setReviewNotes("");
     // For an AI item, "request changes" queues an automatic revision. Run it
@@ -184,6 +196,7 @@ export default function AdminQbankItemPage() {
     if (decision === "changes_requested" && result.regeneration?.queued) {
       await regenerate(notes);
     }
+    setProgress(null);
   }
 
   async function pollRender(jobId: string): Promise<void> {
@@ -213,6 +226,7 @@ export default function AdminQbankItemPage() {
   async function regenerate(feedback?: string) {
     setBusy(true);
     setError(null);
+    setProgress("Feeding your notes back to the model — this takes a minute…");
     try {
       const res = await fetch(`/api/admin/qbank/${id}`, {
         method: "POST", headers: await authHeaders(),
@@ -226,11 +240,15 @@ export default function AdminQbankItemPage() {
       }
       flash("Revised by AI — rendering the new image…");
       await load();
-      if (json.renderJobId) await pollRender(json.renderJobId);
+      if (json.renderJobId) {
+        setProgress("Re-rendering the image…");
+        await pollRender(json.renderJobId);
+      }
     } catch {
       setError("Network error during the AI revision.");
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -297,6 +315,7 @@ export default function AdminQbankItemPage() {
   return (
     <div style={adminShellWide}>
       <style>{`
+        @keyframes qbPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
         .qbi-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
         .qbi-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .qbi-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
@@ -348,7 +367,15 @@ export default function AdminQbankItemPage() {
               </div>
             </div>
             {c.imageUrl ? (
-              <ImageWithRegion src={c.imageUrl} alt={c.imageCaption ?? c.title} region={showRegion ? region : null} />
+              <EegViewer
+                src={c.imageUrl}
+                kind={(c.imageSidecar?.kind as string | undefined) ?? null}
+                panels={(Array.isArray(c.imageSidecar?.panels) ? c.imageSidecar.panels : []) as ImagePanel[]}
+              >
+                {(displaySrc) => (
+                  <ImageWithRegion src={displaySrc} alt={c.imageCaption ?? c.title} region={showRegion ? region : null} />
+                )}
+              </EegViewer>
             ) : (
               <div style={{ padding: 30, textAlign: "center", color: "var(--text-muted)", border: "1px dashed var(--border)", borderRadius: 12 }}>
                 No image yet. {c.spec ? "Re-render to produce one." : "This item has no image spec."}
@@ -391,6 +418,16 @@ export default function AdminQbankItemPage() {
               <button type="button" style={btnGhost} onClick={() => review("changes_requested")} disabled={busy}>Request changes</button>
               <button type="button" style={{ ...btnGhost, color: "var(--accent-secondary)" }} onClick={() => review("rejected")} disabled={busy}>Reject</button>
             </div>
+            {progress && (
+              <div role="status" aria-live="polite"
+                style={{ ...meta, marginTop: 10, color: "var(--accent-tertiary)", display: "flex", gap: 8, alignItems: "center" }}>
+                <span aria-hidden style={{
+                  width: 9, height: 9, borderRadius: 9, background: "var(--accent-tertiary)",
+                  animation: "qbPulse 1s ease-in-out infinite",
+                }} />
+                {progress}
+              </div>
+            )}
             {item.case.source === "ai" && (
               <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0 }}>
                 Requesting changes on this AI-drafted item automatically feeds your note back to the
@@ -502,7 +539,7 @@ export default function AdminQbankItemPage() {
               </Field>
               <Field label="Difficulty">
                 <select value={form.difficulty} onChange={(e) => set({ difficulty: e.target.value })} style={inp}>
-                  {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+                  {DIFFICULTIES.map((d) => <option key={d} value={d}>{classificationLabel(d)}</option>)}
                 </select>
               </Field>
             </div>
@@ -510,19 +547,19 @@ export default function AdminQbankItemPage() {
               <Field label="Population">
                 <select value={form.population} onChange={(e) => set({ population: e.target.value })} style={inp}>
                   <option value="">—</option>
-                  {QBANK_POPULATIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                  {QBANK_POPULATIONS.map((p) => <option key={p} value={p}>{classificationLabel(p)}</option>)}
                 </select>
               </Field>
               <Field label="Setting">
                 <select value={form.setting} onChange={(e) => set({ setting: e.target.value })} style={inp}>
                   <option value="">—</option>
-                  {QBANK_SETTINGS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {QBANK_SETTINGS.map((s) => <option key={s} value={s}>{classificationLabel(s)}</option>)}
                 </select>
               </Field>
               <Field label="Bloom">
                 <select value={form.bloom} onChange={(e) => set({ bloom: e.target.value })} style={inp}>
                   <option value="">—</option>
-                  {QBANK_BLOOMS.map((b) => <option key={b} value={b}>{b}</option>)}
+                  {QBANK_BLOOMS.map((b) => <option key={b} value={b}>{classificationLabel(b)}</option>)}
                 </select>
               </Field>
             </div>
@@ -573,6 +610,9 @@ export default function AdminQbankItemPage() {
             {form.options.map((o, i) => (
               <div key={i} style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: 12 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ ...meta, fontFamily: "var(--mono-font)", minWidth: 16, color: "var(--text)" }}>
+                    {String.fromCharCode(65 + i)}
+                  </span>
                   <label style={{ ...meta, display: "flex", gap: 6, alignItems: "center", whiteSpace: "nowrap" }}>
                     <input
                       type="radio"
@@ -586,7 +626,7 @@ export default function AdminQbankItemPage() {
                     value={o.label}
                     onChange={(e) => set({ options: form.options.map((x, j) => (i === j ? { ...x, label: e.target.value } : x)) })}
                     style={inp}
-                    placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                    placeholder={`Answer text for option ${String.fromCharCode(65 + i)}`}
                     maxLength={140}
                   />
                   <button

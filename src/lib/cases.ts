@@ -38,6 +38,37 @@ export const QBANK_SETTINGS: QbankSetting[] = ["NICU", "PICU", "CICU", "ECMO", "
 export const QBANK_BLOOMS: QbankBloom[] = ["recall", "interpretation", "application", "analysis"];
 export const DIFFICULTIES: Difficulty[] = ["introductory", "intermediate", "advanced"];
 
+// Display labels. The stored values stay lowercase enums; only what a reader
+// sees is capitalised. Settings are acronyms and must NOT be title-cased.
+export const QBANK_POPULATION_LABELS: Record<QbankPopulation, string> = {
+  neonate: "Neonate", infant: "Infant", child: "Child",
+  adolescent: "Adolescent", mixed: "Mixed",
+};
+export const QBANK_SETTING_LABELS: Record<QbankSetting, string> = {
+  NICU: "NICU", PICU: "PICU", CICU: "CICU", ECMO: "ECMO",
+  ED: "ED", EMU: "EMU", OR: "OR", other: "Other",
+};
+export const QBANK_BLOOM_LABELS: Record<QbankBloom, string> = {
+  recall: "Recall", interpretation: "Interpretation",
+  application: "Application", analysis: "Analysis",
+};
+export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  introductory: "Introductory", intermediate: "Intermediate", advanced: "Advanced",
+};
+
+/** Human label for any classification value, falling back to Sentence case. */
+export function classificationLabel(value: string | null | undefined): string {
+  if (!value) return "";
+  return (
+    (QBANK_DOMAIN_LABELS as Record<string, string>)[value] ??
+    (QBANK_POPULATION_LABELS as Record<string, string>)[value] ??
+    (QBANK_SETTING_LABELS as Record<string, string>)[value] ??
+    (QBANK_BLOOM_LABELS as Record<string, string>)[value] ??
+    (DIFFICULTY_LABELS as Record<string, string>)[value] ??
+    value.charAt(0).toUpperCase() + value.slice(1)
+  );
+}
+
 /** One citation backing an item. Public once the item is published. */
 export interface CaseReference {
   id: string;
