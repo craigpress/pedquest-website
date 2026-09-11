@@ -58,6 +58,8 @@ AEEG_PP_WIN_S = 0.5
 AEEG_DISPLAY_WIN_S = 60.0     # span whose amplitude min/max become the margins
 
 SIDES = ("left", "right")
+#: LL/LP/RP/RL - see montage.TREND_REGIONS_19
+REGIONS = mt.TREND_REGION_NAMES
 
 
 @dataclass
@@ -76,6 +78,9 @@ class Trends:
     env: Dict[str, np.ndarray] = field(default_factory=dict)      # uV (envelope trend)
     total_power: Dict[str, np.ndarray] = field(default_factory=dict)   # uV^2 (1-20 Hz)
     adr: Dict[str, np.ndarray] = field(default_factory=dict)      # alpha/delta ratio
+    #: regional spectrograms, keyed LL/LP/RP/RL. Populated only when the spec
+    #: asks for a regional panel - the extra FFTs are not free.
+    psd_region: Dict[str, np.ndarray] = field(default_factory=dict)
     asym_rel: Optional[np.ndarray] = None             # (n_f, n_t) %
     asym_idx: Optional[np.ndarray] = None             # (n_t,) %
     szprob: Optional[np.ndarray] = None               # (n_t,) 0..1
@@ -286,6 +291,14 @@ def compute_trends(
     out = Trends(t=t_grid, hop_s=hop_s, freqs=freqs_disp, rhy_freqs=RHY_FREQS)
     out.sr_threshold_uv = float(sr_threshold_uv)
     out.aeeg_derivation = {s: f"{a}-{b}" for s, (a, b) in aeeg_pairs.items()}
+    # Regional spectrograms cost an extra FFT pass per region, so only build
+    # them when a panel actually asks for one.
+    wanted_panels = set(spec.get("panels") or []) if spec else set()
+    region_chains = (mt.trend_regions(synth.scalp)
+                     if any(f"fft_{r}" in wanted_panels for r in REGIONS) else {})
+    for region in region_chains:
+        out.psd_region[region] = np.zeros((freqs_disp.size, n_t))
+
     for side in SIDES:
         out.psd[side] = np.zeros((freqs_disp.size, n_t))
         out.rhy[side] = np.zeros((RHY_FREQS.size, n_t))
@@ -332,6 +345,14 @@ def compute_trends(
         sr_local = np.round(sr_edges * fs).astype(np.int64) - seg_i0
         sr_local = sr_local[(sr_local >= 0) & (sr_local + sr_epoch_n <= x.shape[1])]
         sr_times.append(sr_edges[: sr_local.size] + SR_EPOCH_S / 2.0)
+
+        for region, rpairs in region_chains.items():
+            if not rpairs:
+                continue
+            rsig = synth.derive(x, [(a, b) for a, b in rpairs])
+            rw = _epoch_windows(rsig, short_starts, short_n)
+            _, rpsd = _psd(rw, fs, short_win)
+            out.psd_region[region][:, col0:col1] = rpsd.mean(axis=0)[:, keep_disp].T
 
         for side in SIDES:
             pairs = chains[side]

@@ -43,10 +43,16 @@ AS $$
 DECLARE
   target UUID;
 BEGIN
-  target := CASE
-    WHEN TG_TABLE_NAME = 'eeg_cases' THEN COALESCE(NEW.id, OLD.id)
-    ELSE COALESCE(NEW.case_id, OLD.case_id)
-  END;
+  -- IF/ELSIF, not a SQL CASE. PL/pgSQL resolves record fields when it PLANS
+  -- the expression, not when the branch is taken, so a CASE mentioning
+  -- NEW.case_id aborts every write to eeg_cases (which has no such column)
+  -- with: record "new" has no field "case_id".
+  IF TG_TABLE_NAME = 'eeg_cases' THEN
+    target := COALESCE(NEW.id, OLD.id);
+  ELSE
+    target := COALESCE(NEW.case_id, OLD.case_id);
+  END IF;
+
   IF target IS NOT NULL THEN
     UPDATE public.eeg_cases
        SET search_text = public.qbank_search_text(target)
@@ -82,3 +88,11 @@ CREATE INDEX IF NOT EXISTS eeg_cases_search_idx
 
 -- backfill
 UPDATE public.eeg_cases SET search_text = public.qbank_search_text(id);
+
+-- A real tsvector column so PostgREST .textSearch() hits the index directly.
+ALTER TABLE public.eeg_cases
+  ADD COLUMN IF NOT EXISTS search_tsv tsvector
+  GENERATED ALWAYS AS (to_tsvector('english', coalesce(search_text, ''))) STORED;
+
+DROP INDEX IF EXISTS public.eeg_cases_search_idx;
+CREATE INDEX IF NOT EXISTS eeg_cases_search_tsv_idx ON public.eeg_cases USING GIN (search_tsv);

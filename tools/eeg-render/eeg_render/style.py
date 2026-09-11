@@ -142,6 +142,10 @@ PANEL_LABELS: Dict[str, str] = {
     "total_power_R": "Total power\nRIGHT  (uV^2)",
     "alpha_delta_ratio_L": "Alpha/delta\nratio LEFT",
     "alpha_delta_ratio_R": "Alpha/delta\nratio RIGHT",
+    "fft_LL": "FFT  LEFT\nlateral",
+    "fft_LP": "FFT  LEFT\nparasagittal",
+    "fft_RP": "FFT  RIGHT\nparasagittal",
+    "fft_RL": "FFT  RIGHT\nlateral",
 }
 
 #: relative vertical weight of each panel
@@ -163,6 +167,10 @@ PANEL_WEIGHT: Dict[str, float] = {
     "total_power_R": 0.90,
     "alpha_delta_ratio_L": 0.90,
     "alpha_delta_ratio_R": 0.90,
+    "fft_LL": 1.15,
+    "fft_LP": 1.15,
+    "fft_RP": 1.15,
+    "fft_RL": 1.15,
 }
 
 

@@ -1,0 +1,188 @@
+id: PQ-C-001
+version: 1
+status: draft
+title: Localising a focal seizure on regional versus hemisphere-pooled spectrograms
+domain: seizure_detection
+topics:
+  - regional spectrogram
+  - lateral versus parasagittal chains
+  - focal seizure localisation
+  - spatial averaging
+population: child
+setting: PICU
+difficulty: intermediate
+bloom: analysis
+learning_objective: >-
+  Localise a focal electrographic seizure to an electrode chain by comparing
+  regional spectrograms, and explain why a hemisphere-pooled display dilutes
+  the same finding.
+stem:
+  vignette: >-
+    A 7-year-old is admitted to the paediatric intensive care unit after a
+    prolonged febrile illness and is placed on continuous EEG. The bedside
+    quantitative display is configured with four regional FFT spectrograms
+    rather than one per hemisphere: left lateral (the Fp1-F7-T3-T5-O1 chain),
+    left parasagittal (Fp1-F3-C3-P3-O1), right parasagittal and right lateral.
+    All four panels share one decibel colour scale, so a colour means the same
+    power in every panel. Two discrete events appear about 45 minutes apart.
+  image_caption: >-
+    Three-hour qEEG panel, top to bottom: FFT spectrogram of the left lateral,
+    left parasagittal, right parasagittal and right lateral chains, 0 to 20
+    hertz, elapsed time (hours:minutes), all four on a shared decibel scale.
+  lead_in: >-
+    Which single conclusion does this regional display best support?
+question_type: multiple_choice
+options:
+  - key: A
+    text: >-
+      The events are focal to the left lateral (temporal) chain, and a
+      hemisphere-pooled display would have understated the localisation
+    correct: true
+    rationale: >-
+      The ramping arcs appear in the left lateral panel and are far weaker in
+      the left parasagittal panel of the same hemisphere, with no change on
+      either right-sided panel. Because the four panels share one colour
+      scale, that is a difference in power, not in display gain. Pooling the
+      hemisphere averages the involved lateral chain with the uninvolved
+      parasagittal chain, so the event is reported as a smaller rise and the
+      within-hemisphere localisation is lost.
+  - key: B
+    text: The events are generalised, because activity is visible in every panel
+    correct: false
+    rationale: >-
+      Every panel shows the ongoing background, which is expected. A
+      generalised event would raise power in all four regions at the same
+      time; here the rise is confined to one chain while the other three are
+      unchanged or slightly lower.
+  - key: C
+    text: >-
+      The events cannot be localised from spectrograms and require review of
+      the raw EEG before any statement about location
+    correct: false
+    rationale: >-
+      Raw EEG review remains necessary to confirm that an event is a seizure
+      and to characterise it. But a spectrogram is a display of the underlying
+      raw signal rather than a separate measurement, and a regional montage
+      supports a statement about which chain the power arose in.
+  - key: D
+    text: >-
+      The right lateral panel is artefactually suppressed, so the study should
+      be repeated after re-applying the right-sided electrodes
+    correct: false
+    rationale: >-
+      The right-sided panels show a normal ongoing background throughout, not
+      suppression. An electrode problem would attenuate that background as
+      well, not only the two brief events.
+  - key: E
+    text: >-
+      The finding is an asymmetry of the background rather than discrete
+      events, so an asymmetry index would be the better display
+    correct: false
+    rationale: >-
+      The change is time-limited and evolving rather than a sustained
+      background difference. An asymmetry index compares hemispheres and would
+      not separate the lateral chain from the parasagittal chain within the
+      same hemisphere, which is the distinction this display makes.
+explanation: >-
+  A spectrogram encodes the power of the underlying raw EEG against frequency
+  and time, so reading one is a way of inferring the raw signal rather than a
+  separate test, and the montage that feeds it decides what can be seen. When
+  the display pools an entire hemisphere, the chain carrying a focal event is
+  averaged with the chains that are not, and the event is attenuated in
+  proportion to how little of the hemisphere it occupies. Splitting the same
+  data into lateral and parasagittal chains keeps that contrast, which is why
+  regional measurement is used clinically: in neonates monitored after cardiac
+  surgery, asymmetry measured regionally rose significantly only in the
+  anterior region, and every neonate who met the asymmetry threshold did so
+  anteriorly, a pattern a single hemispheric measure would not have resolved.
+  A shared colour scale across the panels is what makes the comparison
+  legitimate; with per-panel autoscaling, four regions look alike however
+  different they are.
+key_points:
+  - >-
+    A regional spectrogram montage preserves within-hemisphere localisation
+    that hemisphere pooling averages away.
+  - >-
+    Compare regional panels only when they share one colour scale; per-panel
+    autoscaling makes unequal regions look equal.
+  - >-
+    A spectrogram displays the power of the raw EEG, so localisation inferred
+    from it should still be confirmed on the raw tracing.
+references:
+  - pmid: '34510095'
+    doi: 10.1097/WNP.0000000000000736
+    citation: >-
+      Ng MC, Jing J, Westover MB. A Primer on EEG Spectrograms. J Clin
+      Neurophysiol. 2022;39(3):177-183.
+    role: primary
+    verified: true
+    verified_by: pubmed efetch 2026-09-11
+    open_access: none
+    member_author: false
+  - pmid: '41473044'
+    citation: >-
+      Swartz MF, et al. Postoperative electroencephalographic anterior
+      asymmetry is associated with neurologic injury and increased morbidity.
+      JTCVS Open. 2025.
+    role: supporting
+    verified: true
+    verified_by: pubmed efetch 2026-09-11
+    open_access: none
+    member_author: false
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 240110
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 180
+    background:
+      type: continuous
+      dominant_hz: 7.0
+      amplitude_uv: 38
+      slow_fraction: 0.45
+      reactivity: present
+    events:
+      - type: seizure
+        onset_min: 60
+        duration_min: 4
+        onset_region: left_temporal
+        spread: none
+      - type: seizure
+        onset_min: 105
+        duration_min: 5
+        onset_region: left_temporal
+        spread: none
+    panels:
+      - fft_LL
+      - fft_LP
+      - fft_RP
+      - fft_RL
+    time_axis: elapsed
+    style:
+      spectrogram_hz_range:
+        - 0
+        - 20
+metadata:
+  author: Writer C (claude-opus)
+  model: claude-opus-5
+  created: '2026-09-11'
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null

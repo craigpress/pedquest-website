@@ -36,6 +36,10 @@ EXTRA_PANELS = [
     "envelope_L", "envelope_R",
     "total_power_L", "total_power_R",
     "alpha_delta_ratio_L", "alpha_delta_ratio_R",
+    # Four-region spectrograms (left/right x lateral/parasagittal), the split
+    # the published atlas displays. A hemisphere-pooled panel averages a
+    # temporal focus with the parasagittal chain that cannot see it.
+    "fft_LL", "fft_LP", "fft_RP", "fft_RL",
 ]
 ALL_PANELS = PANELS + EXTRA_PANELS
 

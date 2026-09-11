@@ -1,0 +1,60 @@
+{
+  "id": "PQ-C-001",
+  "kind": "qeeg_panel",
+  "width": 1600,
+  "height": 1000,
+  "answer_region": null,
+  "panels": [
+    {
+      "name": "fft_LL",
+      "y0": 0.104,
+      "y1": 0.301375,
+      "x0": 0.225,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_LP",
+      "y0": 0.312875,
+      "y1": 0.51025,
+      "x0": 0.225,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_RP",
+      "y0": 0.52175,
+      "y1": 0.719125,
+      "x0": 0.225,
+      "x1": 0.984
+    },
+    {
+      "name": "fft_RL",
+      "y0": 0.730625,
+      "y1": 0.928,
+      "x0": 0.225,
+      "x1": 0.984
+    }
+  ],
+  "license": "synthetic-original",
+  "attribution": null,
+  "renderer_version": "0.3.2",
+  "spec_hash": "sha256:5a9ecef4173fc8ecb708b3019e2cd4de3c5a7bea78a1be436dc324399c410398",
+  "db_ranges": {
+    "fft_LL": [
+      -14.039,
+      15.962
+    ],
+    "fft_LP": [
+      -14.039,
+      15.962
+    ],
+    "fft_RP": [
+      -14.039,
+      15.962
+    ],
+    "fft_RL": [
+      -14.039,
+      15.962
+    ]
+  },
+  "path": "public/images/qbank/PQ-C-001.png"
+}

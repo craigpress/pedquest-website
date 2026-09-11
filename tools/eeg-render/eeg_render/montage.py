@@ -111,6 +111,44 @@ TREND_CHAINS_NEONATAL: Dict[str, List[Tuple[str, str]]] = {
 }
 
 
+#: Four-region split: left/right x lateral (temporal) / parasagittal.
+#:
+#: This is what the published teaching atlas displays - "A Primer on EEG
+#: Spectrograms" (Ng, Jing, Westover, J Clin Neurophysiol 2022) plots four
+#: spectrograms labelled LL / LP / RP / RL rather than two hemispheres - and
+#: it is the Persyst convention too.  Pooling a whole hemisphere averages a
+#: temporal focus together with the parasagittal chain that does not see it,
+#: which is exactly the contrast a localisation question needs to survive.
+TREND_REGIONS_19: Dict[str, List[Tuple[str, str]]] = {
+    "LL": [("Fp1", "F7"), ("F7", "T3"), ("T3", "T5"), ("T5", "O1")],
+    "LP": [("Fp1", "F3"), ("F3", "C3"), ("C3", "P3"), ("P3", "O1")],
+    "RL": [("Fp2", "F8"), ("F8", "T4"), ("T4", "T6"), ("T6", "O2")],
+    "RP": [("Fp2", "F4"), ("F4", "C4"), ("C4", "P4"), ("P4", "O2")],
+}
+
+#: The 9-electrode neonatal array has no F7/T5, so each region is the two
+#: derivations of that chain the array can actually support.
+TREND_REGIONS_NEONATAL: Dict[str, List[Tuple[str, str]]] = {
+    "LL": [("Fp1", "T3"), ("T3", "O1")],
+    "LP": [("Fp1", "C3"), ("C3", "O1")],
+    "RL": [("Fp2", "T4"), ("T4", "O2")],
+    "RP": [("Fp2", "C4"), ("C4", "O2")],
+}
+
+#: display order, matching the atlas figures (left over right, lateral first)
+TREND_REGION_NAMES = ("LL", "LP", "RP", "RL")
+
+
+def trend_regions(channels: Sequence[str]) -> Dict[str, List[Tuple[str, str]]]:
+    """Regional derivation lists the electrode set supports."""
+    present = set(channels)
+    table = TREND_REGIONS_19 if "T5" in present and "P3" in present else TREND_REGIONS_NEONATAL
+    return {
+        name: [pair for pair in pairs if pair[0] in present and pair[1] in present]
+        for name, pairs in table.items()
+    }
+
+
 def trend_chains(channels: Sequence[str]) -> Dict[str, List[Tuple[str, str]]]:
     """Pick the hemisphere derivation lists that the electrode set supports."""
     present = set(channels)

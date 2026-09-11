@@ -32,6 +32,8 @@ class PanelGeometry:
         self.height = height
         self.duration_min = duration_min
         self.panels: List[Dict[str, float | str]] = []
+        #: dB window each spectrogram panel was drawn with, for the sidecar
+        self.db_ranges: Dict[str, List[float]] = {}
         self.x0 = LEFT
         self.x1 = 1.0 - RIGHT_MARGIN
 
@@ -106,7 +108,8 @@ def render_qeeg_panel(
 
         for i, (name, ax) in enumerate(axes):
             last = i == len(axes) - 1
-            _draw_panel(ax, name, trends, theme, duration_min, spec, st, last)
+            _draw_panel(ax, name, trends, theme, duration_min, spec, st, last,
+                        db_sink=geo.db_ranges)
 
         _draw_header(fig, spec, theme, st, header_note, rx, ry, rw, rh)
         _draw_cursor_caption(axes, spec, theme, duration_min, st)
@@ -215,6 +218,42 @@ def _smooth_field(field, freqs, t_s, hz: float, seconds: float):
     return uniform_filter(field, size=(n_f, n_t), mode="nearest")
 
 
+def _fft_db_range(st: Dict, tr: Trends, db) -> Tuple[float, float]:
+    """The dB window a spectrogram panel is drawn with.
+
+    ``style.fft_db_range`` pins it, which is what makes colour mean the same
+    thing in every item - the convention the published atlas uses. Otherwise
+    it is fitted to this record, which maximises contrast within one image at
+    the cost of comparability between two.
+    """
+    rng = st.get("fft_db_range")
+    if rng and len(rng) == 2:
+        return float(rng[0]), float(rng[1])
+    pool = db if db is not None else 10.0 * np.log10(np.maximum(
+        np.concatenate([tr.psd["left"], tr.psd["right"]], axis=1), 1e-4))
+    vmin = float(np.percentile(pool, 12))
+    vmax = float(np.percentile(pool, 99.6))
+    if vmax - vmin < 22:
+        vmax = vmin + 22
+    return vmin, vmax
+
+
+def _record_db_range(sink: Optional[Dict], name: str, vmin: float, vmax: float) -> None:
+    """Record the dB window this panel was drawn with, for the sidecar.
+
+    The PNG holds colour; recovering dB from a pixel needs the vmin/vmax that
+    produced it, so the sidecar has to carry it.
+
+    This must NOT be written back into the spec. Doing that (the first cut of
+    this) made spec_hash depend on the render output, so a freshly rendered
+    image failed its own verification - the hash taken before drawing no
+    longer matched the one taken after.
+    """
+    if sink is None:
+        return
+    sink[name] = [round(vmin, 3), round(vmax, 3)]
+
+
 def _nice_ceiling(value: float) -> float:
     """Round up to the next 1/2/5 x 10^n, so an auto-scaled axis gets tick
     labels a reader can actually place (0.2, not 0.183)."""
@@ -243,12 +282,30 @@ def _line_panel(ax, t_min, v, color, theme: S.Theme, lo: float, hi: float,
 
 
 def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
-                spec: Dict, st: Dict, last: bool) -> None:
+                spec: Dict, st: Dict, last: bool,
+                db_sink: Optional[Dict] = None) -> None:
     t_min = tr.t / 60.0
     cmap = S.spectrogram_cmap(st["spectrogram_cmap"])
     side = "left" if name.endswith("_L") else "right"
 
-    if name in ("fft_L", "fft_R"):
+    if name in ("fft_LL", "fft_LP", "fft_RP", "fft_RL"):
+        region = name.split("_", 1)[1]
+        data = tr.psd_region.get(region)
+        if data is None:
+            return
+        db = 10.0 * np.log10(np.maximum(data, 1e-4))
+        # One scale across ALL regions. Scaling each panel to its own data
+        # would make the four regions look alike no matter how different they
+        # are, which is the opposite of what a regional comparison is for.
+        pooled = 10.0 * np.log10(np.maximum(
+            np.concatenate(list(tr.psd_region.values()), axis=1), 1e-4))
+        vmin, vmax = _fft_db_range(st, tr, pooled)
+        _spectrogram(ax, db, tr.freqs, t_min, cmap, vmin, vmax, theme, st)
+        _record_db_range(db_sink, name, vmin, vmax)
+        if st.get("show_colorbar"):
+            _mini_colorbar(ax, cmap, vmin, vmax, theme, "dB")
+
+    elif name in ("fft_L", "fft_R"):
         db = 10.0 * np.log10(np.maximum(tr.psd[side], 1e-4))
         # A FIXED dB window makes colour mean the same thing in every item,
         # which is what a teaching atlas needs - the reference implementation
@@ -257,17 +314,9 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
         # for exactly that reason.  Per-record percentiles (the default here)
         # maximise contrast within one image but make two images
         # incomparable.  Opt in per item with style.fft_db_range.
-        rng = st.get("fft_db_range")
-        if rng and len(rng) == 2:
-            vmin, vmax = float(rng[0]), float(rng[1])
-        else:
-            both = 10.0 * np.log10(np.maximum(np.concatenate(
-                [tr.psd["left"], tr.psd["right"]], axis=1), 1e-4))
-            vmin = float(np.percentile(both, 12))
-            vmax = float(np.percentile(both, 99.6))
-            if vmax - vmin < 22:
-                vmax = vmin + 22
+        vmin, vmax = _fft_db_range(st, tr, None)
         _spectrogram(ax, db, tr.freqs, t_min, cmap, vmin, vmax, theme, st)
+        _record_db_range(db_sink, name, vmin, vmax)
         if st.get("show_colorbar"):
             _mini_colorbar(ax, cmap, vmin, vmax, theme, "dB")
 

@@ -1,0 +1,140 @@
+id: PQ-C-002
+version: 1
+status: draft
+title: Marking the region of onset on a four-region spectrogram display
+domain: seizure_detection
+topics:
+  - regional spectrogram
+  - region of onset
+  - lateral versus parasagittal chains
+  - qEEG screening
+population: child
+setting: PICU
+difficulty: introductory
+bloom: interpretation
+learning_objective: >-
+  Identify on a four-region spectrogram which electrode chain a rhythmic
+  event arises from, and recognise that the regional layout is what makes
+  that identification possible.
+stem:
+  vignette: >-
+    A 6-year-old is on continuous EEG in the paediatric intensive care unit
+    after a prolonged seizure. The overnight quantitative screen is displayed
+    as four regional spectrograms on one shared decibel colour scale: left
+    lateral, left parasagittal, right parasagittal and right lateral. Reviewing
+    the trend, you are asked to mark where the first discrete event begins so
+    that the team can go straight to that point in the raw recording.
+  image_caption: >-
+    Three-hour qEEG panel, top to bottom: FFT spectrogram of the left lateral,
+    left parasagittal, right parasagittal and right lateral chains, 0 to 20
+    hertz, elapsed time (hours:minutes), all four sharing one decibel scale.
+  lead_in: >-
+    Click on the first discrete event, in the panel where it is strongest.
+question_type: point_to_feature
+point_to_feature:
+  instruction: >-
+    Click the onset of the first discrete rhythmic event, in the regional
+    panel that shows it most strongly.
+  target_event: 0
+  target_panel: fft_LL
+  tolerance: 0.05
+options: []
+explanation: >-
+  The first event begins about an hour into the recording and appears as a
+  ramping band of increased power that is clearly strongest in the left
+  lateral panel, the Fp1-F7-T3-T5-O1 chain. The left parasagittal panel from
+  the same hemisphere shows only a faint change at the same moment, and
+  neither right-sided panel changes, so the event is regional rather than
+  hemispheric or generalised. Because a spectrogram is a display of the power
+  in the underlying raw EEG rather than a separate measurement, marking the
+  onset here tells the reviewer exactly where to open the raw tracing to
+  confirm what the event is. The comparison is only valid because all four
+  panels share one colour scale: with per-panel autoscaling each region is
+  stretched to its own range and the regions stop being comparable.
+key_points:
+  - >-
+    On a four-region display the chain with the strongest change identifies
+    the region of onset.
+  - >-
+    A faint change in the neighbouring chain of the same hemisphere is
+    expected and does not make an event hemispheric.
+  - >-
+    Regional panels are only comparable when they share one colour scale.
+references:
+  - pmid: '34510095'
+    doi: 10.1097/WNP.0000000000000736
+    citation: >-
+      Ng MC, Jing J, Westover MB. A Primer on EEG Spectrograms. J Clin
+      Neurophysiol. 2022;39(3):177-183.
+    role: primary
+    verified: true
+    verified_by: pubmed efetch 2026-09-11
+    open_access: none
+    member_author: false
+  - pmid: '41473044'
+    citation: >-
+      Swartz MF, et al. Postoperative electroencephalographic anterior
+      asymmetry is associated with neurologic injury and increased morbidity.
+      JTCVS Open. 2025.
+    role: supporting
+    verified: true
+    verified_by: pubmed efetch 2026-09-11
+    open_access: none
+    member_author: false
+image:
+  kind: qeeg_panel
+  license: synthetic-original
+  attribution: null
+  spec:
+    seed: 240110
+    age_group: child
+    sample_rate: 256
+    channels: standard_19
+    duration_min: 180
+    background:
+      type: continuous
+      dominant_hz: 7.0
+      amplitude_uv: 38
+      slow_fraction: 0.45
+      reactivity: present
+    events:
+      - type: seizure
+        onset_min: 60
+        duration_min: 4
+        onset_region: left_temporal
+        spread: none
+      - type: seizure
+        onset_min: 105
+        duration_min: 5
+        onset_region: left_temporal
+        spread: none
+    panels:
+      - fft_LL
+      - fft_LP
+      - fft_RP
+      - fft_RL
+    time_axis: elapsed
+    style:
+      spectrogram_hz_range:
+        - 0
+        - 20
+metadata:
+  author: Writer C (claude-opus)
+  model: claude-opus-5
+  created: '2026-09-11'
+  source_method: literature-derived
+  checklist:
+    cover_test: true
+    one_best_answer: true
+    numbers_sourced: true
+    pmids_verified: true
+    acns_terminology: true
+    spec_deterministic: true
+    no_copyright_reuse: true
+    deidentified: true
+    explanation_structure: true
+  review:
+    editor: null
+    decision: null
+    notes: null
+    decided_at: null
