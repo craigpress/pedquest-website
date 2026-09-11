@@ -241,12 +241,11 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   // enqueue render. Called by the editor console right after a changes_requested
   // review on an AI item, or from the "Revise with AI" button as a retry.
   if (action === "regenerate") {
-    if (current.source !== "ai") {
-      return NextResponse.json(
-        { error: "Automatic revision is only available for AI-generated items. Edit the spec and press re-render instead." },
-        { status: 400 },
-      );
-    }
+    // Team-written items can be revised by the model too: the reviser EDITS
+    // the stored item rather than redrafting it, and where there is no
+    // retrieval corpus the numbers-sourced and references checks are skipped
+    // with the human editor as the backstop (see lib/qbank/revise.ts).
+    // processRevisionJob reports an item with no stored content snapshot.
     // Prefer an explicit jobId, else the newest pending/failed revision job,
     // else create one from the supplied feedback or the latest review notes.
     let jobId: string | null = typeof body.jobId === "string" ? body.jobId : null;

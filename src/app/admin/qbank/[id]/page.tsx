@@ -361,7 +361,13 @@ export default function AdminQbankItemPage() {
                     {showRegion ? "Hide" : "Show"} answer region
                   </button>
                 )}
-                <button type="button" style={mini} onClick={rerender} disabled={busy || !c.spec}>
+                <button
+                  type="button"
+                  style={mini}
+                  onClick={rerender}
+                  disabled={busy || !c.spec}
+                  title="Redraw the image from the spec below without touching the question text — after you edit the spec by hand, or when a render failed."
+                >
                   Re-render
                 </button>
               </div>
@@ -428,20 +434,20 @@ export default function AdminQbankItemPage() {
                 {progress}
               </div>
             )}
-            {item.case.source === "ai" && (
-              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0 }}>
-                Requesting changes on this AI-drafted item automatically feeds your note back to the
-                model, re-checks it, and re-renders the image.{" "}
-                <button
-                  type="button"
-                  onClick={() => regenerate(reviewNotes.trim() || undefined)}
-                  disabled={busy}
-                  style={{ ...btnGhost, padding: "2px 8px", fontSize: 12 }}
-                >
-                  Revise with AI now
-                </button>
-              </p>
-            )}
+            <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0 }}>
+              {item.case.source === "ai"
+                ? "Requesting changes on this AI-drafted item automatically feeds your note back to the model, re-checks it, and re-renders the image. "
+                : "This item was written by an editor, so requesting changes just records the note. Send it to the model yourself — it edits the stored item from your note, re-checks it and re-renders; the sourcing checks are skipped because there is no retrieval corpus behind a hand-written item. "}
+              <button
+                type="button"
+                onClick={() => regenerate(reviewNotes.trim() || undefined)}
+                disabled={busy}
+                title="Send the review note above to the model now, instead of waiting for the weekly revision cron."
+                style={{ ...btnGhost, padding: "2px 8px", fontSize: 12 }}
+              >
+                Revise with AI now
+              </button>
+            </p>
 
             <div style={{ borderTop: "1px solid var(--border)", marginTop: 16, paddingTop: 14 }}>
               <div style={eyebrow}>Schedule as Case of the Day</div>
