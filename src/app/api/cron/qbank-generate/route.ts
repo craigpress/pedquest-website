@@ -6,6 +6,9 @@ import { notifyEditorsOfPendingItems } from "@/lib/qbank/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// A revision sends the whole item and its evidence to the model and waits for
+// a full rewrite; the old 60 s default aborted them mid-call.
+export const maxDuration = 300;
 
 // Weekly question-bank generation. Guarded by CRON_SECRET, the same way
 // /api/scan-publications is — Vercel Cron sends it as a Bearer token.
@@ -34,20 +37,29 @@ export async function GET(request: NextRequest) {
 
   const countParam = Number(request.nextUrl.searchParams.get("count") ?? "3");
   const count = Number.isFinite(countParam) ? Math.max(1, Math.min(countParam, 10)) : 3;
+  // ?revisions=only drains the editor-requested revision queue and drafts
+  // nothing new. A revision that timed out is re-run from this route rather
+  // than by waiting a week for the next scheduled pass, and a retry should
+  // not also spend the budget drafting unrelated questions.
+  const revisionsOnly = request.nextUrl.searchParams.get("revisions") === "only";
   const budgetMs = Number(process.env.QBANK_GENERATE_BUDGET_MS ?? 45000);
-  const llmTimeoutMs = Number(process.env.QBANK_LLM_TIMEOUT_MS ?? 40000);
+  const llmTimeoutMs = Number(process.env.QBANK_LLM_TIMEOUT_MS ?? (revisionsOnly ? 240_000 : 40_000));
 
   // Drain editor-requested revisions first — a "request changes" on an AI item
   // queues one; process a few before spending the remaining budget on new drafts.
   const revisions = await drainRevisionJobs(supabase, {
-    limit: 3, timeoutMs: llmTimeoutMs, budgetMs: Math.floor(budgetMs / 2),
+    limit: revisionsOnly ? 5 : 3,
+    timeoutMs: llmTimeoutMs,
+    budgetMs: revisionsOnly ? 260_000 : Math.floor(budgetMs / 2),
   });
 
-  const summary = await generateDrafts(supabase, {
-    count,
-    budgetMs,
-    timeoutMs: llmTimeoutMs,
-  });
+  const summary = revisionsOnly
+    ? { provider: "", model: "", promptVersion: "", planned: [], results: [], blueprintMissing: false, notes: ["revisions only"] }
+    : await generateDrafts(supabase, {
+      count,
+      budgetMs,
+      timeoutMs: llmTimeoutMs,
+    });
 
   const drafted = summary.results.filter((r) => r.status === "drafted" && r.caseId);
   let notified = 0;

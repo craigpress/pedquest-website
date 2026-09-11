@@ -79,6 +79,10 @@ _EVOLUTION_OR_NONE = {"oneOf": [_EVOLUTION, {"enum": ["none", None]}]}
 
 _SEIZURE_CORE = {
     "duration_s": _pos,
+    # seizure_cluster only: the length of the LAST run in the cluster. Each
+    # run is interpolated between duration_s and this, so a cluster can
+    # escalate (or shorten after treatment) instead of repeating one length.
+    "duration_end_s": _pos,
     "onset_region": {"enum": REGIONS},
     "evolution": _EVOLUTION_OR_NONE,
     "spread": {"enum": SPREAD},

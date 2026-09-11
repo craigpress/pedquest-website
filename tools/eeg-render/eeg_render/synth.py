@@ -512,11 +512,20 @@ class Synthesizer:
                 end = float(ev["end_min"]) * 60.0
                 step = max(float(ev["interval_min"]) * 60.0, 10.0)
                 jit = substream(self.seed, "cluster", i)
+                # duration_end_s lets a cluster ESCALATE: each seizure is
+                # interpolated between duration_s at start_min and
+                # duration_end_s at end_min, which is how a worsening burden
+                # actually reads on a trend. Absent, every run is the same
+                # length as before.
+                dur0 = float(z["duration_s"])
+                dur1 = float(z.get("duration_end_s", dur0))
+                span = max(end - t, 1e-6)
                 k = 0
                 while t <= end + 1e-6:
+                    frac = min(max((t - float(ev["start_min"]) * 60.0) / span, 0.0), 1.0)
                     out.append(SeizureInstance(
                         t0=t + float(jit.normal(0.0, step * 0.03)),
-                        duration_s=float(z["duration_s"]) * float(_lognorm(jit, 1, 0.10)[0]),
+                        duration_s=(dur0 + (dur1 - dur0) * frac) * float(_lognorm(jit, 1, 0.10)[0]),
                         onset_region=z["onset_region"],
                         start_hz=float(evo["start_hz"]), end_hz=float(evo["end_hz"]),
                         amp_start=float(evo["amplitude_start_uv"]),

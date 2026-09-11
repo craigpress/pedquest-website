@@ -56,6 +56,10 @@ background:
   end_min: 150
   interval_min: 12
   seizure: { duration_s: 90, onset_region: right_central, evolution: {...} }
+  # duration_end_s makes the cluster ESCALATE (or settle after treatment):
+  # each run is interpolated between duration_s at start_min and
+  # duration_end_s at end_min. Omit it and every run is the same length.
+  # seizure: { duration_s: 60, duration_end_s: 240, ... }
 - type: status_epilepticus       # continuous or near-continuous ictal activity
   onset_min: 40
   duration_min: 45
