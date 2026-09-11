@@ -129,6 +129,10 @@ _EVENT = {
         # attenuation transient
         "side": {"enum": ["both", "left", "right", "all"]},
         "depth_pct": {"type": "number", "minimum": 0, "maximum": 100},
+        # minutes over which the attenuation builds to depth_pct; 0 = the
+        # abrupt onset of an acute event, larger = a gradual evolution such as
+        # a developing infarct.  (Sedation ramps live in effect.ramp_min.)
+        "ramp_min": {"type": "number", "minimum": 0},
         # temperature
         "from_c": _num,
         "to_c": _num,
@@ -175,7 +179,9 @@ _BACKGROUND = {
             },
         },
         "burst_suppression": {
-            "type": "object",
+            # explicit null means "no burst-suppression block", which is what a
+            # generator writing every key tends to emit
+            "type": ["object", "null"],
             "additionalProperties": False,
             "properties": {
                 "burst_s": _pos, "ibi_s": _pos,

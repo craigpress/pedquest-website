@@ -66,7 +66,7 @@ interface AttachmentRow {
 }
 
 export default function AdminQbankQueuePage() {
-  const { isEditor, loading: roleLoading } = useRole();
+  const { isEditor, isAdmin, loading: roleLoading } = useRole();
   const [items, setItems] = useState<QueueItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [jobs, setJobs] = useState<GenerationJobRow[]>([]);
@@ -219,6 +219,36 @@ export default function AdminQbankQueuePage() {
       setGenerating(false);
     }
   }
+
+  // Clearing the generation log is admin-only and non-destructive: the rows are
+  // hidden, not deleted, because a drafted job holds the evidence corpus that
+  // "Revise with AI" re-feeds to the model.
+  const [clearing, setClearing] = useState(false);
+  async function clearJobs(scope: "failed" | "all") {
+    const label = scope === "all" ? "every entry in" : "the failed entries from";
+    if (!window.confirm(`Clear ${label} the generation log? The items themselves are not touched.`)) return;
+    setClearing(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/qbank/generate?scope=${scope}`, {
+        method: "DELETE", headers: await authHeaders(),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) { setError(json.error || "Could not clear the generation log."); return; }
+      await load();
+    } catch {
+      setError("Network error clearing the generation log.");
+    } finally {
+      setClearing(false);
+    }
+  }
+
+  // `query` is what the box shows; `search` is what the server has been asked
+  // for. Without this the search box never reached the server.
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
   useEffect(() => { if (isEditor) void load(); }, [isEditor, load]);
 
@@ -401,6 +431,24 @@ export default function AdminQbankQueuePage() {
               </span>
             )}
           </summary>
+          {isAdmin && (
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                type="button"
+                style={mini}
+                disabled={clearing || !jobs.some((j) => j.status === "failed")}
+                onClick={() => void clearJobs("failed")}
+              >
+                {clearing ? "Clearing…" : "Clear failed"}
+              </button>
+              <button type="button" style={mini} disabled={clearing} onClick={() => void clearJobs("all")}>
+                Clear all
+              </button>
+              <span style={meta}>
+                Admin only. Entries are hidden from this log; the drafts, items and their evidence stay.
+              </span>
+            </div>
+          )}
           <ul style={{ listStyle: "none", padding: 0, margin: "10px 0 0", display: "flex", flexDirection: "column", gap: 8 }}>
             {jobs.map((j) => (
               <li key={j.id} style={{ borderTop: "1px solid var(--border)", paddingTop: 8 }}>

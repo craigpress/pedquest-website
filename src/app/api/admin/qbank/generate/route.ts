@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/admin-auth";
 import { createServerClient } from "@/lib/supabase";
 import { QBANK_DOMAINS } from "@/lib/cases";
 import { generateDrafts } from "@/lib/qbank/generate";
+import { clearGenerationJobs } from "@/lib/qbank-server";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -74,5 +75,27 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[Qbank Generate]", error);
     return NextResponse.json({ error: "Question generation failed unexpectedly." }, { status: 500 });
+  }
+}
+
+// Clear the AI generation log. Admin only — an editor should not be able to
+// wipe the audit trail of what the pipeline produced.
+//
+// DELETE /api/admin/qbank/generate?scope=failed | all
+export async function DELETE(request: NextRequest) {
+  const auth = await requireRole(request, "admin");
+  if (!auth.ok) return auth.response;
+
+  const scope = request.nextUrl.searchParams.get("scope") ?? "failed";
+  if (scope !== "failed" && scope !== "all") {
+    return NextResponse.json({ error: "scope must be 'failed' or 'all'." }, { status: 400 });
+  }
+
+  try {
+    const cleared = await clearGenerationJobs(scope, auth.userId);
+    return NextResponse.json({ success: true, cleared, scope });
+  } catch (error) {
+    console.error("[Qbank Generate] clear log", error);
+    return NextResponse.json({ error: "Could not clear the generation log." }, { status: 500 });
   }
 }

@@ -65,11 +65,15 @@ background:
   direction: increase | decrease
   agent: propofol | midazolam | pentobarbital | dexmedetomidine | ketamine
   effect: { suppression_ratio_target_pct: 60, beta_boost: true, ramp_min: 10 }
-- type: attenuation_transient    # abrupt diffuse or focal attenuation (e.g., ischemia)
+- type: attenuation_transient    # diffuse or focal attenuation (e.g., ischemia)
   at_min: 200
   duration_min: 8
   side: both | left | right
   depth_pct: 80
+  ramp_min: 0                   # minutes to build to depth_pct; 0 = abrupt.
+                                # Use a ramp for an evolving process (a new
+                                # infarct declaring itself over an hour); keep
+                                # it 0 for an acute step change.
 - type: temperature_change
   at_min: 0
   from_c: 33.0

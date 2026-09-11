@@ -194,3 +194,52 @@ def test_raw_page_rows_are_separated_at_chain_boundaries():
     ref_breaks = chain_breaks(ref)
     sides = [mt.side_of(a) for a, _ in ref]
     assert ref_breaks == [i for i in range(1, len(ref)) if sides[i] != sides[i - 1]]
+
+
+def _ramped_asymmetry_spec(ramp_min):
+    """A right-sided attenuation that either steps in or builds over an hour."""
+    return normalize({
+        'kind': 'qeeg_panel',
+        'license': 'synthetic-original',
+        'spec': {
+            'seed': 4242,
+            'age_group': 'child',
+            'duration_min': 240,
+            'channels': 'standard_19',
+            'panels': ['fft_L', 'fft_R', 'asymmetry_index'],
+            'background': {'type': 'continuous', 'dominant_hz': 7.5, 'amplitude_uv': 50},
+            'events': [{'type': 'attenuation_transient', 'at_min': 60, 'duration_min': 120,
+                        'side': 'right', 'depth_pct': 55, 'ramp_min': ramp_min}],
+        },
+    })['spec']
+
+
+def _right_amplitude(spec, minute):
+    synth = Synthesizer(spec, 240 * 60)
+    _, raw = synth.segment(minute * 60, minute * 60 + 30)
+    right = [i for i, e in enumerate(synth.electrodes) if e[-1] in '2468']
+    return float(np.ptp(raw[right], axis=-1).mean())
+
+
+def test_attenuation_ramp_builds_over_the_requested_window():
+    # 10 minutes in, an hour-long ramp has barely started while an abrupt
+    # transient is already at full depth; both are equally attenuated once the
+    # ramp has run.
+    ramped, abrupt = _ramped_asymmetry_spec(60), _ramped_asymmetry_spec(0)
+    early_ramped, early_abrupt = _right_amplitude(ramped, 70), _right_amplitude(abrupt, 70)
+    late_ramped, late_abrupt = _right_amplitude(ramped, 150), _right_amplitude(abrupt, 150)
+    assert early_ramped > early_abrupt * 1.3
+    assert late_ramped == pytest.approx(late_abrupt, rel=0.2)
+
+
+def test_null_burst_suppression_block_is_accepted():
+    spec = normalize({
+        'kind': 'qeeg_panel',
+        'license': 'synthetic-original',
+        'spec': {
+            'seed': 7, 'age_group': 'neonate', 'duration_min': 60,
+            'panels': ['fft_L', 'fft_R'],
+            'background': {'type': 'discontinuous', 'amplitude_uv': 40, 'burst_suppression': None},
+        },
+    })['spec']
+    assert isinstance(spec['background']['burst_suppression'], dict)

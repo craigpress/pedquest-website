@@ -63,8 +63,14 @@ export function savePalettePreference(id: PaletteId): void {
   try { localStorage.setItem(PALETTE_STORAGE_KEY, id); } catch { /* ignore */ }
 }
 
-/** Panels whose pixels are drawn with the spectrogram colour map. */
-const HEAT_PANELS = new Set(["fft_L", "fft_R", "rhythmicity_L", "rhythmicity_R"]);
+/** Panels whose pixels are drawn with the spectrogram colour map. Matched by
+ *  prefix so any regional split counts too — a four-region panel names its
+ *  spectrograms fft_LL / fft_LP / fft_RL / fft_RP, not fft_L / fft_R. */
+const HEAT_PANEL_PREFIXES = ["fft_", "rhythmicity_", "spectrogram"];
+
+function isHeatPanel(name: string): boolean {
+  return HEAT_PANEL_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
 
 interface Rect { x0: number; y0: number; x1: number; y1: number }
 
@@ -77,7 +83,7 @@ export function heatRegions(kind: string | null, panels: ImagePanel[]): Rect[] {
   const rects: Rect[] = [];
   let lastRowY1 = 0;
   for (const p of panels) {
-    if (p.name && HEAT_PANELS.has(p.name) && p.x0 != null && p.x1 != null && p.y0 != null && p.y1 != null) {
+    if (p.name && isHeatPanel(p.name) && p.x0 != null && p.x1 != null && p.y0 != null && p.y1 != null) {
       rects.push({ x0: p.x0, y0: p.y0, x1: p.x1, y1: p.y1 });
     }
     if (p.label && p.y1 != null && p.name == null) lastRowY1 = Math.max(lastRowY1, p.y1);

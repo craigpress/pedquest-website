@@ -165,26 +165,32 @@ export default function EegViewer({
         <button type="button" style={btn} onClick={zoomActual} disabled={!naturalWidth} title="Show at the rendered pixel size">1:1</button>
         <span style={{ opacity: 0.7 }}>· ctrl + scroll to zoom{canDrag ? ", drag to pan" : ""}</span>
 
-        {paletteEnabled && (
-          <label style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <span>Heat map</span>
-            <select
-              value={palette}
-              onChange={(e) => choosePalette(e.target.value as PaletteId)}
-              style={{ ...btn, paddingRight: 6 }}
-              title={PALETTES.find((p) => p.id === palette)?.hint}
-            >
-              {PALETTES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-            </select>
-            {paletteState === "working" && <span aria-live="polite">…</span>}
-            {paletteState === "unavailable" && (
-              <span role="status" style={{ color: "var(--accent-primary)" }}>not available for this image</span>
-            )}
-            {paletteState === "noop" && (
-              <span role="status">no heat-map panels in this image</span>
-            )}
-          </label>
-        )}
+        {/* The picker is shown on every figure so its absence is never a
+            mystery; on a figure with no spectrogram panels (a raw page, an
+            aEEG) it is disabled and says why. */}
+        <label style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6,
+          opacity: paletteEnabled ? 1 : 0.65 }}>
+          <span>Heat map</span>
+          <select
+            value={palette}
+            onChange={(e) => choosePalette(e.target.value as PaletteId)}
+            style={{ ...btn, paddingRight: 6, cursor: paletteEnabled ? "pointer" : "not-allowed" }}
+            disabled={!paletteEnabled}
+            title={paletteEnabled
+              ? PALETTES.find((p) => p.id === palette)?.hint
+              : "This figure has no spectrogram panels — the colour map applies to FFT and rhythmicity panels."}
+          >
+            {PALETTES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+          {!paletteEnabled && <span>no spectrogram panels</span>}
+          {paletteState === "working" && <span aria-live="polite">…</span>}
+          {paletteState === "unavailable" && (
+            <span role="status" style={{ color: "var(--accent-primary)" }}>not available for this image</span>
+          )}
+          {paletteState === "noop" && paletteEnabled && (
+            <span role="status">no heat-map panels in this image</span>
+          )}
+        </label>
       </div>
 
       <div

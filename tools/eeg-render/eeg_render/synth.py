@@ -407,7 +407,8 @@ class Synthesizer:
         # attenuation transients ---------------------------------------
         self._atten = [
             (float(e["at_min"]) * 60.0, float(e["duration_min"]) * 60.0,
-             e["side"], float(e["depth_pct"]) / 100.0)
+             e["side"], float(e["depth_pct"]) / 100.0,
+             float(e.get("ramp_min", 0.0)) * 60.0)
             for e in spec["events"] if e["type"] == "attenuation_transient"
         ]
         self._dur_guard = dur
@@ -1021,10 +1022,15 @@ class Synthesizer:
         gain_points = self.bg.get("amplitude_gain_at_h")
         if gain_points:
             env *= np.interp(t / 3600.0, [p[0] for p in gain_points], [p[1] for p in gain_points])
-        for at, dur, side, depth in self._atten:
+        for at, dur, side, depth, ramp in self._atten:
             if at + dur < t[0] or at > t[-1]:
                 continue
-            shape = smoothstep((t - at) / 6.0) * (1.0 - smoothstep((t - (at + dur)) / 12.0))
+            # ramp = 0 keeps the historical 6 s (abrupt) onset; a longer ramp
+            # builds the attenuation over that many minutes, which is how a
+            # developing infarct reads on a trend rather than a step change.
+            rise = max(ramp, 6.0)
+            fall = max(min(ramp, dur) * 0.5, 12.0)
+            shape = smoothstep((t - at) / rise) * (1.0 - smoothstep((t - (at + dur)) / fall))
             lat = np.ones(self.n_elec)
             if side in ("left", "right"):
                 sgn = -1.0 if side == "left" else 1.0

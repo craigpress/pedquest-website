@@ -107,6 +107,46 @@ def render_image(
     return png, sidecar
 
 
+# --------------------------------------------------------------------------
+# composite
+# --------------------------------------------------------------------------
+
+class _CompositeGeometry:
+    """Union of the sub-figure geometries, in whole-image fractions."""
+
+    def __init__(self, width: int, height: int, panel_geo=None, page_geo=None):
+        self.width = width
+        self.height = height
+        self.panel_geo = panel_geo
+        self.page_geo = page_geo
+        self.panels = []
+        if panel_geo is not None:
+            self.panels += list(panel_geo.panels)
+        if page_geo is not None:
+            self.panels += [{"name": f"page:{r['label']}", "y0": r["y0"], "y1": r["y1"],
+                             "x0": page_geo.x0, "x1": page_geo.x1} for r in page_geo.rows]
+        self.rows = list(page_geo.rows) if page_geo is not None else []
+        self.t0_s = page_geo.t0_s if page_geo is not None else 0.0
+        self.window_s = page_geo.window_s if page_geo is not None else 0.0
+
+    # panel-style lookups
+    def panel(self, name):
+        for p in self.panels:
+            if p["name"] == name:
+                return p
+        return self.panels[0] if self.panels else None
+
+    def x_of_min(self, minutes):
+        return self.panel_geo.x_of_min(minutes) if self.panel_geo else 0.5
+
+    # page-style lookups
+    def x_of_s(self, t_s):
+        return self.page_geo.x_of_s(t_s) if self.page_geo else 0.5
+
+    def rows_for(self, electrodes):
+        return self.page_geo.rows_for(electrodes) if self.page_geo else []
+
+
 def _render_composite(spec: Dict[str, Any], out_png: str, note: str):
     st = spec["style"]
     layout = spec.get("layout", "panel_over_page")

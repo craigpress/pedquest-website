@@ -6,6 +6,6 @@ synthesized multichannel EEG with the same algorithms a review station uses -
 they are not drawn.
 """
 
-RENDERER_VERSION = "0.3.2"
+RENDERER_VERSION = "0.3.3"
 
 __all__ = ["RENDERER_VERSION"]

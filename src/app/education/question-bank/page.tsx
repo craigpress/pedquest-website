@@ -106,10 +106,13 @@ export default async function QuestionBankPage() {
         .qb-controls {
           display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
         }
-        .qb-controls select {
+        .qb-controls select,
+        .qb-controls input[type="search"] {
           padding: 0.5rem 0.7rem; border-radius: 9px; border: 1px solid var(--line);
           background: var(--bg); color: var(--ink); font: inherit; font-size: 0.87rem;
         }
+        .qb-controls input[type="search"]::placeholder { color: var(--muted); }
+        .qb-controls input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
         .qb-check {
           display: flex; align-items: center; gap: 0.4rem; font-family: var(--mono-font);
           font-size: 0.78rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em;

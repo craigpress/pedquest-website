@@ -406,6 +406,7 @@ export async function listGenerationJobs(limit = 15): Promise<GenerationJob[]> {
   const { data, error } = await supabase
     .from("eeg_case_generation_jobs")
     .select("id,status,mode,domain,topic,model,case_id,error,created_at,updated_at")
+    .is("cleared_at", null)
     .order("created_at", { ascending: false })
     .limit(Math.min(limit, 50));
   if (error || !data) return [];
@@ -419,4 +420,26 @@ export async function listGenerationJobs(limit = 15): Promise<GenerationJob[]> {
     topic: r.topic ?? null, model: r.model ?? null, caseId: r.case_id ?? null,
     error: r.error || null, createdAt: r.created_at, updatedAt: r.updated_at,
   }));
+}
+
+/**
+ * Hide generation-log rows from the console. Soft, not destructive: a drafted
+ * job holds the retrieval corpus that "Revise with AI" re-feeds to the model,
+ * so deleting the row would quietly weaken every later revision of that item.
+ * `scope` "failed" clears only failed jobs; "all" clears everything visible.
+ */
+export async function clearGenerationJobs(
+  scope: "failed" | "all",
+  clearedBy: string | null,
+): Promise<number> {
+  const supabase = createServerClient();
+  if (!supabase) return 0;
+  let q = supabase
+    .from("eeg_case_generation_jobs")
+    .update({ cleared_at: new Date().toISOString(), cleared_by: clearedBy })
+    .is("cleared_at", null);
+  if (scope === "failed") q = q.eq("status", "failed");
+  const { data, error } = await q.select("id");
+  if (error) throw new Error(error.message);
+  return (data ?? []).length;
 }
