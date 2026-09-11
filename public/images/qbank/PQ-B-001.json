@@ -29,7 +29,7 @@
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.3.5",
-  "spec_hash": "sha256:f232d18f2e05bc89ea32f5f13a853f01c3e0290ce4f6cacaeb683c89d96f4bbc",
+  "renderer_version": "0.3.6",
+  "spec_hash": "sha256:c01ef236addf837e47cec5b671491a0bc1415f516ae5436997098257ae7cf35f",
   "path": "public/images/qbank/PQ-B-001.png"
 }

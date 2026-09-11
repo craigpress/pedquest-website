@@ -254,15 +254,23 @@ def _record_db_range(sink: Optional[Dict], name: str, vmin: float, vmax: float) 
     sink[name] = [round(vmin, 3), round(vmax, 3)]
 
 
-def _nice_ceiling(value: float) -> float:
-    """Round up to the next 1/2/5 x 10^n, so an auto-scaled axis gets tick
-    labels a reader can actually place (0.2, not 0.183)."""
+#: coarse ladder: readable, but it can nearly double an axis (0.58 -> 1.0)
+_CEILING_STEPS = (1.0, 2.0, 5.0, 10.0)
+#: finer ladder for band-ratio panels. On the 1/2/5 ladder a trace peaking at
+#: 0.58 got a 0-1 axis and lived in the bottom third of the panel, which hides
+#: exactly the left-right separation the paired panels exist to show.
+_CEILING_STEPS_FINE = (1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0)
+
+
+def _nice_ceiling(value: float, fine: bool = False) -> float:
+    """Round up to a tick value a reader can place (0.2, not 0.183)."""
     import math
     if value <= 0:
         return 1.0
     exp = math.floor(math.log10(value))
     frac = value / (10.0 ** exp)
-    step = 1.0 if frac <= 1.0 else 2.0 if frac <= 2.0 else 5.0 if frac <= 5.0 else 10.0
+    steps = _CEILING_STEPS_FINE if fine else _CEILING_STEPS
+    step = next((s for s in steps if frac <= s), 10.0)
     return step * (10.0 ** exp)
 
 
@@ -299,7 +307,7 @@ def _ratio_axis(st: Dict, key: str, series) -> tuple:
     both = np.concatenate([np.asarray(v) for v in series])
     top = float(np.percentile(both, 99.5))
     bottom = float(np.percentile(both, 0.5))
-    hi = _nice_ceiling(max(top * 1.15, 0.05))
+    hi = _nice_ceiling(max(top * 1.08, 0.05), fine=True)
     lo = 0.0 if bottom < 0.35 * hi else max(0.0, bottom - 0.25 * (top - bottom))
     return lo, hi
 
@@ -518,7 +526,7 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
             both = np.concatenate([tr.adr["left"], tr.adr["right"]])
             top = float(np.percentile(both, 99.5))
             bottom = float(np.percentile(both, 0.5))
-            hi = _nice_ceiling(max(top * 1.15, 0.05))
+            hi = _nice_ceiling(max(top * 1.08, 0.05), fine=True)
             # Anchor at zero only when the trace actually uses that range;
             # a record living between 0.08 and 0.11 needs a fitted window or
             # every change disappears into a solid block.

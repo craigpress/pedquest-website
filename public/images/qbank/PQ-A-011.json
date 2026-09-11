@@ -71,7 +71,7 @@
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.3.5",
-  "spec_hash": "sha256:9934b1ae4cb2cbf838c126ab67a6ae9419c65a3bc403d75160ad4b9e76f5576c",
+  "renderer_version": "0.3.6",
+  "spec_hash": "sha256:d3de9e165c69cec81cb24c46b57d8ab31e54c5e5ae7d07d566e396761a491940",
   "path": "public/images/qbank/PQ-A-011.png"
 }
