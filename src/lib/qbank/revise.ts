@@ -218,7 +218,12 @@ export async function processRevisionJob(
   try {
     revised = await reviseQuestion({ current: content, feedback: (job as any).feedback ?? "", articles, timeoutMs: opts.timeoutMs });
   } catch (e) {
-    return failJob(`the revision step failed: ${(e as Error).message}`);
+    const message = (e as Error).message;
+    // "This operation was aborted" is the timeout, and says nothing useful.
+    const aborted = /abort/i.test(message);
+    return failJob(aborted
+      ? `the model did not finish the revision within ${Math.round((opts.timeoutMs ?? 240_000) / 1000)}s — nothing was changed; try again, or split the request into smaller changes`
+      : `the revision step failed: ${message}`);
   }
 
   const critic = await critiqueRevision(revised.question, articles);

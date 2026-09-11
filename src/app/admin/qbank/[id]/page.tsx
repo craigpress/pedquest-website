@@ -330,10 +330,10 @@ export default function AdminQbankItemPage() {
           <span style={eyebrow}>Question bank · review</span>
           <h1 style={{ ...h1, marginTop: 6 }}>{c.title}</h1>
           <div style={{ ...meta, marginTop: 8, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <span style={{ color: STATUS_COLORS[c.status] ?? "var(--text-muted)", fontWeight: 600 }}>● {c.status.replace("_", " ")}</span>
+            <span style={{ color: STATUS_COLORS[c.status] ?? "var(--text-muted)", fontWeight: 600 }}>● {classificationLabel(c.status)}</span>
             {c.qbankId && <span>{c.qbankId}</span>}
             <span>v{c.version}</span>
-            <span>{c.source === "ai" ? "pipeline draft" : "team-written"}</span>
+            <span>{c.source === "ai" ? "Pipeline Draft" : "Team-Written"}</span>
             {c.specHash && <span>spec {c.specHash}</span>}
           </div>
         </div>
@@ -507,7 +507,7 @@ export default function AdminQbankItemPage() {
                     <div style={{ ...meta }}>
                       {r.createdAt.slice(0, 16).replace("T", " ")} · {r.reviewerEmail ?? "unknown"} ·{" "}
                       <strong style={{ color: r.decision === "approved" ? "var(--accent-tertiary)" : "var(--accent-secondary)" }}>
-                        {r.decision.replace("_", " ")}
+                        {classificationLabel(r.decision)}
                       </strong>
                     </div>
                     {r.notes && <div style={{ color: "var(--text-secondary)", fontSize: 13.5, marginTop: 3 }}>{r.notes}</div>}

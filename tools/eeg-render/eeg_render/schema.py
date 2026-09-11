@@ -40,6 +40,14 @@ EXTRA_PANELS = [
     # the published atlas displays. A hemisphere-pooled panel averages a
     # temporal focus with the parasagittal chain that cannot see it.
     "fft_LL", "fft_LP", "fft_RP", "fft_RL",
+    # Paired trends: both sides on ONE plot, left blue and right red. Two
+    # stacked single-side panels cost twice the height and still make the
+    # reader compare across a gap, which is the whole point of these trends.
+    "alpha_delta_ratio", "theta_delta_ratio",
+    "alpha_delta_ratio_lateral", "alpha_delta_ratio_parasagittal",
+    "theta_delta_ratio_lateral", "theta_delta_ratio_parasagittal",
+    "theta_delta_ratio_L", "theta_delta_ratio_R",
+    "suppression_ratio", "suppression_ratio_global",
 ]
 ALL_PANELS = PANELS + EXTRA_PANELS
 
@@ -133,6 +141,11 @@ _EVENT = {
         # abrupt onset of an acute event, larger = a gradual evolution such as
         # a developing infarct.  (Sedation ramps live in effect.ramp_min.)
         "ramp_min": {"type": "number", "minimum": 0},
+        # Depth applied to delta (<4 Hz) when the loss is frequency-selective.
+        # Defaults to depth_pct (a flat, broadband attenuation). Set it LOWER
+        # than depth_pct for ischemia, which takes fast activity first and
+        # spares delta - that is what makes alpha/delta and theta/delta move.
+        "delta_depth_pct": {"type": "number", "minimum": 0, "maximum": 100},
         # temperature
         "from_c": _num,
         "to_c": _num,
@@ -241,6 +254,7 @@ _STYLE = {
         "envelope_statistic": {"enum": ["median", "mean", "p90"]},
         "total_power_axis": {"enum": ["log", "linear"]},
         "alpha_delta_ratio_axis": _RANGE,
+        "theta_delta_ratio_axis": _RANGE,
         "show_trend_strip": {"type": "boolean"},
         "trend_strip_panels": {"type": "array", "items": {"type": "string"}},
         "trend_strip_duration_min": {"type": "number", "minimum": 5},

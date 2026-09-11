@@ -155,7 +155,7 @@ export default function EegViewer({
       <div
         role="toolbar"
         aria-label="Image tools"
-        style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8,
+        style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", marginBottom: 8,
           fontFamily: "monospace", fontSize: 12, color: "var(--text-muted)" }}
       >
         <button type="button" style={btn} onClick={zoomOut} disabled={zoom <= ZOOM_MIN} aria-label="Zoom out">−</button>
@@ -163,13 +163,18 @@ export default function EegViewer({
         <button type="button" style={btn} onClick={zoomIn} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in">+</button>
         <button type="button" style={btn} onClick={zoomFit} disabled={zoom === 1}>Fit</button>
         <button type="button" style={btn} onClick={zoomActual} disabled={!naturalWidth} title="Show at the rendered pixel size">1:1</button>
-        <span style={{ opacity: 0.7 }}>· ctrl + scroll to zoom{canDrag ? ", drag to pan" : ""}</span>
+        {/* The hint yields its width first, so the palette picker stays on the
+            toolbar row instead of wrapping onto one of its own. */}
+        <span style={{ opacity: 0.7, flex: "1 1 auto", minWidth: 0, overflow: "hidden",
+          whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+          · ctrl + scroll to zoom{canDrag ? ", drag to pan" : ""}
+        </span>
 
         {/* The picker is shown on every figure so its absence is never a
             mystery; on a figure with no spectrogram panels (a raw page, an
             aEEG) it is disabled and says why. */}
         <label style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6,
-          opacity: paletteEnabled ? 1 : 0.65 }}>
+          flex: "0 0 auto", whiteSpace: "nowrap", opacity: paletteEnabled ? 1 : 0.65 }}>
           <span>Heat map</span>
           <select
             value={palette}
@@ -182,7 +187,7 @@ export default function EegViewer({
           >
             {PALETTES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
-          {!paletteEnabled && <span>no spectrogram panels</span>}
+          {!paletteEnabled && <span style={{ opacity: 0.8 }}>no spectrogram panels</span>}
           {paletteState === "working" && <span aria-live="polite">…</span>}
           {paletteState === "unavailable" && (
             <span role="status" style={{ color: "var(--accent-primary)" }}>not available for this image</span>

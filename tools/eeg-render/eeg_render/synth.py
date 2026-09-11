@@ -408,7 +408,8 @@ class Synthesizer:
         self._atten = [
             (float(e["at_min"]) * 60.0, float(e["duration_min"]) * 60.0,
              e["side"], float(e["depth_pct"]) / 100.0,
-             float(e.get("ramp_min", 0.0)) * 60.0)
+             float(e.get("ramp_min", 0.0)) * 60.0,
+             float(e.get("delta_depth_pct", e["depth_pct"])) / 100.0)
             for e in spec["events"] if e["type"] == "attenuation_transient"
         ]
         self._dur_guard = dur
@@ -1022,7 +1023,7 @@ class Synthesizer:
         gain_points = self.bg.get("amplitude_gain_at_h")
         if gain_points:
             env *= np.interp(t / 3600.0, [p[0] for p in gain_points], [p[1] for p in gain_points])
-        for at, dur, side, depth, ramp in self._atten:
+        for at, dur, side, depth, ramp, delta_depth in self._atten:
             if at + dur < t[0] or at > t[-1]:
                 continue
             # ramp = 0 keeps the historical 6 s (abrupt) onset; a longer ramp
@@ -1036,7 +1037,19 @@ class Synthesizer:
                 sgn = -1.0 if side == "left" else 1.0
                 lat = np.array([float(np.clip(sgn * mt.POSITIONS.get(e, (0, 0))[0] + 0.1, 0.0, 1.0))
                                 for e in self.electrodes])
-            x *= (1.0 - depth * lat[:, None] * shape[None, :])
+            if abs(delta_depth - depth) < 1e-9:
+                x *= (1.0 - depth * lat[:, None] * shape[None, :])
+            else:
+                # Frequency-selective loss. Ischemia takes the faster
+                # frequencies first and spares delta, so a broadband
+                # multiplier — which scales alpha and delta by the same factor
+                # — leaves alpha/delta and theta/delta flat and the very
+                # trends a reader would use to spot the stroke show nothing.
+                sos = sps.butter(4, 4.0, btype="lowpass", fs=self.fs, output="sos")
+                slow = sps.sosfiltfilt(sos, x, axis=-1)
+                fast = x - slow
+                x = (slow * (1.0 - delta_depth * lat[:, None] * shape[None, :])
+                     + fast * (1.0 - depth * lat[:, None] * shape[None, :]))
         x *= env[None, :]
 
         bs = self.bg["burst_suppression"]

@@ -16,22 +16,27 @@ export type ImageLicense =
 // ---------- question-bank taxonomy (content/qbank/schema/question.schema.json) ----------
 export type QbankDomain =
   | "foundations" | "seizure_detection" | "background_terminology"
+  | "acute_neuro_change"
   | "clinical_prognosis" | "monitoring_practice" | "special_populations_pitfalls";
 export type QbankPopulation = "neonate" | "infant" | "child" | "adolescent" | "mixed";
 export type QbankSetting = "NICU" | "PICU" | "CICU" | "ECMO" | "ED" | "EMU" | "OR" | "other";
 export type QbankBloom = "recall" | "interpretation" | "application" | "analysis";
 
 export const QBANK_DOMAINS: QbankDomain[] = [
-  "foundations", "seizure_detection", "background_terminology",
+  "foundations", "seizure_detection", "background_terminology", "acute_neuro_change",
   "clinical_prognosis", "monitoring_practice", "special_populations_pitfalls",
 ];
 export const QBANK_DOMAIN_LABELS: Record<QbankDomain, string> = {
   foundations: "Foundations",
-  seizure_detection: "Seizure detection",
-  background_terminology: "Background & terminology",
-  clinical_prognosis: "Clinical & prognosis",
-  monitoring_practice: "Monitoring practice",
-  special_populations_pitfalls: "Special populations & pitfalls",
+  seizure_detection: "Seizure Detection",
+  background_terminology: "Background & Terminology",
+  // A new focal or global neurologic change — stroke, hemorrhage, rising ICP,
+  // vasospasm — read off the trends. Terminology describes what the record
+  // looks like; this domain is about noticing that it has changed.
+  acute_neuro_change: "Acute Neurologic Change",
+  clinical_prognosis: "Clinical & Prognosis",
+  monitoring_practice: "Monitoring Practice",
+  special_populations_pitfalls: "Special Populations & Pitfalls",
 };
 export const QBANK_POPULATIONS: QbankPopulation[] = ["neonate", "infant", "child", "adolescent", "mixed"];
 export const QBANK_SETTINGS: QbankSetting[] = ["NICU", "PICU", "CICU", "ECMO", "ED", "EMU", "OR", "other"];
@@ -56,7 +61,16 @@ export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   introductory: "Introductory", intermediate: "Intermediate", advanced: "Advanced",
 };
 
-/** Human label for any classification value, falling back to Sentence case. */
+/** Title Case for a bare enum value: "point_to_feature" -> "Point To Feature". */
+function titleCase(value: string): string {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/** Human label for any classification value, falling back to Title Case. */
 export function classificationLabel(value: string | null | undefined): string {
   if (!value) return "";
   return (
@@ -65,7 +79,7 @@ export function classificationLabel(value: string | null | undefined): string {
     (QBANK_SETTING_LABELS as Record<string, string>)[value] ??
     (QBANK_BLOOM_LABELS as Record<string, string>)[value] ??
     (DIFFICULTY_LABELS as Record<string, string>)[value] ??
-    value.charAt(0).toUpperCase() + value.slice(1)
+    titleCase(value)
   );
 }
 

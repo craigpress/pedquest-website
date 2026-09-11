@@ -281,6 +281,50 @@ def _line_panel(ax, t_min, v, color, theme: S.Theme, lo: float, hi: float,
     ax.grid(axis="y", color=theme.grid, linewidth=0.4, alpha=0.5)
 
 
+RATIO_BANDS = {"alpha_delta_ratio": "adr", "theta_delta_ratio": "tdr"}
+#: which regional chains a paired regional panel compares
+REGION_PAIRS = {"lateral": ("LL", "RL"), "parasagittal": ("LP", "RP")}
+
+
+def _ratio_axis(st: Dict, key: str, series) -> tuple:
+    """Fit a shared y-window to every series drawn on a paired panel.
+
+    Both traces must share one axis or the comparison the panel exists for is
+    meaningless, and a fitted window is needed because a delta-dominant record
+    lives near 0.05 where a fixed 0-2 axis shows a flat line on the floor.
+    """
+    rng = st.get(key)
+    if rng and len(rng) == 2:
+        return float(rng[0]), float(rng[1])
+    both = np.concatenate([np.asarray(v) for v in series])
+    top = float(np.percentile(both, 99.5))
+    bottom = float(np.percentile(both, 0.5))
+    hi = _nice_ceiling(max(top * 1.15, 0.05))
+    lo = 0.0 if bottom < 0.35 * hi else max(0.0, bottom - 0.25 * (top - bottom))
+    return lo, hi
+
+
+def _paired_panel(ax, t_min, left, right, theme: S.Theme, lo: float, hi: float,
+                  fmt: str = "{:.3g}", left_label: str = "L", right_label: str = "R") -> None:
+    """Two traces on one axis: left blue, right red, with an inline legend.
+
+    The legend is drawn in the panel rather than in the row label because the
+    label column is narrow and the colours are the only thing telling a reader
+    which side is which.
+    """
+    mid = (lo + hi) / 2.0
+    for value, color in ((left, theme.asym_left), (right, theme.asym_right)):
+        ax.plot(t_min, np.clip(value, lo, hi), color=color, linewidth=0.9)
+    ax.set_ylim(lo, hi)
+    ax.yaxis.set_major_locator(FixedLocator([lo, mid, hi]))
+    ax.set_yticklabels([fmt.format(lo), fmt.format(mid), fmt.format(hi)], fontsize=8.8)
+    ax.grid(axis="y", color=theme.grid, linewidth=0.4, alpha=0.5)
+    ax.text(0.995, 0.93, right_label, transform=ax.transAxes, ha="right", va="top",
+            fontsize=8.5, color=theme.asym_right, fontweight="bold")
+    ax.text(0.995, 0.07, left_label, transform=ax.transAxes, ha="right", va="bottom",
+            fontsize=8.5, color=theme.asym_left, fontweight="bold")
+
+
 def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
                 spec: Dict, st: Dict, last: bool,
                 db_sink: Optional[Dict] = None) -> None:
@@ -423,6 +467,44 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
             _line_panel(ax, t_min, v, theme.accent, theme, 0.0, hi,
                         [0, hi / 2, hi], ["0", f"{hi/2:.3g}", f"{hi:.3g}"])
 
+    elif name in ("alpha_delta_ratio", "theta_delta_ratio"):
+        series = tr.adr if name == "alpha_delta_ratio" else tr.tdr
+        lo, hi = _ratio_axis(st, f"{name}_axis", [series["left"], series["right"]])
+        _paired_panel(ax, t_min, series["left"], series["right"], theme, lo, hi)
+
+    elif name.endswith(("_lateral", "_parasagittal")) and name.startswith(
+            ("alpha_delta_ratio", "theta_delta_ratio")):
+        base, _, region_key = name.rpartition("_")
+        left_key, right_key = REGION_PAIRS[region_key]
+        series = tr.adr_region if base == "alpha_delta_ratio" else tr.tdr_region
+        left, right = series.get(left_key), series.get(right_key)
+        if left is None or right is None:
+            return
+        lo, hi = _ratio_axis(st, f"{base}_axis", [left, right])
+        _paired_panel(ax, t_min, left, right, theme, lo, hi)
+
+    elif name in ("suppression_ratio", "suppression_ratio_global"):
+        rng = st.get("suppression_ratio_axis_pct") or [0, 100]
+        lo, hi = float(rng[0]), float(rng[1])
+        band = st.get("suppression_ratio_target_band_pct")
+        if band and len(band) == 2:
+            ax.axhspan(float(band[0]), float(band[1]), color=theme.accent,
+                       alpha=0.13, linewidth=0)
+        if name == "suppression_ratio_global":
+            # whole brain: one trace, the mean of the two hemispheres
+            mean = 0.5 * (tr.sr["left"] + tr.sr["right"])
+            mid = (lo + hi) / 2.0
+            _line_panel(ax, t_min, np.clip(mean, lo, hi), theme.sr, theme, lo, hi,
+                        [lo, mid, hi], [f"{lo:g}", f"{mid:g}", f"{hi:g}"])
+        else:
+            _paired_panel(ax, t_min, tr.sr["left"], tr.sr["right"], theme, lo, hi, fmt="{:g}")
+
+    elif name in ("theta_delta_ratio_L", "theta_delta_ratio_R"):
+        lo, hi = _ratio_axis(st, "theta_delta_ratio_axis", [tr.tdr["left"], tr.tdr["right"]])
+        mid = (lo + hi) / 2.0
+        _line_panel(ax, t_min, tr.tdr[side], theme.asym_left, theme, lo, hi,
+                    [lo, mid, hi], [f"{lo:.3g}", f"{mid:.3g}", f"{hi:.3g}"], fill=False)
+
     elif name in ("alpha_delta_ratio_L", "alpha_delta_ratio_R"):
         v = tr.adr[side]
         rng = st.get("alpha_delta_ratio_axis")
@@ -463,6 +545,9 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
         text = None
         if name in ("aeeg_L", "aeeg_R") and tr.aeeg_derivation:
             text = f"aEEG {side.upper()}\n{tr.aeeg_derivation[side]}  (uV)"
+        if name in ("suppression_ratio", "suppression_ratio_global"):
+            sides = "L vs R  " if name == "suppression_ratio" else ""
+            text = f"Suppression ratio\n{sides}(%) <{tr.sr_threshold_uv:g} uV"
         if name in ("suppression_ratio_L", "suppression_ratio_R"):
             # Threshold on the same line as the unit, not a third line: the
             # panel is short, and three lines forced the label down to a size

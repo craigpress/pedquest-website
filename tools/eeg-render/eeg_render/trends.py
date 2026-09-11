@@ -78,6 +78,11 @@ class Trends:
     env: Dict[str, np.ndarray] = field(default_factory=dict)      # uV (envelope trend)
     total_power: Dict[str, np.ndarray] = field(default_factory=dict)   # uV^2 (1-20 Hz)
     adr: Dict[str, np.ndarray] = field(default_factory=dict)      # alpha/delta ratio
+    tdr: Dict[str, np.ndarray] = field(default_factory=dict)      # theta/delta ratio
+    #: regional band ratios, keyed like psd_region (LL/LP/RP/RL). Populated
+    #: only when a regional panel asked for the regional spectrograms.
+    adr_region: Dict[str, np.ndarray] = field(default_factory=dict)
+    tdr_region: Dict[str, np.ndarray] = field(default_factory=dict)
     #: regional spectrograms, keyed LL/LP/RP/RL. Populated only when the spec
     #: asks for a regional panel - the extra FFTs are not free.
     psd_region: Dict[str, np.ndarray] = field(default_factory=dict)
@@ -294,8 +299,13 @@ def compute_trends(
     # Regional spectrograms cost an extra FFT pass per region, so only build
     # them when a panel actually asks for one.
     wanted_panels = set(spec.get("panels") or []) if spec else set()
-    region_chains = (mt.trend_regions(synth.scalp)
-                     if any(f"fft_{r}" in wanted_panels for r in REGIONS) else {})
+    wants_regions = (
+        any(f"fft_{r}" in wanted_panels for r in REGIONS)
+        # the paired regional ratio panels (…_lateral / …_parasagittal) read
+        # the same regional spectrograms
+        or any(p.endswith(("_lateral", "_parasagittal")) for p in wanted_panels)
+    )
+    region_chains = mt.trend_regions(synth.scalp) if wants_regions else {}
     for region in region_chains:
         out.psd_region[region] = np.zeros((freqs_disp.size, n_t))
 
@@ -478,15 +488,27 @@ def compute_trends(
     df = float(out.freqs[1] - out.freqs[0]) if out.freqs.size > 1 else 1.0
     b_tot = (out.freqs >= 1.0) & (out.freqs <= 20.0)
     b_alpha = (out.freqs >= 8.0) & (out.freqs <= 13.0)
+    b_theta = (out.freqs >= 4.0) & (out.freqs < 8.0)
     b_delta = (out.freqs >= 1.0) & (out.freqs <= 4.0)
+    smooth = max(1, int(round(30.0 / hop_s)))
+
+    def _ratio(p: np.ndarray, numerator: np.ndarray) -> np.ndarray:
+        d = p[b_delta].sum(axis=0)
+        r = np.divide(p[numerator].sum(axis=0), d, out=np.zeros_like(d), where=d > 1e-12)
+        return ndimage.uniform_filter1d(r, size=smooth)
+
     for side in SIDES:
         p = out.psd[side]
         out.total_power[side] = p[b_tot].sum(axis=0) * df
-        d = p[b_delta].sum(axis=0)
-        out.adr[side] = np.divide(p[b_alpha].sum(axis=0), d,
-                                  out=np.zeros_like(d), where=d > 1e-12)
-        out.adr[side] = ndimage.uniform_filter1d(
-            out.adr[side], size=max(1, int(round(30.0 / hop_s))))
+        out.adr[side] = _ratio(p, b_alpha)
+        # Theta/delta is the ratio that moves in a delta-dominant record - a
+        # neonate or a slowed infant has almost no alpha for alpha/delta to
+        # divide, so that panel sits flat while theta/delta separates.
+        out.tdr[side] = _ratio(p, b_theta)
+
+    for region, p in out.psd_region.items():
+        out.adr_region[region] = _ratio(p, b_alpha)
+        out.tdr_region[region] = _ratio(p, b_theta)
 
     # ---- heuristic seizure probability -----------------------------------
     out.szprob = seizure_probability(out)

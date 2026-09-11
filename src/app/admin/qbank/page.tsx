@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import {
-  DIFFICULTIES, QBANK_DOMAINS, QBANK_DOMAIN_LABELS, QBANK_POPULATIONS,
+  classificationLabel, DIFFICULTIES, QBANK_DOMAINS, QBANK_DOMAIN_LABELS, QBANK_POPULATIONS,
 } from "@/lib/cases";
 import { adminShellWide, btnGhost, btnPrimary, card, eyebrow, h1, inp, meta, mini, STATUS_COLORS } from "@/lib/admin-ui";
 
@@ -492,7 +492,7 @@ export default function AdminQbankQueuePage() {
               fontWeight: (s === "all" ? status === "" : status === s) ? 700 : 500,
             }}
           >
-            {s.replace("_", " ")} · {counts[s === "all" ? "all" : s] ?? 0}
+            {classificationLabel(s)} · {counts[s === "all" ? "all" : s] ?? 0}
           </button>
         ))}
         <span style={{ ...meta, alignSelf: "center" }}>in bank: {counts.bank ?? 0}</span>
@@ -506,11 +506,11 @@ export default function AdminQbankQueuePage() {
           </select>
           <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} style={inp} aria-label="Difficulty">
             <option value="">All difficulties</option>
-            {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+            {DIFFICULTIES.map((d) => <option key={d} value={d}>{classificationLabel(d)}</option>)}
           </select>
           <select value={population} onChange={(e) => setPopulation(e.target.value)} style={inp} aria-label="Population">
             <option value="">All populations</option>
-            {QBANK_POPULATIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+            {QBANK_POPULATIONS.map((p) => <option key={p} value={p}>{classificationLabel(p)}</option>)}
           </select>
           <select value={source} onChange={(e) => setSource(e.target.value)} style={inp} aria-label="Source">
             <option value="">Any source</option>
@@ -574,15 +574,15 @@ export default function AdminQbankQueuePage() {
                     {i.title}
                   </Link>
                   <div style={{ ...meta, marginTop: 5, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <span style={{ color: STATUS_COLORS[i.status] ?? "var(--text-muted)", fontWeight: 600 }}>● {i.status.replace("_", " ")}</span>
+                    <span style={{ color: STATUS_COLORS[i.status] ?? "var(--text-muted)", fontWeight: 600 }}>● {classificationLabel(i.status)}</span>
                     {i.qbankId && <span>{i.qbankId}</span>}
                     <span>v{i.version}</span>
                     {i.domain && <span>{QBANK_DOMAIN_LABELS[i.domain as keyof typeof QBANK_DOMAIN_LABELS] ?? i.domain}</span>}
-                    <span>{i.difficulty}</span>
-                    {i.population && <span>{i.population}</span>}
-                    {i.setting && <span>{i.setting}</span>}
-                    <span>{i.questionType === "point_to_feature" ? "point" : "quiz"}</span>
-                    {i.source === "ai" && <span style={{ color: "var(--accent-secondary)" }}>pipeline draft</span>}
+                    <span>{classificationLabel(i.difficulty)}</span>
+                    {i.population && <span>{classificationLabel(i.population)}</span>}
+                    {i.setting && <span>{classificationLabel(i.setting)}</span>}
+                    <span>{i.questionType === "point_to_feature" ? "Point" : "Quiz"}</span>
+                    {i.source === "ai" && <span style={{ color: "var(--accent-secondary)" }}>Pipeline Draft</span>}
                   </div>
                   <div style={{ ...meta, marginTop: 4, display: "flex", gap: 10, flexWrap: "wrap" }}>
                     <span style={{ color: refsOk ? "var(--accent-tertiary)" : "var(--accent-secondary)" }}>

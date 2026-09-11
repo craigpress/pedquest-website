@@ -116,10 +116,39 @@ panels:                          # top → bottom; default order below
   - aeeg_R
   - suppression_ratio_L
   - suppression_ratio_R
+  # Paired panels — BOTH sides on one plot, left blue / right red. Prefer
+  # these to a stacked _L and _R pair: half the vertical space, and a reader
+  # compares the sides on one axis instead of across a gap.
+  - alpha_delta_ratio            # L vs R
+  - theta_delta_ratio            # L vs R
+  - alpha_delta_ratio_lateral    # left vs right lateral chain
+  - alpha_delta_ratio_parasagittal
+  - theta_delta_ratio_lateral
+  - theta_delta_ratio_parasagittal
+  - suppression_ratio            # L vs R on one plot
+  - suppression_ratio_global     # whole brain, one trace
 hemisphere_channels: default     # or explicit lists per side
 time_axis: clock | elapsed
 show_cursor_at_min: null         # optional vertical cursor line
 ```
+
+### Choosing a band ratio
+
+Alpha/delta divides 8–13 Hz by 1–4 Hz, so it only says something when the
+record HAS alpha. In a neonate, a young infant, a sedated child or any
+delta-dominant background it sits near the floor and barely moves; use
+`theta_delta_ratio` there, which divides 4–8 Hz by the same delta band.
+Match the ratio to `background.dominant_hz` and `age_group`: dominant
+frequency ≥ 7 Hz and an older child or adolescent → alpha/delta; below that,
+or any neonate/infant → theta/delta. Showing both is reasonable when the
+question is about which one declares the change first.
+
+A ratio is a RATIO: a uniform amplitude loss scales the numerator and the
+denominator alike and leaves it flat. To make a ratio move — an ischemic
+change, where fast activity goes first and delta is relatively spared — give
+the attenuation a smaller `delta_depth_pct` than its `depth_pct` (e.g.
+`depth_pct: 55`, `delta_depth_pct: 15`). Without that the panel is a
+straight line and the item is unanswerable.
 
 Rendering conventions (renderer defaults, may be overridden in `style`):
 dark-on-light "instrument" style, spectrogram 0–20 Hz with a perceptually

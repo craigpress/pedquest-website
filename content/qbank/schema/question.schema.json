@@ -10,7 +10,7 @@
     "version": { "type": "integer", "minimum": 1 },
     "status": { "enum": ["draft", "pending_review", "approved", "published", "archived"] },
     "title": { "type": "string", "maxLength": 90 },
-    "domain": { "enum": ["foundations", "seizure_detection", "background_terminology", "clinical_prognosis", "monitoring_practice", "special_populations_pitfalls"] },
+    "domain": { "enum": ["foundations", "seizure_detection", "background_terminology", "acute_neuro_change", "clinical_prognosis", "monitoring_practice", "special_populations_pitfalls"] },
     "topics": { "type": "array", "items": { "type": "string" }, "maxItems": 8 },
     "population": { "enum": ["neonate", "infant", "child", "adolescent", "mixed"] },
     "setting": { "enum": ["NICU", "PICU", "CICU", "ECMO", "ED", "EMU", "OR", "other"] },

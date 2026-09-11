@@ -17,7 +17,10 @@ import {
 // function room. 60s is allowed on every Vercel plan; if it is killed the
 // revision job stays queued and the weekly cron drains it.
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// A revision sends the whole item plus its evidence corpus to the model and
+// waits for a full rewrite; 60 s was not enough and the call aborted mid-way
+// (PQ-G-002 v5, 2026-09-11).
+export const maxDuration = 300;
 
 // One question-bank item. Editor or admin.
 //
@@ -272,7 +275,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     if (!jobId) return NextResponse.json({ error: "Could not queue the revision." }, { status: 500 });
 
     const outcome = await processRevisionJob(supabase, jobId, {
-      timeoutMs: Number(process.env.QBANK_LLM_TIMEOUT_MS ?? 45000),
+      timeoutMs: Number(process.env.QBANK_LLM_TIMEOUT_MS ?? 240_000),
     });
     if (!outcome.ok) {
       return NextResponse.json(

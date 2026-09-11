@@ -486,6 +486,7 @@ def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
         e.setdefault("side", "both")
         e.setdefault("depth_pct", 70.0)
         e.setdefault("ramp_min", 0.0)
+        e.setdefault("delta_depth_pct", e["depth_pct"])
     elif kind == "temperature_change":
         e.setdefault("at_min", 0.0)
         e.setdefault("from_c", 36.5)
