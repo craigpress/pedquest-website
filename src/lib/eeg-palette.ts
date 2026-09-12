@@ -10,7 +10,7 @@
 
 import type { ImagePanel } from "@/lib/cases";
 
-export type PaletteId = "pedquest" | "rainbow" | "viridis" | "gray";
+export type PaletteId = "pedquest" | "rainbow" | "viridis" | "inferno" | "gray";
 
 export interface Palette {
   id: PaletteId;
@@ -41,6 +41,13 @@ export const PALETTES: Palette[] = [
     stops: [
       [0.000, "#440154"], [0.125, "#48186a"], [0.250, "#472d7b"], [0.375, "#3b528b"],
       [0.500, "#2c728e"], [0.625, "#21918c"], [0.750, "#28ae80"], [0.875, "#5ec962"], [1.000, "#fde725"],
+    ],
+  },
+  {
+    id: "inferno", label: "Inferno", hint: "Perceptually uniform, black → purple → orange → pale yellow",
+    stops: [
+      [0.000, "#000004"], [0.143, "#1f0c48"], [0.286, "#550f6d"], [0.429, "#88226a"],
+      [0.571, "#ba3655"], [0.714, "#e35933"], [0.857, "#f98c0a"], [1.000, "#fcffa4"],
     ],
   },
   { id: "gray", label: "Grayscale", hint: "Black → white", stops: [[0, "#000000"], [1, "#ffffff"]] },

@@ -957,6 +957,14 @@ export default function AdminEegLabPage() {
 
             {job.artifacts && Object.keys(job.artifacts).length > 0 && (
               <div className="lab-chips" style={{ marginTop: 8 }}>
+                {job.status === "done" && (job.artifacts.edf || (job.artifacts.lay && job.artifacts.dat)) && (
+                  <Link
+                    href={`/admin/eeg-lab/viewer?job=${job.id}`}
+                    style={{ ...mini, borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }}
+                  >
+                    Open in viewer
+                  </Link>
+                )}
                 {(Object.keys(job.artifacts) as LabArtifact[]).map((artifact) => (
                   <button
                     key={artifact}
@@ -980,6 +988,7 @@ export default function AdminEegLabPage() {
 
       <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
         <Link href="/admin" style={btnGhost}>← Admin dashboard</Link>
+        <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Lab Viewer</Link>
         <Link href="/admin/qbank" style={btnGhost}>Question bank</Link>
       </div>
     </div>

@@ -1,0 +1,513 @@
+"use client";
+
+// EEG Lab Viewer — the review station.
+//
+// Opens a recording from disk (EDF+, or Persyst .lay + .dat) or from a finished
+// lab job (signed URLs, read a slice at a time), then shows:
+//   - a qEEG trend strip over the whole record, computed here progressively
+//   - a raw page with montage / filters / sensitivity / timebase
+//   - a shared time cursor
+//   - annotations: the file's own (bedside), the viewer's (per user), and — for
+//     editors — the answer key as an overlay.
+//
+// State lives here; the panes only paint and raise intents.
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { btnGhost, mini } from "@/lib/admin-ui";
+import { EdfReader } from "@/lib/eeg/edf";
+import { LayReader, mergeLayComments } from "@/lib/eeg/lay";
+import { FileByteSource, RangeByteSource } from "@/lib/eeg/sources";
+import type { Recording } from "@/lib/eeg/recording";
+import { buildMontage, VIEWER_MONTAGES, type ViewerMontageId } from "@/lib/eeg/montage";
+import {
+  DEFAULT_FILTERS, HIGH_PASS_OPTIONS, LOW_PASS_OPTIONS, NOTCH_OPTIONS, type FilterSettings,
+} from "@/lib/eeg/filters";
+import { createTrendEngine, type ViewerTrends } from "@/lib/eeg/trends";
+import { formatClock, type ViewerAnnotation, type ViewerAnnotationInput } from "@/lib/eeg/annotations";
+import { LocalAnnotationStore, RemoteAnnotationStore, type AnnotationStore } from "@/lib/eeg/annotation-store";
+import { SYNTHETIC_STAMP, type LabArtifact, type LabJob } from "@/lib/lab/types";
+import { DEFAULT_PALETTE, PALETTES, loadPalettePreference, savePalettePreference, type PaletteId } from "@/lib/eeg-palette";
+import RawPane from "./RawPane";
+import TrendStrip, { TREND_PANELS, TREND_WINDOWS } from "./TrendStrip";
+import AnnotationPanel, { type Draft } from "./AnnotationPanel";
+
+export type ViewerSource =
+  | { kind: "file"; files: File[] }
+  | { kind: "job"; job: LabJob; authHeaders: () => Promise<Record<string, string>>; isEditor: boolean };
+
+export interface AnswerSpan { onsetS: number; offsetS: number; label: string }
+
+const PAGE_OPTIONS = [5, 10, 15, 20, 30, 60];
+const SENS_OPTIONS = [2, 3, 5, 7, 10, 15, 20, 30, 50];
+const AUX_SENS_OPTIONS = [10, 20, 50, 100, 200, 500, 1000];
+const TREND_BLOCK_S = 60;
+
+interface Opened {
+  reader: Recording;
+  store: AnnotationStore;
+  /** for a .lay-backed recording: the parsed .lay, so a per-user copy can be exported */
+  lay: LayReader | null;
+  /** answer key found among the chosen files or offered by the job */
+  answers: AnswerSpan[] | null;
+  canFetchAnswers: boolean;
+  title: string;
+}
+
+function parseAnswerManifest(json: unknown): AnswerSpan[] {
+  const m = (typeof json === "object" && json !== null ? json : {}) as { events?: unknown[] };
+  return (Array.isArray(m.events) ? m.events : [])
+    .map((e) => e as Record<string, unknown>)
+    .filter((e) => typeof e.onset_s === "number")
+    .map((e) => ({
+      onsetS: e.onset_s as number,
+      offsetS: typeof e.offset_s === "number" ? e.offset_s : (e.onset_s as number),
+      label: [e.kind, e.onset_region ?? e.label].filter(Boolean).join(" "),
+    }));
+}
+
+function downloadText(name: string, text: string, type = "text/plain") {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+export default function LabViewer({ source, onClose }: { source: ViewerSource; onClose?: () => void }) {
+  const [opened, setOpened] = useState<Opened | null>(null);
+  const [openError, setOpenError] = useState<string | null>(null);
+
+  const [pageT0, setPageT0] = useState(0);
+  const [pageS, setPageS] = useState(10);
+  const [montageId, setMontageId] = useState<ViewerMontageId>("longitudinal_bipolar");
+  const [filters, setFilters] = useState<FilterSettings>(DEFAULT_FILTERS);
+  const [sensitivity, setSensitivity] = useState(7);
+  const [auxSensitivity, setAuxSensitivity] = useState(100);
+  const [palette, setPalette] = useState<PaletteId>(DEFAULT_PALETTE);
+  const [panelId, setPanelId] = useState(TREND_PANELS[0].id);
+  const [windowId, setWindowId] = useState("full");
+  const [windowT0, setWindowT0] = useState(0);
+  const [cursorT, setCursorT] = useState<number | null>(null);
+  const [loadingPage, setLoadingPage] = useState(false);
+
+  const [trends, setTrends] = useState<ViewerTrends | null>(null);
+  const [trendVersion, setTrendVersion] = useState(0);
+  const [trendProgress, setTrendProgress] = useState(0);
+
+  const [annotations, setAnnotations] = useState<ViewerAnnotation[]>([]);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [annBusy, setAnnBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [showKey, setShowKey] = useState(false);
+  const [answers, setAnswers] = useState<AnswerSpan[] | null>(null);
+  const [fileAnnotationCount, setFileAnnotationCount] = useState<number | null>(null);
+
+  // remembered heat-map palette (shared with the image viewer)
+  useEffect(() => { setPalette(loadPalettePreference()); }, []);
+  const choosePalette = (id: PaletteId) => { setPalette(id); savePalettePreference(id); };
+
+  // ── open ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    setOpened(null); setOpenError(null); setTrends(null); setTrendProgress(0); setAnswers(null);
+    setAnnotations([]); setPageT0(0); setCursorT(null); setFileAnnotationCount(null);
+
+    async function open(): Promise<Opened> {
+      if (source.kind === "file") {
+        const byExt = (ext: string) => source.files.find((f) => f.name.toLowerCase().endsWith(ext));
+        const edf = byExt(".edf");
+        const lay = byExt(".lay");
+        const dat = byExt(".dat");
+        const key = source.files.find((f) => /\.answers\.json$/i.test(f.name));
+        const answers = key ? parseAnswerManifest(JSON.parse(await key.text())) : null;
+        if (edf) {
+          const reader = await EdfReader.open(new FileByteSource(edf));
+          return {
+            reader, lay: null, answers, canFetchAnswers: false, title: edf.name,
+            store: new LocalAnnotationStore(`${edf.name}:${edf.size}:${edf.lastModified}`),
+          };
+        }
+        if (lay && dat) {
+          const reader = await LayReader.open(await lay.text(), new FileByteSource(dat));
+          return {
+            reader, lay: reader, answers, canFetchAnswers: false, title: lay.name,
+            store: new LocalAnnotationStore(`${lay.name}:${dat.size}:${dat.lastModified}`),
+          };
+        }
+        if (lay || dat) throw new Error("A Persyst recording needs both the .lay and the .dat file — select them together.");
+        throw new Error("Choose an .edf file, or a .lay and .dat pair.");
+      }
+
+      const { job, authHeaders, isEditor } = source;
+      const getUrl = async (artifact: LabArtifact) => {
+        const res = await fetch(`/api/admin/lab/jobs/${job.id}/download?artifact=${artifact}`, { headers: await authHeaders() });
+        const json = await res.json();
+        if (!res.ok || !json.url) throw new Error(json.error || `Could not open the ${artifact} artifact.`);
+        return json.url as string;
+      };
+      const store = new RemoteAnnotationStore(job.id, authHeaders, isEditor);
+      const canFetchAnswers = isEditor && job.options.includeAnswers && Boolean(job.artifacts?.answers);
+      const title = job.recordingId ?? job.id;
+      if (job.artifacts?.edf) {
+        const reader = await EdfReader.open(await RangeByteSource.open(() => getUrl("edf")));
+        return { reader, store, lay: null, answers: null, canFetchAnswers, title };
+      }
+      if (job.artifacts?.lay && job.artifacts?.dat) {
+        const layText = await (await fetch(await getUrl("lay"))).text();
+        const reader = await LayReader.open(layText, await RangeByteSource.open(() => getUrl("dat")));
+        return { reader, store, lay: reader, answers: null, canFetchAnswers, title };
+      }
+      throw new Error("This job has no viewable recording (needs EDF+ or .lay/.dat).");
+    }
+
+    open().then((o) => {
+      if (cancelled) return;
+      setOpened(o);
+      setAnswers(o.answers);
+      if (o.reader.labels.length && !buildMontage("longitudinal_bipolar", o.reader.labels).some((d) => d.label.includes("-"))) {
+        setMontageId("as_recorded");
+      }
+    }).catch((e: unknown) => {
+      if (!cancelled) setOpenError(e instanceof Error ? e.message : String(e));
+    });
+    return () => { cancelled = true; };
+  }, [source]);
+
+  // ── annotations load ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!opened) return;
+    let cancelled = false;
+    opened.store.list().then((rows) => { if (!cancelled) setAnnotations(rows); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : "Could not load annotations."); });
+    return () => { cancelled = true; };
+  }, [opened]);
+
+  // ── file annotation count (cheap for .lay; a full read for EDF, so only local files) ──
+  useEffect(() => {
+    if (!opened) return;
+    if (!opened.reader.annotationsUpFront && source.kind !== "file") return;
+    let cancelled = false;
+    opened.reader.scanAnnotations().then((rows) => { if (!cancelled) setFileAnnotationCount(rows.length); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [opened, source.kind]);
+
+  // ── trends, progressively ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!opened) return;
+    const { reader } = opened;
+    if (!reader.sampleRate || !reader.durationS) return;
+    let cancelled = false;
+    const engine = createTrendEngine(reader.durationS, reader.sampleRate, reader.labels);
+    setTrends(engine.trends);
+    const margin = engine.marginS();
+    (async () => {
+      for (let t0 = 0; t0 < reader.durationS && !cancelled; t0 += TREND_BLOCK_S) {
+        const t1 = Math.min(reader.durationS, t0 + TREND_BLOCK_S);
+        const win = await reader.readWindow(Math.max(0, t0 - margin), Math.min(reader.durationS, t1 + margin));
+        if (cancelled) return;
+        engine.process(win.t0, win.data);
+        setTrendVersion((v) => v + 1);
+        setTrendProgress(t1 / reader.durationS);
+        await new Promise((r) => setTimeout(r, 0));
+      }
+      if (!cancelled) setTrendProgress(1);
+    })().catch((e) => console.error("[viewer] trend computation failed:", e));
+    return () => { cancelled = true; };
+  }, [opened]);
+
+  // ── derived ─────────────────────────────────────────────────────────────
+  const derivations = useMemo(
+    () => (opened ? buildMontage(montageId, opened.reader.labels) : []),
+    [opened, montageId],
+  );
+  const durationS = opened?.reader.durationS ?? 0;
+  const maxT0 = Math.max(0, durationS - pageS);
+  const answerSpans = useMemo(() => (showKey && answers ? answers : []), [showKey, answers]);
+
+  const panelRows = useMemo(() => (TREND_PANELS.find((p) => p.id === panelId) ?? TREND_PANELS[0]).rows, [panelId]);
+  const windowS = useMemo(() => {
+    const s = TREND_WINDOWS.find((w) => w.id === windowId)?.s ?? null;
+    return s && s < durationS ? s : null;
+  }, [windowId, durationS]);
+  const maxWindowT0 = Math.max(0, durationS - (windowS ?? durationS));
+
+  const scrollWindow = useCallback((deltaS: number) => {
+    setWindowT0((cur) => Math.min(maxWindowT0, Math.max(0, cur + deltaS)));
+  }, [maxWindowT0]);
+
+  const seek = useCallback((t: number) => {
+    setCursorT(t);
+    setPageT0((cur) => (t >= cur && t < cur + pageS ? cur : Math.min(maxT0, Math.max(0, t - pageS / 2))));
+  }, [pageS, maxT0]);
+
+  // keep the trend window around the raw page when paging past its edge
+  useEffect(() => {
+    if (!windowS) return;
+    setWindowT0((cur) => {
+      if (pageT0 >= cur && pageT0 + pageS <= cur + windowS) return cur;
+      return Math.min(maxWindowT0, Math.max(0, pageT0 - windowS / 2));
+    });
+  }, [pageT0, pageS, windowS, maxWindowT0]);
+
+  const page = useCallback((deltaS: number) => {
+    setPageT0((cur) => Math.min(maxT0, Math.max(0, cur + deltaS)));
+  }, [maxT0]);
+
+  const startDraft = useCallback((onsetS: number, durationS: number) => {
+    setDraft({ id: null, onsetS, durationS, kind: durationS > 0 ? "seizure" : "note", label: "", note: "" });
+  }, []);
+
+  // ── keyboard ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      switch (e.key) {
+        case "ArrowRight": e.preventDefault(); page(e.shiftKey ? 1 : pageS); break;
+        case "ArrowLeft": e.preventDefault(); page(e.shiftKey ? -1 : -pageS); break;
+        case "PageDown": e.preventDefault(); page(pageS * 5); break;
+        case "PageUp": e.preventDefault(); page(-pageS * 5); break;
+        case "Home": e.preventDefault(); setPageT0(0); break;
+        case "End": e.preventDefault(); setPageT0(maxT0); break;
+        case "a": case "A": if (cursorT !== null && !draft) { e.preventDefault(); startDraft(cursorT, 0); } break;
+        case "Escape": setDraft(null); break;
+        case "+": case "=": setSensitivity((s) => SENS_OPTIONS[Math.max(0, SENS_OPTIONS.indexOf(s) - 1)] ?? s); break;
+        case "-": case "_": setSensitivity((s) => SENS_OPTIONS[Math.min(SENS_OPTIONS.length - 1, SENS_OPTIONS.indexOf(s) + 1)] ?? s); break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [page, pageS, maxT0, cursorT, draft, startDraft]);
+
+  // ── annotation intents ──────────────────────────────────────────────────
+  async function saveAnnotation(input: ViewerAnnotationInput, id: string | null) {
+    if (!opened) return;
+    setAnnBusy(true); setError(null);
+    try {
+      if (id) {
+        const row = await opened.store.update(id, input);
+        setAnnotations((rows) => rows.map((r) => (r.id === id ? row : r)));
+      } else {
+        const row = await opened.store.create(input);
+        setAnnotations((rows) => [...rows, row]);
+      }
+      setDraft(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save the annotation.");
+    } finally { setAnnBusy(false); }
+  }
+  async function deleteAnnotation(id: string) {
+    if (!opened || !window.confirm("Delete this annotation?")) return;
+    setAnnBusy(true); setError(null);
+    try {
+      await opened.store.remove(id);
+      setAnnotations((rows) => rows.filter((r) => r.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete the annotation.");
+    } finally { setAnnBusy(false); }
+  }
+  function exportAnnotations() {
+    if (!opened) return;
+    const mine = annotations.filter((a) => a.mine);
+    const stem = opened.title.replace(/\.(edf|lay|dat)$/i, "");
+    if (opened.lay) {
+      // A per-user .lay: the original header and [Comments], plus these marks,
+      // pointing at the same .dat. Opens in Persyst with the marks on the timeline.
+      const text = mergeLayComments(opened.lay.lay, mine.map((a) => ({
+        onsetS: a.onsetS, durationS: a.durationS, state: 0, type: 65536,
+        text: `${a.label || a.kind}${a.note ? ` — ${a.note}` : ""}`,
+      })));
+      downloadText(`${stem}.annotated.lay`, text);
+    }
+    downloadText(`${stem}.annotations.json`, JSON.stringify({ recording: opened.title, annotations: mine }, null, 2), "application/json");
+  }
+
+  async function toggleKey() {
+    if (showKey) { setShowKey(false); return; }
+    if (answers) { setShowKey(true); return; }
+    if (source.kind !== "job" || !opened?.canFetchAnswers) return;
+    const ok = window.confirm("Show the answer key? This overlays the realized events on the recording. It is the instructor copy.");
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/admin/lab/jobs/${source.job.id}/download?artifact=answers`, { headers: await source.authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.url) throw new Error(json.error || "Could not fetch the answer key.");
+      const manifest = await (await fetch(json.url)).json();
+      setAnswers(parseAnswerManifest(manifest));
+      setShowKey(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not fetch the answer key.");
+    }
+  }
+
+  // ── render ──────────────────────────────────────────────────────────────
+  if (openError) {
+    return (
+      <div style={{ padding: 24 }}>
+        <p style={{ color: "var(--accent-secondary)", margin: 0 }}>{openError}</p>
+        {onClose && <button type="button" style={{ ...btnGhost, marginTop: 12 }} onClick={onClose}>Back</button>}
+      </div>
+    );
+  }
+  if (!opened) {
+    return <div style={{ padding: 24, color: "var(--text-muted)" }}>Opening recording…</div>;
+  }
+
+  const { reader } = opened;
+  const synthetic = source.kind === "job" || /SYNTHETIC/i.test(reader.info.patient) || reader.info.notes.some((n) => /SYNTHETIC|PedQuEST/i.test(n));
+  const sel: React.CSSProperties = {
+    padding: "5px 8px", borderRadius: 7, border: "1px solid var(--border)", background: "var(--bg)",
+    color: "var(--text)", font: "inherit", fontSize: 12.5,
+  };
+  const lbl: React.CSSProperties = { fontFamily: "var(--mono-font)", fontSize: 10.5, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--text-muted)" };
+  const group = (label: string, node: React.ReactNode) => (
+    <label style={{ display: "grid", gap: 3 }}><span style={lbl}>{label}</span>{node}</label>
+  );
+
+  return (
+    <div style={{ display: "grid", gridTemplateRows: "auto auto auto 1fr", height: "100%", minHeight: 0, gap: 8 }}>
+      {/* header */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "0 4px" }}>
+        {onClose && <button type="button" style={mini} onClick={onClose}>← close</button>}
+        <div style={{ fontWeight: 600, color: "var(--text)" }}>{opened.title}</div>
+        <div style={{ fontFamily: "var(--mono-font)", fontSize: 12, color: "var(--text-muted)" }}>
+          {reader.info.format} · {formatClock(durationS)} · {reader.sampleRate} Hz · {reader.labels.length} ch
+          {reader.info.startDateTime && ` · ${reader.info.startDateTime.toLocaleString()}`}
+          {fileAnnotationCount !== null && ` · ${fileAnnotationCount} file annotation${fileAnnotationCount === 1 ? "" : "s"}`}
+        </div>
+        {synthetic && (
+          <span style={{ marginLeft: "auto", fontFamily: "var(--mono-font)", fontSize: 11, letterSpacing: ".08em", color: "var(--accent-secondary)", border: "1px solid var(--accent-secondary)", borderRadius: 6, padding: "3px 8px" }}>
+            {SYNTHETIC_STAMP}
+          </span>
+        )}
+      </div>
+
+      {/* toolbar */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 12, padding: "0 4px" }}>
+        {group("Montage", (
+          <select style={sel} value={montageId} onChange={(e) => setMontageId(e.target.value as ViewerMontageId)}>
+            {VIEWER_MONTAGES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+          </select>
+        ))}
+        {group("Timebase", (
+          <select style={sel} value={pageS} onChange={(e) => setPageS(Number(e.target.value))}>
+            {PAGE_OPTIONS.map((p) => <option key={p} value={p}>{p} s/page</option>)}
+          </select>
+        ))}
+        {group("Sensitivity", (
+          <select style={sel} value={sensitivity} onChange={(e) => setSensitivity(Number(e.target.value))}>
+            {SENS_OPTIONS.map((s) => <option key={s} value={s}>{s} µV/mm</option>)}
+          </select>
+        ))}
+        {group("EKG gain", (
+          <select style={sel} value={auxSensitivity} onChange={(e) => setAuxSensitivity(Number(e.target.value))}>
+            {AUX_SENS_OPTIONS.map((s) => <option key={s} value={s}>{s} µV/mm</option>)}
+          </select>
+        ))}
+        {group("HP", (
+          <select style={sel} value={filters.highPassHz} onChange={(e) => setFilters({ ...filters, highPassHz: Number(e.target.value) })}>
+            {HIGH_PASS_OPTIONS.map((f) => <option key={f} value={f}>{f === 0 ? "off" : `${f} Hz`}</option>)}
+          </select>
+        ))}
+        {group("LP", (
+          <select style={sel} value={filters.lowPassHz} onChange={(e) => setFilters({ ...filters, lowPassHz: Number(e.target.value) })}>
+            {LOW_PASS_OPTIONS.map((f) => <option key={f} value={f}>{f === 0 ? "off" : `${f} Hz`}</option>)}
+          </select>
+        ))}
+        {group("Notch", (
+          <select style={sel} value={filters.notchHz} onChange={(e) => setFilters({ ...filters, notchHz: Number(e.target.value) })}>
+            {NOTCH_OPTIONS.map((f) => <option key={f} value={f}>{f === 0 ? "off" : `${f} Hz`}</option>)}
+          </select>
+        ))}
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <button type="button" style={mini} onClick={() => setPageT0(0)} title="Home">⏮</button>
+          <button type="button" style={mini} onClick={() => page(-pageS)} title="Previous page (←)">◀</button>
+          <span style={{ fontFamily: "var(--mono-font)", fontSize: 12.5, color: "var(--text)", minWidth: 120, textAlign: "center" }}>
+            {formatClock(pageT0)} – {formatClock(Math.min(durationS, pageT0 + pageS))}
+          </span>
+          <button type="button" style={mini} onClick={() => page(pageS)} title="Next page (→)">▶</button>
+          <button type="button" style={mini} onClick={() => setPageT0(maxT0)} title="End">⏭</button>
+          {loadingPage && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>loading…</span>}
+        </div>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+          {cursorT !== null && (
+            <button type="button" style={mini} onClick={() => startDraft(cursorT, 0)} disabled={!!draft}>
+              + mark at {formatClock(cursorT)}
+            </button>
+          )}
+          {(answers || opened.canFetchAnswers) && (
+            <button type="button" style={{ ...mini, borderColor: showKey ? "var(--accent-secondary)" : "var(--border)", color: showKey ? "var(--accent-secondary)" : "var(--text-secondary)" }} onClick={() => void toggleKey()}>
+              {showKey ? "hide answer key" : "show answer key"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* trend toolbar */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 12, padding: "0 4px" }}>
+        {group("Trend panel", (
+          <select style={sel} value={panelId} onChange={(e) => setPanelId(e.target.value)}>
+            {TREND_PANELS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+        ))}
+        {group("Trend window", (
+          <select style={sel} value={windowId} onChange={(e) => { setWindowId(e.target.value); setWindowT0((cur) => Math.min(cur, maxWindowT0)); }}>
+            {TREND_WINDOWS.filter((w) => w.s === null || w.s < durationS).map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}
+          </select>
+        ))}
+        {windowS && (
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            <button type="button" style={mini} onClick={() => setWindowT0(0)} title="Start">⏮</button>
+            <button type="button" style={mini} onClick={() => scrollWindow(-windowS)} title="Back one window">◀</button>
+            <span style={{ fontFamily: "var(--mono-font)", fontSize: 12.5, color: "var(--text)", minWidth: 130, textAlign: "center" }}>
+              {formatClock(windowT0)} – {formatClock(Math.min(durationS, windowT0 + windowS))}
+            </span>
+            <button type="button" style={mini} onClick={() => scrollWindow(windowS)} title="Forward one window">▶</button>
+            <button type="button" style={mini} onClick={() => setWindowT0(maxWindowT0)} title="End">⏭</button>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>wheel over the strip to scroll</span>
+          </div>
+        )}
+        {group("Heat map", (
+          <select style={sel} value={palette} onChange={(e) => choosePalette(e.target.value as PaletteId)}>
+            {PALETTES.map((p) => <option key={p.id} value={p.id} title={p.hint}>{p.label}</option>)}
+          </select>
+        ))}
+      </div>
+
+      {/* body */}
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 300px", gap: 10, minHeight: 0 }}>
+        <div style={{ display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 6, minHeight: 0 }}>
+          <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+            <TrendStrip
+              trends={trends} durationS={durationS} cursorT={cursorT} pageT0={pageT0} pageS={pageS}
+              annotations={annotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
+              rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} onScroll={scrollWindow}
+              key={trendVersion === 0 ? "empty" : "live"}
+            />
+          </div>
+          <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", minHeight: 0 }}>
+            <RawPane
+              reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
+              sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT}
+              onCursor={setCursorT}
+              onSelect={(a, b) => { setCursorT(a); startDraft(a, b - a); }}
+              onLoading={setLoadingPage}
+            />
+          </div>
+        </div>
+        <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 12, minHeight: 0, background: "var(--bg-card)" }}>
+          {error && <div style={{ color: "var(--accent-secondary)", fontSize: 12.5, marginBottom: 8 }}>{error}</div>}
+          <AnnotationPanel
+            annotations={annotations} draft={draft} storeLabel={opened.store.label} busy={annBusy}
+            onDraftChange={setDraft}
+            onSave={(input, id) => void saveAnnotation(input, id)}
+            onCancel={() => setDraft(null)}
+            onDelete={(id) => void deleteAnnotation(id)}
+            onJump={(a) => seek(a.onsetS)}
+            onExport={exportAnnotations}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
