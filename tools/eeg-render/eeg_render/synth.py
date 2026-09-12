@@ -47,6 +47,109 @@ from . import montage as mt
 from .rng import substream
 
 FRAME_S = 32.0          # overlap-add frame length
+
+#: Spread of per-electrode gain, as a two-sided log-normal: ``_LO`` governs how
+#: much quieter than the median a channel may read, ``_HI`` how much louder.
+#:
+#: At the original symmetric 0.055 every channel sat within ~5% of every other,
+#: which is a large part of what reads as synthetic.  Chosen against CHB-MIT by
+#: the SHAPE of the per-channel amplitude distribution rather than one summary
+#: statistic - matching the interquartile spread with a symmetric distribution
+#: argues for ~1.0, which puts the loudest channel 30x the quietest against a
+#: real 4.2-7.2x and leaves the quietest at 0.12 of the median, effectively a
+#: dead electrode.
+#:
+#: Measured, bipolar, 100 s interictal, against real min/med 0.52-0.69 and
+#: max/min 4.2-7.2.
+CH_GAIN_LOG_SD_LO = 0.30
+CH_GAIN_LOG_SD_HI = 0.75
+
+#: Weight of the continuous muscle floor, awake.  NOT microvolts: this term is
+#: mixed in before ``x *= self.amp_rms``, so it scales with the record's own
+#: background amplitude - which is right, since muscle and cerebral amplitude
+#: both ride the same electrode gain. It is also inside the burst envelope, so
+#: a suppressed interval stays suppressed.
+#:
+#: Set against CHB-MIT: at 0.0 our 1-40 Hz spectral slope was -2.65 against a
+#: real -0.83..-1.69 and line length 361 against 543-2376. At 0.70, -1.27 and
+#: 1531.
+#:
+#: Sleep drives it, via ``1 - 0.75*sleep``.  Tonic muscle falls markedly as
+#: sleep deepens, which is much of why a sleep record looks cleaner than a
+#: waking one; and because ``_sleep_at`` dips at an arousal, an arousal gets a
+#: transient muscle burst for free, which is what one looks like in life.
+#: Measured, 25-70 Hz over 2-20 Hz power: awake 0.461, asleep 0.024 (a 19x
+#: drop), arousal 0.294, back to 0.024 afterwards.  ``_sleep_at`` is a
+#: continuous depth, not a stage, so there is no REM atonia here - the model
+#: has no REM to hook onto.
+EMG_FLOOR_W = 0.70
+
+#: Extra muscle during an ictal run, as a multiple of the tonic floor.  Applied
+#: through ``ictal_gate`` and multiplied by the same wakefulness factor, so a
+#: sedated or neonatal electrographic seizure still recruits none.
+#: Measured on a focal run against CHB-MIT ictal windows: at 0.0, slope -1.84
+#: (target -0.83..-1.52) and line length 1542 (target 2909-8646); at 1.5, -1.04
+#: and 3453, both inside. Kept modest on purpose - this bank is mostly
+#: electrographic seizures, not convulsions, where real muscle is far larger.
+#: It does NOT close the ictal amplitude gap: 36 -> 41 uV against a real 81-95.
+#: That residue is the specs' own amplitude_start_uv/amplitude_end_uv, a
+#: clinical authoring value, not a scaling bug.
+EMG_ICTAL_GAIN = 1.5
+
+#: Spontaneous blinks per second, awake.  ~0.25/s is 15/min, an ordinary rate.
+#: Set to 0 to disable.  Gated by wakefulness and by the burst envelope, so a
+#: sleeping or suppressed record does not blink.
+BLINK_RATE_HZ = 0.25
+
+#: Global multiplier on ictal amplitude.  The authored amplitude_start_uv /
+#: amplitude_end_uv across the bank express clinical intent and their RELATIVE
+#: values are meaningful, but their absolute scale ran about 2x quiet against
+#: real pediatric ictal recordings: a focal run measured 43 uV median on the
+#: bipolar montage against CHB-MIT's 81-95. One multiplier here preserves every
+#: authored relationship instead of rewriting 48 YAMLs.
+#:
+#: A montage-aware version was tried first and rejected: a generalized field
+#: cancels ~2.5x through a bipolar chain where a focal one barely cancels at
+#: all, so in principle the scaling should follow the field. But the static
+#: field predictor did not match measurement - 5.33x predicted against 2.53x
+#: measured for generalized - and it degenerates to zero survival for focal
+#: fields, where most derivation pairs sit in the leak and see the same value.
+#: A wrong model is worse than an honest constant.
+ICTAL_GAIN = 2.0
+
+#: Peak microvolts of a blink at Fp1/Fp2, referential.  Real Fp blinks run
+#: 100-300 uV, and a bipolar chain halves one (Fp1 - F7), so the 95 used by the
+#: explicit ``eye_blink`` artifact reads thin as a spontaneous floor.  Measured
+#: on FP1-F7 as the ratio of the 99.9th percentile to the channel SD - a
+#: scale-free measure of how far transients stand out of the trace - real is
+#: 6.4-7.0, ours 4.2 at 95 and 5.3 at 200.
+#:
+#: Kept at 95 anyway.  A blink is ocular and genuinely should NOT shrink with a
+#: cerebral attenuation, and the attenuation ramp is applied separately from
+#: ``env`` so blinks escape it - but at 200 they then obscure the very thing an
+#: attenuation case asks the reader to see, and
+#: test_attenuation_ramp_builds_over_the_requested_window drops to 1.25x against
+#: a required 1.3x.  Readability of the clinical sign wins over transient
+#: realism.  The shortfall against real is partly honest anyway: real extremes
+#: are not only blinks but movement and electrode pops, which remain
+#: artifact-events-only here.
+BLINK_UV = 95.0
+
+#: Blink field: frontal-maximal, falling off fast behind the frontal chain.
+_BLINK_FIELD = {
+    "Fp1": 1.00, "Fp2": 1.00, "F7": 0.45, "F8": 0.45,
+    "F3": 0.50, "F4": 0.50, "Fz": 0.45, "T3": 0.15, "T4": 0.15,
+}
+
+#: RMS microvolts of amplifier/electrode noise.  Deliberately left at 0.25.
+#: This term is added AFTER the burst envelope - correctly, since amplifier
+#: noise is not physiologically suppressed - so raising it fills the interburst
+#: intervals of a burst-suppression record and breaks the <5 uV suppression
+#: criterion that the BSR trend depends on. Raising it to 1.0 dropped measured
+#: suppression from 15%+ to 10.6% and failed
+#: test_suppressed_raw_intervals_survive_sensor_noise. It also bought almost
+#: nothing: line length moved 1241 -> 1267 against a target band of 543-2376.
+SENSOR_RMS_UV = 0.25
 _SMOOTH_EPS = 1e-12
 
 
@@ -338,6 +441,19 @@ _TEMPORAL = {
 }
 _BROAD = {"Fp1": 0.85, "Fp2": 0.85, "Fz": 0.92, "Cz": 0.92, "Pz": 0.92}
 
+#: Tonic muscle: temporalis AND frontalis, so this is broader and much flatter
+#: than ``_TEMPORAL``.  Reusing the chewing-artifact profile (10:1 temporal to
+#: midline) buried the temporal chains under EMG while leaving the midline
+#: clean - obviously wrong beside a real page, where muscle is frontotemporal
+#: and roughly bilateral rather than a band across two derivations.
+_MUSCLE = {
+    "T3": 1.00, "T4": 1.00, "F7": 0.95, "F8": 0.95,
+    "T5": 0.72, "T6": 0.72, "Fp1": 0.70, "Fp2": 0.70,
+    "F3": 0.55, "F4": 0.55, "Fz": 0.45,
+    "C3": 0.40, "C4": 0.40, "Cz": 0.30,
+    "P3": 0.30, "P4": 0.30, "Pz": 0.25, "O1": 0.30, "O2": 0.30,
+}
+
 
 # --------------------------------------------------------------------------
 # the synthesizer
@@ -393,6 +509,7 @@ class Synthesizer:
         self._build_channel_am()
         self._build_control_timelines()
         self._build_burst_schedule()
+        self._build_blink_schedule()
         self._collect_seizures()
         self.artifacts = [e for e in spec["events"] if e["type"] == "artifact"]
         self.stimulations = [e for e in spec["events"] if e["type"] == "stimulation"]
@@ -446,6 +563,12 @@ class Synthesizer:
         self.st_brush = self._mk("brush", band_shape(f, 13.0, 4.5, order=1.0), cen * 0.6 + temp * 0.5, common=0.35)
         self.st_theta = self._mk("theta", band_shape(f, 5.0, 1.8, order=1.0), temp * 0.6 + cen * 0.5, common=0.5)
         self.st_emg = self._mk("emg", hp_lp_shape(f, 22.0, 95.0), temp, common=0.15)
+        # tonic floor gets its own, broader field; st_emg stays peaked for artifacts
+        musc = _profile(ch, _MUSCLE, 0.30)
+        for e in mt.REFERENCE_ELECTRODES:
+            musc[self._idx[e]] = 0.20
+        self.st_muscle = self._mk("muscle", hp_lp_shape(f, 20.0, 95.0), musc,
+                                  common=0.10)
         self.st_sensor = self._mk(
             "sensor", hp_lp_shape(f, 16.0, min(55.0, self.fs * 0.45)),
             np.ones(self.n_elec), common=0.02,
@@ -500,7 +623,16 @@ class Synthesizer:
         w /= np.maximum(w.std(axis=1, keepdims=True), _SMOOTH_EPS)
         self._ch_am_t = grid
         self._ch_am_v = np.exp(log_sd * w)
-        self._ch_gain = np.exp(rng.normal(0.0, 0.055, self.n_elec))
+        # Asymmetric on purpose.  A symmetric log-normal wide enough to match
+        # the real interquartile spread also drives its low tail to 0.12 of the
+        # median, i.e. a near-dead channel, where real recordings bottom out
+        # around 0.52-0.69.  Physiologically that asymmetry is right: an
+        # electrode can read hot (poor contact, focal pathology, muscle) far
+        # more easily than a live channel can read much quieter than its
+        # neighbours.
+        z = rng.standard_normal(self.n_elec)
+        self._ch_gain = np.exp(
+            np.where(z < 0.0, CH_GAIN_LOG_SD_LO, CH_GAIN_LOG_SD_HI) * z)
 
     def channel_am(self, t: np.ndarray) -> np.ndarray:
         return np.vstack([
@@ -642,6 +774,44 @@ class Synthesizer:
         self._burst_start = np.asarray(starts)
         self._burst_end = np.asarray(ends)
         self._ibi_floor0 = floor0
+
+    def _build_blink_schedule(self) -> None:
+        """Spontaneous blink times over the whole record, drawn once.
+
+        Real awake EEG blinks every few seconds without anyone scheduling it;
+        the ``eye_blink`` artifact only fires inside an event window, so a
+        recording with none had no blinks at all.  The whole schedule is drawn
+        at construction from the record seed, so which chunk asks for a given
+        second cannot change where the blinks are.
+        """
+        if BLINK_RATE_HZ <= 0:
+            self._blink_t = np.empty(0)
+            return
+        rng = substream(self.seed, "blinks")
+        span = self.duration_s + 120.0
+        # inter-blink intervals are lognormal-ish, not a metronome
+        n = max(1, int(span * BLINK_RATE_HZ * 1.6))
+        gaps = _lognorm(rng, n, 0.55) / BLINK_RATE_HZ
+        times = np.cumsum(gaps) - 60.0
+        self._blink_t = times[times < span]
+
+    def blink_rows(self, t: np.ndarray, wake: np.ndarray) -> np.ndarray:
+        """Blink deflections over ``t``; ``wake`` is the 0..1 gate."""
+        rows = np.zeros((self.n_elec, t.size))
+        if self._blink_t.size == 0 or t.size == 0:
+            return rows
+        sel = self._blink_t[(self._blink_t > t[0] - 0.6) & (self._blink_t < t[-1] + 0.6)]
+        if sel.size == 0:
+            return rows
+        prof = np.zeros(t.size)
+        for tt in sel:
+            d = t - tt
+            m = (d > -0.05) & (d < 0.45)
+            prof[m] += np.exp(-0.5 * ((d[m] - 0.14) / 0.075) ** 2)
+        prof = prof * BLINK_UV * wake
+        for i, e in enumerate(self.electrodes):
+            rows[i] = prof * _BLINK_FIELD.get(e, 0.04)
+        return rows
 
     def _ibi_floor_at(self, t: np.ndarray) -> np.ndarray:
         """Interburst residual amplitude; sedation drives it toward true flat."""
@@ -955,13 +1125,38 @@ class Synthesizer:
 
         # amplitude_*_uv is the peak-to-peak of the ictal run; a rhythmic,
         # sharply contoured discharge runs ~2.9x its RMS peak-to-peak.
-        amp = (inst.amp_start + (inst.amp_end - inst.amp_start) * uu) / 2.9
+        amp = ((inst.amp_start + (inst.amp_end - inst.amp_start) * uu)
+               / 2.9 * ICTAL_GAIN)
         ramp = 0.07 if inst.kind != "rhythmic_pattern" else 0.14
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
         # cycle-group waxing and waning
         amp = amp * (1.0 + inst.fluctuate * np.sin(2 * np.pi * 0.11 * uu * dur + wax_phase))
         amp = amp * live
         return phase, uu, amp, f_inst
+
+    def ictal_gate(self, t: np.ndarray) -> np.ndarray:
+        """0..1 over the support of any ictal run, with a short rise and fall.
+
+        Only used to drive muscle.  A *clinical* seizure recruits muscle hard,
+        and on a real ictal page much of the apparent amplitude is EMG rather
+        than cerebral - which is a large part of why our ictal pages measured
+        quiet against CHB-MIT, a cohort of awake children having clinical
+        seizures.  An electrographic seizure in a sedated or paralysed patient
+        recruits none, and that case is handled without a separate flag because
+        the muscle term is multiplied by the same ``1 - 0.75*sleep`` wakefulness
+        factor as the tonic floor.
+        """
+        gate = np.zeros_like(t)
+        if t.size == 0 or not self.seizures:
+            return gate
+        lo, hi = float(t[0]), float(t[-1])
+        for inst in self.seizures:
+            if inst.t1 < lo - 2.0 or inst.t0 > hi + 2.0:
+                continue
+            ramp = max(min(2.0, inst.duration_s * 0.08), 0.25)
+            gate = np.maximum(gate, smoothstep((t - inst.t0) / ramp)
+                              * (1.0 - smoothstep((t - (inst.t1 - ramp)) / ramp)))
+        return gate
 
     def postictal_envelope(self, t: np.ndarray) -> np.ndarray:
         env = np.ones_like(t)
@@ -1282,6 +1477,27 @@ class Synthesizer:
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :]
 
+        # Continuous muscle floor.  Before this, ``st_emg`` existed but was
+        # reachable only through an explicit artifact event, so a recording with
+        # no artifact scheduled had no high-frequency content whatever.  Real
+        # scalp EEG always carries some: measured against CHB-MIT we were 3-15x
+        # too smooth by line length (162 against 543-2376 interictal) and our
+        # 1-40 Hz spectral slope was -2.5 against a real -0.83 to -1.69.
+        #
+        # Tonic muscle falls markedly in sleep, which is also why a sleep record
+        # looks cleaner than a waking one.
+        # Gated by the burst envelope a SECOND time (everything gets it once at
+        # the end).  Muscle tracks burst state far more sharply than cerebral
+        # background does: in the deep suppression this models - anaesthesia,
+        # post-anoxic - the patient is typically sedated or paralysed and there
+        # is essentially no muscle at all.  Without this the broadband floor
+        # lifts the interburst intervals above the <5 uV suppression criterion
+        # the BSR trend is measured against.  On a continuous record the
+        # envelope is ~1 and this changes nothing.
+        emg_w = (EMG_FLOOR_W * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
+                 * (1.0 + EMG_ICTAL_GAIN * self.ictal_gate(t)))
+        x += self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
+
         if self.age != "neonate":
             spindle_phase = np.mod(t, 3.7)
             spindle_gate = np.where(spindle_phase < 1.2, np.sin(np.pi * spindle_phase / 1.2) ** 2, 0.0)
@@ -1396,8 +1612,24 @@ class Synthesizer:
         x += self._seizure_block(t)
 
         # --- always-present ECG contamination + artifacts ------------------
-        sensor_rms_uv = 0.25
+        sensor_rms_uv = SENSOR_RMS_UV
         x += self._stream_signal(self.st_sensor, i0, n) * sensor_rms_uv
+
+        # Spontaneous blinks.  Ocular, not cerebral, so they are in absolute
+        # microvolts and added after the amplitude scaling rather than riding
+        # it.
+        #
+        # Gated by wakefulness AND by the full envelope.  Strictly a blink is
+        # not cerebral and should survive cerebral attenuation, but every
+        # attenuated state this bank models - sedation, burst suppression,
+        # postictal - is a reduced-arousal state in which blinking stops, so
+        # gating on the same envelope is right for the cases that exist here.
+        # Leaving them ungated masks the very thing an attenuation case is
+        # asking the reader to see: it cut the measured attenuation ratio to
+        # 1.25x and failed test_attenuation_ramp_builds_over_the_requested_window,
+        # and it would have lifted burst-suppression interburst intervals past
+        # the <5 uV suppression criterion.
+        x += self.blink_rows(t, (1.0 - sleep) * env)
         ecg_uv = float(self.bg.get("baseline_ecg_uv", 0.0))
         if ecg_uv > 0:
             x += self._ecg(t, amplitude=ecg_uv)
