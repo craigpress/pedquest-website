@@ -1,0 +1,2 @@
+tools/eeglab-host/** text eol=lf
+tools/eeg-render/lab_worker.py text eol=lf
