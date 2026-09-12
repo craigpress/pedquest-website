@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
 import { hasRole } from "@/lib/roles";
 import { LAB_JOB_COLUMNS, resolveArtifact, rowToJob } from "@/lib/lab/jobs";
+import { eeglabConfigured, isEeglabPath, signEeglabUrl } from "@/lib/lab/eeglab-store";
 import {
   isLabArtifact, LAB_ARTIFACT_LABELS, LAB_BUCKET, LAB_SIGNED_URL_TTL_S, SYNTHETIC_STAMP,
 } from "@/lib/lab/types";
@@ -75,18 +76,31 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
     return NextResponse.json({ error: decision.reason }, { status: decision.status });
   }
 
-  const { data: signed, error: signError } = await supabase
-    .storage
-    .from(LAB_BUCKET)
-    .createSignedUrl(decision.path, LAB_SIGNED_URL_TTL_S, {
-      download: decision.path.split("/").pop() ?? true,
-    });
-
-  if (signError || !signed?.signedUrl) {
-    console.error("[EEG Lab] signing failed:", signError?.message);
-    return NextResponse.json({
-      error: "Could not issue a download link for that artifact.",
-    }, { status: 500 });
+  // Two stores. Rows written by tools/eeg-render/lab_worker.py point at the
+  // homelab recording store (eeglab://…) and get a nginx secure_link URL;
+  // older rows still hold Supabase Storage paths and are signed there.
+  let url: string;
+  if (isEeglabPath(decision.path)) {
+    if (!eeglabConfigured()) {
+      return NextResponse.json({
+        error: "The recording store is not configured on this deployment (EEG_LAB_BASE_URL / EEG_LAB_URL_SECRET).",
+      }, { status: 503 });
+    }
+    url = signEeglabUrl(decision.path, LAB_SIGNED_URL_TTL_S);
+  } else {
+    const { data: signed, error: signError } = await supabase
+      .storage
+      .from(LAB_BUCKET)
+      .createSignedUrl(decision.path, LAB_SIGNED_URL_TTL_S, {
+        download: decision.path.split("/").pop() ?? true,
+      });
+    if (signError || !signed?.signedUrl) {
+      console.error("[EEG Lab] signing failed:", signError?.message);
+      return NextResponse.json({
+        error: "Could not issue a download link for that artifact.",
+      }, { status: 500 });
+    }
+    url = signed.signedUrl;
   }
 
   return NextResponse.json({
@@ -94,7 +108,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
     artifact,
     label: LAB_ARTIFACT_LABELS[artifact],
     instructorCopy: decision.instructorCopy,
-    url: signed.signedUrl,
+    url,
     expiresInS: LAB_SIGNED_URL_TTL_S,
     expiresAt: new Date(Date.now() + LAB_SIGNED_URL_TTL_S * 1000).toISOString(),
     recordingId: job.recordingId,

@@ -1,0 +1,25 @@
+# eeglab-nginx on OMV (VM 102). Deploy dir: /root/eeglab-nginx
+#   docker compose up -d
+# Serves the shared folder `eeg-lab` on the 6.3 TB array at :8335 for NPM
+# (eeglab.presshome.net -> 10.100.10.102:8335). Read-only mount: the export
+# worker on moltbot writes over NFS; nothing here can modify a recording.
+services:
+  eeglab-nginx:
+    image: nginx:1.27-alpine
+    container_name: eeglab-nginx
+    restart: unless-stopped
+    ports:
+      - "8335:80"
+    environment:
+      # read by the nginx image's envsubst step for templates/*.template
+      EEGLAB_URL_SECRET_FILE: /run/secrets/eeglab_url_secret
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        export EEGLAB_URL_SECRET="$(cat /run/secrets/eeglab_url_secret)" &&
+        exec /docker-entrypoint.sh nginx -g 'daemon off;'
+    volumes:
+      - /srv/dev-disk-by-uuid-d96070a4-9964-4a49-8d1c-fd443aa03ee3/storage/eeg-lab:/recordings:ro
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./logs:/var/log/nginx
+      - /etc/eeglab/secret:/run/secrets/eeglab_url_secret:ro

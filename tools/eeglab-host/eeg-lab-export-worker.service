@@ -1,0 +1,23 @@
+# /etc/systemd/system/eeg-lab-export-worker.service on moltbot (VM 200)
+# Shares the render worker's env file (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY).
+[Unit]
+Description=PedQuEST EEG Teaching Lab export worker (eeg_lab_jobs stage=export)
+After=network-online.target mnt-eeg\x2dlab.mount
+Wants=network-online.target
+RequiresMountsFor=/mnt/eeg-lab
+
+[Service]
+Type=simple
+EnvironmentFile=/root/.openclaw/workspace/config/case-image-worker.env
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=MPLCONFIGDIR=/opt/pedquest-eeg-render/.cache
+Environment=EEG_LAB_DIR=/mnt/eeg-lab
+Environment=EEG_RENDER_BIN=/opt/pedquest-eeg-render/.venv/bin/eeg-render
+ExecStart=/opt/pedquest-eeg-render/.venv/bin/python /opt/pedquest-eeg-render/lab_worker.py --poll 10
+WorkingDirectory=/opt/pedquest-eeg-render
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
