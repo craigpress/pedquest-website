@@ -87,7 +87,7 @@ class Supabase:
                 return json.loads(data) if data else None
         except HTTPError as error:
             detail = error.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Supabase {method} {path} returned {error.code}: {detail[:500]}") from error
+            raise RuntimeError(f"Supabase {method} returned {error.code}: {detail[:300]} ({path[:120]})") from error
 
 
 # --------------------------------------------------------------------------
