@@ -78,16 +78,16 @@
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.3.7",
-  "spec_hash": "sha256:efdf01d0efd0c2ab9891820c7c1a3252262f564e885844100e28b2eee97bdd8e",
+  "renderer_version": "0.3.9",
+  "spec_hash": "sha256:6484356f60ed74a31fdf6bcb4fdd9fb884f29ed180d34e9ba92ea48a0f58e479",
   "db_ranges": {
     "fft_L": [
-      -10.522,
-      18.346
+      -6.093,
+      23.437
     ],
     "fft_R": [
-      -10.522,
-      18.346
+      -6.093,
+      23.437
     ]
   },
   "path": "public/images/qbank/PQ-B-021.png"

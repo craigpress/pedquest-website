@@ -61,13 +61,14 @@ def mutate_sidecar(image_dir, **changes):
     path.write_text(json.dumps(data), encoding="utf-8")
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "The 52 committed images were rendered by 0.3.7; 0.3.8 changes the "
-    "generalized waveform, so every sidecar is legitimately stale. The "
-    "re-render is deliberately deferred while the morphology work is in "
-    "flight. strict=True so this FAILS once render-all has been run - that is "
-    "the signal to delete this marker."))
 def test_current_png_and_sidecar_verify(pair):
+    """Every committed image verifies against its question and this renderer.
+
+    This was a strict xfail from 0.3.7 through 0.3.9's development while the
+    committed images were deliberately stale; render-all at 0.3.9 (2026-09-12)
+    made them current again.  If it fails, either a spec changed without a
+    re-render or the renderer version moved - run render-all, do not mark it.
+    """
     question, image_dir = pair
     verify(question, image_dir)
 
