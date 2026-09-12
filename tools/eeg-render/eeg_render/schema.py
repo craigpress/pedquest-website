@@ -123,6 +123,8 @@ _EVENT = {
         # the low-voltage fast activity riding it
         "decrement_depth": {"type": "number", "minimum": 0, "maximum": 1},
         "fast_uv": {"type": "number", "minimum": 0, "maximum": 100},
+        # spasm: cerebral beta riding the slow-wave deflection itself
+        "wave_fast_uv": {"type": "number", "minimum": 0, "maximum": 150},
         # spasm_cluster: mean seconds between spasms and how many
         "interval_s": {"type": "number", "minimum": 2, "maximum": 300},
         "count": {"type": "integer", "minimum": 1, "maximum": 400},

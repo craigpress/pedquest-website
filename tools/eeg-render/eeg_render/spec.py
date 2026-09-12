@@ -61,8 +61,17 @@ BACKGROUND_PRESETS: Dict[str, Dict[str, float]] = {
 #: location, asynchronous; StatPearls NBK537251 and the Medscape/Wyllie
 #: description "mountainous, chaotic, disorganized rhythms with superimposed
 #: multifocal spikes").  amplitude_uv is the spec's background amplitude.
-HYPSARRHYTHMIA_DEFAULTS = {"amplitude_uv": 260.0, "dominant_hz": 1.5, "slow_fraction": 0.95,
-                           "multifocal_spikes": {"rate_per_s": 1.4, "amplitude_uv": 160.0}}
+#: Spikes: the 2021 BASED score (Mytinger 2021, PMID 33839516; Frontiers
+#: review 10.3389/fneur.2022.960454) grades definite epileptic encephalopathy
+#: as >3 spike foci with >50% of 1 s bins containing a spike in the most
+#: epileptic 5 min of sleep, plus grouped multifocal spikes and paroxysmal
+#: voltage attenuations - so the default rate is above one spike per second
+#: head-wide, a quarter of them arriving as grouped multifocal runs, and the
+#: spikes must stand out of the slow: 280 uV peak-to-peak at the focus.
+HYPSARRHYTHMIA_DEFAULTS = {"amplitude_uv": 280.0, "dominant_hz": 1.3, "slow_fraction": 0.95,
+                           # six independent foci, ~0.6 discharges/s each: erratic
+                           # bilateral independent periodic-discharge-like trains
+                           "multifocal_spikes": {"rate_per_s": 3.6, "amplitude_uv": 520.0}}
 
 #: Maturation of neonatal discontinuity by postmenstrual age (weeks).  Columns:
 #: mean interburst interval (s), log-normal spread of the IBI, mean burst
@@ -616,14 +625,20 @@ def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
         e.setdefault("duration_s", 0.8)
         e.setdefault("onset_region", "generalized")
         e.setdefault("spread", "none")
-        e.setdefault("decrement_s", 2.5)
-        e.setdefault("decrement_depth", 0.80)
-        e.setdefault("fast_uv", 14.0)
-        # modest: the brief phasic EMG must not bury the slow wave it rides on
-        e.setdefault("muscle", "modest")
+        e.setdefault("decrement_s", 3.5)
+        e.setdefault("decrement_depth", 0.95)
+        # Cerebral fast activity, NOT muscle: beta rides the slow wave itself
+        # (wave_fast_uv) and lower-voltage beta rides the electrodecrement
+        # (fast_uv); Traub & Moeller 2020 (PMID 31525161) put very fast
+        # oscillations at the start of the decrement, coincident with the spasm.
+        e.setdefault("fast_uv", 22.0)
+        e.setdefault("wave_fast_uv", 40.0)
+        # Scalp EMG is off by default so the beta reads as cerebral; add
+        # muscle: modest for a recording where neck/frontalis EMG shows.
+        e.setdefault("muscle", "none")
         e.setdefault("postictal_attenuation_s", 0.0)
         e.setdefault("morphology", "spasm")
-        evo = {"start_hz": 1.0, "end_hz": 1.0, "amplitude_start_uv": 320.0, "amplitude_end_uv": 320.0}
+        evo = {"start_hz": 1.0, "end_hz": 1.0, "amplitude_start_uv": 420.0, "amplitude_end_uv": 420.0}
         evo.update(e.get("evolution", {}) or {})
         e["evolution"] = evo
         if kind == "spasm_cluster":

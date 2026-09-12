@@ -492,6 +492,7 @@ class SeizureInstance:
     decrement_s: float = 0.0
     decrement_depth: float = 0.0
     fast_uv: float = 0.0
+    wave_fast_uv: float = 0.0
     #: waveform family: ``ictal`` (sharply contoured evolving run),
     #: ``rda`` (monomorphic rhythmic delta), ``periodic`` (LPD/GPD - a sharp
     #: transient with an after-going slow wave, repeating at a fixed rate)
@@ -1223,7 +1224,7 @@ class Synthesizer:
                         index=i, ordinal=k, kind="spasm", morph="spasm",
                         muscle=ev.get("muscle", "clinical"),
                         decrement_s=float(ev["decrement_s"]), decrement_depth=float(ev["decrement_depth"]),
-                        fast_uv=float(ev["fast_uv"]),
+                        fast_uv=float(ev["fast_uv"]), wave_fast_uv=float(ev.get("wave_fast_uv", 0.0)),
                     ))
             elif ev["type"] == "tonic_seizure":
                 evo = ev["evolution"]
@@ -1354,11 +1355,12 @@ class Synthesizer:
                 mt.generator_field_scale(region, self.electrodes))
         return cached[region]
 
-    #: Vertex / frontocentral field of the spasm slow wave.
-    _SPASM_FIELD = {"Cz": 1.0, "Fz": 0.92, "C3": 0.88, "C4": 0.88, "F3": 0.82, "F4": 0.82,
-                    "Pz": 0.75, "Fp1": 0.6, "Fp2": 0.6, "P3": 0.6, "P4": 0.6,
-                    "F7": 0.5, "F8": 0.5, "T3": 0.45, "T4": 0.45, "T5": 0.4, "T6": 0.4,
-                    "O1": 0.4, "O2": 0.4}
+    #: Field of the spasm slow wave: vertex and central-parietal maximum with
+    #: a large posterior deflection, smaller frontally.
+    _SPASM_FIELD = {"Cz": 1.0, "Pz": 1.0, "P3": 0.95, "P4": 0.95, "C3": 0.9, "C4": 0.9,
+                    "O1": 0.85, "O2": 0.85, "T5": 0.7, "T6": 0.7, "Fz": 0.7,
+                    "F3": 0.6, "F4": 0.6, "T3": 0.5, "T4": 0.5,
+                    "Fp1": 0.4, "Fp2": 0.4, "F7": 0.4, "F8": 0.4}
 
     def _spasm_rows(self, inst: SeizureInstance, t: np.ndarray) -> np.ndarray:
         """One epileptic spasm: the slow-wave transient plus the decrement's fast activity.
@@ -1379,8 +1381,12 @@ class Synthesizer:
         jitter = float(_lognorm(rng, 1, 0.2)[0])
         # amplitude_uv is peak-to-peak; the shape above spans ~1.5 units
         slow = wave * (inst.amp_start / 1.5) * jitter
-        fast_on = 0.15 * np.sin(2 * np.pi * 19.0 * d + rng.uniform(0, 2 * np.pi)) \
-            * np.exp(-0.5 * ((d - 0.5 * dur) / (0.25 * dur)) ** 2) * (inst.amp_start / 1.5) * 0.35
+        # Cerebral beta (18-26 Hz) riding the delta deflection, peaking with
+        # it; ``wave_fast_uv`` peak-to-peak.  Not muscle.
+        f_wave = rng.uniform(18.0, 26.0)
+        fast_on = (0.5 * inst.wave_fast_uv * jitter
+                   * np.sin(2 * np.pi * f_wave * d + rng.uniform(0, 2 * np.pi))
+                   * np.exp(-0.5 * ((d - 0.5 * dur) / (0.28 * dur)) ** 2))
         field = np.array([self._SPASM_FIELD.get(e, 0.0) for e in self.electrodes])
         rows = np.outer(field, slow + fast_on)
         if inst.fast_uv > 0 and inst.decrement_s > 0:
@@ -1400,18 +1406,31 @@ class Synthesizer:
         amp = float(ms.get("amplitude_uv", 0.0) or 0.0)
         if rate <= 0 or amp <= 0:
             return
+        # Erratic multifocal discharges, "like lots of BIPDs": six independent
+        # foci across both hemispheres, each with its own irregular clock
+        # (log-normal intervals, sd 0.55, so runs bunch and thin out), each
+        # discharge a 70-110 ms sharp wave with a large after-going slow wave.
+        # ``rate_per_s`` is the head-wide total; per focus it is rate / 6.
         rng = substream(self.seed, "multifocal")
         span = self.duration_s + 120.0
-        n = max(1, int(span * rate * 1.6))
-        times = np.cumsum(_lognorm(rng, n, 0.7) / rate) - 60.0
-        times = times[times < span]
-        m = times.size
         scalp_idx = np.array([self._idx[e] for e in self.scalp])
-        focus = scalp_idx[rng.integers(0, len(scalp_idx), m)]
-        width = rng.uniform(0.035, 0.09, m)          # 35-90 ms: spikes and sharp waves
-        amps = amp * _lognorm(rng, m, 0.35)
-        slow = rng.uniform(0.3, 0.9, m)              # after-going slow wave, relative
-        self._mf_spikes = np.column_stack([times, focus, width, amps, slow])
+        n_foci = 6
+        left = [i for i in scalp_idx if mt.POSITIONS[self.electrodes[i]][0] < -1e-6]
+        right = [i for i in scalp_idx if mt.POSITIONS[self.electrodes[i]][0] > 1e-6]
+        foci = list(rng.choice(left, n_foci // 2, replace=False)) + list(rng.choice(right, n_foci // 2, replace=False))
+        per = rate / n_foci
+        ev = []
+        for fi in foci:
+            n = max(1, int(span * per * 1.8))
+            times = np.cumsum(_lognorm(rng, n, 0.55) / per) - 60.0
+            times = times[times < span]
+            m = times.size
+            width = rng.uniform(0.07, 0.11, m)       # sharp waves, not spikes
+            amps = amp * _lognorm(rng, m, 0.30)
+            slow = rng.uniform(1.0, 1.7, m)          # big after-going slow wave
+            ev.append(np.column_stack([times, np.full(m, fi, float), width, amps, slow]))
+        allev = np.vstack(ev)
+        self._mf_spikes = allev[np.argsort(allev[:, 0])]
 
     def _multifocal_spike_rows(self, t: np.ndarray) -> np.ndarray:
         rows = np.zeros((self.n_elec, t.size))
@@ -1422,7 +1441,8 @@ class Synthesizer:
         for t0, fi, width, amp, slow in sel:
             d = t - t0
             spike = -np.exp(-0.5 * (d / (width / 2.355)) ** 2)
-            after = slow * np.exp(-0.5 * ((d - 0.28) / 0.11) ** 2)
+            # broad after-going slow wave (~400 ms), opposite polarity
+            after = slow * np.exp(-0.5 * ((d - 0.32) / 0.16) ** 2)
             w = self._gen_weights(self.electrodes[int(fi)], mt.PINNED_FALLOFF)
             rows += np.outer(w, (spike + after) * amp * 0.5)
         return rows
@@ -2033,9 +2053,15 @@ class Synthesizer:
         # lifts the interburst intervals above the <5 uV suppression criterion
         # the BSR trend is measured against.  On a continuous record the
         # envelope is ~1 and this changes nothing.
+        # An electrodecrement (spasm, tonic onset) silences the muscle floor
+        # too: the child is still, and the page must actually flatten.
+        dec = self.decrement_envelope(t)
         emg_w = (EMG_FLOOR_W * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
                  * (1.0 + self.ictal_gate(t))
-                 * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t)))
+                 * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
+                 * dec
+                 # an infant's temporalis floor is a fraction of a child's
+                 * (0.45 if self.age == "infant" else 1.0))
         x += self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
 
         if self.age != "neonate":
@@ -2119,7 +2145,6 @@ class Synthesizer:
                      + fast * (1.0 - depth * lat[:, None] * shape[None, :]))
         # Electrodecrements (spasms, tonic seizures) attenuate the background
         # and its graphoelements; the ictal block below is added after.
-        dec = self.decrement_envelope(t)
         env = env * dec
         x *= burst_rows * env[None, :]
         # Head-wide envelope including the burst gate, for the blinks below.

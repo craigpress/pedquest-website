@@ -48,9 +48,9 @@ background:
     temporal_theta:  {enabled: false}                         # 26-32 w; temporal_alpha at 33 w; stop 22-30 w;
                                                               # frontal_sharp 34-48 w; anterior_slow 35-46 w; midline_theta
   synchrony: 0.8               # neonates: fraction of bursts interhemispherically synchronous (PMA default)
-  multifocal_spikes:           # independent multifocal spikes/sharp waves; hypsarrhythmia defaults to 1.4/s, 160 uV
-    rate_per_s: 1.4
-    amplitude_uv: 160
+  multifocal_spikes:           # six independent foci of erratic sharp-and-slow-wave trains; hypsarrhythmia
+    rate_per_s: 3.6            # defaults to 3.6/s head-wide (>50% of 1 s bins, BASED grade 5) at 520 uV
+    amplitude_uv: 520
   reactivity: present | absent  # applied to any `stimulation` event
 ```
 
@@ -68,10 +68,11 @@ follows the spread, not the electrographic onset.
   onset_min: 2.0
   duration_s: 0.8              # the high-voltage vertex-maximal slow wave
   evolution: {amplitude_start_uv: 320}   # peak-to-peak of the slow wave
-  decrement_s: 2.5             # diffuse electrodecrement after the wave
-  decrement_depth: 0.8
-  fast_uv: 14                  # low-voltage 16-22 Hz fast activity riding the decrement
-  muscle: clinical             # brief symmetric EMG burst with the wave
+  decrement_s: 3.5             # diffuse electrodecrement after the wave (silences the muscle floor too)
+  decrement_depth: 0.95
+  wave_fast_uv: 40             # cerebral 18-26 Hz beta riding the delta deflection itself
+  fast_uv: 22                  # lower-voltage beta riding the decrement
+  muscle: none                 # default; `modest` adds a brief symmetric EMG burst with the wave
 - type: tonic_seizure
   onset_min: 3.0
   decrement_s: 1.5             # electrodecrement first ...
