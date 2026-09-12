@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
   // finds nothing in the Vercel bundle.
   outputFileTracingIncludes: {
     "/api/cron/qbank-generate": ["./content/qbank/**/*"],
+    // The lab's prose mode reads IMAGE_SPEC.md at request time for the same reason.
+    "/api/admin/lab/jobs": ["./content/qbank/**/*"],
   },
   async headers() {
     // Content-Security-Policy. Ships as Report-Only first: violations show up in

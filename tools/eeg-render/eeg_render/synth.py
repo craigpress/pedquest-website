@@ -13,6 +13,24 @@ review station runs.  Two properties make that affordable for a 12-hour panel:
   joins).  That is also what lets ``eeg_page`` re-extract 15 s out of hour 2
   without synthesizing hours 0-2.
 
+**Partition independence.**  The invariant the whole design rests on is that
+*the same absolute sample interval yields the same samples however it was
+requested* - so a chunked export and a single-shot render agree, and the file a
+learner scrolls through is the recording the rendered image was drawn from.
+Anything derived from the requested window rather than from absolute time
+breaks it.  Four classes of that bug were fixed in 0.3.7: RNG streams keyed by
+the request's starting hop, event times drawn across the request instead of the
+event, normalisers taken from the request's own statistics, and window functions
+convolved against edge-padded requests.  One case remains and cannot be fixed
+here: ``sosfiltfilt`` in the frequency-selective attenuation branch settles
+against the block it is given, so **callers that chunk must request a margin and
+trim it**, as ``compute_trends`` does.
+
+Constructing the synthesizer with a different ``duration_s`` also changes the
+signal everywhere, because the slow amplitude-modulation grids are normalised
+over the whole recording.  Duration is therefore part of a recording's identity,
+not a display option.
+
 Units are microvolts throughout.  Time is seconds from recording start.
 """
 
@@ -52,6 +70,27 @@ _PERIODIC_MEAN, _PERIODIC_RMS = _periodic_norm()
 def smoothstep(x: np.ndarray | float) -> np.ndarray:
     x = np.clip(x, 0.0, 1.0)
     return x * x * (3.0 - 2.0 * x)
+
+
+def _margin_time(t: np.ndarray, k: int, fs: float) -> np.ndarray:
+    """``t`` extended by ``k`` samples of *absolute* time on each side.
+
+    Convolving a window function needs values beyond the request.  Taking them
+    from ``np.pad(..., mode="edge")`` makes the result depend on where the
+    request happened to start, so the same absolute second smooths differently
+    in a full-record render and in a chunked export.  Continuing the real time
+    axis instead keeps the smoothing partition-independent.
+    """
+    dt = 1.0 / fs
+    return np.concatenate([
+        t[0] - dt * np.arange(k, 0, -1),
+        t,
+        t[-1] + dt * np.arange(1, k + 1),
+    ])
+
+
+#: Heart rate by age band, used both for the ECG artifact and the baseline ECG.
+_ECG_HR = {"neonate": 145.0, "infant": 130.0, "child": 100.0, "adolescent": 80.0}
 
 
 def _piecewise(times: Sequence[float], values: Sequence[float], t: np.ndarray) -> np.ndarray:
@@ -194,6 +233,13 @@ class Synthesizer:
         self._win = np.sqrt(sps.get_window("hann", self.frame_n, fftbins=True))
         self._freqs = np.fft.rfftfreq(self.frame_n, 1.0 / self.fs)
         self._norm_cache: Dict[bytes, float] = {}
+
+        # Caches for quantities that must NOT be derived from the requested
+        # window, or the same absolute sample would differ between a full-record
+        # render and a chunked export.  See the partition-independence note in
+        # the module docstring.
+        self._ecg_jit: Optional[Tuple[int, np.ndarray]] = None
+        self._brush_norm: Optional[float] = None
 
         bg = spec["background"]
         self.bg = bg
@@ -477,14 +523,17 @@ class Synthesizer:
 
     def burst_envelope(self, t: np.ndarray) -> np.ndarray:
         """Smoothed 0..1 burst indicator lifted by the interburst floor."""
-        idx = np.searchsorted(self._burst_start, t, side="right") - 1
-        idx = np.clip(idx, 0, len(self._burst_start) - 1)
-        inside = (t >= self._burst_start[idx]) & (t < self._burst_end[idx])
-        env = inside.astype(float)
         k = max(3, int(round(0.22 * self.fs)) | 1)
+        # Evaluate the indicator over an absolute-time margin rather than padding
+        # the request's own edge value: a burst straddling a chunk boundary must
+        # smooth identically whichever chunk asked for it.
+        te = _margin_time(t, k, self.fs)
+        idx = np.searchsorted(self._burst_start, te, side="right") - 1
+        idx = np.clip(idx, 0, len(self._burst_start) - 1)
+        inside = (te >= self._burst_start[idx]) & (te < self._burst_end[idx])
         win = np.hanning(k)
         win /= win.sum()
-        env = np.convolve(np.pad(env, k, mode="edge"), win, mode="same")[k:-k]
+        env = np.convolve(inside.astype(float), win, mode="same")[k:-k]
         floor = self._ibi_floor_at(t)
         return floor + (1.0 - floor) * env
 
@@ -724,17 +773,27 @@ class Synthesizer:
 
     def postictal_envelope(self, t: np.ndarray) -> np.ndarray:
         env = np.ones_like(t)
+        if t.size == 0:
+            return env
+        lo, hi = float(t[0]), float(t[-1])
         for inst in self.seizures:
             if inst.postictal_s <= 0:
+                continue
+            # Skip on the event's own support -- [t1, t1 + 3*postictal_s) -- before
+            # allocating anything.  A long cluster can hold thousands of instances
+            # and the old code built two full-length arrays for every one of them.
+            # Note this is the *postictal* interval, not the ictal one.
+            if inst.t1 > hi or inst.t1 + inst.postictal_s * 3.0 < lo:
                 continue
             d = t - inst.t1
             m = (d >= 0) & (d < inst.postictal_s * 3)
             if not m.any():
                 continue
             depth = 0.62
-            env = np.where(
-                m, env * (1.0 - depth * np.exp(-d / max(inst.postictal_s / 1.6, 1.0))), env
-            )
+            # Masked, not np.where: the latter evaluates the exponential across
+            # the whole array, including samples far before offset where the
+            # positive exponent overflows.
+            env[m] *= 1.0 - depth * np.exp(-d[m] / max(inst.postictal_s / 1.6, 1.0))
         return np.clip(env, 0.05, 1.0)
 
     # ---------------- overlap-add noise ----------------
@@ -806,6 +865,12 @@ class Synthesizer:
 
     _INTENSITY = {"low": 0.45, "medium": 1.0, "high": 2.1}
 
+    @staticmethod
+    def _event_window(ev: Dict) -> Tuple[float, float]:
+        """The artifact's own ``[start, end)`` in seconds from recording start."""
+        a0 = float(ev["at_min"]) * 60.0
+        return a0, a0 + float(ev["duration_s"])
+
     def _artifact_block(self, t: np.ndarray, i0: int) -> np.ndarray:
         out = np.zeros((self.n_elec, t.size))
         n = t.size
@@ -814,14 +879,16 @@ class Synthesizer:
             a1 = a0 + float(ev["duration_s"])
             if a1 < t[0] or a0 > t[-1]:
                 continue
-            live = ((t >= a0) & (t <= a1)).astype(float)
-            # 1 s raised-cosine edges
-            k_ed = max(3, int(0.8 * self.fs) | 1)
-            win = np.hanning(k_ed)
-            win /= win.sum()
-            live = np.convolve(np.pad(live, k_ed, mode="edge"), win, mode="same")[k_ed:-k_ed]
+            # Raised-cosine edges evaluated on absolute time.  The old code
+            # convolved an edge-padded indicator, so an artifact straddling a
+            # chunk boundary got a different envelope in each chunk.
+            ramp = 0.8
+            live = np.clip(np.minimum((t - a0) / ramp, (a1 - t) / ramp), 0.0, 1.0)
+            live = 0.5 - 0.5 * np.cos(np.pi * live)
             gain = self._INTENSITY[ev["intensity"]]
-            rng = substream(self.seed, "art", k, i0 // self.hop_n)
+            # Keyed to the event, NOT to the request's starting hop: otherwise
+            # the realized pops/blinks move when the window moves.
+            rng = substream(self.seed, "art", k)
             w = self._artifact_channels(ev)
             kind = ev["kind"]
             sig = self._artifact_waveform(kind, ev, t, i0, rng, gain)
@@ -841,9 +908,12 @@ class Synthesizer:
 
         if kind == "emg_chewing":
             base = self._oa(self.st_emg, i0, n, 1)[0]
-            chew = 0.5 + 0.5 * sps.square(2 * np.pi * 1.9 * t, duty=0.42)
-            chew = np.convolve(np.pad(chew, 50, mode="edge"),
-                               np.hanning(31) / np.hanning(31).sum(), mode="same")[50:-50]
+            # Continue the square wave on absolute time rather than padding the
+            # request's edge value, so the chew cycle is continuous across chunks.
+            te = _margin_time(t, 50, fs)
+            chew = 0.5 + 0.5 * sps.square(2 * np.pi * 1.9 * te, duty=0.42)
+            chew = np.convolve(chew, np.hanning(31) / np.hanning(31).sum(),
+                               mode="same")[50:-50]
             return base * chew * 26.0 * gain
 
         if kind in ("patting", "chest_pt"):
@@ -877,10 +947,15 @@ class Synthesizer:
             target = (ev.get("channels") or ["T5"])[0]
             rows = np.zeros((self.n_elec, n))
             rate = 0.8
-            k = max(1, int(rate * (t[-1] - t[0])))
-            times = rng.uniform(t[0], t[-1], k)
-            amps = rng.uniform(120.0, 420.0, k) * rng.choice([-1.0, 1.0], k) * gain
             tau = 0.09
+            # Draw over the EVENT's window, not the request's, so a given pop
+            # keeps its time and amplitude however the recording is chunked.
+            a0, a1 = self._event_window(ev)
+            k = max(1, int(rate * (a1 - a0)))
+            times = rng.uniform(a0, a1, k)
+            amps = rng.uniform(120.0, 420.0, k) * rng.choice([-1.0, 1.0], k) * gain
+            sel = (times >= t[0] - 8 * tau) & (times <= t[-1])
+            times, amps = times[sel], amps[sel]
             prof = np.zeros(n)
             for tt, aa in zip(times, amps):
                 d = t - tt
@@ -917,8 +992,10 @@ class Synthesizer:
         if kind == "eye_blink":
             rows = np.zeros((self.n_elec, n))
             rate = 0.30
-            k = max(1, int(rate * (t[-1] - t[0])))
-            times = np.sort(rng.uniform(t[0], t[-1], k))
+            a0, a1 = self._event_window(ev)
+            k = max(1, int(rate * (a1 - a0)))
+            times = np.sort(rng.uniform(a0, a1, k))
+            times = times[(times > t[0] - 0.5) & (times < t[-1] + 0.5)]
             prof = np.zeros(n)
             for tt in times:
                 d = t - tt
@@ -933,13 +1010,30 @@ class Synthesizer:
 
         return None
 
+    def _beat_jitter(self, idx: np.ndarray) -> np.ndarray:
+        """Beat-timing jitter keyed to the *absolute* beat index.
+
+        Drawing ``jr.normal(size=beats.size)`` per request assigns the stream's
+        first value to whichever beat the request happens to start on, so the
+        same heartbeat lands at a different time in a chunked export than in a
+        full-record render.  ``baseline_ecg_uv`` is non-zero for every age band,
+        so that affected every channel of every recording.  The table is drawn
+        once for the whole recording and indexed absolutely.
+        """
+        if self._ecg_jit is None:
+            rr = 60.0 / _ECG_HR[self.age]
+            lo = int(math.floor(-180.0 / rr)) - 2
+            hi = int(math.ceil((self.duration_s + 180.0) / rr)) + 2
+            vals = substream(self.seed, "ecg").normal(0.0, 0.012, hi - lo + 1)
+            self._ecg_jit = (lo, vals)
+        lo, vals = self._ecg_jit
+        return vals[np.clip(idx - lo, 0, vals.size - 1)]
+
     def _ecg(self, t: np.ndarray, amplitude: float) -> np.ndarray:
         """Synthetic QRS train, opposite polarity over the two hemispheres."""
-        hr = {"neonate": 145.0, "infant": 130.0, "child": 100.0, "adolescent": 80.0}[self.age]
-        rr = 60.0 / hr
-        jr = substream(self.seed, "ecg")
-        beats = np.arange(math.floor(t[0] / rr) - 1, math.ceil(t[-1] / rr) + 2) * rr
-        beats = beats + jr.normal(0.0, 0.012, beats.size)
+        rr = 60.0 / _ECG_HR[self.age]
+        idx = np.arange(math.floor(t[0] / rr) - 1, math.ceil(t[-1] / rr) + 2, dtype=np.int64)
+        beats = idx * rr + self._beat_jitter(idx)
         prof = np.zeros(t.size)
         for b in beats:
             d = t - b
@@ -1005,7 +1099,14 @@ class Synthesizer:
             x += self._stream_signal(self.st_spindle, i0, n) * (1.5 * sleep * spindle_gate)[None, :]
         if self.bg.get("delta_brushes") and self.age == "neonate":
             brush_gate = np.clip(self._oa(self.st_delta, i0 + 4242, n, 1)[0], 0, None)
-            brush_gate = brush_gate / (brush_gate.std() + _SMOOTH_EPS)
+            # Normalise by a fixed reference window, not this request's own std:
+            # otherwise brush amplitude depends on how much of the recording was
+            # asked for at once.  Neonatal backgrounds enable brushes by default.
+            if self._brush_norm is None:
+                ref_n = max(1, min(int(300.0 * self.fs), int(self.duration_s * self.fs)))
+                ref = np.clip(self._oa(self.st_delta, 4242, ref_n, 1)[0], 0, None)
+                self._brush_norm = float(ref.std()) + _SMOOTH_EPS
+            brush_gate = brush_gate / self._brush_norm
             brush_gate = np.clip(brush_gate - 0.8, 0.0, None)
             x += self._stream_signal(self.st_brush, i0, n) * (0.30 * brush_gate)[None, :]
 
@@ -1054,6 +1155,13 @@ class Synthesizer:
                 # multiplier — which scales alpha and delta by the same factor
                 # — leaves alpha/delta and theta/delta flat and the very
                 # trends a reader would use to spot the stroke show nothing.
+                # NOTE (partition independence): this is the one place segment()
+                # cannot be made window-independent on its own.  sosfiltfilt
+                # extends the *requested* block to settle, so samples within
+                # roughly a filter length of a chunk edge differ from the same
+                # samples rendered in a longer window.  Callers must request a
+                # margin and trim it -- compute_trends already does (MARGIN_S),
+                # and the waveform exporter must do the same.
                 sos = sps.butter(4, 4.0, btype="lowpass", fs=self.fs, output="sos")
                 slow = sps.sosfiltfilt(sos, x, axis=-1)
                 fast = x - slow

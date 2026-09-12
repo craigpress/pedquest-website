@@ -44,3 +44,6 @@ homelab/
 
 # Supabase CLI scratch
 supabase/.temp/
+
+# Persyst PSCLI drops this into whatever directory it is run from.
+InvalidFiles.txt

@@ -164,6 +164,122 @@ def cmd_validate(args) -> int:
     return 1 if bad else 0
 
 
+_DURATION_UNITS = {"s": 1.0, "m": 60.0, "h": 3600.0}
+
+
+def _parse_duration(text: str) -> float:
+    unit = _DURATION_UNITS.get(text[-1].lower())
+    value = float(text[:-1]) if unit else float(text)
+    return value * (unit or 1.0)
+
+
+def _spec_duration_s(kind: str, spec: dict) -> float:
+    if kind == "aeeg":
+        return float(spec["duration_h"]) * 3600.0
+    if kind == "eeg_page" and spec.get("duration_min") is None:
+        return float(spec["at_min"]) * 60.0 + float(spec["window_s"]) + 60.0
+    return float(spec["duration_min"]) * 60.0
+
+
+def cmd_export(args) -> int:
+    from .export import (baseline_advisory, build_manifest, ekg_row,
+                         write_edf_plus, write_lay_dat)
+    from .export.manifest import recording_for
+    from .synth import Synthesizer
+
+    path = Path(args.file)
+    q = load_question(path)          # also accepts a bare spec file
+    image = q.image
+    norm = normalize(image)
+    kind = norm["kind"]
+    if kind == "composite":
+        # The page is a window into the panel's own recording, so the panel's
+        # spec is the recording.
+        norm = {"kind": "qeeg_panel", "spec": norm["spec"]["qeeg_panel"]}
+        kind = "qeeg_panel"
+    spec = norm["spec"]
+
+    duration_s = (_parse_duration(args.duration) if args.duration
+                  else _spec_duration_s(kind, spec))
+    ident = q.ident or path.stem
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    synth = Synthesizer(spec, duration_s)
+    extra_rows = {}
+    extra_names = []
+    if not args.no_ekg:
+        # A row literally named EKG is what switches on Persyst's heart-rate
+        # engine; ECG carried on A1/A2 is not recognised.
+        extra_rows["EKG"] = ekg_row(synth, duration_s)
+        extra_names.append("EKG")
+    recording = recording_for(image, synth, duration_s, extra_channels=extra_names)
+    formats = {f.strip().lower() for f in args.format.split(",") if f.strip()}
+    unknown = formats - {"lay", "edf"}
+    if unknown:
+        print(f"unknown format(s): {', '.join(sorted(unknown))}", file=sys.stderr)
+        return 1
+
+    manifest = build_manifest(synth, recording)
+    # Embedding is a separate, louder opt-in than writing the key file. Annotations
+    # inside the recording travel with it: a learner scrolling the timeline reads
+    # the answer off the file no matter what the surrounding page withholds.
+    events = manifest["events"] if args.embed_answers else []
+    lay_events = [(e["onset_s"], max(0.0, e["offset_s"] - e["onset_s"]),
+                   f"@{e['kind']} {e.get('onset_region') or e.get('label') or ''}".strip())
+                  for e in events]
+    edf_events = [(e["onset_s"], max(0.0, e["offset_s"] - e["onset_s"]),
+                   f"{e['kind']} {e.get('onset_region') or e.get('label') or ''}".strip())
+                  for e in events]
+
+    files, clipped = {}, 0
+    if "lay" in formats:
+        kw = {"events": lay_events, "extra_rows": extra_rows}
+        if args.calibration is not None:
+            kw["calibration"] = args.calibration
+        report = write_lay_dat(out_dir / ident, synth, recording, **kw)
+        files["lay"], files["dat"] = report["lay"], report["dat"]
+        clipped = max(clipped, report["clipped_samples"])
+        print(f"  lay  {report['lay']}  {report['samples']:,} samples x "
+              f"{report['channels']} ch  peak {report['peak_uv']} uV  "
+              f"clipped {report['clipped_samples']}")
+    if "edf" in formats:
+        report = write_edf_plus(out_dir / ident, synth, recording,
+                                events=edf_events, extra_rows=extra_rows)
+        files["edf"] = report["edf"]
+        clipped = max(clipped, report["clipped_samples"])
+        print(f"  edf  {report['edf']}  {report['records']:,} records x "
+              f"{report['record_duration_s']}s  clipped {report['clipped_samples']}  "
+              f"padded {report['padded_samples']}")
+
+    if args.answers or args.embed_answers:
+        manifest = build_manifest(synth, recording, clipped_samples=clipped, files=files)
+        key = out_dir / f"{ident}.answers.json"
+        key.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        print(f"  key  {key}  {len(manifest['events'])} realized events")
+
+    print(f"  recording {recording.recording_id}  {duration_s / 60:.1f} min @ "
+          f"{recording.sample_rate} Hz  {len(recording.channels)} ch")
+    if args.embed_answers:
+        print("  *** INSTRUCTOR COPY: realized events are embedded in the recording "
+              "itself. Do not hand this file to a learner. ***")
+    elif args.answers:
+        print("  instructor copy: answer key written alongside; the recording itself "
+              "carries no ground truth")
+    else:
+        print("  learner copy: no answer key, no embedded ground truth")
+
+    # A recording too short for the MMX baseline window produces VsBaseline
+    # trends that are silently all zero -- exit 0, no warning.  Say so here,
+    # where it is still cheap to fix, rather than letting it look like a result.
+    advisory = baseline_advisory(synth, duration_s)
+    if not advisory["ok"]:
+        print("  baseline: NOT USABLE by Persyst's stock auto-search")
+        for reason in advisory["reasons"]:
+            print(f"    - {reason}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="eeg-render",
                                 description=f"PedQuEST qEEG image renderer {RENDERER_VERSION}")
@@ -199,6 +315,35 @@ def build_parser() -> argparse.ArgumentParser:
     v = add("validate", help="schema/semantic check without rendering")
     v.add_argument("files", nargs="+")
     v.set_defaults(func=cmd_validate)
+
+    ex = add("export", help="write a reviewable recording (.lay/.dat and/or EDF+)")
+    ex.add_argument("file", help="question or bare spec YAML")
+    ex.add_argument("--out", default="exports")
+    ex.add_argument("--duration", default=None,
+                    help="override the spec's horizon, e.g. 30m, 4h, 900s. "
+                         "Duration is part of a recording's identity, not a view "
+                         "option: changing it changes the waveform everywhere.")
+    ex.add_argument("--format", default="lay",
+                    help="comma-separated: lay, edf")
+    ex.add_argument("--calibration", type=float, default=None,
+                    help="microvolts per count for .dat (default 0.1)")
+    # Two separate opt-ins, because they leak differently. The key file can be
+    # withheld by whoever distributes the recording; annotations inside the
+    # recording cannot -- they travel with the file.
+    ex.add_argument("--answers", action="store_true",
+                    help="write the answer-key JSON beside the recording "
+                         "(instructor artifact). The recording itself still "
+                         "carries no ground truth. Off by default.")
+    ex.add_argument("--embed-answers", action="store_true",
+                    help="ALSO write realized events into the recording's "
+                         "annotations. Anyone who opens the file can read the "
+                         "answer off the timeline. Implies --answers.")
+    ex.add_argument("--no-ekg", action="store_true",
+                    help="omit the dedicated EKG channel. It is included by "
+                         "default because Persyst finds ECG by channel NAME "
+                         "(AutoEKGChannels); without a row called EKG the "
+                         "heart-rate engine silently returns all zeros.")
+    ex.set_defaults(func=cmd_export)
     return p
 
 

@@ -23,7 +23,7 @@ dev = ["pytest>=7.4"]
 eeg-render = "eeg_render.cli:main"
 
 [tool.setuptools]
-packages = ["eeg_render", "eeg_render.datasets"]
+packages = ["eeg_render", "eeg_render.datasets", "eeg_render.export"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
