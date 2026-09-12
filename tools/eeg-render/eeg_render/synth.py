@@ -1413,7 +1413,15 @@ class Synthesizer:
         # ``rate_per_s`` is the head-wide total; per focus it is rate / 6.
         rng = substream(self.seed, "multifocal")
         span = self.duration_s + 120.0
-        scalp_idx = np.array([self._idx[e] for e in self.scalp])
+        # Foci sit INSIDE a longitudinal bipolar chain (an electrode that
+        # appears in two derivations), so every discharge shows a phase
+        # reversal about its electrode on the reading montage.  Chain ends
+        # (Fp1/Fp2, O1/O2, Fz, Pz) cannot reverse and are excluded.
+        # (Fp1/O1 each start or end TWO chains, so counting derivations does
+        # not find them; the ends are named explicitly.)
+        chain_ends = {"Fp1", "Fp2", "O1", "O2", "Fz", "Pz"}
+        inner = [e for e in self.scalp if e not in chain_ends] or list(self.scalp)
+        scalp_idx = np.array([self._idx[e] for e in inner])
         n_foci = 6
         left = [i for i in scalp_idx if mt.POSITIONS[self.electrodes[i]][0] < -1e-6]
         right = [i for i in scalp_idx if mt.POSITIONS[self.electrodes[i]][0] > 1e-6]
