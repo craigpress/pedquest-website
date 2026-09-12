@@ -15,7 +15,10 @@ services:
       EEGLAB_URL_SECRET_FILE: /run/secrets/eeglab_url_secret
     entrypoint: ["/bin/sh", "-c"]
     command:
+      # addgroup: files arrive over NFS as root:users 0660 (OMV's default ACL on
+      # `storage`), so the nginx worker must belong to `users` (gid 100) to read them.
       - >
+        addgroup nginx users 2>/dev/null;
         export EEGLAB_URL_SECRET="$(cat /run/secrets/eeglab_url_secret)" &&
         exec /docker-entrypoint.sh nginx -g 'daemon off;'
     volumes:

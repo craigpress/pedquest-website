@@ -20,8 +20,9 @@ eeg-lab-export-worker  --NFS-->  storage/eeg-lab/<recording_id>/   <--Range--  v
 
 ## One-time setup (in this order)
 
-Each step is idempotent. Steps 1, 4 and 5 change shared infrastructure and were **not** run
-unattended on 2026-09-12 (auto-mode denied them); everything else is staged.
+Each step is idempotent. All five were run on 2026-09-12 with Craig's approval and verified end to
+end (signed 1 MiB Range read through NPM = 206 with matching bytes; expired = 410; tampered = 403;
+`/healthz` = 200 from the Cloudflare edge). Kept here so the store can be rebuilt.
 
 ### 1. OMV — shared folder + NFS export (`ssh omv`)
 
@@ -38,6 +39,17 @@ grep eeg-lab /etc/exports && ls -la /export/eeg-lab     # verify the bind mount 
 ```
 
 `storage` is already an SMB share, so `\\10.100.10.102\storage\eeg-lab` needs nothing more.
+
+Files written over NFS inherit `storage`'s default ACL (`group::---`, `other::---`), which the nginx
+worker (uid 101, in group `users` via the compose command) cannot read. Grant the group once, with a
+default entry so new recordings inherit it:
+
+```sh
+setfacl -R -m g:users:rwX -m d:g:users:rwX "$BASE/storage/eeg-lab"
+```
+
+Symptom if skipped: signed URLs return 403 while `$secure_link` is 1 - the signature is fine, the
+`open()` is what fails. (Applied 2026-09-12.)
 
 ### 2. OMV — nginx origin (`ssh omv`)
 
