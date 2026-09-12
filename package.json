@@ -15,6 +15,7 @@
     "qbank:validate": "tsx scripts/qbank-validate.ts",
     "qbank:import": "tsx scripts/qbank-import.ts",
     "qbank:generate": "tsx scripts/qbank-generate.ts",
+    "qbank:lab-export": "tsx scripts/qbank-lab-export.ts",
     "members:check-match": "tsx scripts/check-member-match.ts"
   },
   "keywords": [],
