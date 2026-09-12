@@ -262,3 +262,88 @@ export function createTrendEngine(durationS: number, fs: number, labels: string[
 
   return { process, marginS: () => margin, trends };
 }
+
+// ── derived views: asymmetry spectrogram and "vs baseline" ────────────────
+//
+// Nothing here touches the signal. Both are read off the stored per-side
+// spectrograms, so a baseline change or a panel switch is a redraw, not a
+// recompute. Conventions follow Persyst's VsBaseline / Asymmetry panels in
+// spirit: relative asymmetry per frequency in %, positive = right louder;
+// FFT vs baseline in dB against the mean baseline spectrum; scalar trends as
+// percent change from their baseline mean.
+
+export interface BaselineStats {
+  t0: number;
+  t1: number;
+  /** epochs that went into the mean */
+  epochs: number;
+  /** mean spectrum per side, length nF (µV²/Hz) */
+  psd: Record<Side, Float32Array>;
+  adr: Record<Side, number>;
+  totalPower: Record<Side, number>;
+  aeegHi: Record<Side, number>;
+  sr: Record<Side, number>;
+}
+
+/** Mean of every trend over [t0, t1). Returns null until at least 5 epochs are filled inside it. */
+export function baselineStats(tr: ViewerTrends, t0: number, t1: number): BaselineStats | null {
+  const e0 = Math.max(0, Math.floor(t0 / tr.hopS));
+  const e1 = Math.min(tr.filled, Math.ceil(t1 / tr.hopS));
+  const n = e1 - e0;
+  if (n < 5) return null;
+  const nF = tr.freqs.length;
+  const sides: Side[] = ["left", "right"];
+  const out: BaselineStats = {
+    t0, t1, epochs: n,
+    psd: { left: new Float32Array(nF), right: new Float32Array(nF) },
+    adr: { left: 0, right: 0 }, totalPower: { left: 0, right: 0 }, aeegHi: { left: 0, right: 0 }, sr: { left: 0, right: 0 },
+  };
+  for (const s of sides) {
+    const psd = tr.psd[s], acc = out.psd[s];
+    let adr = 0, pw = 0, hi = 0, sr = 0;
+    for (let e = e0; e < e1; e++) {
+      const off = e * nF;
+      for (let f = 0; f < nF; f++) acc[f] += psd[off + f];
+      adr += tr.adr[s][e]; pw += tr.totalPower[s][e]; hi += tr.aeegHi[s][e]; sr += tr.sr[s][e];
+    }
+    for (let f = 0; f < nF; f++) acc[f] /= n;
+    out.adr[s] = adr / n; out.totalPower[s] = pw / n; out.aeegHi[s] = hi / n; out.sr[s] = sr / n;
+  }
+  return out;
+}
+
+/**
+ * A power floor for the relative displays. Bins with almost no power in
+ * either hemisphere (the top of the spectrum, suppressed periods) would
+ * otherwise paint ±100 % asymmetry or ±10 dB from nothing. Persyst masks the
+ * same way. 5 % of the mean filled cell is a small number against real
+ * activity and a large one against noise.
+ */
+export function spectrumFloor(tr: ViewerTrends): number {
+  const nF = tr.freqs.length, n = tr.filled * nF;
+  if (!n) return 0;
+  let s = 0;
+  for (let i = 0; i < n; i++) s += tr.psd.left[i] + tr.psd.right[i];
+  return (0.05 * s) / (2 * n);
+}
+
+/** Relative asymmetry at one (epoch, bin): 100·(R−L)/(R+L+ε). */
+export function asymmetryAt(tr: ViewerTrends, e: number, f: number, eps = 0): number {
+  const i = e * tr.freqs.length + f;
+  const l = tr.psd.left[i], r = tr.psd.right[i];
+  const d = l + r + eps;
+  return d > 0 ? (100 * (r - l)) / d : 0;
+}
+
+/** dB of one spectrogram cell against the baseline spectrum, both floored by ε; clamped to ±20 dB. */
+export function vsBaselineDb(tr: ViewerTrends, base: BaselineStats, side: Side, e: number, f: number, eps = 0): number {
+  const v = tr.psd[side][e * tr.freqs.length + f] + eps;
+  const b = base.psd[side][f] + eps;
+  if (!(b > 0) || !(v > 0)) return 0;
+  return Math.max(-20, Math.min(20, 10 * Math.log10(v / b)));
+}
+
+/** Percent change of a scalar trend from its baseline mean. */
+export function pctChange(value: number, baseline: number): number {
+  return baseline > 0 ? (100 * (value - baseline)) / baseline : 0;
+}

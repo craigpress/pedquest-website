@@ -85,6 +85,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   const [palette, setPalette] = useState<PaletteId>(DEFAULT_PALETTE);
   const [panelId, setPanelId] = useState(TREND_PANELS[0].id);
   const [windowId, setWindowId] = useState("full");
+  const [baselineId, setBaselineId] = useState("first5");
   const [windowT0, setWindowT0] = useState(0);
   const [cursorT, setCursorT] = useState<number | null>(null);
   const [loadingPage, setLoadingPage] = useState(false);
@@ -230,6 +231,19 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
     return s && s < durationS ? s : null;
   }, [windowId, durationS]);
   const maxWindowT0 = Math.max(0, durationS - (windowS ?? durationS));
+
+  // Baseline window for the "vs BL" rows. Persyst's default is the opening
+  // minutes; "at cursor" lets an instructor re-baseline after an intervention.
+  const baseline = useMemo(() => {
+    if (!durationS || baselineId === "none") return null;
+    const len = baselineId.endsWith("10") ? 600 : 300;
+    let start = 0;
+    if (baselineId.startsWith("cursor")) {
+      if (cursorT === null) return null;
+      start = Math.min(Math.max(0, durationS - len), Math.max(0, cursorT));
+    }
+    return { t0: start, t1: Math.min(durationS, start + len) };
+  }, [baselineId, cursorT, durationS]);
 
   const scrollWindow = useCallback((deltaS: number) => {
     setWindowT0((cur) => Math.min(maxWindowT0, Math.max(0, cur + deltaS)));
@@ -467,6 +481,20 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             <span style={{ fontSize: 11, color: "var(--text-muted)" }}>wheel over the strip to scroll</span>
           </div>
         )}
+        {group("Baseline", (
+          <select style={sel} value={baselineId} onChange={(e) => setBaselineId(e.target.value)}>
+            <option value="first5">First 5 min</option>
+            <option value="first10">First 10 min</option>
+            <option value="cursor5">5 min from cursor</option>
+            <option value="cursor10">10 min from cursor</option>
+            <option value="none">None</option>
+          </select>
+        ))}
+        {baseline && (
+          <span style={{ fontFamily: "var(--mono-font)", fontSize: 11, color: "var(--text-muted)", alignSelf: "center" }}>
+            BL {formatClock(baseline.t0)} – {formatClock(baseline.t1)}
+          </span>
+        )}
         {group("Heat map", (
           <select style={sel} value={palette} onChange={(e) => choosePalette(e.target.value as PaletteId)}>
             {PALETTES.map((p) => <option key={p.id} value={p.id} title={p.hint}>{p.label}</option>)}
@@ -481,7 +509,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             <TrendStrip
               trends={trends} durationS={durationS} cursorT={cursorT} pageT0={pageT0} pageS={pageS}
               annotations={annotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
-              rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} onScroll={scrollWindow}
+              rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} onScroll={scrollWindow}
               key={trendVersion === 0 ? "empty" : "live"}
             />
           </div>
