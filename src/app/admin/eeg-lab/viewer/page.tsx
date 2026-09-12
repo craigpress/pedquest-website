@@ -65,7 +65,11 @@ function ViewerInner() {
 
   if (source) {
     return (
-      <div style={{ padding: "12px 16px 16px", height: "calc(100vh - 112px)", minHeight: 560, boxSizing: "border-box" }}>
+      <div className="lv-shell">
+        <style>{`
+          .lv-shell { padding: 12px 16px 16px; height: calc(100vh - 112px); min-height: 560px; box-sizing: border-box; }
+          @media (max-width: 900px) { .lv-shell { height: auto; min-height: 0; padding: 8px 8px 24px; } }
+        `}</style>
         <LabViewer source={source} onClose={() => setSource(null)} />
       </div>
     );

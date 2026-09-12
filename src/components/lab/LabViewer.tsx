@@ -400,9 +400,31 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
     : ({ "--lab-overlay": "rgba(255,255,255,0.10)" } as React.CSSProperties);
 
   return (
-    <div style={{ ...themeVars, display: "grid", gridTemplateRows: "auto auto auto 1fr", height: "100%", minHeight: 0, gap: 8, background: theme === "light" ? "var(--bg)" : undefined, borderRadius: 12, padding: theme === "light" ? 8 : 0 }}>
+    <div className="lv-root" style={{ ...themeVars, background: theme === "light" ? "var(--bg)" : undefined, borderRadius: 12, padding: theme === "light" ? 8 : 0 }}>
+      <style>{`
+        .lv-root { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); height: 100%; min-height: 0; gap: 8px; }
+        .lv-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 0 4px; }
+        .lv-bar select { max-width: 100%; }
+        .lv-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 10px; min-height: 0; }
+        .lv-main { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; min-height: 0; }
+        .lv-trend { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .lv-raw { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; min-height: 0; }
+        .lv-side { border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 0; background: var(--bg-card); }
+        /* Phones and narrow tablets: the fixed-height, two-column workstation
+           layout leaves the raw page a few pixels wide.  Stack everything, let
+           the page scroll, and give the raw page a viewport-relative height. */
+        @media (max-width: 900px) {
+          .lv-root { display: flex; flex-direction: column; height: auto; }
+          .lv-bar { gap: 8px 10px; }
+          .lv-body { grid-template-columns: minmax(0, 1fr); }
+          .lv-main { display: flex; flex-direction: column; }
+          .lv-raw { height: 60vh; min-height: 320px; }
+          .lv-side { max-height: 55vh; overflow: auto; }
+        }
+        @media (hover: none) { .lv-wheel-hint { display: none; } }
+      `}</style>
       {/* header */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "0 4px" }}>
+      <div className="lv-bar" style={{ alignItems: "center" }}>
         {onClose && <button type="button" style={mini} onClick={onClose}>← close</button>}
         <div style={{ fontWeight: 600, color: "var(--text)" }}>{opened.title}</div>
         <div style={{ fontFamily: "var(--mono-font)", fontSize: 12, color: "var(--text-muted)" }}>
@@ -421,7 +443,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
       </div>
 
       {/* toolbar */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 12, padding: "0 4px" }}>
+      <div className="lv-bar">
         {group("Montage", (
           <select style={sel} value={montageId} onChange={(e) => setMontageId(e.target.value as ViewerMontageId)}>
             {VIEWER_MONTAGES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
@@ -482,7 +504,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
       </div>
 
       {/* trend toolbar */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 12, padding: "0 4px" }}>
+      <div className="lv-bar">
         {group("Trend panel", (
           <select style={sel} value={panelId} onChange={(e) => setPanelId(e.target.value)}>
             {TREND_PANELS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
@@ -502,7 +524,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             </span>
             <button type="button" style={mini} onClick={() => scrollWindow(windowS)} title="Forward one window">▶</button>
             <button type="button" style={mini} onClick={() => setWindowT0(maxWindowT0)} title="End">⏭</button>
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>wheel over the strip to scroll</span>
+            <span className="lv-wheel-hint" style={{ fontSize: 11, color: "var(--text-muted)" }}>wheel over the strip to scroll</span>
           </div>
         )}
         {group("Baseline", (
@@ -527,9 +549,9 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
       </div>
 
       {/* body */}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 300px", gap: 10, minHeight: 0 }}>
-        <div style={{ display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 6, minHeight: 0 }}>
-          <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+      <div className="lv-body">
+        <div className="lv-main">
+          <div className="lv-trend">
             <TrendStrip
               trends={trends} durationS={durationS} cursorT={cursorT} pageT0={pageT0} pageS={pageS}
               annotations={annotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
@@ -537,7 +559,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
               key={trendVersion === 0 ? "empty" : "live"}
             />
           </div>
-          <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", minHeight: 0 }}>
+          <div className="lv-raw">
             <RawPane
               reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
               sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
@@ -547,7 +569,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             />
           </div>
         </div>
-        <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 12, minHeight: 0, background: "var(--bg-card)" }}>
+        <div className="lv-side">
           {error && <div style={{ color: "var(--accent-secondary)", fontSize: 12.5, marginBottom: 8 }}>{error}</div>}
           <AnnotationPanel
             annotations={annotations} draft={draft} storeLabel={opened.store.label} busy={annBusy}

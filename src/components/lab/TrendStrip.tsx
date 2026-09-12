@@ -398,7 +398,8 @@ export default function TrendStrip({
     <div ref={wrapRef} style={{ width: "100%" }}>
       <canvas
         ref={canvasRef}
-        style={{ width: w, height: h, display: "block", cursor: "pointer", touchAction: "none" }}
+        style={{ width: w, height: h, display: "block", cursor: "pointer", touchAction: "pan-y" }}
+        onPointerCancel={() => { dragging.current = false; }}
         onPointerDown={(e) => { dragging.current = true; (e.target as HTMLElement).setPointerCapture(e.pointerId); seekAt(e.clientX); }}
         onPointerMove={(e) => { if (dragging.current) seekAt(e.clientX); }}
         onPointerUp={() => { dragging.current = false; }}

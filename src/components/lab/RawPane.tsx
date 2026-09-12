@@ -225,7 +225,8 @@ export default function RawPane({
     <div ref={wrapRef} style={{ position: "relative", width: "100%", height: "100%", minHeight: 320 }}>
       <canvas
         ref={canvasRef}
-        style={{ width: size.w, height: size.h, display: "block", cursor: "crosshair", touchAction: "none" }}
+        style={{ width: size.w, height: size.h, display: "block", cursor: "crosshair", touchAction: "pan-y" }}
+        onPointerCancel={() => { dragRef.current = null; setDrag(null); }}
         onPointerDown={(e) => {
           if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
