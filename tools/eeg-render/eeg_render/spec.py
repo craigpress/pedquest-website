@@ -6,7 +6,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import jsonschema
 import yaml
@@ -51,7 +51,119 @@ BACKGROUND_PRESETS: Dict[str, Dict[str, float]] = {
     "burst_suppression":         {"suppression_fraction": 0.75, "cycle_s": 10.0, "ibi_floor": 0.005, "amp_scale": 1.10},
     "suppressed":                {"suppression_fraction": 0.00, "cycle_s": 12.0, "ibi_floor": 1.00, "amp_scale": 0.06},
     "low_voltage":               {"suppression_fraction": 0.00, "cycle_s": 12.0, "ibi_floor": 1.00, "amp_scale": 0.28},
+    # awake hypsarrhythmia is continuous; NREM fragmentation comes from the
+    # synthesizer's sleep-driven suppression fraction, floor 0.30
+    "hypsarrhythmia":            {"suppression_fraction": 0.00, "cycle_s": 9.0, "ibi_floor": 0.30, "amp_scale": 1.00},
 }
+
+#: Hypsarrhythmia defaults when the author gives none (Gibbs & Gibbs: random
+#: high-voltage slow waves and spikes, >200 uV, varying in duration and
+#: location, asynchronous; StatPearls NBK537251 and the Medscape/Wyllie
+#: description "mountainous, chaotic, disorganized rhythms with superimposed
+#: multifocal spikes").  amplitude_uv is the spec's background amplitude.
+HYPSARRHYTHMIA_DEFAULTS = {"amplitude_uv": 260.0, "dominant_hz": 1.5, "slow_fraction": 0.95,
+                           "multifocal_spikes": {"rate_per_s": 1.4, "amplitude_uv": 160.0}}
+
+#: Maturation of neonatal discontinuity by postmenstrual age (weeks).  Columns:
+#: mean interburst interval (s), log-normal spread of the IBI, mean burst
+#: length (s), interburst floor as a fraction of burst amplitude, burst
+#: amplitude (uV, the spec's ``amplitude_uv`` when the author gave none).
+#:
+#: Sources (EndNote record numbers): the longest ACCEPTABLE single IBI by
+#: conceptional age is 46 s at 26 w, 36 s at 27 w, 27 s at 28 w, 20 s at
+#: 31-33 w, 10 s at 34-36 w and 6 s at 37-40 w, with an average IBI of
+#: 6-12 s below 30 w and a quiescent interburst under 25 uV (Laoprasert,
+#: Atlas of Pediatric EEG, rec 2446, citing Hahn 1989 and Selton 2000).
+#: Trace alternant (36-38 w, waning by 40-44 w): bursts 50-300 uV between
+#: interburst activity of 25-50 uV - the distinction from trace discontinu
+#: IS the interburst amplitude, >25 uV vs <25 uV (rec 2446).  At term, IBI
+#: <=6 s is normal, >6 s excessively discontinuous, and normal awake voltage
+#: is 25-50 uV peak-to-peak (Wusthoff 2017, rec 4156; Nash 2011, rec 4282).
+#: With increasing PMA the aEEG minimum rises, the maximum falls, and both
+#: the share of time in IBI and the longest IBI shorten (Vesoulis 2015,
+#: rec 1251; Zhang 2011, rec 1320).
+#:
+#: The mean IBI, spread and burst length are chosen so that the log-normal
+#: draw's ~99th percentile lands on the published maximum while the mean
+#: stays in the published average; burst lengths are not tabulated in
+#: these sources and are set so the cycle stays plausible.  This is a
+#: measuring stick from the literature, not a fit to patient data.
+PMA_TABLE: List[Tuple[float, float, float, float, float, float]] = [
+    # pma,  ibi_s, ibi_sigma, burst_s, ibi_floor, amplitude_uv
+    (26.0, 11.0, 0.60, 4.0, 0.06, 130.0),
+    (28.0,  9.0, 0.50, 5.5, 0.08, 120.0),
+    (30.0,  7.5, 0.45, 7.0, 0.10, 110.0),
+    (32.0,  6.0, 0.40, 9.0, 0.14, 100.0),
+    (34.0,  5.0, 0.32, 11.0, 0.20, 90.0),
+    (36.0,  4.5, 0.28, 12.0, 0.28, 80.0),
+    (38.0,  4.0, 0.25, 8.0, 0.40, 70.0),
+    (40.0,  3.5, 0.22, 7.0, 0.48, 65.0),
+    (42.0,  3.0, 0.20, 7.0, 0.62, 60.0),
+    (44.0,  2.5, 0.20, 8.0, 0.85, 55.0),
+]
+
+
+#: Neonatal graphoelements by postmenstrual age: element -> (pma, rate per
+#: minute, peak-to-peak amplitude uV) breakpoints, linearly interpolated and
+#: zero outside the listed span.  Windows and amplitudes follow the atlas
+#: (rec 2446, ch. 3): delta brushes 24-26 w to 44 w (handled by
+#: ``delta_brushes``); monorhythmic occipital delta 0.3-1.5 Hz, 50-250 uV,
+#: appears 23-24 w, peaks 31-33 w, fades by 35 w, runs of 2-60 s (long at
+#: 28-31 w); temporal theta bursts 4-6 Hz, 1-2 s, 20-200 uV, 26 w to
+#: ~32 w, peak 29-32 w, replaced by temporal alpha bursts AT 33 w (gone by
+#: 34 w); sharp theta on the occipitals of prematures 5-6 Hz, most at
+#: 22-25 w, none near term; frontal sharp transients (encoches frontales)
+#: 50->150 uV biphasic, maximal 35-36 w, diminished after 44 w, absent by
+#: 48 w; anterior slow dysrhythmia 1.5-2 Hz, 50-100 uV frontal delta in
+#: transitional sleep; rhythmic midline central theta 5-9 Hz, 50-200 uV,
+#: a variant.  Rates per minute are NOT tabulated in the source and are set
+#: so a 30 s page at the element's peak age usually shows one; tune per
+#: element through ``background.graphoelements``.
+GRAPHOELEMENT_PMA: Dict[str, List[Tuple[float, float, float]]] = {
+    "occipital_delta": [(23.0, 0.8, 100.0), (28.0, 2.5, 150.0), (32.0, 3.0, 170.0), (34.0, 1.5, 130.0), (35.5, 0.0, 0.0)],
+    "temporal_theta":  [(25.5, 0.0, 0.0), (26.0, 1.0, 60.0), (29.0, 3.0, 90.0), (32.0, 2.5, 80.0), (32.8, 0.0, 0.0)],
+    "temporal_alpha":  [(32.6, 0.0, 0.0), (33.0, 2.5, 60.0), (33.9, 2.0, 60.0), (34.2, 0.0, 0.0)],
+    "stop":            [(22.0, 2.0, 35.0), (25.0, 1.8, 35.0), (28.0, 0.5, 30.0), (31.0, 0.0, 0.0)],
+    "frontal_sharp":   [(33.0, 0.0, 0.0), (34.0, 0.6, 70.0), (35.5, 2.5, 110.0), (40.0, 1.8, 100.0), (44.0, 0.6, 60.0), (48.0, 0.0, 0.0)],
+    "anterior_slow":   [(33.0, 0.0, 0.0), (35.0, 0.8, 70.0), (38.0, 1.2, 80.0), (42.0, 0.6, 60.0), (46.0, 0.0, 0.0)],
+    "midline_theta":   [(28.0, 0.25, 70.0), (40.0, 0.25, 70.0), (44.0, 0.0, 0.0)],
+}
+
+#: Fraction of quiet-sleep bursts that are interhemispherically synchronous
+#: (within 1.5 s): "paradoxical hypersynchrony" below 30 w, ~70% at 31-32 w,
+#: ~80% at 33-34 w, 100% after 37 w (rec 2446).
+SYNCHRONY_PMA: List[Tuple[float, float]] = [
+    (26.0, 1.0), (30.0, 0.98), (31.0, 0.70), (32.5, 0.70), (33.0, 0.80), (34.5, 0.80), (37.0, 1.0),
+]
+
+
+def graphoelement_defaults(pma: float) -> Dict[str, Dict[str, float]]:
+    """Rate and amplitude of every graphoelement at ``pma`` weeks (zero outside its span)."""
+    import numpy as _np
+    out: Dict[str, Dict[str, float]] = {}
+    for name, pts in GRAPHOELEMENT_PMA.items():
+        xs = [p[0] for p in pts]
+        if pma < xs[0] or pma > xs[-1]:
+            out[name] = {"rate_per_min": 0.0, "amplitude_uv": 0.0}
+            continue
+        out[name] = {"rate_per_min": float(_np.interp(pma, xs, [p[1] for p in pts])),
+                     "amplitude_uv": float(_np.interp(pma, xs, [p[2] for p in pts]))}
+    return out
+
+
+def synchrony_default(pma: float) -> float:
+    import numpy as _np
+    return float(_np.interp(pma, [p[0] for p in SYNCHRONY_PMA], [p[1] for p in SYNCHRONY_PMA]))
+
+
+def pma_defaults(pma: float) -> Dict[str, float]:
+    """Interpolate PMA_TABLE at ``pma`` weeks (clamped to the table)."""
+    import numpy as _np
+    xs = [r[0] for r in PMA_TABLE]
+    keys = ("ibi_s", "ibi_sigma", "burst_s", "ibi_floor", "amplitude_uv")
+    return {k: float(_np.interp(pma, xs, [r[i + 1] for r in PMA_TABLE]))
+            for i, k in enumerate(keys)}
+
 
 DEFAULT_SEIZURE = {
     "duration_s": 90.0,
@@ -272,6 +384,18 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bg.setdefault("type", _aeeg_pattern_background(pat))
         bg.setdefault("amplitude_uv", AEEG_PATTERN_AMPLITUDE_UV.get(pat, 75.0))
     bg.setdefault("type", ad["type"])
+    if bg["type"] == "hypsarrhythmia":
+        for k in ("dominant_hz", "amplitude_uv", "slow_fraction"):
+            bg.setdefault(k, HYPSARRHYTHMIA_DEFAULTS[k])
+        ms = dict(bg.get("multifocal_spikes") or {})
+        for k, v in HYPSARRHYTHMIA_DEFAULTS["multifocal_spikes"].items():
+            ms.setdefault(k, v)
+        bg["multifocal_spikes"] = {k: float(v) for k, v in ms.items()}
+    else:
+        ms = bg.get("multifocal_spikes")
+        bg["multifocal_spikes"] = ({"rate_per_s": float(ms.get("rate_per_s", 0.0)),
+                                    "amplitude_uv": float(ms.get("amplitude_uv", 150.0))}
+                                   if ms else None)
     bg.setdefault("dominant_hz", ad["dominant_hz"])
     bg.setdefault("amplitude_uv", ad["amplitude_uv"])
     bg.setdefault("slow_fraction", ad["slow_fraction"])
@@ -280,6 +404,18 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     bg.setdefault("baseline_ecg_uv", float(ad["baseline_ecg_uv"]))
     preset = BACKGROUND_PRESETS[bg["type"]]
     bs = dict(bg.get("burst_suppression", {}) or {})
+    pma = bg.get("pma_weeks")
+    if pma is not None and age == "neonate" and bg["type"] in (
+            "discontinuous", "excessively_discontinuous", "trace_alternant"):
+        row = pma_defaults(float(pma))
+        bs.setdefault("burst_s", row["burst_s"])
+        bs.setdefault("ibi_s", row["ibi_s"])
+        bs.setdefault("ibi_sigma", row["ibi_sigma"])
+        bs.setdefault("ibi_floor", row["ibi_floor"])
+        # AGE_DEFAULTS set amplitude_uv above; a PMA that was given overrides
+        # that default (not an explicit author value) with the maturational one.
+        if "amplitude_uv" not in (s.get("background") or {}):
+            bg["amplitude_uv"] = row["amplitude_uv"]
     if bg["type"] == "burst_suppression":
         bs.setdefault("burst_s", 2.0)
         bs.setdefault("ibi_s", 8.0)
@@ -289,6 +425,24 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bs.setdefault("ibi_s", cyc * preset["suppression_fraction"])
     bs.setdefault("ibi_floor", preset["ibi_floor"])
     bg["burst_suppression"] = {k: float(v) for k, v in bs.items()}
+    # Neonatal graphoelements: defaults from the PMA table (all zero without a
+    # PMA), each element's rate and amplitude overridable by the author.
+    ge_in = dict(bg.get("graphoelements", {}) or {})
+    ge = graphoelement_defaults(float(pma)) if (pma is not None and age == "neonate") else {
+        name: {"rate_per_min": 0.0, "amplitude_uv": 0.0} for name in GRAPHOELEMENT_PMA}
+    for name, row in ge_in.items():
+        row = dict(row or {})
+        if row.get("enabled") is False:
+            ge[name] = {"rate_per_min": 0.0, "amplitude_uv": 0.0}
+            continue
+        ge.setdefault(name, {"rate_per_min": 0.0, "amplitude_uv": 0.0})
+        for k in ("rate_per_min", "amplitude_uv"):
+            if k in row and row[k] is not None:
+                ge[name][k] = float(row[k])
+    bg["graphoelements"] = ge
+    if bg.get("synchrony") is None:
+        bg["synchrony"] = synchrony_default(float(pma)) if (pma is not None and age == "neonate") else 1.0
+    bg["synchrony"] = float(bg["synchrony"])
     if bg.get("asymmetry"):
         asym = dict(bg["asymmetry"])
         asym.setdefault("attenuation_pct", 40.0)
@@ -440,6 +594,8 @@ COMPOSITE_INHERIT = (
 def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
     e = dict(ev)
     kind = e["type"]
+    if kind in ("seizure", "seizure_cluster", "status_epilepticus"):
+        e.setdefault("muscle", "modest")
     if kind == "seizure":
         e.setdefault("onset_min", 0.0)
         for k, v in DEFAULT_SEIZURE.items():
@@ -449,6 +605,46 @@ def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
                 e["evolution"] = evo
             else:
                 e.setdefault(k, v)
+    elif kind in ("spasm", "spasm_cluster"):
+        # Epileptic spasm (Kellaway 1979; Fusco & Vigevano 1993): a generalized
+        # high-voltage slow-wave transient, vertex/frontocentral maximum,
+        # 0.5-1 s, with a brief symmetric EMG burst, followed by a diffuse
+        # electrodecrement of one to several seconds that may carry
+        # low-voltage fast activity.  Spasms cluster every 5-30 s, tens per
+        # cluster, typically on waking.
+        e.setdefault("onset_min", 0.0)
+        e.setdefault("duration_s", 0.8)
+        e.setdefault("onset_region", "generalized")
+        e.setdefault("spread", "none")
+        e.setdefault("decrement_s", 2.5)
+        e.setdefault("decrement_depth", 0.80)
+        e.setdefault("fast_uv", 14.0)
+        # modest: the brief phasic EMG must not bury the slow wave it rides on
+        e.setdefault("muscle", "modest")
+        e.setdefault("postictal_attenuation_s", 0.0)
+        e.setdefault("morphology", "spasm")
+        evo = {"start_hz": 1.0, "end_hz": 1.0, "amplitude_start_uv": 320.0, "amplitude_end_uv": 320.0}
+        evo.update(e.get("evolution", {}) or {})
+        e["evolution"] = evo
+        if kind == "spasm_cluster":
+            e.setdefault("interval_s", 12.0)
+            e.setdefault("count", 12)
+    elif kind == "tonic_seizure":
+        # Tonic seizure: diffuse electrodecrement, then generalized paroxysmal
+        # fast activity (15-25 Hz) building in amplitude with tonic EMG; brief
+        # postictal slowing.
+        e.setdefault("onset_min", 0.0)
+        e.setdefault("duration_s", 12.0)
+        e.setdefault("onset_region", "generalized")
+        e.setdefault("spread", "generalized")
+        e.setdefault("decrement_s", 1.5)
+        e.setdefault("decrement_depth", 0.70)
+        e.setdefault("muscle", "clinical")
+        e.setdefault("postictal_attenuation_s", 20.0)
+        e.setdefault("morphology", "ictal")
+        evo = {"start_hz": 22.0, "end_hz": 15.0, "amplitude_start_uv": 15.0, "amplitude_end_uv": 110.0}
+        evo.update(e.get("evolution", {}) or {})
+        e["evolution"] = evo
     elif kind == "seizure_cluster":
         z = dict(e.get("seizure", {}) or {})
         for k, v in DEFAULT_SEIZURE.items():

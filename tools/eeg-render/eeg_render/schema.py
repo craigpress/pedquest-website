@@ -13,7 +13,11 @@ AGE_GROUPS = ["neonate", "infant", "child", "adolescent"]
 BACKGROUND_TYPES = [
     "continuous", "discontinuous", "burst_suppression", "suppressed",
     "low_voltage", "excessively_discontinuous", "trace_alternant",
+    # infantile epileptic spasms syndrome: very high voltage, chaotic,
+    # asynchronous slow with multifocal spikes; fragments in NREM sleep
+    "hypsarrhythmia",
 ]
+MUSCLE_LEVELS = ["none", "modest", "clinical"]
 REGIONS = [
     "left_temporal", "right_temporal", "left_frontal", "right_frontal",
     "left_central", "right_central", "left_occipital", "right_occipital",
@@ -102,8 +106,26 @@ _EVENT = {
                 "seizure", "seizure_cluster", "status_epilepticus",
                 "sedation_change", "attenuation_transient", "temperature_change",
                 "stimulation", "artifact", "state_change", "rhythmic_pattern",
+                # epileptic spasm: high-voltage generalized slow wave, brief EMG,
+                # then a diffuse electrodecrement with low-voltage fast activity
+                "spasm", "spasm_cluster",
+                # tonic seizure: electrodecrement, then generalized paroxysmal
+                # fast activity building in amplitude with tonic EMG
+                "tonic_seizure",
             ]
         },
+        # how much scalp muscle an ictal run recruits: none (electrographic /
+        # paralysed), modest (default, the 0.3.8 behaviour), clinical
+        "muscle": {"enum": MUSCLE_LEVELS},
+        # spasm / tonic_seizure: seconds of diffuse voltage attenuation
+        "decrement_s": {"type": "number", "minimum": 0, "maximum": 30},
+        # spasm: depth of the decrement (fraction of background removed) and
+        # the low-voltage fast activity riding it
+        "decrement_depth": {"type": "number", "minimum": 0, "maximum": 1},
+        "fast_uv": {"type": "number", "minimum": 0, "maximum": 100},
+        # spasm_cluster: mean seconds between spasms and how many
+        "interval_s": {"type": "number", "minimum": 2, "maximum": 300},
+        "count": {"type": "integer", "minimum": 1, "maximum": 400},
         "label": {"type": "string"},
         # rhythmic_pattern (ACNS rhythmic / periodic pattern - NOT a seizure)
         "pattern": {"type": "string"},
@@ -189,6 +211,41 @@ _BACKGROUND = {
         "reactivity": {"enum": ["present", "absent"]},
         "delta_brushes": {"type": "boolean"},
         "baseline_ecg_uv": {"type": "number", "minimum": 0, "maximum": 30},
+        # neonates only: postmenstrual age drives the discontinuity defaults
+        # (interburst interval, its spread, burst length, interburst floor,
+        # burst voltage) from the maturational tables - see spec.PMA_TABLE.
+        "pma_weeks": {"type": "number", "minimum": 23, "maximum": 48},
+        # neonates: per-element rate / amplitude overrides of the PMA table
+        # (spec.GRAPHOELEMENT_PMA); `enabled: false` silences one.
+        "graphoelements": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                name: {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "rate_per_min": {"type": "number", "minimum": 0, "maximum": 60},
+                        "amplitude_uv": {"type": "number", "minimum": 0, "maximum": 500},
+                        "enabled": {"type": "boolean"},
+                    },
+                }
+                for name in ("occipital_delta", "temporal_theta", "temporal_alpha", "stop",
+                             "frontal_sharp", "anterior_slow", "midline_theta")
+            },
+        },
+        # fraction of bursts that are interhemispherically synchronous
+        "synchrony": {"type": "number", "minimum": 0, "maximum": 1},
+        # hypsarrhythmia (or any background): independent multifocal spikes
+        # and sharp waves, rate over the whole head per second
+        "multifocal_spikes": {
+            "type": ["object", "null"],
+            "additionalProperties": False,
+            "properties": {
+                "rate_per_s": {"type": "number", "minimum": 0, "maximum": 20},
+                "amplitude_uv": {"type": "number", "minimum": 0, "maximum": 600},
+            },
+        },
         "asymmetry": {
             "type": "object",
             "required": ["side"],
@@ -206,6 +263,10 @@ _BACKGROUND = {
             "additionalProperties": False,
             "properties": {
                 "burst_s": _pos, "ibi_s": _pos,
+                # log-normal spread of interburst intervals; the maturational
+                # tables have the longest acceptable IBI at 4-5x the mean in
+                # extreme prematurity and ~1.5x at term
+                "ibi_sigma": {"type": "number", "minimum": 0, "maximum": 1.5},
                 "ibi_floor": {"type": "number", "minimum": 0, "maximum": 1},
                 "epileptiform_discharges": {"type": "integer", "minimum": 2, "maximum": 20},
                 "highly_epileptiform_fraction": {"type": "number", "minimum": 0, "maximum": 1},

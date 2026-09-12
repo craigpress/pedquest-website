@@ -61,8 +61,32 @@ FRAME_S = 32.0          # overlap-add frame length
 #:
 #: Measured, bipolar, 100 s interictal, against real min/med 0.52-0.69 and
 #: max/min 4.2-7.2.
+#:
+#: ``_HI`` came down from 0.75 to 0.50 when the draw became pair-shared (see
+#: CH_GAIN_ASYM_LOG_SD).  A 3x regional draw on a homologous pair makes a
+#: whole bipolar chain run hot on both sides at once, which moved a
+#: calibrated burst-suppression page (PQ-A-003, minute 20) from 16% to 13%
+#: suppressed epochs against a 15-35% band.  Swept over 8 seeds, bipolar
+#: 100 s awake child: HI 0.75 gave max/min 4.2 (median; range 2.3-11.8) and
+#: min/med 0.50; HI 0.50 gives max/min 3.0 (2.2-5.9), min/med 0.56, and the
+#: page back at 16-17%.  The real 4.2-7.2 extremes are muscle- and
+#: eye-laden frontotemporal channels, which the blink and muscle streams
+#: already place anatomically; a random regional gain was standing in for
+#: them and producing false hot regions instead.
 CH_GAIN_LOG_SD_LO = 0.30
-CH_GAIN_LOG_SD_HI = 0.75
+CH_GAIN_LOG_SD_HI = 0.50
+
+#: The spread above is drawn ONCE PER HOMOLOGOUS PAIR (Fp1/Fp2, T3/T4, ...),
+#: with this much independent log-normal spread left between the two sides.
+#: Drawn per electrode instead, 60 seeds gave a worst homologous ratio of
+#: 4.0x median (98% of records had a pair differing >2x) and a hemispheric
+#: median-gain ratio of 1.25 (p90 1.70) - a reader calls >1.5x an abnormal
+#: asymmetry, so nearly every "normal" background carried a false focal
+#: finding.  The real 4.2-7.2x max/min spread is between REGIONS (a muscle-
+#: and eye-laden frontotemporal channel against a quiet parasagittal one),
+#: not between homologues, and the pair-shared draw keeps that spread.  At
+#: 0.12 a typical homologous pair differs 1.13x, the 95th percentile 1.3x.
+CH_GAIN_ASYM_LOG_SD = 0.12
 
 #: Weight of the continuous muscle floor, awake.  NOT microvolts: this term is
 #: mixed in before ``x *= self.amp_rms``, so it scales with the record's own
@@ -96,6 +120,44 @@ EMG_FLOOR_W = 0.70
 #: clinical authoring value, not a scaling bug.
 EMG_ICTAL_GAIN = 1.5
 
+#: Fraction of the tonic muscle floor withdrawn during a generalized
+#: spike-wave (absence-type) run, which is behavioural arrest and staring
+#: rather than a convulsion.  Blinks stop with it.  Only ``morphology:
+#: spike_wave`` seizures do this; every other ictal morphology recruits
+#: muscle through ``EMG_ICTAL_GAIN`` instead.
+ABSENCE_EMG_DROP = 0.65
+
+#: Burst edges by background type: ``(rise_s, fall_s, lag_s, regional_log_sd)``.
+#: The old envelope was a box smoothed over 0.22 s, identical on every
+#: electrode, so a neonatal burst snapped on and off head-wide like a switch.
+#: A real burst builds over a fraction of a second and decays over one to
+#: two seconds as its slow waves fade into the interburst interval, and its
+#: edges lead or lag by a few hundred milliseconds from one region to another.
+#: ``rise`` is centred on the scheduled start and ``fall`` on the scheduled
+#: end, so the burst's mean duration - and the suppression fraction the trend
+#: is measured against - is unchanged.  ``lag`` is the per-electrode edge
+#: offset of a spatially smooth (linear-in-position) field drawn once per
+#: burst; ``regional_log_sd`` tilts the burst's amplitude across the head the
+#: same way.  Anaesthetic burst suppression keeps an abrupt onset, which is
+#: what it actually looks like, and its short tail protects the <5 uV
+#: interburst criterion.  Continuous backgrounds use the default and see no
+#: edge at all (their pseudo-bursts are merged in ``_build_burst_schedule``).
+#: The fifth element, ``hump``, is how much a burst waxes and wanes inside
+#: its own span (0 = flat-topped, 0.3 = the ends sit at 70% of the peak);
+#: neonatal bursts crescendo and decrescendo, anaesthetic ones do not.
+BURST_EDGE_S: Dict[str, Tuple[float, float, float, float, float]] = {
+    "burst_suppression": (0.15, 0.35, 0.05, 0.08, 0.0),
+    "discontinuous": (1.20, 3.00, 0.60, 0.18, 0.30),
+    "excessively_discontinuous": (0.80, 2.00, 0.50, 0.18, 0.25),
+    "trace_alternant": (2.00, 4.00, 0.60, 0.15, 0.30),
+    "hypsarrhythmia": (0.40, 0.90, 0.30, 0.25, 0.20),
+}
+
+#: Scalp muscle recruited by an ictal run, as a multiple of the tonic floor,
+#: by the run's ``muscle`` setting.  ``modest`` is the 0.3.8 constant.
+MUSCLE_FACTOR: Dict[str, float] = {"none": 0.0, "modest": 1.5, "clinical": 4.0}
+_BURST_EDGE_DEFAULT = (0.11, 0.11, 0.0, 0.0, 0.0)
+
 #: Spontaneous blinks per second, awake.  ~0.25/s is 15/min, an ordinary rate.
 #: Set to 0 to disable.  Gated by wakefulness and by the burst envelope, so a
 #: sleeping or suppressed record does not blink.
@@ -116,6 +178,33 @@ BLINK_RATE_HZ = 0.25
 #: fields, where most derivation pairs sit in the leak and see the same value.
 #: A wrong model is worse than an honest constant.
 ICTAL_GAIN = 2.0
+
+#: Spatial correlation length of the per-electrode background noise, in head
+#: units (adjacent 10-20 electrodes sit ~0.5 apart).  Volume conduction blurs
+#: a cortical source over several centimetres of scalp, so neighbouring
+#: electrodes see partly the SAME activity; the old model gave each electrode
+#: an independent draw plus one head-wide common row, and a bipolar chain
+#: subtracts the common row out, leaving adjacent derivations with only the
+#: -0.5 that sharing an electrode imposes.  Measured on CHB-MIT, longitudinal
+#: bipolar, 100 s interictal, four records: |r| between derivations whose
+#: midpoints sit <0.45 apart is 0.46-0.71, <0.75 is 0.23-0.42, 1.1-1.6 is
+#: 0.15-0.25.  Ours before: 0.42-0.45 / 0.23-0.25 / 0.10-0.14.  A Gaussian
+#: kernel on the independent rows puts the correlation where the real
+#: signal has it - at short range, falling with distance - which no amount of
+#: head-wide common mode can, because bipolar derivation cancels that.
+#:
+#: Correlated neighbours make a bipolar DIFFERENCE smaller, and the bank's
+#: amplitudes (aEEG margins, 5 uV interburst criterion) were all calibrated
+#: on bipolar derivations.  ``_build_spatial_mix`` therefore rescales the
+#: kernel so the variance of a nearest-neighbour derivation is unchanged;
+#: referential amplitude rises instead, which is the direction real
+#: referential-vs-bipolar amplitude actually goes.
+#:
+#: Far-pair correlation (>1.6) is NOT this mechanism.  Real 0.11-0.22 there
+#: comes from per-electrode gain mismatch leaking common mode into every
+#: derivation (already modelled by CH_GAIN_LOG_SD_*, and seed-dependent: two
+#: seeds measured 0.06 and 0.11) plus ocular and cardiac artifact.
+SPATIAL_CORR_LENGTH = 0.65
 
 #: Peak microvolts of a blink at Fp1/Fp2, referential.  Real Fp blinks run
 #: 100-300 uV, and a bipolar chain halves one (Fp1 - F7), so the 95 used by the
@@ -396,6 +485,13 @@ class SeizureInstance:
     index: int          # index into spec["events"]
     ordinal: int = 0    # position within a cluster
     kind: str = "seizure"
+    #: scalp muscle recruited by this run: none / modest / clinical
+    muscle: str = "modest"
+    #: seconds of diffuse electrodecrement tied to this run (spasm: after the
+    #: slow wave; tonic seizure: before the fast activity)
+    decrement_s: float = 0.0
+    decrement_depth: float = 0.0
+    fast_uv: float = 0.0
     #: waveform family: ``ictal`` (sharply contoured evolving run),
     #: ``rda`` (monomorphic rhythmic delta), ``periodic`` (LPD/GPD - a sharp
     #: transient with an after-going slow wave, repeating at a fixed rate)
@@ -473,6 +569,7 @@ class Synthesizer:
         self.electrodes: List[str] = self.scalp + mt.REFERENCE_ELECTRODES
         self.n_elec = len(self.electrodes)
         self._idx = {ch: i for i, ch in enumerate(self.electrodes)}
+        self._spatial_mix = self._build_spatial_mix()
 
         self.frame_n = int(round(FRAME_S * self.fs))
         if self.frame_n % 2:
@@ -510,6 +607,8 @@ class Synthesizer:
         self._build_control_timelines()
         self._build_burst_schedule()
         self._build_blink_schedule()
+        self._build_graphoelement_schedule()
+        self._build_multifocal_spikes()
         self._collect_seizures()
         self.artifacts = [e for e in spec["events"] if e["type"] == "artifact"]
         self.stimulations = [e for e in spec["events"] if e["type"] == "stimulation"]
@@ -563,6 +662,12 @@ class Synthesizer:
         self.st_brush = self._mk("brush", band_shape(f, 13.0, 4.5, order=1.0), cen * 0.6 + temp * 0.5, common=0.35)
         self.st_theta = self._mk("theta", band_shape(f, 5.0, 1.8, order=1.0), temp * 0.6 + cen * 0.5, common=0.5)
         self.st_emg = self._mk("emg", hp_lp_shape(f, 22.0, 95.0), temp, common=0.15)
+        if self.bg["type"] == "hypsarrhythmia":
+            # "no topographical distribution, no frequency or amplitude
+            # gradient": the slow activity is asynchronous between regions, so
+            # the head-wide shared component is cut for the slow streams.
+            for st in (self.st_broad, self.st_delta, self.st_theta):
+                st.common = 0.12
         # tonic floor gets its own, broader field; st_emg stays peaked for artifacts
         musc = _profile(ch, _MUSCLE, 0.30)
         for e in mt.REFERENCE_ELECTRODES:
@@ -630,9 +735,29 @@ class Synthesizer:
         # electrode can read hot (poor contact, focal pathology, muscle) far
         # more easily than a live channel can read much quieter than its
         # neighbours.
-        z = rng.standard_normal(self.n_elec)
-        self._ch_gain = np.exp(
-            np.where(z < 0.0, CH_GAIN_LOG_SD_LO, CH_GAIN_LOG_SD_HI) * z)
+        # One regional draw per homologous pair (mirror the x coordinate;
+        # midline electrodes are their own pair), plus a small independent
+        # left-right term.  See CH_GAIN_ASYM_LOG_SD.
+        keys: List[Tuple[float, float]] = []
+        key_of: List[int] = []
+        for e in self.electrodes:
+            x, y = mt.POSITIONS.get(e, (0.0, 0.0))
+            k = (round(abs(x), 3), round(y, 3))
+            if k not in keys:
+                keys.append(k)
+            key_of.append(keys.index(k))
+        zk = rng.standard_normal(len(keys))[np.asarray(key_of)]
+        ze = rng.standard_normal(self.n_elec)
+        gain = np.exp(
+            np.where(zk < 0.0, CH_GAIN_LOG_SD_LO, CH_GAIN_LOG_SD_HI) * zk
+            + CH_GAIN_ASYM_LOG_SD * ze)
+        # Anchor the median SCALP gain at 1 so ``amplitude_uv`` means the
+        # median channel of every record.  With ~11 regional draws instead of
+        # 19 independent ones, an unanchored median swung ~1.4x between
+        # seeds, which moved a calibrated burst-suppression page from 16% to
+        # 12% suppressed epochs with no change of spec.
+        scalp = [self._idx[e] for e in self.scalp]
+        self._ch_gain = gain / float(np.median(gain[scalp]))
 
     def channel_am(self, t: np.ndarray) -> np.ndarray:
         return np.vstack([
@@ -745,6 +870,11 @@ class Synthesizer:
         temp = self.temperature_at(t)
         cold = 0.22 * np.clip((35.0 - temp) / 2.5, 0.0, 1.6)
         sleep = 0.05 * self._sleep_at(t) if self.age == "neonate" else 0.0
+        if self.bg["type"] == "hypsarrhythmia":
+            # NREM sleep fragments hypsarrhythmia into grouped bursts with
+            # periods of voltage attenuation (the "modified" variant); awake
+            # it is continuous.
+            sleep = 0.35 * self._sleep_at(t)
         out = (sed if len(self._sed_t) > 1 else base) + cold + sleep
         return np.clip(out, 0.0, 0.96)
 
@@ -762,12 +892,22 @@ class Synthesizer:
             sf = float(self.suppression_fraction_at(np.array([max(t, 0.0)]))[0])
             cyc = cycle0 * (1.0 + 1.35 * max(0.0, sf - 0.3))
             if sf < 0.03:
-                starts.append(t)
-                ends.append(t + 300.0)
-                t += 300.0
+                # Continuous: extend the running pseudo-burst instead of
+                # abutting a new one, so the edge ramps never meet inside it.
+                # 30 s steps (not 300) so a state or sedation change that
+                # brings discontinuity is honoured within half a minute; the
+                # merge keeps a continuous record one unbroken burst.
+                if ends and abs(ends[-1] - t) < 1e-9:
+                    ends[-1] = t + 30.0
+                else:
+                    starts.append(t)
+                    ends.append(t + 30.0)
+                t += 30.0
                 continue
             burst = max(0.25, cyc * (1.0 - sf) * float(_lognorm(rng, 1, 0.22)[0]))
-            ibi = max(0.25, cyc * sf * float(_lognorm(rng, 1, 0.26)[0]))
+            # IBI spread widens with prematurity (spec.PMA_TABLE); 0.26 is the
+            # historical default every existing spec keeps.
+            ibi = max(0.25, cyc * sf * float(_lognorm(rng, 1, float(bs.get("ibi_sigma", 0.26)))[0]))
             starts.append(t)
             ends.append(t + burst)
             t += burst + ibi
@@ -813,6 +953,108 @@ class Synthesizer:
             rows[i] = prof * _BLINK_FIELD.get(e, 0.04)
         return rows
 
+    # ---------------- neonatal graphoelements ----------------
+
+    #: Per element: (mean duration s, log-sd of duration, carrier Hz range,
+    #: laterality, burst-bound).  Laterality: "bilateral" (synchronous both
+    #: sides), "unilateral" (one side per event), "midline".  Burst-bound
+    #: elements are gated by the head-wide burst envelope so in a
+    #: discontinuous record they live inside bursts.
+    _GE_SHAPE: Dict[str, Tuple[float, float, Tuple[float, float], str, bool]] = {
+        "occipital_delta": (8.0, 0.7, (0.4, 1.4), "bilateral", True),
+        "temporal_theta": (1.5, 0.25, (4.0, 6.0), "unilateral", True),
+        "temporal_alpha": (1.5, 0.25, (8.0, 10.0), "unilateral", True),
+        "stop": (1.0, 0.3, (5.0, 6.0), "unilateral", True),
+        "frontal_sharp": (0.45, 0.0, (0.0, 0.0), "bilateral", False),
+        "anterior_slow": (3.0, 0.35, (1.5, 2.0), "bilateral", False),
+        "midline_theta": (1.5, 0.3, (5.0, 9.0), "midline", True),
+    }
+    #: Spatial fields (electrode weight; the unilateral ones list the LEFT
+    #: field and are mirrored for the right).
+    _GE_FIELD: Dict[str, Dict[str, float]] = {
+        "occipital_delta": {"O1": 1.0, "O2": 1.0, "T5": 0.45, "T6": 0.45, "P3": 0.45, "P4": 0.45, "Pz": 0.3},
+        "temporal_theta": {"T3": 1.0, "F7": 0.5, "T5": 0.5, "C3": 0.25},
+        "temporal_alpha": {"T3": 1.0, "F7": 0.5, "T5": 0.5, "C3": 0.25},
+        "stop": {"O1": 1.0, "P3": 0.4, "T5": 0.4},
+        "frontal_sharp": {"Fp1": 1.0, "Fp2": 1.0, "F3": 0.6, "F4": 0.6, "Fz": 0.6, "F7": 0.45, "F8": 0.45},
+        "anterior_slow": {"Fp1": 1.0, "Fp2": 1.0, "F3": 1.0, "F4": 1.0, "Fz": 0.9, "F7": 0.6, "F8": 0.6, "C3": 0.3, "C4": 0.3, "Cz": 0.3},
+        "midline_theta": {"Cz": 1.0, "C3": 0.4, "C4": 0.4, "Fz": 0.35, "Pz": 0.35},
+    }
+    _MIRROR = {"Fp1": "Fp2", "F7": "F8", "F3": "F4", "T3": "T4", "C3": "C4", "T5": "T6", "P3": "P4", "O1": "O2"}
+
+    def _build_graphoelement_schedule(self) -> None:
+        """Draw every graphoelement's events over the whole record at construction.
+
+        Times, durations, carrier frequencies, sides and amplitude jitter are
+        all drawn from the record seed here, so which chunk asks for a given
+        second cannot change what it contains.
+        """
+        self._ge_events: Dict[str, np.ndarray] = {}
+        ge = (self.bg.get("graphoelements") or {}) if self.age == "neonate" else {}
+        span = self.duration_s + 120.0
+        for name, cfg in ge.items():
+            rate = float(cfg.get("rate_per_min", 0.0))
+            amp = float(cfg.get("amplitude_uv", 0.0))
+            if rate <= 0 or amp <= 0 or name not in self._GE_SHAPE:
+                continue
+            mean_s, dur_sd, (f0, f1), lat, _ = self._GE_SHAPE[name]
+            rng = substream(self.seed, "graphoelement", name)
+            n = max(1, int(span * rate / 60.0 * 1.8))
+            gaps = _lognorm(rng, n, 0.6) * (60.0 / rate)
+            times = np.cumsum(gaps) - 60.0
+            times = times[times < span]
+            m = times.size
+            if name == "occipital_delta":
+                # runs are longest at 28-31 w ("commonly >30 s"), short before 28 w
+                pma = float(self.bg.get("pma_weeks") or 32.0)
+                mean_s = 3.0 if pma < 28.0 else (14.0 if pma <= 31.0 else 6.0)
+            dur = np.clip(mean_s * _lognorm(rng, m, dur_sd), 0.3, 60.0) if dur_sd > 0 else np.full(m, mean_s)
+            freq = rng.uniform(f0, f1, m) if f1 > 0 else np.zeros(m)
+            side = (rng.integers(0, 2, m) * 2 - 1).astype(float) if lat == "unilateral" else np.zeros(m)
+            aj = amp * _lognorm(rng, m, 0.30)
+            phase = rng.uniform(0, 2 * np.pi, m)
+            self._ge_events[name] = np.column_stack([times, dur, freq, side, aj, phase])
+
+    def _ge_field(self, name: str, side: float) -> np.ndarray:
+        base = self._GE_FIELD[name]
+        w = np.zeros(self.n_elec)
+        for e, v in base.items():
+            if side > 0 and e in self._MIRROR:
+                e = self._MIRROR[e]
+            if e in self._idx:
+                w[self._idx[e]] = max(w[self._idx[e]], v)
+        return w
+
+    def graphoelement_rows(self, t: np.ndarray) -> np.ndarray:
+        """(n_elec, n) microvolts of the scheduled neonatal graphoelements over ``t``."""
+        bound = np.zeros((self.n_elec, t.size))   # gated by the burst envelope
+        free = np.zeros((self.n_elec, t.size))    # frontal transients, anterior slow
+        if not getattr(self, "_ge_events", None) or t.size == 0:
+            return bound
+        for name, ev in self._ge_events.items():
+            _, _, _, lat, burst_bound = self._GE_SHAPE[name]
+            target = bound if burst_bound else free
+            sel = ev[(ev[:, 0] + ev[:, 1] > t[0] - 1.0) & (ev[:, 0] < t[-1] + 1.0)]
+            for t0, dur, freq, side, amp, phase in sel:
+                if name == "frontal_sharp":
+                    # broad biphasic transient, negative then positive, ~0.4 s
+                    d = t - t0
+                    wave = (np.exp(-0.5 * ((d - 0.10) / 0.055) ** 2)
+                            - 0.75 * np.exp(-0.5 * ((d - 0.27) / 0.085) ** 2))
+                    sig = -amp * 0.5 * wave
+                else:
+                    u = (t - t0) / max(dur, 1e-3)
+                    win = np.where((u > 0) & (u < 1), np.sin(np.pi * np.clip(u, 0, 1)) ** 1.5, 0.0)
+                    ph = 2 * np.pi * freq * (t - t0) + phase
+                    carrier = np.sin(ph)
+                    if name in ("temporal_theta", "stop", "temporal_alpha"):
+                        carrier = (carrier + 0.25 * np.sin(3 * ph)) / 1.03   # sharply contoured
+                    sig = amp * 0.5 * win * carrier
+                target += np.outer(self._ge_field(name, side if lat == "unilateral" else 0.0), sig)
+        if bound.any():
+            bound *= self.burst_envelope(t)[None, :]
+        return bound + free
+
     def _ibi_floor_at(self, t: np.ndarray) -> np.ndarray:
         """Interburst residual amplitude; sedation drives it toward true flat."""
         sed = _piecewise(self._sed_t, self._sed_sf, t) if len(self._sed_t) > 1 else np.zeros_like(t)
@@ -823,21 +1065,78 @@ class Synthesizer:
             floor = np.interp(t / 3600.0, [p[0] for p in points], [p[1] for p in points])
         return floor
 
+    def _burst_edge(self) -> Tuple[float, float, float, float, float]:
+        return BURST_EDGE_S.get(self.bg["type"], _BURST_EDGE_DEFAULT)
+
+    def _bursts_touching(self, t: np.ndarray, rise: float, fall: float) -> range:
+        """Indices of scheduled bursts whose ramps reach into ``t``."""
+        if t.size == 0:
+            return range(0)
+        lo = float(t[0]) - fall - 1.0
+        hi = float(t[-1]) + rise + 1.0
+        k0 = int(np.searchsorted(self._burst_end, lo, side="left"))
+        k1 = int(np.searchsorted(self._burst_start, hi, side="right"))
+        return range(max(k0, 0), min(k1, len(self._burst_start)))
+
+    @staticmethod
+    def _burst_shape(t: np.ndarray, start: float, end: float, rise: float, fall: float,
+                     hump: float = 0.0) -> np.ndarray:
+        # Rise centred on the scheduled start, fall centred on the scheduled
+        # end, so the burst keeps its scheduled mean duration.
+        shape = (smoothstep((t - start) / rise + 0.5)
+                 * (1.0 - smoothstep((t - end) / fall + 0.5)))
+        if hump > 0:
+            u = np.clip((t - start) / max(end - start, 1e-6), 0.0, 1.0)
+            shape = shape * ((1.0 - hump) + hump * np.sin(np.pi * u))
+        return shape
+
     def burst_envelope(self, t: np.ndarray) -> np.ndarray:
-        """Smoothed 0..1 burst indicator lifted by the interburst floor."""
-        k = max(3, int(round(0.22 * self.fs)) | 1)
-        # Evaluate the indicator over an absolute-time margin rather than padding
-        # the request's own edge value: a burst straddling a chunk boundary must
-        # smooth identically whichever chunk asked for it.
-        te = _margin_time(t, k, self.fs)
-        idx = np.searchsorted(self._burst_start, te, side="right") - 1
-        idx = np.clip(idx, 0, len(self._burst_start) - 1)
-        inside = (te >= self._burst_start[idx]) & (te < self._burst_end[idx])
-        win = np.hanning(k)
-        win /= win.sum()
-        env = np.convolve(inside.astype(float), win, mode="same")[k:-k]
+        """Head-wide 0..1 burst envelope lifted by the interburst floor.
+
+        A pure function of absolute time (partition-independent).  Drives
+        the muscle floor and blinks; the per-electrode version the background
+        is scaled by is ``burst_envelope_rows``.
+        """
+        rise, fall, _, _, hump = self._burst_edge()
+        env = np.zeros_like(t)
+        for k in self._bursts_touching(t, rise, fall):
+            env += self._burst_shape(t, self._burst_start[k], self._burst_end[k], rise, fall, hump)
+        env = np.clip(env, 0.0, 1.0)
         floor = self._ibi_floor_at(t)
         return floor + (1.0 - floor) * env
+
+    def burst_envelope_rows(self, t: np.ndarray) -> np.ndarray:
+        """(n_elec, n) burst envelope with per-burst edge lag and regional tilt.
+
+        Each burst draws, keyed on its index in the schedule, a linear field
+        over electrode position: edges lead or lag by up to ``lag_s`` and the
+        burst's amplitude tilts by ``regional_log_sd``.  Keying on the burst
+        index rather than the request window keeps a chunked export identical
+        to a whole-record render.
+        """
+        rise, fall, lag, reg, hump = self._burst_edge()
+        floor = self._ibi_floor_at(t)
+        if lag <= 0 and reg <= 0:
+            return np.broadcast_to(self.burst_envelope(t), (self.n_elec, t.size)).copy()
+        pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes], float)
+        env = np.zeros((self.n_elec, t.size))
+        sync = float(self.bg.get("synchrony", 1.0))
+        for k in self._bursts_touching(t, rise, fall + lag + 1.5):
+            rng = substream(self.seed, "burst_edge", k)
+            z = rng.standard_normal(4) / math.sqrt(2.0)
+            shift = lag * (z[0] * pos[:, 0] + z[1] * pos[:, 1])
+            # Interhemispheric asynchrony: with probability 1 - synchrony the
+            # two hemispheres start this burst 0.5-1.5 s apart (rec 2446:
+            # ~70% synchronous at 31-32 w, 80% at 33-34 w, 100% after 37 w).
+            if rng.uniform() > sync:
+                hemi_lag = rng.uniform(0.5, 1.5) * (1.0 if rng.uniform() < 0.5 else -1.0)
+                shift = shift + 0.5 * hemi_lag * np.sign(pos[:, 0])
+            tilt = np.exp(reg * (z[2] * pos[:, 0] + z[3] * pos[:, 1]))
+            tt = t[None, :] - shift[:, None]
+            env += tilt[:, None] * self._burst_shape(
+                tt, self._burst_start[k], self._burst_end[k], rise, fall, hump)
+        env = np.clip(env, 0.0, 1.35)
+        return floor[None, :] + (1.0 - floor[None, :]) * env
 
     # ---------------- seizures ----------------
 
@@ -904,10 +1203,71 @@ class Synthesizer:
                 ))
             elif ev["type"] == "rhythmic_pattern":
                 out.extend(self._rpp_instances(ev, i))
+            elif ev["type"] in ("spasm", "spasm_cluster"):
+                evo = ev["evolution"]
+                if ev["type"] == "spasm":
+                    times = [float(ev["onset_min"]) * 60.0]
+                else:
+                    jit = substream(self.seed, "spasms", i)
+                    step = float(ev["interval_s"])
+                    times, t = [], float(ev["onset_min"]) * 60.0
+                    for _ in range(int(ev["count"])):
+                        times.append(t)
+                        t += max(step * float(_lognorm(jit, 1, 0.35)[0]), 3.0)
+                for k, t0 in enumerate(times):
+                    out.append(SeizureInstance(
+                        t0=t0, duration_s=float(ev["duration_s"]),
+                        onset_region=ev["onset_region"], start_hz=1.0, end_hz=1.0,
+                        amp_start=float(evo["amplitude_start_uv"]), amp_end=float(evo["amplitude_end_uv"]),
+                        spread="none", postictal_s=float(ev["postictal_attenuation_s"]),
+                        index=i, ordinal=k, kind="spasm", morph="spasm",
+                        muscle=ev.get("muscle", "clinical"),
+                        decrement_s=float(ev["decrement_s"]), decrement_depth=float(ev["decrement_depth"]),
+                        fast_uv=float(ev["fast_uv"]),
+                    ))
+            elif ev["type"] == "tonic_seizure":
+                evo = ev["evolution"]
+                dec = float(ev["decrement_s"])
+                # the fast activity starts when the decrement ends
+                out.append(SeizureInstance(
+                    t0=float(ev["onset_min"]) * 60.0 + dec,
+                    duration_s=float(ev["duration_s"]),
+                    onset_region=ev["onset_region"],
+                    start_hz=float(evo["start_hz"]), end_hz=float(evo["end_hz"]),
+                    amp_start=float(evo["amplitude_start_uv"]), amp_end=float(evo["amplitude_end_uv"]),
+                    spread=ev["spread"], postictal_s=float(ev["postictal_attenuation_s"]),
+                    index=i, kind="tonic_seizure", morph="ictal",
+                    muscle=ev.get("muscle", "clinical"),
+                    decrement_s=dec, decrement_depth=float(ev["decrement_depth"]),
+                ))
+        # per-run muscle setting for the ordinary seizure kinds
+        for z in out:
+            if z.kind in ("seizure", "seizure_cluster", "status_epilepticus"):
+                z.muscle = str(self.spec["events"][z.index].get("muscle") or "modest")
         out.sort(key=lambda z: z.t0)
         self.seizures = out
         self.ictal = [z for z in out if z.kind != "rhythmic_pattern"]
         self.rhythmic_patterns = [z for z in out if z.kind == "rhythmic_pattern"]
+        # electrodecrements: (start, end, depth)
+        self._decrements: List[Tuple[float, float, float]] = []
+        for z in out:
+            if z.decrement_s <= 0:
+                continue
+            if z.kind == "spasm":
+                start = z.t0 + 0.55 * z.duration_s
+                self._decrements.append((start, start + z.decrement_s, z.decrement_depth))
+            elif z.kind == "tonic_seizure":
+                self._decrements.append((z.t0 - z.decrement_s, z.t0 + 0.4, z.decrement_depth))
+
+    def decrement_envelope(self, t: np.ndarray) -> np.ndarray:
+        """Diffuse voltage attenuation tied to spasms and tonic seizures, 0..1."""
+        env = np.ones_like(t)
+        for start, end, depth in getattr(self, "_decrements", []):
+            if end < t[0] - 1.0 or start > t[-1] + 1.0:
+                continue
+            shape = smoothstep((t - start) / 0.25) * (1.0 - smoothstep((t - end) / 0.6))
+            env *= 1.0 - depth * shape
+        return env
 
     def _rpp_instances(self, ev: Dict, i: int) -> List[SeizureInstance]:
         """Intermittent runs of an ACNS rhythmic / periodic pattern.
@@ -927,21 +1287,38 @@ class Synthesizer:
         fluct = 0.45 if "fluctuat" in modifier else 0.15
         duty_gap = 0.55 if "intermittent" in modifier else 0.30
 
-        t = float(ev["onset_min"]) * 60.0
-        end = t + float(ev["duration_min"]) * 60.0
+        pat = str(ev.get("pattern") or "").upper()
+        # Bilateral INDEPENDENT periodic discharges need two generators with
+        # their own clocks: one per hemisphere, at slightly different rates,
+        # with independent run timing.  Same for BIRDA.
+        if pat.startswith(("BIPD", "BIRD")):
+            hemi = {"left_hemisphere": ("left_hemisphere",), "right_hemisphere": ("right_hemisphere",)}
+            region = ev["onset_region"]
+            if region in ("left_hemisphere", "right_hemisphere", "left_temporal", "right_temporal"):
+                base_regions = [region.replace("left", "right") if region.startswith("left") else region.replace("right", "left"), region]
+            else:
+                base_regions = ["left_temporal", "right_temporal"]
+            generators = [(base_regions[0], 0.88, substream(self.seed, "rpp", i, "L")),
+                          (base_regions[1], 1.12, substream(self.seed, "rpp", i, "R"))]
+        else:
+            generators = [(ev["onset_region"], 1.0, rng)]
+
         out: List[SeizureInstance] = []
-        k = 0
-        while t < end - 1.0 and k < 4000:
-            dur = min(run * float(_lognorm(rng, 1, 0.18)[0]), end - t)
-            out.append(SeizureInstance(
-                t0=t, duration_s=dur, onset_region=ev["onset_region"],
-                start_hz=f0, end_hz=f0, amp_start=amp, amp_end=amp,
-                spread="none", postictal_s=0.0, index=i, ordinal=k,
-                kind="rhythmic_pattern", morph=morph, fluctuate=fluct,
-                plus_fast=plus_fast,
-            ))
-            t += dur + max(run * duty_gap * float(_lognorm(rng, 1, 0.3)[0]), 3.0)
-            k += 1
+        for gi, (region, fmul, grng) in enumerate(generators):
+            t = float(ev["onset_min"]) * 60.0 + (0.0 if gi == 0 else float(grng.uniform(0.0, run * 0.5)))
+            end = float(ev["onset_min"]) * 60.0 + float(ev["duration_min"]) * 60.0
+            k = 0
+            while t < end - 1.0 and k < 4000:
+                dur = min(run * float(_lognorm(grng, 1, 0.18)[0]), end - t)
+                out.append(SeizureInstance(
+                    t0=t, duration_s=dur, onset_region=region,
+                    start_hz=f0 * fmul, end_hz=f0 * fmul, amp_start=amp, amp_end=amp,
+                    spread="none", postictal_s=0.0, index=i, ordinal=k * len(generators) + gi,
+                    kind="rhythmic_pattern", morph=morph, fluctuate=fluct,
+                    plus_fast=plus_fast,
+                ))
+                t += dur + max(run * duty_gap * float(_lognorm(grng, 1, 0.3)[0]), 3.0)
+                k += 1
         return out
 
     def _spread_region(self, inst: SeizureInstance) -> Optional[str]:
@@ -977,13 +1354,89 @@ class Synthesizer:
                 mt.generator_field_scale(region, self.electrodes))
         return cached[region]
 
+    #: Vertex / frontocentral field of the spasm slow wave.
+    _SPASM_FIELD = {"Cz": 1.0, "Fz": 0.92, "C3": 0.88, "C4": 0.88, "F3": 0.82, "F4": 0.82,
+                    "Pz": 0.75, "Fp1": 0.6, "Fp2": 0.6, "P3": 0.6, "P4": 0.6,
+                    "F7": 0.5, "F8": 0.5, "T3": 0.45, "T4": 0.45, "T5": 0.4, "T6": 0.4,
+                    "O1": 0.4, "O2": 0.4}
+
+    def _spasm_rows(self, inst: SeizureInstance, t: np.ndarray) -> np.ndarray:
+        """One epileptic spasm: the slow-wave transient plus the decrement's fast activity.
+
+        The high-voltage slow wave (``amplitude_start_uv`` peak-to-peak, ~0.8 s,
+        vertex maximum, positive-negative-positive) carries a little
+        superimposed fast activity; the diffuse electrodecrement that follows
+        is applied to the background in ``segment`` and here gets its
+        low-voltage 16-22 Hz fast activity (``fast_uv``).
+        """
+        d = t - inst.t0
+        dur = max(inst.duration_s, 0.3)
+        # main negative deflection at ~45% of the wave, flanked by smaller positive phases
+        wave = (-1.0 * np.exp(-0.5 * ((d - 0.45 * dur) / (0.17 * dur)) ** 2)
+                + 0.42 * np.exp(-0.5 * ((d - 0.12 * dur) / (0.10 * dur)) ** 2)
+                + 0.50 * np.exp(-0.5 * ((d - 0.85 * dur) / (0.16 * dur)) ** 2))
+        rng = substream(self.seed, "spasm", inst.index, inst.ordinal)
+        jitter = float(_lognorm(rng, 1, 0.2)[0])
+        # amplitude_uv is peak-to-peak; the shape above spans ~1.5 units
+        slow = wave * (inst.amp_start / 1.5) * jitter
+        fast_on = 0.15 * np.sin(2 * np.pi * 19.0 * d + rng.uniform(0, 2 * np.pi)) \
+            * np.exp(-0.5 * ((d - 0.5 * dur) / (0.25 * dur)) ** 2) * (inst.amp_start / 1.5) * 0.35
+        field = np.array([self._SPASM_FIELD.get(e, 0.0) for e in self.electrodes])
+        rows = np.outer(field, slow + fast_on)
+        if inst.fast_uv > 0 and inst.decrement_s > 0:
+            start = inst.t0 + 0.55 * dur
+            w = smoothstep((t - start) / 0.3) * (1.0 - smoothstep((t - (start + inst.decrement_s)) / 0.5))
+            f_hz = rng.uniform(16.0, 22.0)
+            fast = 0.5 * inst.fast_uv * w * np.sin(2 * np.pi * f_hz * d + rng.uniform(0, 2 * np.pi))
+            gen = np.array([0.7 + 0.3 * self._SPASM_FIELD.get(e, 0.0) for e in self.electrodes])
+            rows += np.outer(gen, fast)
+        return rows
+
+    def _build_multifocal_spikes(self) -> None:
+        """Independent multifocal spikes/sharp waves (hypsarrhythmia), drawn once."""
+        self._mf_spikes = None
+        ms = self.bg.get("multifocal_spikes") or {}
+        rate = float(ms.get("rate_per_s", 0.0) or 0.0)
+        amp = float(ms.get("amplitude_uv", 0.0) or 0.0)
+        if rate <= 0 or amp <= 0:
+            return
+        rng = substream(self.seed, "multifocal")
+        span = self.duration_s + 120.0
+        n = max(1, int(span * rate * 1.6))
+        times = np.cumsum(_lognorm(rng, n, 0.7) / rate) - 60.0
+        times = times[times < span]
+        m = times.size
+        scalp_idx = np.array([self._idx[e] for e in self.scalp])
+        focus = scalp_idx[rng.integers(0, len(scalp_idx), m)]
+        width = rng.uniform(0.035, 0.09, m)          # 35-90 ms: spikes and sharp waves
+        amps = amp * _lognorm(rng, m, 0.35)
+        slow = rng.uniform(0.3, 0.9, m)              # after-going slow wave, relative
+        self._mf_spikes = np.column_stack([times, focus, width, amps, slow])
+
+    def _multifocal_spike_rows(self, t: np.ndarray) -> np.ndarray:
+        rows = np.zeros((self.n_elec, t.size))
+        ev = getattr(self, "_mf_spikes", None)
+        if ev is None or t.size == 0:
+            return rows
+        sel = ev[(ev[:, 0] > t[0] - 1.0) & (ev[:, 0] < t[-1] + 0.2)]
+        for t0, fi, width, amp, slow in sel:
+            d = t - t0
+            spike = -np.exp(-0.5 * (d / (width / 2.355)) ** 2)
+            after = slow * np.exp(-0.5 * ((d - 0.28) / 0.11) ** 2)
+            w = self._gen_weights(self.electrodes[int(fi)], mt.PINNED_FALLOFF)
+            rows += np.outer(w, (spike + after) * amp * 0.5)
+        return rows
+
     def _seizure_block(self, t: np.ndarray) -> np.ndarray:
         """Sum of every ictal run overlapping ``t``; shape (n_elec, len(t))."""
         out = np.zeros((self.n_elec, t.size))
         if not self.seizures:
             return out
         for inst in self.seizures:
-            if inst.t1 < t[0] - 1.0 or inst.t0 > t[-1] + 1.0:
+            if inst.t1 + inst.decrement_s < t[0] - 1.0 or inst.t0 > t[-1] + 1.0:
+                continue
+            if inst.morph == "spasm":
+                out += self._spasm_rows(inst, t)
                 continue
             phase, u, amp, f_inst = self._ictal_phase(inst, t)
             if phase is None:
@@ -1147,10 +1600,49 @@ class Synthesizer:
         factor as the tonic floor.
         """
         gate = np.zeros_like(t)
-        if t.size == 0 or not self.seizures:
+        if t.size == 0:
             return gate
         lo, hi = float(t[0]), float(t[-1])
-        for inst in self.seizures:
+        for inst in self.ictal:
+            if inst.morph == "spike_wave" or inst.t1 < lo - 2.0 or inst.t0 > hi + 2.0:
+                continue
+            factor = MUSCLE_FACTOR.get(inst.muscle, MUSCLE_FACTOR["modest"])
+            if factor <= 0:
+                continue
+            u = (t - inst.t0) / max(inst.duration_s, 1.0)
+            if inst.kind == "spasm":
+                # a brief symmetric phasic contraction peaking with the slow wave
+                shape = smoothstep(u / 0.2) * (1.0 - smoothstep((u - 0.5) / 0.3))
+            else:
+                ramp = max(min(2.0, inst.duration_s * 0.08), 0.25)
+                shape = smoothstep((t - inst.t0) / ramp) * (1.0 - smoothstep((t - (inst.t1 - ramp)) / ramp))
+                if inst.kind == "tonic_seizure":
+                    shape = shape * (0.35 + 0.65 * smoothstep(u / 0.7))   # tonic EMG builds
+                elif inst.spread not in (None, "none"):
+                    # Muscle follows clinical spread, not electrographic onset:
+                    # a focal-onset run recruits muscle as it generalizes.
+                    shape = shape * smoothstep((u - 0.12) / 0.30)
+            gate = np.maximum(gate, factor * shape)
+        return gate
+
+    def absence_gate(self, t: np.ndarray) -> np.ndarray:
+        """0..1 over generalized spike-wave runs, the absence-type discharge.
+
+        The behavioural counterpart of a generalized 3 Hz spike-wave run is
+        arrest and staring, so where ``ictal_gate`` recruits muscle this one
+        withdraws it (``ABSENCE_EMG_DROP``) and stops the blinks.  Rhythmic
+        and periodic patterns (LPDs, LRDA) drive neither gate: they are not
+        seizures and recruit nothing.
+        """
+        return self._run_gate(t, [z for z in self.ictal if z.morph == "spike_wave"])
+
+    @staticmethod
+    def _run_gate(t: np.ndarray, insts: Sequence[SeizureInstance]) -> np.ndarray:
+        gate = np.zeros_like(t)
+        if t.size == 0 or not insts:
+            return gate
+        lo, hi = float(t[0]), float(t[-1])
+        for inst in insts:
             if inst.t1 < lo - 2.0 or inst.t0 > hi + 2.0:
                 continue
             ramp = max(min(2.0, inst.duration_s * 0.08), 0.25)
@@ -1212,12 +1704,59 @@ class Synthesizer:
         halves the FFT count for the whole background mixture.
         """
         rows = self._oa(stream, i0, n, self.n_elec + 1)
+        # Smooth the independent rows over the scalp (see SPATIAL_CORR_LENGTH).
+        # A fixed matrix on frame-seeded rows keeps this partition-independent.
+        indep = (self._spatial_mix @ rows[: self.n_elec]) * self._indep_gain(stream)
         if stream.common <= 0:
-            return rows[: self.n_elec] * stream.spatial[:, None]
+            return indep * stream.spatial[:, None]
         c = stream.common
-        mixed = (math.sqrt(1.0 - c) * rows[: self.n_elec]
+        mixed = (math.sqrt(1.0 - c) * indep
                  + math.sqrt(c) * rows[self.n_elec][None, :])
         return mixed * stream.spatial[:, None]
+
+    def _build_spatial_mix(self) -> np.ndarray:
+        """(n_elec, n_elec) mixing that gives independent rows a smooth field.
+
+        Rows of the Cholesky factor of a Gaussian kernel, each normalised to
+        unit norm so every electrode keeps unit variance.  The amplitude
+        correction that keeps bipolar derivations calibrated is per stream
+        (``_indep_gain``), because it depends on the stream's spatial profile.
+        """
+        pos = np.array([mt.POSITIONS[e] for e in self.electrodes], float)
+        d = np.hypot(pos[:, None, 0] - pos[None, :, 0], pos[:, None, 1] - pos[None, :, 1])
+        self._spatial_k = np.exp(-(d / SPATIAL_CORR_LENGTH) ** 2)
+        m = np.linalg.cholesky(self._spatial_k + 1e-6 * np.eye(self.n_elec))
+        m /= np.sqrt((m ** 2).sum(axis=1, keepdims=True))
+        # The derivations the bank's amplitudes were calibrated on: the
+        # channel set's own bipolar montage (neonatal pairs are longer, so the
+        # neonatal array gets a smaller correction than the 10-20 array).
+        self._montage_idx = [(self._idx[a], self._idx[b])
+                             for a, b in mt.montage_pairs("longitudinal_bipolar", self.scalp)
+                             if b is not None and a in self._idx and b in self._idx]
+        self._indep_gain_cache: Dict[str, float] = {}
+        return m
+
+    def _indep_gain(self, stream: _Stream) -> float:
+        """Scalar that restores this stream's mean bipolar variance over the
+        montage pairs to what independent rows gave.
+
+        For a pair with spatial weights ``s_a, s_b`` the independent part
+        contributed ``s_a^2 + s_b^2`` before; correlated rows contribute
+        ``s_a^2 + s_b^2 - 2 s_a s_b k_ab``.  A single head-wide factor was
+        tried first and over-corrected graded profiles (posterior rhythm,
+        frontal beta) by up to 2x in variance, because where one weight
+        dominates nothing cancels and there is nothing to restore.
+        """
+        g = self._indep_gain_cache.get(stream.name)
+        if g is None:
+            s, k = stream.spatial, self._spatial_k
+            before = after = 0.0
+            for a, b in self._montage_idx:
+                before += s[a] ** 2 + s[b] ** 2
+                after += s[a] ** 2 + s[b] ** 2 - 2.0 * s[a] * s[b] * k[a, b]
+            g = math.sqrt(before / after) if after > 1e-12 and before > 1e-12 else 1.0
+            self._indep_gain_cache[stream.name] = g
+        return g
 
     # ---------------- artifacts ----------------
 
@@ -1495,7 +2034,8 @@ class Synthesizer:
         # the BSR trend is measured against.  On a continuous record the
         # envelope is ~1 and this changes nothing.
         emg_w = (EMG_FLOOR_W * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
-                 * (1.0 + EMG_ICTAL_GAIN * self.ictal_gate(t)))
+                 * (1.0 + self.ictal_gate(t))
+                 * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t)))
         x += self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
 
         if self.age != "neonate":
@@ -1533,8 +2073,10 @@ class Synthesizer:
         }.get(self.bg["type"], 1.10 if self.bg["type"] == "burst_suppression" else 1.0)
         x *= preset_scale
 
-        env = self.burst_envelope(t)
-        env = env * self.slow_am(t)
+        # Per-electrode burst envelope (edge lag + regional tilt); ``env`` below
+        # carries the head-wide factors and is what the blink gate reuses.
+        burst_rows = self.burst_envelope_rows(t)
+        env = self.slow_am(t)
         env = env * self.postictal_envelope(t)
         env = env * np.clip(0.70 + 0.09 * (temp - 33.0), 0.55, 1.06)
         env = env * amp_w
@@ -1575,7 +2117,13 @@ class Synthesizer:
                 fast = x - slow
                 x = (slow * (1.0 - delta_depth * lat[:, None] * shape[None, :])
                      + fast * (1.0 - depth * lat[:, None] * shape[None, :]))
-        x *= env[None, :]
+        # Electrodecrements (spasms, tonic seizures) attenuate the background
+        # and its graphoelements; the ictal block below is added after.
+        dec = self.decrement_envelope(t)
+        env = env * dec
+        x *= burst_rows * env[None, :]
+        # Head-wide envelope including the burst gate, for the blinks below.
+        env = env * self.burst_envelope(t)
 
         bs = self.bg["burst_suppression"]
         discharge_count = int(bs.get("epileptiform_discharges", 0))
@@ -1610,6 +2158,8 @@ class Synthesizer:
 
         # --- ictal activity (not scaled by the background envelope) -------
         x += self._seizure_block(t)
+        # multifocal spikes (hypsarrhythmia), attenuated through a decrement
+        x += self._multifocal_spike_rows(t) * (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]
 
         # --- always-present ECG contamination + artifacts ------------------
         sensor_rms_uv = SENSOR_RMS_UV
@@ -1629,7 +2179,11 @@ class Synthesizer:
         # 1.25x and failed test_attenuation_ramp_builds_over_the_requested_window,
         # and it would have lifted burst-suppression interburst intervals past
         # the <5 uV suppression criterion.
-        x += self.blink_rows(t, (1.0 - sleep) * env)
+        # A staring absence does not blink; see ABSENCE_EMG_DROP.
+        x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)))
+        # Neonatal graphoelements (microvolts; burst-bound ones gated inside).
+        if self.age == "neonate":
+            x += self.graphoelement_rows(t) * self._ch_gain[:, None]
         ecg_uv = float(self.bg.get("baseline_ecg_uv", 0.0))
         if ecg_uv > 0:
             x += self._ecg(t, amplitude=ecg_uv)

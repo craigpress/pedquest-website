@@ -38,7 +38,46 @@ background:
   burst_suppression:           # only for type burst_suppression
     burst_s: 2.0
     ibi_s: 8.0                 # inter-burst interval
+    ibi_sigma: 0.26            # optional log-normal spread of the IBI (default 0.26)
+  pma_weeks: 30                # neonates, discontinuous types only: postmenstrual age sets the
+                               # default IBI, its spread, burst length, interburst floor and burst
+                               # voltage from the maturational tables (spec.PMA_TABLE); any
+                               # burst_suppression.* or amplitude_uv you give still wins
+  graphoelements:              # neonates: per-element overrides of the PMA table (spec.GRAPHOELEMENT_PMA)
+    occipital_delta: {rate_per_min: 2.5, amplitude_uv: 150}   # monorhythmic occipital delta, 23-35 w
+    temporal_theta:  {enabled: false}                         # 26-32 w; temporal_alpha at 33 w; stop 22-30 w;
+                                                              # frontal_sharp 34-48 w; anterior_slow 35-46 w; midline_theta
+  synchrony: 0.8               # neonates: fraction of bursts interhemispherically synchronous (PMA default)
+  multifocal_spikes:           # independent multifocal spikes/sharp waves; hypsarrhythmia defaults to 1.4/s, 160 uV
+    rate_per_s: 1.4
+    amplitude_uv: 160
   reactivity: present | absent  # applied to any `stimulation` event
+```
+
+`type: hypsarrhythmia` defaults to 260 uV chaotic 1.5 Hz slow (slow_fraction 0.95) with the shared
+head-wide component cut so regions are asynchronous, multifocal spikes as above, and NREM-sleep
+fragmentation into grouped bursts (from any `state_change: sleep`).
+
+Seizure-type events (`seizure`, `seizure_cluster`, `status_epilepticus`, `spasm`, `tonic_seizure`) take
+`muscle: none | modest | clinical` — how much scalp EMG the run recruits (`none` for an electrographic-only
+or paralysed patient; `modest` is the historical default). For a focal-onset run with `spread`, muscle
+follows the spread, not the electrographic onset.
+
+```yaml
+- type: spasm                  # one epileptic spasm; spasm_cluster adds interval_s (mean, default 12) and count (12)
+  onset_min: 2.0
+  duration_s: 0.8              # the high-voltage vertex-maximal slow wave
+  evolution: {amplitude_start_uv: 320}   # peak-to-peak of the slow wave
+  decrement_s: 2.5             # diffuse electrodecrement after the wave
+  decrement_depth: 0.8
+  fast_uv: 14                  # low-voltage 16-22 Hz fast activity riding the decrement
+  muscle: clinical             # brief symmetric EMG burst with the wave
+- type: tonic_seizure
+  onset_min: 3.0
+  decrement_s: 1.5             # electrodecrement first ...
+  duration_s: 12               # ... then generalized paroxysmal fast activity
+  evolution: {start_hz: 22, end_hz: 15, amplitude_start_uv: 15, amplitude_end_uv: 110}
+  postictal_attenuation_s: 20
 ```
 
 ## `events[]` (time in minutes from recording start unless noted)

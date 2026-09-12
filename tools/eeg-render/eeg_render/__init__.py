@@ -14,6 +14,6 @@ they are not drawn.
 # ``spec_hash`` mixes this string in, so the bump marks all 52 rendered images
 # stale.  It does NOT regenerate anything - only ``render-all`` does that, and
 # it is deliberately not being run while the morphology work is in flight.
-RENDERER_VERSION = "0.3.8"
+RENDERER_VERSION = "0.3.9"
 
 __all__ = ["RENDERER_VERSION"]
