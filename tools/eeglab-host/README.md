@@ -29,11 +29,11 @@ end (signed 1 MiB Range read through NPM = 206 with matching bytes; expired = 41
 ```sh
 BASE=/srv/dev-disk-by-uuid-d96070a4-9964-4a49-8d1c-fd443aa03ee3
 mkdir -p "$BASE/storage/eeg-lab" && chown root:users "$BASE/storage/eeg-lab" && chmod 2775 "$BASE/storage/eeg-lab"
-UUID=$(python3 -c "import uuid;print(uuid.uuid4())")
-omv-rpc -u admin "ShareMgmt" "set" "{\"uuid\":\"$UUID\",\"name\":\"eeg-lab\",\"reldirpath\":\"storage/eeg-lab/\",\"comment\":\"PedQuEST EEG Teaching Lab recordings\",\"mntentref\":\"96b0df43-864f-4c80-9adf-3d2a6713576d\"}"
+NEW=$(sed -n 's/^OMV_CONFIGOBJECT_NEW_UUID="\(.*\)"//p' /etc/default/openmediavault)   # new-object placeholder
+omv-rpc -u admin "ShareMgmt" "set" "{\"uuid\":\"$NEW\",\"name\":\"eeg-lab\",\"reldirpath\":\"storage/eeg-lab/\",\"comment\":\"PedQuEST EEG Teaching Lab recordings\",\"mntentref\":\"96b0df43-864f-4c80-9adf-3d2a6713576d\"}"
 SF=$(omv-rpc -u admin "ShareMgmt" "enumerateSharedFolders" | python3 -c "import sys,json;print([s['uuid'] for s in json.load(sys.stdin) if s['name']=='eeg-lab'][0])")
-NU=$(python3 -c "import uuid;print(uuid.uuid4())")
-omv-rpc -u admin "NFS" "setShare" "{\"uuid\":\"$NU\",\"sharedfolderref\":\"$SF\",\"client\":\"10.100.10.120\",\"options\":\"rw,sync,no_subtree_check,no_root_squash\",\"extraoptions\":\"\",\"comment\":\"moltbot export worker\"}"
+# mntentref is required (same placeholder); extraoptions must be non-empty
+omv-rpc -u admin "NFS" "setShare" "{\"uuid\":\"$NEW\",\"sharedfolderref\":\"$SF\",\"mntentref\":\"$NEW\",\"client\":\"10.100.10.120\",\"options\":\"rw,sync,no_subtree_check,no_root_squash\",\"extraoptions\":\"secure\",\"comment\":\"moltbot export worker\"}"
 omv-salt deploy run fstab nfs
 grep eeg-lab /etc/exports && ls -la /export/eeg-lab     # verify the bind mount shows the real folder
 ```
@@ -82,14 +82,15 @@ systemctl daemon-reload && systemctl enable --now eeg-lab-export-worker && journ
 ### 4. NPM proxy host
 
 `eeglab.presshome.net` → `http://10.100.10.102:8335`, certificate 23 (wildcard), **Force SSL on,
-HTTP/2 on** (the API defaults both off), Block Common Exploits on. Advanced:
+HTTP/2 on** (the API defaults both off), Block Common Exploits on. Created as **host 87**. Advanced:
 
 ```
-proxy_buffering off;
-proxy_request_buffering off;
 client_max_body_size 0;
-proxy_read_timeout 300s;
 ```
+
+Do not add `proxy_buffering`/`proxy_read_timeout` here: NPM already sets them globally in
+`/data/nginx/custom/server_proxy.conf`, and the duplicate is an `[emerg]` that leaves
+`proxy_host/87.conf` unwritten (host shows online in the UI, 502/handshake failures in practice).
 
 Technitium already answers `eeglab.presshome.net → 10.100.10.105` (wildcard), so LAN works as soon
 as the host exists.
