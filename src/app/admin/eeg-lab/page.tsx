@@ -922,7 +922,8 @@ export default function AdminEegLabPage() {
       <section style={{ ...card, padding: 18, marginTop: 16 }}>
         <h2 style={h2}>Finished recordings</h2>
         <p style={{ ...meta, marginTop: 4 }}>
-          Question-bank recordings are labelled with their item id; open one in the viewer or download it.
+          The most recent finished exports. To search every recording by finding, age or question, use the{" "}
+          <Link href="/admin/eeg-lab/library">EEG Library</Link>.
         </p>
         {finishedJobs.length === 0 && (
           <p style={{ ...meta, marginTop: 12 }}>Nothing finished yet.</p>
@@ -932,6 +933,7 @@ export default function AdminEegLabPage() {
 
       <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
         <Link href="/admin" style={btnGhost}>← Admin dashboard</Link>
+        <Link href="/admin/eeg-lab/library" style={btnGhost}>EEG Library</Link>
         <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Lab Viewer</Link>
         <Link href="/admin/qbank" style={btnGhost}>Question bank</Link>
       </div>

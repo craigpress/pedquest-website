@@ -77,7 +77,8 @@ function ViewerInner() {
       <h1 style={{ ...h1, marginTop: 6 }}>EEG Lab Viewer</h1>
       <p style={{ color: "var(--text-secondary)", marginTop: 8, maxWidth: 640 }}>
         Review a recording in the browser: whole-record qEEG trends, a raw page with montage,
-        filters and sensitivity, and your own annotations. Open a finished lab job from the{" "}
+        filters and sensitivity, and your own annotations. Find a finished recording in the{" "}
+        <Link href="/admin/eeg-lab/library">EEG Library</Link>, build one in the{" "}
         <Link href="/admin/eeg-lab">console</Link>, or choose a file here.
       </p>
       {jobId && (
