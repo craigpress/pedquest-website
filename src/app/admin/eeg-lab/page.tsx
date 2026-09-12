@@ -136,6 +136,10 @@ export default function AdminEegLabPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [jobs, setJobs] = useState<LabJob[]>([]);
+  // The API returns newest first, so a bulk enqueue (the 52 bank items) would
+  // push every finished recording out of a single short list.  Split instead.
+  const activeJobs = jobs.filter((j) => !isLabTerminal(j.status));
+  const finishedJobs = jobs.filter((j) => isLabTerminal(j.status));
 
   const authHeaders = useCallback(async () => {
     const sb = getSupabase();
@@ -145,7 +149,7 @@ export default function AdminEegLabPage() {
 
   const loadJobs = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/lab/jobs?limit=30", { headers: await authHeaders() });
+      const res = await fetch("/api/admin/lab/jobs?limit=100", { headers: await authHeaders() });
       const json = await res.json();
       if (res.ok && json.success) setJobs(json.jobs as LabJob[]);
     } catch {
@@ -908,11 +912,35 @@ export default function AdminEegLabPage() {
           <button type="button" style={mini} onClick={() => void loadJobs()}>Refresh</button>
         </div>
 
-        {jobs.length === 0 && (
-          <p style={{ ...meta, marginTop: 12 }}>Nothing queued yet.</p>
+        {activeJobs.length === 0 && (
+          <p style={{ ...meta, marginTop: 12 }}>Nothing in progress.</p>
         )}
 
-        {jobs.map((job) => (
+        {activeJobs.map(jobRow)}
+      </section>
+
+      <section style={{ ...card, padding: 18, marginTop: 16 }}>
+        <h2 style={h2}>Finished recordings</h2>
+        <p style={{ ...meta, marginTop: 4 }}>
+          Question-bank recordings are labelled with their item id; open one in the viewer or download it.
+        </p>
+        {finishedJobs.length === 0 && (
+          <p style={{ ...meta, marginTop: 12 }}>Nothing finished yet.</p>
+        )}
+        {finishedJobs.map(jobRow)}
+      </section>
+
+      <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Link href="/admin" style={btnGhost}>← Admin dashboard</Link>
+        <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Lab Viewer</Link>
+        <Link href="/admin/qbank" style={btnGhost}>Question bank</Link>
+      </div>
+    </div>
+  );
+
+  function jobRow(job: LabJob) {
+    const bank = job.requestedBy?.startsWith("qbank:") ? job.requestedBy.slice("qbank:".length) : null;
+    return (
           <div className="lab-job" key={job.id}>
             <div className="lab-chips">
               <span style={{
@@ -925,6 +953,9 @@ export default function AdminEegLabPage() {
               <span style={{ color: "var(--text)", fontSize: 13.5, fontFamily: "var(--mono-font)" }}>
                 {job.recordingId ?? job.id.slice(0, 8)}
               </span>
+              {bank && (
+                <span style={{ ...meta, color: "var(--accent-primary)", fontWeight: 700 }}>{bank}</span>
+              )}
               <span style={meta}>{humanDuration(job.durationS)}</span>
               <span style={meta}>{job.formats.join(", ")}</span>
               {job.options.runPersyst && <span style={meta}>persyst</span>}
@@ -983,14 +1014,6 @@ export default function AdminEegLabPage() {
               </div>
             )}
           </div>
-        ))}
-      </section>
-
-      <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Link href="/admin" style={btnGhost}>← Admin dashboard</Link>
-        <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Lab Viewer</Link>
-        <Link href="/admin/qbank" style={btnGhost}>Question bank</Link>
-      </div>
-    </div>
-  );
+    );
+  }
 }
