@@ -86,6 +86,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   const [panelId, setPanelId] = useState(TREND_PANELS[0].id);
   const [windowId, setWindowId] = useState("full");
   const [baselineId, setBaselineId] = useState("first5");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [windowT0, setWindowT0] = useState(0);
   const [cursorT, setCursorT] = useState<number | null>(null);
   const [loadingPage, setLoadingPage] = useState(false);
@@ -103,8 +104,16 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   const [answers, setAnswers] = useState<AnswerSpan[] | null>(null);
   const [fileAnnotationCount, setFileAnnotationCount] = useState<number | null>(null);
 
-  // remembered heat-map palette (shared with the image viewer)
-  useEffect(() => { setPalette(loadPalettePreference()); }, []);
+  // remembered heat-map palette (shared with the image viewer) and viewer theme
+  useEffect(() => {
+    setPalette(loadPalettePreference());
+    try { const t = localStorage.getItem("pq-lab-theme"); if (t === "light" || t === "dark") setTheme(t); } catch { /* private mode */ }
+  }, []);
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    try { localStorage.setItem("pq-lab-theme", next); } catch { /* ignore */ }
+  };
   const choosePalette = (id: PaletteId) => { setPalette(id); savePalettePreference(id); };
 
   // ── open ────────────────────────────────────────────────────────────────
@@ -378,8 +387,20 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
     <label style={{ display: "grid", gap: 3 }}><span style={lbl}>{label}</span>{node}</label>
   );
 
+  // The site is dark-only; the viewer carries its own light palette because
+  // EEG is read on white paper. Canvases read these tokens via getComputedStyle.
+  const themeVars: React.CSSProperties = theme === "light"
+    ? ({
+        "--bg": "#f7f8fb", "--bg-card": "#ffffff", "--border": "#cfd6e0", "--border-strong": "#aab4c3",
+        "--text": "#101418", "--text-secondary": "#2e3a47", "--text-muted": "#5b6b7c",
+        "--accent-primary": "#0f8f82", "--accent-secondary": "#c2410c", "--accent-tertiary": "#15803d",
+        "--lab-overlay": "rgba(0,0,0,0.08)",
+        color: "#101418",
+      } as React.CSSProperties)
+    : ({ "--lab-overlay": "rgba(255,255,255,0.10)" } as React.CSSProperties);
+
   return (
-    <div style={{ display: "grid", gridTemplateRows: "auto auto auto 1fr", height: "100%", minHeight: 0, gap: 8 }}>
+    <div style={{ ...themeVars, display: "grid", gridTemplateRows: "auto auto auto 1fr", height: "100%", minHeight: 0, gap: 8, background: theme === "light" ? "var(--bg)" : undefined, borderRadius: 12, padding: theme === "light" ? 8 : 0 }}>
       {/* header */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "0 4px" }}>
         {onClose && <button type="button" style={mini} onClick={onClose}>← close</button>}
@@ -389,8 +410,11 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           {reader.info.startDateTime && ` · ${reader.info.startDateTime.toLocaleString()}`}
           {fileAnnotationCount !== null && ` · ${fileAnnotationCount} file annotation${fileAnnotationCount === 1 ? "" : "s"}`}
         </div>
+        <button type="button" style={{ ...mini, marginLeft: "auto" }} onClick={toggleTheme} title="Toggle light / dark background">
+          {theme === "dark" ? "\u2600 light" : "\u263E dark"}
+        </button>
         {synthetic && (
-          <span style={{ marginLeft: "auto", fontFamily: "var(--mono-font)", fontSize: 11, letterSpacing: ".08em", color: "var(--accent-secondary)", border: "1px solid var(--accent-secondary)", borderRadius: 6, padding: "3px 8px" }}>
+          <span style={{ fontFamily: "var(--mono-font)", fontSize: 11, letterSpacing: ".08em", color: "var(--accent-secondary)", border: "1px solid var(--accent-secondary)", borderRadius: 6, padding: "3px 8px" }}>
             {SYNTHETIC_STAMP}
           </span>
         )}
@@ -509,14 +533,14 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             <TrendStrip
               trends={trends} durationS={durationS} cursorT={cursorT} pageT0={pageT0} pageS={pageS}
               annotations={annotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
-              rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} onScroll={scrollWindow}
+              rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme} onScroll={scrollWindow}
               key={trendVersion === 0 ? "empty" : "live"}
             />
           </div>
           <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", minHeight: 0 }}>
             <RawPane
               reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
-              sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT}
+              sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
               onCursor={setCursorT}
               onSelect={(a, b) => { setCursorT(a); startDraft(a, b - a); }}
               onLoading={setLoadingPage}

@@ -23,7 +23,7 @@ interface Page { t0: number; fs: number; rows: Float32Array[]; fileAnnotations: 
 
 export default function RawPane({
   reader, t0, pageS, derivations, filters, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT,
-  onCursor, onSelect, onLoading,
+  theme, onCursor, onSelect, onLoading,
 }: {
   reader: Recording;
   t0: number;
@@ -37,6 +37,8 @@ export default function RawPane({
   /** instructor overlay: [onset, offset, label] */
   answerSpans: { onsetS: number; offsetS: number; label: string }[];
   cursorT: number | null;
+  /** re-reads the CSS tokens when it changes */
+  theme: "dark" | "light";
   onCursor: (t: number) => void;
   /** drag-select a span; the parent decides what to do with it */
   onSelect: (t0: number, t1: number) => void;
@@ -210,7 +212,7 @@ export default function RawPane({
       ctx.strokeStyle = accent; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size.h); ctx.stroke();
     }
-  }, [derived, page, derivations, layout, size, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT, drag, t0, pageS]);
+  }, [derived, page, derivations, layout, size, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT, drag, t0, pageS, theme]);
 
   // ── pointer ─────────────────────────────────────────────────────────────
   const timeAt = (clientX: number) => {

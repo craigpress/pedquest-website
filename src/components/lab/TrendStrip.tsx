@@ -74,14 +74,15 @@ export function trendStripHeight(rows: TrendRowId[]): number {
   return AXIS_H + rows.reduce((s, r) => s + ROW_DEFS[r].h, 0) + 6;
 }
 
-// Diverging map for asymmetry and vs-baseline: blue (less / left) → near-black → red (more / right).
+// Diverging map for asymmetry and vs-baseline: blue (less / left) → white → red (more / right),
+// the review-station convention — symmetric / unchanged reads as blank paper.
 const DIVERGING: [number, string][] = [
-  [0.0, "#2f6bff"], [0.25, "#1b3a8a"], [0.5, "#0e0e14"], [0.75, "#8a1f2a"], [1.0, "#ff4d4d"],
+  [0.0, "#1f4fd8"], [0.5, "#ffffff"], [1.0, "#e0202a"],
 ];
 
 export default function TrendStrip({
   trends, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress,
-  rows, palette, windowT0, windowS, baseline, onSeek, onScroll,
+  rows, palette, windowT0, windowS, baseline, theme, onSeek, onScroll,
 }: {
   trends: ViewerTrends | null;
   durationS: number;
@@ -99,6 +100,8 @@ export default function TrendStrip({
   windowS: number | null;
   /** baseline window for the "vs BL" rows; null = none chosen */
   baseline: { t0: number; t1: number } | null;
+  /** re-reads the CSS tokens when it changes */
+  theme: "dark" | "light";
   onSeek: (t: number) => void;
   onScroll: (deltaS: number) => void;
 }) {
@@ -145,7 +148,7 @@ export default function TrendStrip({
         const done = e < filled;
         for (let f = 0; f < nF; f++) {
           const o = ((nF - 1 - f) * nT + e) * 4;
-          if (!done) { img.data[o] = 20; img.data[o + 1] = 20; img.data[o + 2] = 24; img.data[o + 3] = 255; continue; }
+          if (!done) { const g = theme === "light" ? 235 : 20; img.data[o] = g; img.data[o + 1] = g; img.data[o + 2] = g + 4; img.data[o + 3] = 255; continue; }
           const k = Math.max(0, Math.min(255, Math.round(cell(e, f) * 255))) * 3;
           img.data[o] = lut[k]; img.data[o + 1] = lut[k + 1]; img.data[o + 2] = lut[k + 2]; img.data[o + 3] = 255;
         }
@@ -168,7 +171,7 @@ export default function TrendStrip({
       out.psd_vs_right = paint((e, f) => (vsBaselineDb(trends, base, "right", e, f, eps) + 10) / 20, divLut);
     }
     return out;
-  }, [trends, filled, palette, base]);
+  }, [trends, filled, palette, base, theme]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -182,7 +185,8 @@ export default function TrendStrip({
     const col = (n: string, fb: string) => css.getPropertyValue(n).trim() || fb;
     const bg = col("--bg-card", "#111"), grid = col("--border", "#333"), text = col("--text-muted", "#999");
     const accent = col("--accent-primary", "#4cc9b0"), trace = col("--text", "#eee");
-    const left = "#5aa9ff", right = "#ff8a5a";
+    const overlay = col("--lab-overlay", "rgba(255,255,255,0.10)");
+    const left = theme === "light" ? "#1f5fd0" : "#5aa9ff", right = theme === "light" ? "#d9531e" : "#ff8a5a";
 
     ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
     const plotW = w - GUTTER - 8;
@@ -315,7 +319,7 @@ export default function TrendStrip({
 
     if (progress < 1) {
       const x = Math.max(GUTTER, Math.min(w, xOf(progress * durationS)));
-      ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(x, AXIS_H, w - x, h - AXIS_H);
+      ctx.fillStyle = theme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.45)"; ctx.fillRect(x, AXIS_H, w - x, h - AXIS_H);
       ctx.fillStyle = text; ctx.textAlign = "left"; ctx.textBaseline = "top";
       ctx.fillText(`computing trends… ${Math.round(progress * 100)}%`, Math.min(x + 6, w - 160), AXIS_H + 4);
     }
@@ -349,7 +353,7 @@ export default function TrendStrip({
     // current page window
     const px0 = xOf(pageT0), px1 = Math.max(px0 + 2, xOf(pageT0 + pageS));
     if (px1 >= GUTTER && px0 <= w) {
-      ctx.fillStyle = "rgba(255,255,255,0.10)";
+      ctx.fillStyle = overlay;
       ctx.fillRect(px0, AXIS_H, px1 - px0, h - AXIS_H);
       ctx.strokeStyle = trace; ctx.lineWidth = 1;
       ctx.strokeRect(px0, AXIS_H, px1 - px0, h - AXIS_H);
@@ -368,7 +372,7 @@ export default function TrendStrip({
       ctx.fillStyle = accent;
       ctx.fillRect(GUTTER + (t0 / durationS) * plotW, sbY, Math.max(6, (span / durationS) * plotW), 3);
     }
-  }, [trends, bitmaps, base, baseline, filled, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress, w, h, rowTop, rows, t0, span, windowS]);
+  }, [trends, bitmaps, base, baseline, filled, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress, w, h, rowTop, rows, t0, span, windowS, theme]);
 
   const seekAt = (clientX: number) => {
     const r = canvasRef.current!.getBoundingClientRect();
