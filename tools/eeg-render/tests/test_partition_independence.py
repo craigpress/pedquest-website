@@ -139,3 +139,23 @@ def test_duration_is_part_of_recording_identity():
     _, xa = a.segment(0.0, 60.0)
     _, xb = b2.segment(0.0, 60.0)
     assert np.abs(xa - xb).max() > 1e-6
+
+
+def _sw_seizure(morphology):
+    return [{
+        "type": "seizure", "onset_min": 1.0, "duration_s": 120.0,
+        "onset_region": "generalized", "spread": "generalized",
+        "morphology": morphology, "postictal_attenuation_s": 30.0,
+        "evolution": {"start_hz": 3.0, "end_hz": 1.5,
+                      "amplitude_start_uv": 70, "amplitude_end_uv": 180},
+    }]
+
+
+def test_spike_wave_seizure_is_partition_independent():
+    """The spike-wave kernel is a function of elapsed seconds inside a cycle.
+
+    That timebase comes from an *analytic* instantaneous frequency.  Deriving it
+    numerically from the sampled phase would use one-sided differences at the
+    array edges and make the run depend on where the caller cut its chunk.
+    """
+    _assert_matches(_synth(events=_sw_seizure("spike_wave")))

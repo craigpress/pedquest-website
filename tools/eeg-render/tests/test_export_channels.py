@@ -165,3 +165,72 @@ def test_advisory_says_it_is_only_advisory():
     """Persyst decides with its own quality thresholds; we cannot evaluate those."""
     adv = baseline_advisory(_synth(1200.0), 1200.0)
     assert "advisory only" in adv["note"]
+
+
+def test_generalized_field_is_frontally_maximal_and_reaches_the_rim():
+    """A generalized discharge must not spare the electrode periphery.
+
+    The nine-generator model this replaced left Fp1/Fp2/F7/F8/T5/T6/O1/O2 out of
+    the generator set entirely, so they saw only a neighbour's Gaussian tail --
+    a 2.35x centre-to-rim gradient that an epileptologist reads, correctly, as a
+    seizure that never reached the rim.
+    """
+    from eeg_render import montage as mt
+
+    chans = mt.STANDARD_19
+    scale = np.array(mt.generator_field_scale("generalized", chans))
+    raw = np.zeros(len(chans))
+    fall = mt.generator_falloff("generalized")
+    for focus, ga, _ in mt.region_generators("generalized", chans):
+        w = mt.monopole_weights(focus, chans, falloff=fall)
+        raw += ga * np.array([w[c] for c in chans])
+    field = dict(zip(chans, scale * raw))
+
+    rim = ["Fp1", "F7", "T5", "O1", "Fp2", "F8", "T6", "O2"]
+    interior = [c for c in chans if c not in rim]
+    gradient = (np.mean([field[c] for c in interior])
+                / np.mean([field[c] for c in rim]))
+    assert gradient < 1.35, f"centre-to-rim gradient {gradient:.2f}x is too steep"
+
+    # frontally maximal: Fp1/Fp2 must not sit near the floor of the field
+    assert field["Fp1"] > field["O1"], "generalized field is inverted front-to-back"
+    assert field["Fz"] >= max(field.values()) - 1e-9
+
+
+def test_generalized_synthesis_and_prose_agree_on_the_field():
+    """``electrodes_for_region`` drives the question text; the generators drive
+    the waveform.  Before this they were two different models that disagreed."""
+    from eeg_render import montage as mt
+
+    chans = mt.STANDARD_19
+    scale = np.array(mt.generator_field_scale("generalized", chans))
+    raw = np.zeros(len(chans))
+    fall = mt.generator_falloff("generalized")
+    for focus, ga, _ in mt.region_generators("generalized", chans):
+        w = mt.monopole_weights(focus, chans, falloff=fall)
+        raw += ga * np.array([w[c] for c in chans])
+    target = mt.region_weights("generalized", chans)
+    assert np.abs(scale * raw - np.array([target[c] for c in chans])).max() < 1e-9
+
+
+@pytest.mark.parametrize("f_hz", [3.0, 2.0, 1.5, 1.0])
+def test_spike_wave_spike_width_is_independent_of_repetition_rate(f_hz):
+    """IFCN defines a spike as 20 to <70 ms.  A harmonic stack is defined in
+    phase, so its spike doubles in width when a run sweeps 3.0 -> 1.5 Hz."""
+    from eeg_render.synth import Synthesizer
+
+    fs = 256.0
+    n = int(round(fs * 4.0 / f_hz))
+    t = np.arange(n) / fs
+    w = Synthesizer._wave(2 * np.pi * f_hz * t, np.zeros(4), 0.0,
+                          "spike_wave", 0.0, np.full(n, f_hz))
+    seg = w[int(n * 0.375):int(n * 0.625)]
+    pk = int(np.argmax(seg))
+    half = seg[pk] / 2.0
+    i, j = pk, pk
+    while i > 0 and seg[i] > half:
+        i -= 1
+    while j < len(seg) - 1 and seg[j] > half:
+        j += 1
+    fwhm_ms = (j - i) / fs * 1000.0
+    assert 20.0 <= fwhm_ms < 70.0, f"{fwhm_ms:.0f} ms is not an IFCN spike at {f_hz} Hz"

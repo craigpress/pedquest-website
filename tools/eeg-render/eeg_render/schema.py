@@ -87,6 +87,10 @@ _SEIZURE_CORE = {
     "evolution": _EVOLUTION_OR_NONE,
     "spread": {"enum": SPREAD},
     "postictal_attenuation_s": {"type": "number", "minimum": 0},
+    # Waveform family of the ictal run. ``ictal`` (default) is the harmonic
+    # stack; ``spike_wave`` is a true spike-and-slow-wave complex whose spike
+    # keeps its millisecond width as the repetition rate evolves.
+    "morphology": {"enum": ["ictal", "spike_wave", "rda", None]},
 }
 
 _EVENT = {

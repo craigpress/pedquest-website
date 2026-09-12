@@ -64,6 +64,138 @@ _PERIODIC_MEAN, _PERIODIC_RMS = _periodic_norm()
 
 
 # --------------------------------------------------------------------------
+# spike-and-wave, parameterized in SECONDS
+# --------------------------------------------------------------------------
+# A harmonic stack (``morph="ictal"``) is defined in phase, so its "spike"
+# stretches with the repetition rate: sweep a run 3.0 -> 1.5 Hz and the spike
+# doubles in width.  A real spike does not care how often it repeats - IFCN
+# fixes it at 20 to <70 ms, an after-going slow wave follows at its own
+# timescale, and the pair keeps those durations whatever the rate.  So this
+# kernel is a function of elapsed SECONDS within the cycle, and the cycle
+# period only decides how much flat baseline follows the complex.
+#
+# The spike is deliberately asymmetric - steeper ascending than descending -
+# which is one of the six IFCN criteria for an epileptiform discharge and is
+# something a symmetric harmonic sum cannot produce.
+_SW_SPIKE_RISE = 0.012      # s, ascending limb sigma
+_SW_SPIKE_FALL = 0.024      # s, descending limb sigma (FWHM ~42 ms overall)
+_SW_WAVE_LAG = 0.16         # s, spike peak -> slow-wave trough
+_SW_WAVE_SIGMA = 0.075      # s, slow-wave sigma (FWHM ~177 ms)
+_SW_WAVE_GAIN = 0.85        # slow wave amplitude, relative to the spike
+
+
+#: Cycle-to-cycle variability.  Without these every complex is an identical
+#: stamp and every channel moves in lockstep, which reads as synthetic
+#: immediately - real generalized spike-wave wobbles in timing, amplitude and
+#: contour, and the head is never perfectly synchronous.
+#
+#: These draws are deliberately COMMON to every generator of one discharge,
+#: with the head-wide desynchrony carried by ``_SW_AP_LEAD`` instead.  A
+#: generalized field sums ~19 generators into each electrode, so per-generator
+#: independent jitter is averaged away by the central limit theorem - it makes
+#: the trace *smoother*, not more organic.  Only variation with spatial
+#: structure survives the sum.
+_SW_JITTER_S = 0.016        # +/- s, per-cycle timing of the whole discharge
+_SW_AMP_VAR = 0.26          # +/- fraction, per-cycle amplitude
+_SW_WIDTH_VAR = 0.22        # +/- fraction, per-cycle spike width
+_SW_WAVE_VAR = 0.28         # +/- fraction, per-cycle slow-wave depth
+#: Per-cycle anterior-posterior lead, scaled by each generator's y position.
+#: Generalized spike-wave is near-synchronous but not simultaneous, and the
+#: front-to-back lead varies discharge to discharge.
+_SW_AP_LEAD = 0.022         # +/- s at the poles
+
+
+def _cycle_noise(k: np.ndarray, salt: int) -> np.ndarray:
+    """Deterministic uniform [0,1), keyed by the ABSOLUTE cycle index.
+
+    Keying on the cycle number rather than on position within the request is
+    what keeps the jitter partition-independent: the same discharge gets the
+    same wobble no matter which chunk asked for it, so a chunked export still
+    matches the image it was drawn from.
+    """
+    # The salt is mixed in Python ints and masked to 64 bits: the wrap-around
+    # is the point of a hash, but doing it in numpy raises an overflow warning.
+    off = np.uint64(((salt & 0xFFFFFFFF) * 0x9E3779B97F4A7C15) & 0xFFFFFFFFFFFFFFFF)
+    x = (k.astype(np.int64) + 1_000_003).astype(np.uint64) + off
+    x = (x ^ (x >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+    x = (x ^ (x >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+    x = x ^ (x >> np.uint64(31))
+    return (x >> np.uint64(11)).astype(np.float64) * (1.0 / 9007199254740992.0)
+
+
+def _sw_kernel(tau: np.ndarray, width: float | np.ndarray = 1.0,
+               wave: float | np.ndarray = 1.0) -> np.ndarray:
+    """One spike-and-wave complex; ``tau`` is seconds from the spike peak."""
+    sig = np.where(tau < 0.0, _SW_SPIKE_RISE, _SW_SPIKE_FALL) * width
+    spike = np.exp(-0.5 * (tau / sig) ** 2)
+    slow = (_SW_WAVE_GAIN * wave
+            * np.exp(-0.5 * ((tau - _SW_WAVE_LAG) / _SW_WAVE_SIGMA) ** 2))
+    return spike - slow
+
+
+def _sw_cycle(tau: np.ndarray, period: np.ndarray,
+              k: Optional[np.ndarray] = None, salt: int = 0,
+              lead: float = 0.0, gsalt: Optional[int] = None) -> np.ndarray:
+    """The complex plus its neighbours, so nothing is truncated at the wrap.
+
+    Each neighbour is drawn with *its own* cycle's jitter (cycle ``k - n``
+    holds the spike sitting at ``tau + n*period``), so a complex keeps one
+    identity across the wrap instead of changing shape at the boundary.
+
+    ``lead`` is the generator's anterior-posterior position in [-1, 1]; it
+    scales a per-cycle timing gradient across the head.
+    """
+    out = np.zeros_like(tau)
+    for n in (-2, -1, 0, 1, 2):
+        if k is None:
+            out = out + _sw_kernel(tau + n * period)
+            continue
+        kk = k - n
+        gs = salt if gsalt is None else gsalt
+
+        def draw(sal, off, amt):
+            return (_cycle_noise(kk, sal + off) - 0.5) * (2.0 * amt)
+
+        # Each parameter blends a discharge-wide draw with a per-generator one.
+        # The common part survives the ~19-generator sum and is what makes one
+        # complex differ from the next; the per-generator part is what stops
+        # every channel being a scaled copy of the same trace, and it survives
+        # only because PINNED_FALLOFF keeps each electrode local.
+        dt = (draw(salt, 11, _SW_JITTER_S)
+              + lead * draw(salt, 67, _SW_AP_LEAD)
+              + draw(gs, 83, _SW_JITTER_S * 0.5))
+        amp = 1.0 + draw(salt, 23, _SW_AMP_VAR * 0.65) + draw(gs, 23, _SW_AMP_VAR * 0.55)
+        wid = 1.0 + draw(salt, 37, _SW_WIDTH_VAR * 0.6) + draw(gs, 37, _SW_WIDTH_VAR * 0.6)
+        wav = 1.0 + draw(salt, 53, _SW_WAVE_VAR * 0.6) + draw(gs, 53, _SW_WAVE_VAR * 0.6)
+        out = out + amp * _sw_kernel(tau + n * period - dt, np.maximum(wid, 0.35),
+                                     wav)
+    return out
+
+
+def _sw_norm() -> tuple:
+    """Per-frequency mean and RMS of the spike-wave complex (computed once).
+
+    The duty cycle - and so the RMS - depends on the repetition rate, because
+    the complex has a fixed duration inside a cycle that does not.  Normalising
+    against the *realised* signal would be partition-dependent, so this is a
+    pure function of frequency, interpolated at use.
+    """
+    freqs = np.geomspace(0.2, 30.0, 192)
+    means = np.empty_like(freqs)
+    rmss = np.empty_like(freqs)
+    for i, f in enumerate(freqs):
+        period = 1.0 / f
+        tau = np.linspace(0.0, period, 2048, endpoint=False)
+        v = _sw_cycle(tau, np.full_like(tau, period))
+        means[i] = v.mean()
+        rmss[i] = np.sqrt(np.mean((v - means[i]) ** 2)) or 1.0
+    return freqs, means, rmss
+
+
+_SW_FREQS, _SW_MEANS, _SW_RMSS = _sw_norm()
+
+
+# --------------------------------------------------------------------------
 # small helpers
 # --------------------------------------------------------------------------
 
@@ -552,6 +684,7 @@ class Synthesizer:
                     amp_start=float(evo["amplitude_start_uv"]),
                     amp_end=float(evo["amplitude_end_uv"]),
                     spread=ev["spread"], postictal_s=float(ev["postictal_attenuation_s"]),
+                    morph=ev.get("morphology") or "ictal",
                     index=i,
                 ))
             elif ev["type"] == "seizure_cluster":
@@ -580,6 +713,7 @@ class Synthesizer:
                         amp_start=float(evo["amplitude_start_uv"]),
                         amp_end=float(evo["amplitude_end_uv"]),
                         spread=z["spread"], postictal_s=float(z["postictal_attenuation_s"]),
+                        morph=z.get("morphology") or "ictal",
                         index=i, ordinal=k, kind="seizure_cluster",
                     ))
                     t += step
@@ -595,6 +729,7 @@ class Synthesizer:
                     amp_end=float(evo["amplitude_end_uv"]),
                     spread=ev.get("spread", "generalized"),
                     postictal_s=float(ev.get("postictal_attenuation_s", 0.0)),
+                    morph=ev.get("morphology") or "ictal",
                     index=i, kind="status_epilepticus",
                 ))
             elif ev["type"] == "rhythmic_pattern":
@@ -649,15 +784,28 @@ class Synthesizer:
         hemi = mt.HEMISPHERE_OF_REGION.get(inst.onset_region, "both")
         return f"{hemi}_hemisphere" if hemi in ("left", "right") else "generalized"
 
-    def _gen_weights(self, focus: str) -> np.ndarray:
+    def _gen_weights(self, focus: str,
+                     falloff: float = mt.DEFAULT_FALLOFF) -> np.ndarray:
         cached = getattr(self, "_gw_cache", None)
         if cached is None:
             cached = {}
             self._gw_cache = cached
-        if focus not in cached:
-            w = mt.monopole_weights(focus, self.electrodes)
-            cached[focus] = np.array([w[c] for c in self.electrodes])
-        return cached[focus]
+        key = (focus, falloff)
+        if key not in cached:
+            w = mt.monopole_weights(focus, self.electrodes, falloff=falloff)
+            cached[key] = np.array([w[c] for c in self.electrodes])
+        return cached[key]
+
+    def _field_scale(self, region: str) -> np.ndarray:
+        """Cached ``generator_field_scale`` for ``region`` on this electrode set."""
+        cached = getattr(self, "_fs_cache", None)
+        if cached is None:
+            cached = {}
+            self._fs_cache = cached
+        if region not in cached:
+            cached[region] = np.array(
+                mt.generator_field_scale(region, self.electrodes))
+        return cached[region]
 
     def _seizure_block(self, t: np.ndarray) -> np.ndarray:
         """Sum of every ictal run overlapping ``t``; shape (n_elec, len(t))."""
@@ -667,7 +815,7 @@ class Synthesizer:
         for inst in self.seizures:
             if inst.t1 < t[0] - 1.0 or inst.t0 > t[-1] + 1.0:
                 continue
-            phase, u, amp = self._ictal_phase(inst, t)
+            phase, u, amp, f_inst = self._ictal_phase(inst, t)
             if phase is None:
                 continue
             psi = substream(self.seed, "szharm", inst.index).uniform(0, 2 * np.pi, 4)
@@ -679,39 +827,75 @@ class Synthesizer:
                 onset_frac = {"hemispheric": 0.22, "generalized": 0.30,
                               "contralateral": 0.42}.get(inst.spread, 0.3)
                 s = smoothstep((u - onset_frac) / 0.30)
-                phase_d, _, _ = self._ictal_phase(inst, t - 0.18)
+                # A generalized discharge is near-synchronous across the head -
+                # tens of milliseconds, not the ~0.2 s a focal run takes to
+                # cross to the other hemisphere.  The old flat 0.18 s lag made
+                # every generalized event look like it propagated.
+                lag = 0.02 if spread == "generalized" else 0.18
+                phase_d, _, _, f_d = self._ictal_phase(inst, t - lag)
 
-            for focus, ga, gph in mt.region_generators(inst.onset_region, self.electrodes):
-                w = self._gen_weights(focus)
-                wv = (self._wave(phase, psi, gph, inst.morph, inst.plus_fast)
+            # One jitter stream per discharge, shared by every generator, with
+            # the head-wide desynchrony carried by each generator's y position.
+            # Independent per-generator noise would be averaged away: ~19
+            # generators sum into every electrode.
+            base = int(self.seed) * 31 + inst.index * 1009 + inst.ordinal * 101
+            onset_scale = self._field_scale(inst.onset_region)
+            onset_fall = mt.generator_falloff(inst.onset_region)
+            for gi, (focus, ga, gph) in enumerate(
+                    mt.region_generators(inst.onset_region, self.electrodes)):
+                w = self._gen_weights(focus, onset_fall) * onset_scale
+                wv = (self._wave(phase, psi, gph, inst.morph, inst.plus_fast,
+                                 f_inst, base, mt.POSITIONS.get(focus, (0.0, 0.0))[1],
+                                 base + 7919 * (gi + 1))
                       * amp * ga * (1.0 - 0.55 * s))
                 out += w[:, None] * wv[None, :]
             if spread is not None and phase_d is not None:
-                for focus, ga, gph in mt.region_generators(spread, self.electrodes):
-                    w = self._gen_weights(focus)
-                    wv = (self._wave(phase_d, psi, gph, inst.morph, inst.plus_fast)
+                spread_scale = self._field_scale(spread)
+                spread_fall = mt.generator_falloff(spread)
+                for gi, (focus, ga, gph) in enumerate(
+                        mt.region_generators(spread, self.electrodes)):
+                    w = self._gen_weights(focus, spread_fall) * spread_scale
+                    wv = (self._wave(phase_d, psi, gph, inst.morph, inst.plus_fast,
+                                     f_d, base + 500_003,
+                                     mt.POSITIONS.get(focus, (0.0, 0.0))[1],
+                                     base + 500_003 + 7919 * (gi + 1))
                           * amp * ga * s)
                     out += w[:, None] * wv[None, :]
         return out
 
     @staticmethod
     def _wave(phase: np.ndarray, psi: np.ndarray, offset_cycles: float,
-              morph: str = "ictal", plus_fast: float = 0.0) -> np.ndarray:
+              morph: str = "ictal", plus_fast: float = 0.0,
+              f_inst: Optional[np.ndarray] = None, salt: int = 0,
+              lead: float = 0.0, gsalt: Optional[int] = None) -> np.ndarray:
         """Waveform for one generator, from its instantaneous phase.
 
-        ``ictal``    four harmonics at 1/k^1.3 - the spiky, non-sinusoidal
-                     contour of an evolving ictal run.
-        ``rda``      near-monomorphic (harmonics heavily suppressed), which is
-                     what makes rhythmic delta activity look *bland* next to a
-                     seizure of the same frequency.
-        ``periodic`` a narrow sharp transient plus an after-going slow wave,
-                     repeating once per cycle - LPDs / GPDs.
+        ``ictal``      four harmonics at 1/k^1.3 - the spiky, non-sinusoidal
+                       contour of an evolving ictal run.
+        ``rda``        near-monomorphic (harmonics heavily suppressed), which is
+                       what makes rhythmic delta activity look *bland* next to a
+                       seizure of the same frequency.
+        ``periodic``   a narrow sharp transient plus an after-going slow wave,
+                       repeating once per cycle - LPDs / GPDs.
+        ``spike_wave`` the same two components but fixed in SECONDS, so the
+                       spike keeps its ~42 ms width while the repetition rate
+                       sweeps.  Needs ``f_inst``.
 
         Every family is normalized to unit RMS so ``amplitude_uv`` in the spec
-        means the same thing across them.
+        means the same thing across them.  For ``spike_wave`` that normalisation
+        is frequency-dependent, because a fixed-duration complex inside a
+        lengthening cycle has a falling duty cycle.
         """
         p = phase + 2 * np.pi * offset_cycles
-        if morph == "periodic":
+        if morph == "spike_wave":
+            f = np.full_like(p, 3.0) if f_inst is None else np.clip(f_inst, 0.2, 30.0)
+            period = 1.0 / f
+            cycles = p / (2 * np.pi)
+            tau = np.mod(cycles, 1.0) * period
+            wave = _sw_cycle(tau, period, np.floor(cycles), salt, lead, gsalt)
+            wave = ((wave - np.interp(f, _SW_FREQS, _SW_MEANS))
+                    / np.interp(f, _SW_FREQS, _SW_RMSS))
+        elif morph == "periodic":
             x = np.mod(p / (2 * np.pi), 1.0)
             wave = (np.exp(-0.5 * ((x - 0.16) / 0.033) ** 2)
                     - 0.55 * np.exp(-0.5 * ((x - 0.24) / 0.045) ** 2)
@@ -737,15 +921,21 @@ class Synthesizer:
         u = (t - inst.t0) / dur
         live = (u >= 0.0) & (u <= 1.0)
         if not live.any():
-            return None, u, None
+            return None, u, None, None
         uu = np.clip(u, 0.0, 1.0)
         r = max(inst.end_hz, 0.2) / max(inst.start_hz, 0.2)
         f0 = max(inst.start_hz, 0.2)
         if abs(r - 1.0) < 1e-6:
             phase = 2 * np.pi * f0 * (uu * dur)
+            f_inst = np.full_like(uu, f0)
         else:
             lnr = math.log(r)
             phase = 2 * np.pi * f0 * dur * (np.power(r, uu) - 1.0) / lnr
+            # d(phase)/dt / 2pi.  Analytic on purpose: differentiating the
+            # sampled phase numerically would use one-sided differences at the
+            # array edges, making the result depend on where the caller cut
+            # its chunk - exactly what test_partition_independence forbids.
+            f_inst = f0 * np.power(r, uu)
         # Slow phase wander so the run is rhythmic but not a pure tone.  This
         # is *additive* on purpose: perturbing the accumulated phase
         # multiplicatively scales with elapsed cycles and smears the ictal
@@ -759,7 +949,9 @@ class Synthesizer:
                             jr.uniform(0.03, 0.30, nj),
                             jr.uniform(0, 2 * np.pi, nj)):
             wander += a * np.sin(2 * np.pi * fq * (uu * dur) + p)
+            f_inst = f_inst + a * fq * np.cos(2 * np.pi * fq * (uu * dur) + p)
         phase = phase + wander
+        f_inst = np.clip(f_inst, 0.2, 30.0)
 
         # amplitude_*_uv is the peak-to-peak of the ictal run; a rhythmic,
         # sharply contoured discharge runs ~2.9x its RMS peak-to-peak.
@@ -769,7 +961,7 @@ class Synthesizer:
         # cycle-group waxing and waning
         amp = amp * (1.0 + inst.fluctuate * np.sin(2 * np.pi * 0.11 * uu * dur + wax_phase))
         amp = amp * live
-        return phase, uu, amp
+        return phase, uu, amp, f_inst
 
     def postictal_envelope(self, t: np.ndarray) -> np.ndarray:
         env = np.ones_like(t)

@@ -229,10 +229,37 @@ REGION_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
                         ("P3", 0.80, 0.18), ("O1", 0.70, 0.24), ("F3", 0.75, 0.03)],
     "right_hemisphere": [("F8", 0.85, 0.00), ("T4", 1.00, 0.06), ("C4", 0.90, 0.12),
                          ("P4", 0.80, 0.18), ("O2", 0.70, 0.24), ("F4", 0.75, 0.03)],
-    "generalized":     [("F3", 0.95, 0.00), ("F4", 0.95, 0.03), ("C3", 1.00, 0.07),
-                        ("C4", 1.00, 0.05), ("T3", 0.75, 0.12), ("T4", 0.75, 0.10),
-                        ("P3", 0.80, 0.15), ("P4", 0.80, 0.14), ("Fz", 0.85, 0.01)],
+    # Frontally maximal, and it reaches the rim.  The nine-generator version
+    # this replaced held only F3 F4 C3 C4 T3 T4 P3 P4 Fz, so Fp1/Fp2/F7/F8/
+    # T5/T6/O1/O2 were never sources - they saw only the Gaussian tail of a
+    # neighbour.  Interior electrodes superpose several generators and boundary
+    # electrodes one or two, which built in a 2.35x centre-to-rim gradient and
+    # put Fp1/Fp2 near the floor of a discharge that is frontally maximal in
+    # life.  ``GENERALIZED_FIELD`` below now pins the topography; these
+    # generators supply the phase texture.
+    "generalized":     [("Fz", 1.00, 0.00), ("F3", 0.98, 0.01), ("F4", 0.98, 0.02),
+                        ("Fp1", 0.90, 0.00), ("Fp2", 0.90, 0.01), ("C3", 0.90, 0.04),
+                        ("C4", 0.90, 0.03), ("Cz", 0.95, 0.02), ("F7", 0.80, 0.03),
+                        ("F8", 0.80, 0.04), ("T3", 0.70, 0.06), ("T4", 0.70, 0.05),
+                        ("P3", 0.72, 0.07), ("P4", 0.72, 0.07), ("Pz", 0.75, 0.06),
+                        ("T5", 0.58, 0.09), ("T6", 0.58, 0.08), ("O1", 0.52, 0.10),
+                        ("O2", 0.52, 0.10)],
     "midline":         [("Cz", 1.00, 0.00), ("Fz", 0.55, 0.06), ("Pz", 0.50, 0.09)],
+}
+
+#: Intended scalp topography of a *generalized* discharge, peak 1.0.
+#:
+#: Generalized spike-and-wave is frontally maximal with a smooth
+#: anterior-posterior decline - it is not flat, and it is certainly not
+#: centre-maximal.  This is the target the synthesizer normalises onto, so the
+#: waveform and the prose (`electrodes_for_region`) finally agree; before, the
+#: two were computed from different models that disagreed.
+GENERALIZED_FIELD: Dict[str, float] = {
+    "Fp1": 0.90, "Fp2": 0.90,
+    "F7": 0.80, "F3": 1.00, "Fz": 1.00, "F4": 1.00, "F8": 0.80,
+    "T3": 0.65, "C3": 0.85, "Cz": 0.85, "C4": 0.85, "T4": 0.65,
+    "T5": 0.55, "P3": 0.70, "Pz": 0.70, "P4": 0.70, "T6": 0.55,
+    "O1": 0.50, "O2": 0.50,
 }
 
 
@@ -253,8 +280,27 @@ def region_generators(region: str, channels: Sequence[str]) -> List[Tuple[str, f
     return [(best, 1.0, 0.0)]
 
 
+#: Default monopole falloff.  See :func:`generator_falloff` for why the pinned
+#: generalized field uses a sharper one.
+DEFAULT_FALLOFF = 0.42
+
+#: Sharper falloff for a pinned field.  ``generalized`` has 19 generators, so
+#: at the default falloff every electrode is a weighted average of most of
+#: them and each channel ends up a scaled copy of one waveform - which is
+#: exactly what "too synchronous" looks like on a page.  Narrowing the falloff
+#: lets each electrode be dominated by its two or three nearest generators, so
+#: per-generator variation survives instead of averaging out.  The topography
+#: is unaffected: ``generator_field_scale`` pins the sum either way.
+PINNED_FALLOFF = 0.30
+
+
+def generator_falloff(region: str) -> float:
+    """Monopole falloff to use for ``region``'s generators."""
+    return PINNED_FALLOFF if region in _PINNED_FIELDS else DEFAULT_FALLOFF
+
+
 def monopole_weights(focus: str, channels: Sequence[str],
-                     falloff: float = 0.42, leak: float = 0.03) -> Dict[str, float]:
+                     falloff: float = DEFAULT_FALLOFF, leak: float = 0.03) -> Dict[str, float]:
     """Field of a single source at ``focus``: ``exp(-(d/falloff)^2)``."""
     fx, fy = POSITIONS[focus]
     out: Dict[str, float] = {}
@@ -312,10 +358,7 @@ def region_weights(
     """
     foci = REGION_FOCI[region]
     if region == "generalized":
-        return {
-            ch: 1.0 if ch in ("Fz", "Cz", "F3", "F4", "C3", "C4") else 0.85
-            for ch in channels
-        }
+        return {ch: GENERALIZED_FIELD.get(ch, leak) for ch in channels}
     out: Dict[str, float] = {}
     for ch in channels:
         if ch not in POSITIONS:
@@ -331,6 +374,46 @@ def region_weights(
             best = max(best, float(pow(2.718281828459045, -((d / falloff) ** 2))))
         out[ch] = max(leak, best)
     return out
+
+
+#: Regions whose summed generator field is pinned to an explicit topography.
+#: Deliberately only ``generalized``.  A *focal* region's generators are a
+#: physiologically meaningful set of partially independent nearby sources, and
+#: their superposition is what gives a focus its gradient and its phase reversal
+#: on a bipolar montage; forcing those onto ``region_weights`` shifts a focal
+#: field by up to 0.72 (left_hemisphere), which would silently rewrite the
+#: left-temporal case Persyst has already lateralised correctly.  Generalized is
+#: different: it had no rim generators at all, so its gradient was an artefact
+#: of where the electrodes happen to sit.
+_PINNED_FIELDS = ("generalized",)
+
+
+def generator_field_scale(region: str, channels: Sequence[str]) -> List[float]:
+    """Per-electrode correction making the generator sum match the intended field.
+
+    A region's generators are summed as monopoles, so an electrode's amplitude
+    depends on *how many* generators happen to reach it.  Interior electrodes
+    accumulate from several and rim electrodes from one or two, which is an
+    artefact of the electrode array's geometry rather than anything
+    physiological.  For a region in :data:`_PINNED_FIELDS` this returns
+    ``target / raw`` per electrode, so the summed field reproduces
+    :func:`region_weights` while the generators keep supplying the phase
+    structure.  Every other region returns ones and is left exactly as it was.
+
+    Multiplying each generator's weight vector by this is identical to scaling
+    the sum, because the sum is linear.
+    """
+    if region not in _PINNED_FIELDS:
+        return [1.0] * len(channels)
+    target = region_weights(region, channels)
+    raw: Dict[str, float] = {ch: 0.0 for ch in channels}
+    fall = generator_falloff(region)
+    for focus, ga, _ in region_generators(region, channels):
+        w = monopole_weights(focus, channels, falloff=fall)
+        for ch in channels:
+            raw[ch] += ga * w[ch]
+    floor = (max(raw.values()) or 1.0) * 1e-6
+    return [target[ch] / max(raw[ch], floor) for ch in channels]
 
 
 def electrodes_for_region(region: str, channels: Sequence[str], top: int = 4) -> List[str]:
