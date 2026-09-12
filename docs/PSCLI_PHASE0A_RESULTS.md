@@ -236,7 +236,22 @@ A background-parameter sweep then appeared to isolate `amplitude_uv=55`. **It di
 trials. The fault is **intermittent, not content-determined**, and the apparent parameter sensitivity was
 sampling noise.
 
-### It scales with recording length, and long recordings do not recover
+> **Corrected 2026-09-12, and the correction matters.** An earlier version of this section called the
+> behaviour below a Persyst defect. It is not. Craig routinely processes **48-hour** recordings through
+> this same install — so PSCLI plainly handles long files, and any reading that says otherwise is wrong.
+>
+> What the measurements actually show is narrower: *our generated `.lay/.dat` files* fault above roughly
+> five minutes while *Persyst's own sample* does not. That points at something about what we write, not
+> at the vendor. The cause is **unidentified**, and this line of investigation is **paused** — it does not
+> block the project, because every trend is computed locally and Persyst processing is enrichment.
+>
+> Untested candidates, for whoever picks this up: our header omits `Montage=` and `Sensitivity=`, which the
+> vendor sample carries; we use an **inline `[ChannelMap]`** where the sample references an external named
+> map (`CdwTrans19Map`); we emit 22 channels including `A1`/`A2`/`EKG` against the sample's 19; and we use
+> `Calibration=0.1` against its `1`. Any of these could interact with montage resolution at length. Start
+> by making one export as close to `SK000.LAY` as possible and lengthening it until it breaks.
+
+### It scales with recording length, on our files
 
 A first pass concluded "roughly one run in three, so retry and move on". **That was wrong**, and the
 error mattered: it made an unusable configuration look merely flaky. Measuring against duration — same
@@ -276,9 +291,9 @@ sample still passes 3/3 at the end of the session**, on the same install and MMX
    `<name>.Persyst\` products behind.
 5. Verify the trend outputs after a *successful* exit too — this is a memory fault, so a run that exits 0
    after a near-miss deserves the same all-zero sentinel checks as §Finding 1.
-6. **This is a reportable vendor defect** with a minimal reproduction: a valid `.lay/.dat` above roughly
-   five minutes, `/Process` with a stock P15 MMX, on Persyst `15C3:2026.05.07`. Worth raising with Persyst
-   directly — it blocks exactly the hours-long records the product exists to process.
+6. **Do not report this to Persyst as a defect.** 48-hour recordings process fine on this install, so the
+   fault is in the interaction with our generated files. Treat it as an open question about our exporter,
+   parked until someone wants the vendor trends badly enough to chase it.
 
 ## Incidental: Persyst renames channels on processing
 
