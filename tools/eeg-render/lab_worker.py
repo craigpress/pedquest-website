@@ -340,9 +340,14 @@ def main() -> int:
     while True:
         try:
             worked = process_one(db, cfg)
-        except Exception:
-            log.exception("poll failed")
+        except Exception as error:
+            # A missing table (migration not applied) or an outage: say so once
+            # a minute rather than once a poll.
+            log.error("poll failed: %s", str(error)[:300])
             worked = False
+            if not cfg.once:
+                time.sleep(max(cfg.poll, 60.0))
+                continue
         if cfg.once:
             return 0
         if not worked:
