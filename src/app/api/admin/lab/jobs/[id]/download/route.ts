@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   const artifact = request.nextUrl.searchParams.get("artifact") ?? "";
   if (!isLabArtifact(artifact)) {
     return NextResponse.json({
-      error: "artifact must be one of lay, dat, edf, answers, trends_csv.",
+      error: "artifact must be one of lay, dat, edf, trends, answers, trends_csv.",
     }, { status: 400 });
   }
 

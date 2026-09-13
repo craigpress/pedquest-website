@@ -255,6 +255,24 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
             if src:
                 shutil.copy2(src, dest / src.name)
                 artifacts[key] = f"eeglab://{recording_id}/{src.name}"
+        # qEEG trends sidecar: the viewer's own engine (tools/trend-sidecar,
+        # bundled to trend-sidecar.mjs) run once here, so no browser has to walk
+        # the whole recording again. Best effort: a failure logs and the job
+        # still completes; the viewer falls back to computing.
+        recording_file = next((dest / produced[e].name for e in ("edf", "lay") if e in produced), None)
+        if recording_file and os.path.exists(cfg.trend_sidecar):
+            try:
+                side = subprocess.run(
+                    ["node", cfg.trend_sidecar, str(recording_file)],
+                    capture_output=True, text=True, timeout=cfg.sidecar_timeout, env=env, check=True,
+                )
+                info = json.loads(side.stdout.strip().splitlines()[-1])
+                artifacts["trends"] = f"eeglab://{recording_id}/{Path(info['path']).name}"
+                log.info("job %s: trends sidecar %s (%d epochs, %d bytes)",
+                         job["id"], Path(info["path"]).name, info.get("nT", 0), info.get("bytes", 0))
+            except Exception as error:  # noqa: BLE001 - never fail the export over the sidecar
+                log.warning("job %s: trends sidecar failed: %s", job["id"], str(error)[:400])
+
         key_file = out / f"{recording_id}.answers.json"
         if key_file.exists():
             # The instructor copy sits beside the recording but is only ever
@@ -331,6 +349,11 @@ def main() -> int:
     p.add_argument("--poll", type=float, default=float(os.getenv("POLL_INTERVAL_SECONDS", "10")))
     p.add_argument("--lease", type=float, default=600.0)
     p.add_argument("--timeout", type=float, default=float(os.getenv("EEG_LAB_EXPORT_TIMEOUT_S", "3600")))
+    p.add_argument("--trend-sidecar", dest="trend_sidecar",
+                   default=os.getenv("TREND_SIDECAR_MJS", "/opt/pedquest-eeg-render/trend-sidecar.mjs"),
+                   help="bundled tools/trend-sidecar (node); skipped when the file is absent")
+    p.add_argument("--sidecar-timeout", dest="sidecar_timeout", type=float,
+                   default=float(os.getenv("TREND_SIDECAR_TIMEOUT_S", "5400")))
     p.add_argument("--worker-id", default=f"{socket.gethostname()}:{os.getpid()}")
     p.add_argument("--once", action="store_true", help="process at most one job and exit")
     cfg = p.parse_args()

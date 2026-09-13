@@ -47,3 +47,6 @@ supabase/.temp/
 
 # Persyst PSCLI drops this into whatever directory it is run from.
 InvalidFiles.txt
+
+# bundled Node trend-sidecar (built by npm run trends:sidecar:build, deployed by scp)
+tools/trend-sidecar/dist/

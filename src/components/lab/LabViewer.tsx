@@ -24,6 +24,7 @@ import {
 } from "@/lib/eeg/filters";
 import { createTrendEngine, defaultHopS, type ViewerTrends } from "@/lib/eeg/trends";
 import { loadCachedTrends, saveCachedTrends } from "@/lib/eeg/trend-cache";
+import { decodeTrends, TREND_SIDECAR_EXT } from "@/lib/eeg/trend-sidecar";
 import { formatClock, type ViewerAnnotation, type ViewerAnnotationInput } from "@/lib/eeg/annotations";
 import { LocalAnnotationStore, RemoteAnnotationStore, type AnnotationStore } from "@/lib/eeg/annotation-store";
 import { SYNTHETIC_STAMP, type LabArtifact, type LabJob } from "@/lib/lab/types";
@@ -55,6 +56,8 @@ interface Opened {
   store: AnnotationStore;
   /** identity of the recording bytes for the trend cache; null = do not cache */
   cacheKey: string | null;
+  /** fetches the precomputed trends sidecar written beside the recording, when there is one */
+  sidecar: (() => Promise<ArrayBuffer>) | null;
   /** for a .lay-backed recording: the parsed .lay, so a per-user copy can be exported */
   lay: LayReader | null;
   /** answer key found among the chosen files or offered by the job */
@@ -105,6 +108,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   const [trendVersion, setTrendVersion] = useState(0);
   const [trendProgress, setTrendProgress] = useState(0);
   const [trendsFromCache, setTrendsFromCache] = useState(false);
+  const [trendsSource, setTrendsSource] = useState<"sidecar" | "cache" | null>(null);
 
   // layout: pen width, which panes show, and where the trend/raw splitter sits
   const [penWidth, setPenWidth] = useState(0.75);
@@ -166,12 +170,14 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
         const dat = byExt(".dat");
         const key = source.files.find((f) => /\.answers\.json$/i.test(f.name));
         const answers = key ? parseAnswerManifest(JSON.parse(await key.text())) : null;
+        const sidecarFile = byExt(TREND_SIDECAR_EXT);
+        const sidecar = sidecarFile ? () => sidecarFile.arrayBuffer() : null;
         if (edf) {
           const reader = await EdfReader.open(new FileByteSource(edf));
           const identity = `${edf.name}:${edf.size}:${edf.lastModified}`;
           return {
             reader, lay: null, answers, canFetchAnswers: false, title: edf.name,
-            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}`,
+            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}`, sidecar,
           };
         }
         if (lay && dat) {
@@ -179,7 +185,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           const identity = `${lay.name}:${dat.size}:${dat.lastModified}`;
           return {
             reader, lay: reader, answers, canFetchAnswers: false, title: lay.name,
-            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}`,
+            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}`, sidecar,
           };
         }
         if (lay || dat) throw new Error("A Persyst recording needs both the .lay and the .dat file — select them together.");
@@ -199,14 +205,23 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
       // The recording bytes are fixed by (job, spec, renderer); a re-export
       // under a new spec hash or renderer version is a different recording.
       const cacheKey = `job:${job.id}:${job.specHash ?? "-"}:${job.rendererVersion ?? "-"}`;
+      // The export worker writes the trends beside the recording; one small
+      // signed fetch replaces a walk over the whole file.
+      const sidecar = job.artifacts?.trends
+        ? async () => {
+            const res = await fetch(await getUrl("trends"));
+            if (!res.ok) throw new Error(`trends sidecar HTTP ${res.status}`);
+            return res.arrayBuffer();
+          }
+        : null;
       if (job.artifacts?.edf) {
         const reader = await EdfReader.open(await RangeByteSource.open(() => getUrl("edf")));
-        return { reader, store, lay: null, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:edf` };
+        return { reader, store, lay: null, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:edf`, sidecar };
       }
       if (job.artifacts?.lay && job.artifacts?.dat) {
         const layText = await (await fetch(await getUrl("lay"))).text();
         const reader = await LayReader.open(layText, await RangeByteSource.open(() => getUrl("dat")));
-        return { reader, store, lay: reader, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:lay` };
+        return { reader, store, lay: reader, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:lay`, sidecar };
       }
       throw new Error("This job has no viewable recording (needs EDF+ or .lay/.dat).");
     }
@@ -242,22 +257,42 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
     return () => { cancelled = true; };
   }, [opened, source.kind]);
 
-  // ── trends: from the browser cache when this recording was seen before, else progressively ──
+  // ── trends: sidecar beside the recording → browser cache → compute progressively ──
   useEffect(() => {
     if (!opened) return;
-    const { reader, cacheKey } = opened;
+    const { reader, cacheKey, sidecar } = opened;
     if (!reader.sampleRate || !reader.durationS) return;
     let cancelled = false;
     setTrendsFromCache(false);
+    setTrendsSource(null);
     (async () => {
-      const cached = cacheKey ? await loadCachedTrends(cacheKey) : null;
-      if (cancelled) return;
       const expectedNT = Math.max(1, Math.floor(reader.durationS / defaultHopS(reader.durationS)));
-      if (cached && cached.nT === expectedNT) {
-        setTrends(cached);
+      const adopt = (t: ViewerTrends, from: "sidecar" | "cache") => {
+        setTrends(t);
         setTrendVersion((v) => v + 1);
         setTrendProgress(1);
         setTrendsFromCache(true);
+        setTrendsSource(from);
+      };
+      if (sidecar) {
+        try {
+          const decoded = decodeTrends(await sidecar(), { durationS: reader.durationS });
+          if (cancelled) return;
+          if (decoded && decoded.nT === expectedNT) {
+            adopt(decoded, "sidecar");
+            if (cacheKey) void saveCachedTrends(cacheKey, decoded);
+            return;
+          }
+          console.warn("[viewer] trends sidecar ignored (engine version or shape mismatch); computing");
+        } catch (e) {
+          if (cancelled) return;
+          console.warn("[viewer] trends sidecar unavailable; computing:", e);
+        }
+      }
+      const cached = cacheKey ? await loadCachedTrends(cacheKey) : null;
+      if (cancelled) return;
+      if (cached && cached.nT === expectedNT) {
+        adopt(cached, "cache");
         return;
       }
       const engine = createTrendEngine(reader.durationS, reader.sampleRate, reader.labels);
@@ -623,7 +658,14 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           strip: click seeks · drag scrubs · Shift-drag selects a span to mark{windowS ? " · wheel scrolls" : " · wheel pages"}
         </span>
         {trendsFromCache && trendProgress >= 1 && (
-          <span style={{ ...lbl, alignSelf: "center" }} title="Trends were restored from this browser's cache instead of recomputed">cached</span>
+          <span
+            style={{ ...lbl, alignSelf: "center" }}
+            title={trendsSource === "sidecar"
+              ? "Trends came from the precomputed sidecar stored beside the recording"
+              : "Trends were restored from this browser's cache instead of recomputed"}
+          >
+            {trendsSource === "sidecar" ? "precomputed" : "cached"}
+          </span>
         )}
         {group("Baseline", (
           <select style={sel} value={baselineId} onChange={(e) => setBaselineId(e.target.value)}>

@@ -52,10 +52,14 @@ export const LAB_FORMATS: { id: LabFormat; label: string; hint: string }[] = [
   { id: "edf", label: "EDF+", hint: "Opens in EDFbrowser, Moonlight, Epicurrents — the portable copy." },
 ];
 
-export type LabArtifact = "lay" | "dat" | "edf" | "answers" | "trends_csv";
+export type LabArtifact = "lay" | "dat" | "edf" | "trends" | "answers" | "trends_csv";
 
-/** Safe to hand a learner: signal only, no realized-event annotations. */
-export const LEARNER_ARTIFACTS: LabArtifact[] = ["lay", "dat", "edf"];
+/**
+ * Safe to hand a learner: signal only, no realized-event annotations. `trends`
+ * is the viewer's precomputed qEEG sidecar (src/lib/eeg/trend-sidecar.ts) —
+ * derived from the signal alone, it shows nothing the raw page does not.
+ */
+export const LEARNER_ARTIFACTS: LabArtifact[] = ["lay", "dat", "edf", "trends"];
 
 /**
  * Instructor copies. `answers` is the realized-event manifest; `trends_csv` is
@@ -77,6 +81,7 @@ export const LAB_ARTIFACT_LABELS: Record<LabArtifact, string> = {
   lay: "Persyst .lay",
   dat: "Persyst .dat",
   edf: "EDF+",
+  trends: "Trend sidecar",
   answers: "Answer key",
   trends_csv: "Trend CSV",
 };
