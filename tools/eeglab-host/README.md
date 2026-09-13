@@ -109,6 +109,22 @@ ingress entry **before** the 404 catch-all:
 Verify from outside the LAN: `curl -sI --resolve eeglab.presshome.net:443:104.21.54.133 https://eeglab.presshome.net/healthz`
 should return `Server: openresty` and `ok`.
 
+## After a host reboot (OMV or moltbot)
+
+Seen 2026-09-13 when the Proxmox host restarted both VMs:
+
+- `eeglab-nginx` did **not** come back under `restart: unless-stopped` (the nexus containers with the
+  same policy did) → every signed URL was a 502 from NPM. Check `docker ps -a --filter name=eeglab`
+  on omv; `cd /root/eeglab-nginx && docker compose up -d`. The policy is now `restart: always`.
+- The moltbot NFS mount renegotiates `rsize/wsize` on remount (262144 in fstab → 131072 observed);
+  harmless when moltbot reboots after OMV, dangerous the other way round (memory
+  `error_nfs_oversized_rpc_fragment`).
+- A bank export that is "claimed" again at the same minute every hour and ends in
+  `exhausted 5 of 5 attempts` is the worker's subprocess timeout (`EEG_LAB_EXPORT_TIMEOUT_S`,
+  default 3600 s) killing a 12–24 h recording, not a Supabase or lease fault. The unit sets 21600 s.
+  Requeue: `update eeg_lab_jobs set status='pending', attempts=0, error=null, lease_expires_at=null,
+  claimed_by=null where recording_id='LAB-…' and status='error';` via `npx supabase db query --linked -f`.
+
 ## Verifying end to end
 
 1. Queue an export from `/admin/eeg-lab` (10 min is enough). The job should go `pending → running → done`
