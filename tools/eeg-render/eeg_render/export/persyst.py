@@ -84,8 +84,13 @@ def write_lay_dat(path: str | Path, synth: Synthesizer, recording: Recording,
                   start: Optional[_dt.datetime] = None,
                   extra_rows: Optional[Dict[str, np.ndarray]] = None,
                   events: Sequence[Tuple[float, float, str]] = (),
+                  blocks: Optional[Iterable[Tuple[int, np.ndarray]]] = None,
                   ) -> Dict:
     """Stream ``synth`` to ``<path>.LAY`` + ``<path>.DAT``.
+
+    ``blocks`` replaces the writer's own ``iter_blocks`` pull -- the CLI passes
+    one arm of :func:`export.tee.tee_blocks` so a two-format export
+    synthesizes the recording once.
 
     ``events`` are written into ``[Comments]``.  Pass none for a learner copy:
     ground truth in the header is ground truth in the learner's hands.
@@ -116,8 +121,9 @@ def write_lay_dat(path: str | Path, synth: Synthesizer, recording: Recording,
     clipped = 0
     written = 0
     peak = 0.0
+    source = blocks if blocks is not None else iter_blocks(synth, n_expected)
     with dat_path.open("wb") as fh:
-        for start_sample, block in iter_blocks(synth, n_expected):
+        for start_sample, block in source:
             n = block.shape[1]
             if extra_order:
                 rows = [block] + [

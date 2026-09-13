@@ -233,19 +233,57 @@ def cmd_export(args) -> int:
                   for e in events]
 
     files, clipped = {}, 0
-    if "lay" in formats:
-        kw = {"events": lay_events, "extra_rows": extra_rows}
-        if args.calibration is not None:
-            kw["calibration"] = args.calibration
-        report = write_lay_dat(out_dir / ident, synth, recording, **kw)
+    lay_kw = {"events": lay_events, "extra_rows": extra_rows}
+    if args.calibration is not None:
+        lay_kw["calibration"] = args.calibration
+    edf_kw = {"events": edf_events, "extra_rows": extra_rows}
+
+    reports: dict = {}
+    if formats == {"lay", "edf"}:
+        # Both formats from ONE pass over the synthesizer: the writers each used
+        # to pull iter_blocks themselves, so a two-format export synthesized the
+        # whole recording twice (the dominant cost of a lab export).
+        import threading
+        from .export.manifest import iter_blocks
+        from .export.tee import tee_blocks
+
+        lay_blocks, edf_blocks = tee_blocks(iter_blocks(synth, recording.n_samples), 2)
+
+        def run_edf() -> None:
+            try:
+                reports["edf"] = write_edf_plus(out_dir / ident, synth, recording, blocks=edf_blocks, **edf_kw)
+            except BaseException as error:  # noqa: BLE001 - re-raised below
+                reports["edf"] = error
+                for _ in edf_blocks:      # release the tee so the .lay side is not blocked
+                    pass
+
+        worker = threading.Thread(target=run_edf, name="eeg-render-edf", daemon=True)
+        worker.start()
+        try:
+            reports["lay"] = write_lay_dat(out_dir / ident, synth, recording, blocks=lay_blocks, **lay_kw)
+        except BaseException as error:  # noqa: BLE001
+            reports["lay"] = error
+            for _ in lay_blocks:
+                pass
+        worker.join()
+        for name in ("lay", "edf"):
+            if isinstance(reports[name], BaseException):
+                raise reports[name]
+    else:
+        if "lay" in formats:
+            reports["lay"] = write_lay_dat(out_dir / ident, synth, recording, **lay_kw)
+        if "edf" in formats:
+            reports["edf"] = write_edf_plus(out_dir / ident, synth, recording, **edf_kw)
+
+    if "lay" in reports:
+        report = reports["lay"]
         files["lay"], files["dat"] = report["lay"], report["dat"]
         clipped = max(clipped, report["clipped_samples"])
         print(f"  lay  {report['lay']}  {report['samples']:,} samples x "
               f"{report['channels']} ch  peak {report['peak_uv']} uV  "
               f"clipped {report['clipped_samples']}")
-    if "edf" in formats:
-        report = write_edf_plus(out_dir / ident, synth, recording,
-                                events=edf_events, extra_rows=extra_rows)
+    if "edf" in reports:
+        report = reports["edf"]
         files["edf"] = report["edf"]
         clipped = max(clipped, report["clipped_samples"])
         print(f"  edf  {report['edf']}  {report['records']:,} records x "

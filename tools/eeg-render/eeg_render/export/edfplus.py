@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import datetime as _dt
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -94,10 +94,12 @@ def write_edf_plus(path: str | Path, synth: Synthesizer, recording: Recording,
                    start: Optional[_dt.datetime] = None,
                    extra_rows: Optional[Dict[str, np.ndarray]] = None,
                    events: Sequence[Tuple[float, Optional[float], str]] = (),
+                   blocks: Optional[Iterable[Tuple[int, np.ndarray]]] = None,
                    ) -> Dict:
     """Stream ``synth`` to a conforming EDF+C file.
 
-    ``events`` become annotations.  Pass none for a learner copy.
+    ``events`` become annotations.  Pass none for a learner copy.  ``blocks``
+    replaces the writer's own ``iter_blocks`` pull (see export.tee).
     """
     path = Path(path).with_suffix(".edf")
     fs = int(recording.sample_rate)
@@ -187,7 +189,8 @@ def write_edf_plus(path: str | Path, synth: Synthesizer, recording: Recording,
                     break
             return buf
 
-        for start_sample, block in iter_blocks(synth, n_expected):
+        source = blocks if blocks is not None else iter_blocks(synth, n_expected)
+        for start_sample, block in source:
             if extra_order:
                 block = np.vstack([block] + [
                     extra_rows[c][start_sample:start_sample + block.shape[1]][None, :]
