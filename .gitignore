@@ -50,3 +50,6 @@ InvalidFiles.txt
 
 # bundled Node trend-sidecar (built by npm run trends:sidecar:build, deployed by scp)
 tools/trend-sidecar/dist/
+
+# Session debug output: Edge-CDP screenshots, worker logs, one-off scripts
+artifacts/

@@ -154,6 +154,20 @@ To stop or restart the pool: `C:\pedquest-worker\restart-pool.ps1 stop|start|sta
 (`update eeg_lab_jobs set status='pending', claimed_by=null, lease_expires_at=null where status='running'
 and claimed_by like 'craigsrig%'`) so the restarted pool reclaims them at once instead of after the lease.
 
+`status` is also the check to run before assuming the queue is being served: a `stop` leaves the task
+`Ready` with `LastTaskResult` **267014** (`SCHED_S_TASK_TERMINATED`) and zero processes, and a requeued
+job then sits `pending` indefinitely with nothing to claim it (seen 2026-09-13). Run it through
+`ssh ai-workstation` for an un-UAC-filtered token — unelevated, `Get-ScheduledTask` cannot see the SYSTEM
+task and the process list reads as 0 even when the pool is running.
+
+**A job can fail five times over one earlier success.** If the export finishes but the `done` PATCH fails
+(Supabase 504), the attempt leaves a complete root-owned folder in the store; the Windows NFS client cannot
+overwrite or delete it, so every retry dies with `PermissionError` on the `.LAY` until the attempts run out.
+`lab_worker.py` from `c90c383` clears such a folder where it can and otherwise writes `<recording_id>-a<attempt>`.
+For older folders: move the directory aside on OMV (`mv … _stale-<id>-<why>`), reset the row
+(`status='pending', attempts=0, error=null, claimed_by=null, lease_expires_at=null`), and delete the stale
+copy once the rerun's folder is complete.
+
 ## Trends sidecar (`<recording>.trends.bin`)
 
 Every export gets the viewer's qEEG trends precomputed beside it by `tools/trend-sidecar` — the same

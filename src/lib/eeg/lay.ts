@@ -11,6 +11,14 @@
 // reviewer's marks, so `mergeLayComments` writes a per-user copy of the .lay
 // that opens in Persyst with the learner's annotations on the timeline. The
 // .dat is never rewritten.
+//
+// `state` and `type` do not change how Persyst classifies a comment (PQW-093,
+// verified 2026-09-13 in Persyst against a 15-row probe covering types 0-4,
+// 256, 4096, 32768, 65536, 65537, 131072 and states 0-2): every row appeared in
+// the Comments pane as `Origin: User-Persyst`, an ordinary reviewer comment,
+// none as a detector event, and `duration` was honoured as a span (0 = point).
+// So the 65536 written for learner marks and for the exporter's realized events
+// is safe as is.
 
 import type { ByteSource, EdfAnnotation, SignalWindow } from "./edf";
 import type { Recording, RecordingInfo } from "./recording";
