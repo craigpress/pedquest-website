@@ -259,13 +259,28 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
         out = work / "out"
         produced = {p.suffix.lstrip(".").lower(): p for p in out.iterdir() if p.is_file()}
         artifacts: dict[str, str] = {}
+        # A folder left by an interrupted attempt (host reboot mid-copy) holds
+        # files this host may not be able to replace: the Windows NFS client
+        # cannot overwrite or delete root-owned files. Clear it where we can;
+        # otherwise write this attempt beside it. The artifact paths carry the
+        # folder, and the download route signs any path under the store.
+        folder = recording_id
+        if dest.exists() and any(dest.iterdir()):
+            try:
+                shutil.rmtree(dest)
+                log.warning("job %s: replaced a stale %s folder from an interrupted attempt", job["id"], recording_id)
+            except OSError:
+                folder = f"{recording_id}-a{int(job.get('attempts') or 0)}"
+                dest = store / folder
+                log.warning("job %s: %s exists and cannot be replaced from this host; writing %s",
+                            job["id"], recording_id, folder)
         dest.mkdir(parents=True, exist_ok=True)
         mapping = {"lay": "lay", "dat": "dat", "edf": "edf"}
         for ext, key in mapping.items():
             src = produced.get(ext)
             if src:
                 _copy_to_store(src, dest / src.name)
-                artifacts[key] = f"eeglab://{recording_id}/{src.name}"
+                artifacts[key] = f"eeglab://{folder}/{src.name}"
         # qEEG trends sidecar: the viewer's own engine (tools/trend-sidecar,
         # bundled to trend-sidecar.mjs) run once here, so no browser has to walk
         # the whole recording again. Computed from the LOCAL export output, not
@@ -282,7 +297,7 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
                 info = json.loads(side.stdout.strip().splitlines()[-1])
                 sidecar = Path(info["path"])
                 _copy_to_store(sidecar, dest / sidecar.name)
-                artifacts["trends"] = f"eeglab://{recording_id}/{sidecar.name}"
+                artifacts["trends"] = f"eeglab://{folder}/{sidecar.name}"
                 log.info("job %s: trends sidecar %s (%d epochs, %d bytes)",
                          job["id"], sidecar.name, info.get("nT", 0), info.get("bytes", 0))
             except Exception as error:  # noqa: BLE001 - never fail the export over the sidecar
@@ -293,7 +308,7 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
             # The instructor copy sits beside the recording but is only ever
             # handed out through the editor-gated download route.
             _copy_to_store(key_file, dest / key_file.name)
-            artifacts["answers"] = f"eeglab://{recording_id}/{key_file.name}"
+            artifacts["answers"] = f"eeglab://{folder}/{key_file.name}"
         (dest / "README.txt").write_text(
             f"{STAMP}\nrecording_id: {recording_id}\njob: {job['id']}\nspec_hash: {job.get('spec_hash')}\n"
             f"exported: {iso(utcnow())} by {socket.gethostname()}\n"
