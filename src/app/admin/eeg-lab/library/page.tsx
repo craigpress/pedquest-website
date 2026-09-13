@@ -8,10 +8,14 @@
  * authored into them (background, seizures, patterns, artifacts), by age band,
  * by teaching domain, or by any word in the linked question. Every hit opens
  * in the viewer or downloads through the same gated route the console uses.
+ *
+ * Any signed-in member may browse. The API redacts the authored findings for
+ * non-editors (they are the answers to the bank questions), so a learner sees
+ * what a recording is and can open it, not what is in it.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRole } from "@/lib/auth";
+import { useRole, useUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, btnGhost, card, eyebrow, fieldLabel, h1, inp, meta, mini } from "@/lib/admin-ui";
 import {
@@ -38,8 +42,21 @@ function minutes(v: number): string {
   return v % 1 === 0 ? `${v}` : v.toFixed(1);
 }
 
+/** Start a browser download without opening a tab (no popup blocker involved). */
+function triggerDownload(url: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 export default function LibraryPage() {
+  const { user, loading: userLoading } = useUser();
   const { isEditor, loading: roleLoading } = useRole();
+  const signedIn = !!user;
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
@@ -48,6 +65,7 @@ export default function LibraryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [downloadOpen, setDownloadOpen] = useState<string | null>(null);
 
   const authHeaders = useCallback(async () => {
     const sb = getSupabase();
@@ -65,7 +83,7 @@ export default function LibraryPage() {
   // Debounced fetch: the search runs server-side over the whole library, and
   // a keystroke every 250 ms is cheap against a few hundred metadata rows.
   useEffect(() => {
-    if (!isEditor) return;
+    if (!signedIn) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
       setLoading(true);
@@ -88,41 +106,52 @@ export default function LibraryPage() {
       }
     }, 250);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [isEditor, params, authHeaders]);
+  }, [signedIn, params, authHeaders]);
 
-  async function download(entry: LibraryEntry, artifact: LabArtifact) {
-    if (isInstructorArtifact(artifact)) {
+  /**
+   * Download one or more artifacts of an entry. Every signed URL is minted
+   * first, then the downloads start together, so the browser sees one user
+   * gesture (it may ask once to allow multiple downloads).
+   */
+  async function download(entry: LibraryEntry, artifacts: LabArtifact[]) {
+    const instructor = artifacts.filter(isInstructorArtifact);
+    if (instructor.length) {
       const ok = window.confirm(
-        `${LAB_ARTIFACT_LABELS[artifact]} is the INSTRUCTOR copy — it carries the ground truth ` +
+        `${instructor.map((a) => LAB_ARTIFACT_LABELS[a]).join(" and ")} is the INSTRUCTOR copy — it carries the ground truth ` +
         "for this recording. Do not hand it to a learner. Download it?",
       );
       if (!ok) return;
     }
     setError(null);
+    setDownloadOpen(null);
     try {
-      const res = await fetch(`/api/admin/lab/jobs/${entry.jobId}/download?artifact=${artifact}`, { headers: await authHeaders() });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        setError(json.error || "Could not issue a download link.");
-        return;
+      const headers = await authHeaders();
+      const urls: string[] = [];
+      for (const artifact of artifacts) {
+        const res = await fetch(`/api/admin/lab/jobs/${entry.jobId}/download?artifact=${artifact}`, { headers });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          setError(json.error || "Could not issue a download link.");
+          return;
+        }
+        urls.push(json.url as string);
       }
-      window.open(json.url as string, "_blank", "noopener,noreferrer");
+      for (const url of urls) triggerDownload(url);
     } catch {
       setError("Could not issue a download link.");
     }
   }
 
-  if (roleLoading) {
+  if (userLoading || roleLoading) {
     return <div style={adminShellWide}><p style={{ color: "var(--text-muted)" }}>Loading…</p></div>;
   }
-  if (!isEditor) {
+  if (!signedIn) {
     return (
       <div style={adminShellWide}>
-        <h1 style={h1}>Editor access required</h1>
+        <h1 style={h1}>Sign in to browse the EEG Library</h1>
         <p style={{ color: "var(--text-secondary)", marginTop: 10 }}>
-          The EEG Library is available to question-bank editors and admins.
+          The library is available to signed-in PedQuEST members. <Link href="/login">Sign in</Link>.
         </p>
-        <Link href="/admin" style={{ ...btnGhost, display: "inline-block", marginTop: 16, textDecoration: "none" }}>← Admin dashboard</Link>
       </div>
     );
   }
@@ -144,6 +173,9 @@ export default function LibraryPage() {
         .lib-findings b { color: var(--text); font-weight: 600; }
         .lib-more { color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; max-width: 80ch; }
         .lib-more ul { margin: 4px 0 0 18px; padding: 0; }
+        .lib-dl { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 6px 8px; border-radius: 8px;
+          border: 1px dashed var(--border); }
+        .lib-dl-label { font-family: var(--mono-font); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-right: 2px; }
         @media (max-width: 960px) { .lib-filters { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 560px) { .lib-filters { grid-template-columns: 1fr 1fr; } }
       `}</style>
@@ -152,9 +184,13 @@ export default function LibraryPage() {
         <span style={eyebrow}>EEG teaching lab</span>
         <h1 style={{ ...h1, marginTop: 6 }}>EEG Library</h1>
         <p style={{ color: "var(--text-secondary)", marginTop: 8, maxWidth: "68ch", lineHeight: 1.6 }}>
-          Every finished teaching recording, searchable by what was authored into it and by the
-          question it belongs to. Build new recordings in the{" "}
-          <Link href="/admin/eeg-lab">lab console</Link>. All recordings are {SYNTHETIC_STAMP.toLowerCase()}s.
+          Every finished teaching recording, searchable by the question it belongs to
+          {isEditor ? " and by what was authored into it" : ""}. Open one in the browser viewer, or download it
+          for Persyst or EDFbrowser.
+          {isEditor && (
+            <> Build new recordings in the <Link href="/admin/eeg-lab">lab console</Link>.</>
+          )}{" "}
+          All recordings are {SYNTHETIC_STAMP.toLowerCase()}s.
         </p>
       </div>
 
@@ -165,7 +201,9 @@ export default function LibraryPage() {
           style={inp}
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Try: burst suppression pentobarbital · PQ-B-010 · left temporal seizure · hypsarrhythmia · neonate BS"
+          placeholder={isEditor
+            ? "Try: burst suppression pentobarbital · PQ-B-010 · left temporal seizure · hypsarrhythmia · neonate BS"
+            : "Try: PQ-B-010 · neonate · aEEG · status epilepticus"}
           autoFocus
         />
         <div className="lib-filters">
@@ -190,7 +228,7 @@ export default function LibraryPage() {
       <section style={{ ...card, padding: "4px 18px 18px", marginTop: 16 }}>
         {!loading && entries.length === 0 && (
           <p style={{ ...meta, marginTop: 14 }}>
-            {total === 0 ? "No finished recordings yet — the export queue is on the lab console." : "Nothing matches. Loosen a filter or try another word."}
+            {total === 0 ? "No finished recordings yet." : "Nothing matches. Loosen a filter or try another word."}
           </p>
         )}
         {entries.map((e) => {
@@ -199,6 +237,14 @@ export default function LibraryPage() {
           const title = qn?.title ?? (s.kind === "aeeg" ? "aEEG recording" : "Teaching recording");
           const expanded = !!open[e.jobId];
           const hasMore = !!(qn?.learningObjective || qn?.imageCaption || qn?.teachingPoints.length || s.annotations.length);
+          const hasEdf = !!e.artifacts.edf;
+          const hasPersyst = !!(e.artifacts.lay && e.artifacts.dat);
+          const learnerArtifacts = (["edf", "lay", "dat"] as LabArtifact[]).filter((a) => !!e.artifacts[a]);
+          const instructorArtifacts = isEditor
+            ? (Object.keys(e.artifacts) as LabArtifact[]).filter(isInstructorArtifact)
+            : [];
+          const canDownload = learnerArtifacts.length + instructorArtifacts.length > 0;
+          const dlOpen = downloadOpen === e.jobId;
           return (
             <div className="lib-row" key={e.jobId}>
               <div className="lib-head">
@@ -220,20 +266,22 @@ export default function LibraryPage() {
                 {qn?.domain && <span className="lib-chip">{qn.domain}</span>}
                 {qn?.difficulty && <span className="lib-chip">{qn.difficulty}</span>}
                 {qn?.setting && <span className="lib-chip">{qn.setting}</span>}
-                {e.rendererVersion && <span className="lib-chip">render {e.rendererVersion}</span>}
+                {isEditor && e.rendererVersion && <span className="lib-chip">render {e.rendererVersion}</span>}
               </div>
 
-              <div className="lib-findings">
-                {s.backgroundDetail && <span><b>Background</b> {s.backgroundDetail}</span>}
-                {s.findings.length === 0 && !s.aeegPattern && <span>Background only — no authored events.</span>}
-                {s.findings.map((f, i) => (
-                  <span key={i}>
-                    <b>{labelize(f.type)}</b>
-                    {f.detail ? ` ${f.detail}` : ""}
-                    {f.atMin !== null ? ` @ ${minutes(f.atMin)} min` : ""}
-                  </span>
-                ))}
-              </div>
+              {isEditor && (
+                <div className="lib-findings">
+                  {s.backgroundDetail && <span><b>Background</b> {s.backgroundDetail}</span>}
+                  {s.findings.length === 0 && !s.aeegPattern && <span>Background only — no authored events.</span>}
+                  {s.findings.map((f, i) => (
+                    <span key={i}>
+                      <b>{labelize(f.type)}</b>
+                      {f.detail ? ` ${f.detail}` : ""}
+                      {f.atMin !== null ? ` @ ${minutes(f.atMin)} min` : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {expanded && hasMore && (
                 <div className="lib-more">
@@ -256,7 +304,7 @@ export default function LibraryPage() {
               )}
 
               <div className="lib-chips">
-                {(e.artifacts.edf || (e.artifacts.lay && e.artifacts.dat)) && (
+                {(hasEdf || hasPersyst) && (
                   <Link
                     href={`/admin/eeg-lab/viewer?job=${e.jobId}`}
                     style={{ ...mini, borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }}
@@ -264,38 +312,65 @@ export default function LibraryPage() {
                     Open in viewer
                   </Link>
                 )}
-                {(Object.keys(e.artifacts) as LabArtifact[]).map((artifact) => (
+                {canDownload && (
                   <button
-                    key={artifact}
                     type="button"
-                    style={{
-                      ...mini,
-                      borderColor: isInstructorArtifact(artifact) ? "var(--accent-secondary)" : "var(--border)",
-                      color: isInstructorArtifact(artifact) ? "var(--accent-secondary)" : "var(--text-secondary)",
-                    }}
-                    onClick={() => void download(e, artifact)}
+                    style={{ ...mini, borderColor: dlOpen ? "var(--text)" : "var(--border)", color: dlOpen ? "var(--text)" : "var(--text-secondary)" }}
+                    aria-expanded={dlOpen}
+                    aria-controls={`dl-${e.jobId}`}
+                    onClick={() => setDownloadOpen(dlOpen ? null : e.jobId)}
                   >
-                    {LAB_ARTIFACT_LABELS[artifact]}
-                    {isInstructorArtifact(artifact) ? " · instructor" : ""}
+                    Download {dlOpen ? "▴" : "▾"}
                   </button>
-                ))}
-                {qn && <Link href={`/admin/qbank/${qn.caseId}`} style={mini}>Open question</Link>}
+                )}
+                {qn && (isEditor || qn.status === "approved" || qn.status === "published") && (
+                  <Link href={isEditor ? `/admin/qbank/${qn.caseId}` : `/education/question-bank/${qn.caseId}`} style={mini}>
+                    Open question
+                  </Link>
+                )}
                 {hasMore && (
                   <button type="button" style={mini} onClick={() => setOpen((o) => ({ ...o, [e.jobId]: !expanded }))}>
                     {expanded ? "Less" : "More"}
                   </button>
                 )}
               </div>
+
+              {dlOpen && (
+                <div className="lib-dl" id={`dl-${e.jobId}`} role="group" aria-label="Download formats">
+                  <span className="lib-dl-label">Format</span>
+                  {hasEdf && (
+                    <button type="button" style={mini} onClick={() => void download(e, ["edf"])}>EDF+ (.edf)</button>
+                  )}
+                  {hasPersyst && (
+                    <button type="button" style={mini} onClick={() => void download(e, ["lay", "dat"])}>Persyst (.lay + .dat)</button>
+                  )}
+                  {learnerArtifacts.length > 1 && (
+                    <button type="button" style={mini} onClick={() => void download(e, learnerArtifacts)}>All files</button>
+                  )}
+                  {instructorArtifacts.map((artifact) => (
+                    <button
+                      key={artifact}
+                      type="button"
+                      style={{ ...mini, borderColor: "var(--accent-secondary)", color: "var(--accent-secondary)" }}
+                      onClick={() => void download(e, [artifact])}
+                      title="Instructor copy — carries the ground truth"
+                    >
+                      {LAB_ARTIFACT_LABELS[artifact]} · instructor
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
       </section>
 
       <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Link href="/admin" style={btnGhost}>← Admin dashboard</Link>
-        <Link href="/admin/eeg-lab" style={btnGhost}>Lab console</Link>
-        <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Lab Viewer</Link>
-        <Link href="/admin/qbank" style={btnGhost}>Question bank</Link>
+        <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Viewer</Link>
+        <Link href="/education/question-bank" style={btnGhost}>Question bank</Link>
+        {isEditor && <Link href="/admin/eeg-lab" style={btnGhost}>Lab console</Link>}
+        {isEditor && <Link href="/admin/qbank" style={btnGhost}>Review queue</Link>}
+        {isEditor && <Link href="/admin" style={btnGhost}>Admin dashboard</Link>}
       </div>
     </div>
   );
@@ -309,6 +384,8 @@ function Facet(props: {
   onChange: (v: string) => void;
 }) {
   const keys = Object.keys(props.counts ?? {}).sort();
+  // A facet nobody can use (e.g. findings, redacted for learners) is not shown.
+  if (props.counts && keys.length === 0 && !props.value) return null;
   return (
     <label style={{ display: "block" }}>
       <span style={fieldLabel}>{props.label}</span>

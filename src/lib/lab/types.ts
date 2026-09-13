@@ -77,8 +77,8 @@ export const LAB_ARTIFACT_LABELS: Record<LabArtifact, string> = {
   lay: "Persyst .lay",
   dat: "Persyst .dat",
   edf: "EDF+",
-  answers: "Answer key (answers.json)",
-  trends_csv: "Persyst trend CSV",
+  answers: "Answer key",
+  trends_csv: "Trend CSV",
 };
 
 // ── Persyst processing ─────────────────────────────────────────────────────

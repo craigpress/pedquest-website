@@ -262,6 +262,34 @@ export function rowToEntry(row: Json, cases: Map<string, LibraryQuestion>): Libr
   return { ...base, searchText: buildSearchText(base) };
 }
 
+/**
+ * The learner view of an entry. Everything that names what was authored into
+ * the recording — events with their region and minute, the background type
+ * and its numbers, the aEEG pattern, bedside notes, and the question's
+ * objective / caption / teaching points — is the answer to the question the
+ * recording was made for, so a non-editor never receives it. What stays is
+ * enough to find and open the recording: kind, age band, montage, duration,
+ * and the question's id, title, domain, difficulty and setting.
+ */
+export function redactForLearner(entry: LibraryEntry): LibraryEntry {
+  const s = entry.summary;
+  const q = entry.question;
+  const base: Omit<LibraryEntry, "searchText"> = {
+    ...entry,
+    summary: {
+      ...s,
+      background: null,
+      backgroundDetail: null,
+      aeegPattern: null,
+      sleepWakeCycling: null,
+      findings: [],
+      annotations: [],
+    },
+    question: q ? { ...q, learningObjective: null, imageCaption: null, teachingPoints: [] } : null,
+  };
+  return { ...base, searchText: buildSearchText(base) };
+}
+
 // ── query ──────────────────────────────────────────────────────────────────
 
 export interface LibraryQuery {

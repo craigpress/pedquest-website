@@ -22,13 +22,12 @@ export const runtime = "nodejs";
 //
 // TWO INDEPENDENT GATES, and that is the point:
 //
-//   1. requireRole(request, "editor") — this lives under /api/admin, like every
-//      other route there.
+//   1. requireRole(request, "member") — any signed-in member may fetch a
+//      learner artifact (lay/dat/edf) of a finished recording.
 //   2. resolveArtifact(..., callerIsEditor) — re-checks the caller's role for
-//      `answers` and `trends_csv` specifically. It is redundant today. It stops
-//      being redundant the moment anyone relaxes gate 1 to let learners fetch
-//      their own recording, which is the obvious next feature. The answer key
-//      is the instructor copy and must refuse on its own terms.
+//      `answers` and `trends_csv` specifically. Since gate 1 was relaxed to
+//      members (2026-09-13) this is the gate that keeps the instructor copy
+//      from a learner; it must refuse on its own terms.
 //
 // The learner artifacts are safe to hand out because of what the WORKER does,
 // not because of what this route withholds: `eeg-render export --answers` — the
@@ -39,7 +38,7 @@ export const runtime = "nodejs";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireRole(request, "editor");
+  const auth = await requireRole(request, "member");
   if (!auth.ok) return auth.response;
 
   const { id } = await ctx.params;

@@ -13,9 +13,8 @@ export const runtime = "nodejs";
 // GET  /api/admin/lab/jobs/<uuid>/annotations?all=1   → everyone's (editors only)
 // POST /api/admin/lab/jobs/<uuid>/annotations         → create one, owned by the caller
 //
-// Gated at editor today like everything under /api/admin. The per-user model
-// is already in the data, so opening the viewer to members later is a change
-// to the role argument here, not to the table.
+// Open to any signed-in member since 2026-09-13 (the viewer is a learner
+// tool); marks are per user, and `all=1` stays editor-only.
 
 async function loadJob(id: string) {
   const supabase = createServerClient();
@@ -29,7 +28,7 @@ async function loadJob(id: string) {
 }
 
 export async function GET(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireRole(request, "editor");
+  const auth = await requireRole(request, "member");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Not a job id." }, { status: 400 });
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
 }
 
 export async function POST(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireRole(request, "editor");
+  const auth = await requireRole(request, "member");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Not a job id." }, { status: 400 });

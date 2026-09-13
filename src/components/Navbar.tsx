@@ -6,16 +6,23 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser, useMember, useRole } from "@/lib/auth";
 
+type MenuLink = { href: string; label: string; hint: string };
+
+/** Learner-facing EEG destinations. A dropdown on desktop, rows in the mobile drawer. */
+const labLinks: MenuLink[] = [
+  { href: "/education/question-bank", label: "Question bank", hint: "Practice qEEG questions" },
+  { href: "/admin/eeg-lab/library", label: "EEG Library", hint: "Find a teaching recording" },
+  { href: "/admin/eeg-lab/viewer", label: "EEG Viewer", hint: "Open a recording in the browser" },
+];
+
 /** Editor-only destinations. A menu on desktop, rows in the mobile drawer. */
-const editorLinks = [
-  { href: "/admin/qbank", label: "Question bank", hint: "Review queue and drafts" },
+const editorLinks: MenuLink[] = [
+  { href: "/admin/qbank", label: "Question bank review", hint: "Review queue and drafts" },
   { href: "/admin/eeg-lab", label: "EEG Lab console", hint: "Build and queue recordings" },
-  { href: "/admin/eeg-lab/library", label: "EEG Library", hint: "Find a finished recording" },
-  { href: "/admin/eeg-lab/viewer", label: "EEG Lab viewer", hint: "Open a recording in the browser" },
   { href: "/admin", label: "Admin dashboard", hint: "Members, publications, events" },
 ];
 
-function editorLinkActive(href: string, pathname: string): boolean {
+function menuLinkActive(href: string, pathname: string): boolean {
   if (href === "/admin") return pathname === "/admin";
   if (href === "/admin/eeg-lab") return pathname === "/admin/eeg-lab";
   return pathname.startsWith(href);
@@ -27,11 +34,11 @@ const navLinks = [
   { href: "/members", label: "Members" },
   { href: "/publications", label: "Publications" },
   { href: "/education", label: "Education" },
-  { href: "/education/question-bank", label: "Question bank" },
   { href: "/events", label: "Events" },
-  { href: "/contact", label: "Contact" },
-  { href: "/sponsor", label: "Sponsor" },
 ];
+
+/** The EEG Library dropdown sits after this link in the desktop list. */
+const LAB_MENU_AFTER = "/education";
 
 function MenuIcon() {
   return (
@@ -61,13 +68,181 @@ function UserIcon() {
   );
 }
 
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+/**
+ * Desktop dropdown. `variant="nav"` styles the trigger like the other top links
+ * (the EEG Library menu); `variant="pill"` is the bordered Editor button.
+ * Closes on an outside click, Escape, or navigation.
+ */
+function NavMenu(props: {
+  id: string;
+  label: string;
+  links: MenuLink[];
+  pathname: string;
+  variant: "nav" | "pill";
+  align: "left" | "right";
+}) {
+  const { id, label, links, pathname, variant, align } = props;
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const active = links.some((l) => menuLinkActive(l.href, pathname));
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  const triggerStyle: React.CSSProperties = variant === "nav"
+    ? {
+        fontSize: "1.05rem",
+        fontWeight: active ? 700 : 500,
+        fontFamily: "var(--body-font)",
+        color: active ? "var(--accent-primary)" : open ? "var(--text)" : "var(--text-secondary)",
+        background: active || open ? "var(--bg-card-hover)" : "transparent",
+        letterSpacing: "0.02em",
+        padding: "0.75rem 1.25rem",
+        borderRadius: 8,
+        border: "none",
+        cursor: "pointer",
+        position: "relative",
+        whiteSpace: "nowrap",
+      }
+    : {
+        fontSize: "0.85rem",
+        fontWeight: 600,
+        fontFamily: "var(--body-font)",
+        color: open || active ? "var(--text)" : "var(--text-secondary)",
+        padding: "0.45rem 0.85rem",
+        borderRadius: 8,
+        border: "1px solid var(--border)",
+        background: open ? "var(--bg-card-hover)" : "transparent",
+        cursor: "pointer",
+      };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={id}
+        className="flex items-center gap-1.5 transition-all duration-200"
+        style={triggerStyle}
+        onMouseEnter={(e) => {
+          if (variant === "nav" && !active && !open) {
+            e.currentTarget.style.color = "var(--text)";
+            e.currentTarget.style.background = "var(--bg-card-hover)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (variant === "nav" && !active && !open) {
+            e.currentTarget.style.color = "var(--text-secondary)";
+            e.currentTarget.style.background = "transparent";
+          }
+        }}
+      >
+        {label}
+        <Chevron open={open} />
+        {variant === "nav" && active && (
+          <span style={{
+            position: "absolute",
+            bottom: 0,
+            left: 8,
+            right: 8,
+            height: 3,
+            borderRadius: 99,
+            background: "linear-gradient(90deg, var(--accent-primary), var(--accent-secondary, var(--accent-primary)))",
+          }} />
+        )}
+      </button>
+      {open && (
+        <div
+          id={id}
+          role="menu"
+          style={{
+            position: "absolute", [align]: 0, top: "calc(100% + 8px)", minWidth: 260,
+            background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.25)", padding: 6, display: "grid", gap: 2, zIndex: 60,
+          }}
+        >
+          {links.map((l) => {
+            const linkActive = menuLinkActive(l.href, pathname);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                role="menuitem"
+                className="no-underline"
+                style={{
+                  display: "grid", gap: 1, padding: "8px 10px", borderRadius: 8,
+                  background: linkActive ? "var(--bg-card-hover)" : "transparent",
+                  color: "var(--text)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = linkActive ? "var(--bg-card-hover)" : "transparent"; }}
+              >
+                <span style={{ fontSize: "0.9rem", fontWeight: 600, color: linkActive ? "var(--accent-primary)" : "var(--text)" }}>{l.label}</span>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{l.hint}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A titled group of rows in the mobile drawer. */
+function DrawerSection(props: { title: string; links: MenuLink[]; pathname: string; onNavigate: () => void }) {
+  return (
+    <li className="mt-3">
+      <div style={{ fontFamily: "var(--mono-font)", fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--text-muted)", padding: "0 0.25rem 0.5rem" }}>
+        {props.title}
+      </div>
+      <ul className="flex flex-col gap-1 list-none m-0 p-0">
+        {props.links.map((l) => (
+          <li key={l.href}>
+            <Link
+              href={l.href}
+              onClick={props.onNavigate}
+              className="flex items-center justify-between gap-3 px-5 py-3 rounded-xl no-underline"
+              style={{
+                fontSize: "1rem",
+                fontWeight: 600,
+                color: menuLinkActive(l.href, props.pathname) ? "var(--accent-primary)" : "var(--text-secondary)",
+                border: "1px solid var(--border)",
+                background: "transparent",
+              }}
+            >
+              <span>{l.label}</span>
+              <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-muted)" }}>{l.hint}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+}
 
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const editorRef = useRef<HTMLDivElement>(null);
   const { user, loading: userLoading } = useUser();
   const { member } = useMember();
   const { isEditor } = useRole();
@@ -84,6 +259,8 @@ export default function Navbar() {
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
+    // /education stays a plain link; its question-bank child belongs to the EEG menu.
+    if (href === "/education") return pathname === "/education" || (pathname.startsWith("/education/") && !pathname.startsWith("/education/question-bank"));
     return pathname.startsWith(href);
   };
 
@@ -97,19 +274,6 @@ export default function Navbar() {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
-
-  // The editor menu closes on an outside click, Escape, or navigation.
-  useEffect(() => {
-    if (!editorOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if (editorRef.current && !editorRef.current.contains(e.target as Node)) setEditorOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEditorOpen(false); };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
-  }, [editorOpen]);
-  useEffect(() => { setEditorOpen(false); }, [pathname]);
 
   return (
     <>
@@ -165,7 +329,7 @@ export default function Navbar() {
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
-                <li key={link.href}>
+                <li key={link.href} className="flex items-center gap-1.5">
                   <Link
                     href={link.href}
                     className="relative px-5 py-3 rounded-lg no-underline transition-all duration-200"
@@ -204,6 +368,9 @@ export default function Navbar() {
                       }} />
                     )}
                   </Link>
+                  {link.href === LAB_MENU_AFTER && (
+                    <NavMenu id="lab-menu" label="EEG Library" links={labLinks} pathname={pathname} variant="nav" align="left" />
+                  )}
                 </li>
               );
             })}
@@ -213,62 +380,8 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {/* Editor console — editors and admins */}
             {!userLoading && user && isEditor && (
-              <div ref={editorRef} className="hidden lg:block" style={{ position: "relative" }}>
-                <button
-                  type="button"
-                  onClick={() => setEditorOpen((o) => !o)}
-                  aria-haspopup="menu"
-                  aria-expanded={editorOpen}
-                  aria-controls="editor-menu"
-                  className="flex items-center gap-1.5 transition-all duration-200"
-                  style={{
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    fontFamily: "var(--body-font)",
-                    color: editorOpen || pathname.startsWith("/admin") ? "var(--text)" : "var(--text-secondary)",
-                    padding: "0.45rem 0.85rem",
-                    borderRadius: 8,
-                    border: "1px solid var(--border)",
-                    background: editorOpen ? "var(--bg-card-hover)" : "transparent",
-                    cursor: "pointer",
-                  }}
-                >
-                  Editor
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: editorOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}><path d="m6 9 6 6 6-6" /></svg>
-                </button>
-                {editorOpen && (
-                  <div
-                    id="editor-menu"
-                    role="menu"
-                    style={{
-                      position: "absolute", right: 0, top: "calc(100% + 8px)", minWidth: 260,
-                      background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12,
-                      boxShadow: "0 12px 40px rgba(0,0,0,0.25)", padding: 6, display: "grid", gap: 2, zIndex: 60,
-                    }}
-                  >
-                    {editorLinks.map((l) => {
-                      const active = editorLinkActive(l.href, pathname);
-                      return (
-                        <Link
-                          key={l.href}
-                          href={l.href}
-                          role="menuitem"
-                          className="no-underline"
-                          style={{
-                            display: "grid", gap: 1, padding: "8px 10px", borderRadius: 8,
-                            background: active ? "var(--bg-card-hover)" : "transparent",
-                            color: "var(--text)",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = active ? "var(--bg-card-hover)" : "transparent"; }}
-                        >
-                          <span style={{ fontSize: "0.9rem", fontWeight: 600, color: active ? "var(--accent-primary)" : "var(--text)" }}>{l.label}</span>
-                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{l.hint}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+              <div className="hidden lg:block">
+                <NavMenu id="editor-menu" label="Editor" links={editorLinks} pathname={pathname} variant="pill" align="right" />
               </div>
             )}
             {/* Profile button — shown when logged in */}
@@ -398,6 +511,8 @@ export default function Navbar() {
               background: "var(--bg)",
               borderBottom: "1px solid var(--border)",
               boxShadow: "0 20px 40px rgba(0,0,0,0.45)",
+              maxHeight: "calc(100vh - 92px)",
+              overflowY: "auto",
             }}
           >
             <ul id="mobile-nav-menu" className="flex flex-col gap-1 list-none m-0 px-6 py-5" role="navigation" aria-label="Mobile navigation">
@@ -423,34 +538,11 @@ export default function Navbar() {
                   </li>
                 );
               })}
+              {/* EEG Library — everyone */}
+              <DrawerSection title="EEG Library" links={labLinks} pathname={pathname} onNavigate={() => setMobileOpen(false)} />
               {/* Mobile editor console — editors and admins */}
               {!userLoading && user && isEditor && (
-                <li className="mt-3">
-                  <div style={{ fontFamily: "var(--mono-font)", fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--text-muted)", padding: "0 0.25rem 0.5rem" }}>
-                    Editor
-                  </div>
-                  <ul className="flex flex-col gap-1 list-none m-0 p-0">
-                    {editorLinks.map((l) => (
-                      <li key={l.href}>
-                        <Link
-                          href={l.href}
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center justify-between gap-3 px-5 py-3 rounded-xl no-underline"
-                          style={{
-                            fontSize: "1rem",
-                            fontWeight: 600,
-                            color: editorLinkActive(l.href, pathname) ? "var(--accent-primary)" : "var(--text-secondary)",
-                            border: "1px solid var(--border)",
-                            background: "transparent",
-                          }}
-                        >
-                          <span>{l.label}</span>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-muted)" }}>{l.hint}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
+                <DrawerSection title="Editor" links={editorLinks} pathname={pathname} onNavigate={() => setMobileOpen(false)} />
               )}
               {/* Mobile profile link — when logged in */}
               {!userLoading && user && (

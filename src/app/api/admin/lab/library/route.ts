@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
+import { hasRole } from "@/lib/roles";
 import {
-  LIBRARY_CASE_COLUMNS, caseRowToQuestion, facets, matches, qbankIdOf, rowToEntry,
+  LIBRARY_CASE_COLUMNS, caseRowToQuestion, facets, matches, qbankIdOf, redactForLearner, rowToEntry,
   type LibraryEntry, type LibraryQuery, type LibraryQuestion,
 } from "@/lib/lab/library";
 import { SYNTHETIC_STAMP } from "@/lib/lab/types";
 
 export const runtime = "nodejs";
 
-// The EEG Library: every finished export, searchable. Editor or admin.
+// The EEG Library: every finished export, searchable. Any signed-in member;
+// the authored findings are editor-only (see redactForLearner).
 //
 // GET /api/admin/lab/library?q=&kind=&age=&background=&event=&domain=&source=
-//   -> { entries, facets, total }
+//   -> { entries, facets, total, editor }
 //
 // Reads job metadata and the linked question-bank row only. It never touches
 // the recording files or the instructor answer key — the download route is
@@ -30,8 +32,12 @@ function param(request: NextRequest, name: string): string | null {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await requireRole(request, "editor");
+  // Any signed-in member may browse; editors see the authored findings, everyone
+  // else gets the learner view (redactForLearner) so a bank question's answer
+  // is not readable off its recording's card.
+  const auth = await requireRole(request, "member");
   if (!auth.ok) return auth.response;
+  const editor = hasRole(auth.role, "editor");
 
   const supabase = createServerClient();
   if (!supabase) {
@@ -76,7 +82,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const all: LibraryEntry[] = rows.map((r) => rowToEntry(r, cases));
+  const all: LibraryEntry[] = rows.map((r) => {
+    const entry = rowToEntry(r, cases);
+    return editor ? entry : redactForLearner(entry);
+  });
   const source = param(request, "source");
   const query: LibraryQuery = {
     q: param(request, "q") ?? "",
@@ -94,6 +103,7 @@ export async function GET(request: NextRequest) {
     entries,
     facets: facets(all),
     total: all.length,
+    editor,
     stamp: SYNTHETIC_STAMP,
   });
 }

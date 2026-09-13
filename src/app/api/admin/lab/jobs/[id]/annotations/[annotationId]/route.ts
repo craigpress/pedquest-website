@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 type Ctx = { params: Promise<{ id: string; annotationId: string }> };
 
 async function own(request: NextRequest, ctx: Ctx) {
-  const auth = await requireRole(request, "editor");
+  const auth = await requireRole(request, "member");
   if (!auth.ok) return { error: auth.response };
   const { id, annotationId } = await ctx.params;
   if (!UUID_RE.test(id) || !UUID_RE.test(annotationId)) {

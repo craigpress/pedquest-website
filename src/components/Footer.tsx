@@ -8,8 +8,12 @@ const quickLinks = [
   { href: "/members", label: "Members" },
   { href: "/publications", label: "Publications" },
   { href: "/education", label: "Education" },
+  { href: "/education/question-bank", label: "Question bank" },
+  { href: "/admin/eeg-lab/library", label: "EEG Library" },
+  { href: "/admin/eeg-lab/viewer", label: "EEG Viewer" },
   { href: "/events", label: "Events" },
   { href: "/contact", label: "Contact" },
+  { href: "/sponsor", label: "Sponsor" },
 ];
 
 export default function Footer() {

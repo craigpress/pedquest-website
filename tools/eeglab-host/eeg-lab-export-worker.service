@@ -14,6 +14,8 @@ Environment=OMP_NUM_THREADS=1
 Environment=MPLCONFIGDIR=/opt/pedquest-eeg-render/.cache
 Environment=EEG_LAB_DIR=/mnt/eeg-lab
 Environment=EEG_RENDER_BIN=/opt/pedquest-eeg-render/.venv/bin/eeg-render
+# 12 h / 24 h recordings take well over an hour to synthesise; the default 3600 s killed PQ-B-003 five times
+Environment=EEG_LAB_EXPORT_TIMEOUT_S=21600
 ExecStart=/opt/pedquest-eeg-render/.venv/bin/python /opt/pedquest-eeg-render/lab_worker.py --poll 10
 WorkingDirectory=/opt/pedquest-eeg-render
 Restart=always

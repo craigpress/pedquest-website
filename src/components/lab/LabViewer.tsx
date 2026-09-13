@@ -497,7 +497,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           )}
           {(answers || opened.canFetchAnswers) && (
             <button type="button" style={{ ...mini, borderColor: showKey ? "var(--accent-secondary)" : "var(--border)", color: showKey ? "var(--accent-secondary)" : "var(--text-secondary)" }} onClick={() => void toggleKey()}>
-              {showKey ? "hide answer key" : "show answer key"}
+              {showKey ? "Hide key" : "Answer key"}
             </button>
           )}
         </div>
