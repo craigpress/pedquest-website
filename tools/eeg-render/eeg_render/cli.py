@@ -238,16 +238,27 @@ def cmd_export(args) -> int:
         lay_kw["calibration"] = args.calibration
     edf_kw = {"events": edf_events, "extra_rows": extra_rows}
 
+    # One block stream for the whole export. --jobs > 1 synthesizes the blocks
+    # on that many cores (export/parallel.py); the writers see the same
+    # sequence either way.
+    jobs = max(1, int(args.jobs or 1))
+    if jobs > 1:
+        from .export.parallel import iter_blocks_parallel
+        block_stream = iter_blocks_parallel(spec, duration_s, synth.fs, recording.n_samples, jobs)
+        print(f"  synth  {jobs} processes")
+    else:
+        from .export.manifest import iter_blocks
+        block_stream = iter_blocks(synth, recording.n_samples)
+
     reports: dict = {}
     if formats == {"lay", "edf"}:
         # Both formats from ONE pass over the synthesizer: the writers each used
         # to pull iter_blocks themselves, so a two-format export synthesized the
         # whole recording twice (the dominant cost of a lab export).
         import threading
-        from .export.manifest import iter_blocks
         from .export.tee import tee_blocks
 
-        lay_blocks, edf_blocks = tee_blocks(iter_blocks(synth, recording.n_samples), 2)
+        lay_blocks, edf_blocks = tee_blocks(block_stream, 2)
 
         def run_edf() -> None:
             try:
@@ -271,9 +282,9 @@ def cmd_export(args) -> int:
                 raise reports[name]
     else:
         if "lay" in formats:
-            reports["lay"] = write_lay_dat(out_dir / ident, synth, recording, **lay_kw)
+            reports["lay"] = write_lay_dat(out_dir / ident, synth, recording, blocks=block_stream, **lay_kw)
         if "edf" in formats:
-            reports["edf"] = write_edf_plus(out_dir / ident, synth, recording, **edf_kw)
+            reports["edf"] = write_edf_plus(out_dir / ident, synth, recording, blocks=block_stream, **edf_kw)
 
     if "lay" in reports:
         report = reports["lay"]
@@ -376,6 +387,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="ALSO write realized events into the recording's "
                          "annotations. Anyone who opens the file can read the "
                          "answer off the timeline. Implies --answers.")
+    ex.add_argument("--jobs", type=int, default=1,
+                    help="synthesize blocks on this many cores (output is identical; default 1)")
     ex.add_argument("--no-ekg", action="store_true",
                     help="omit the dedicated EKG channel. It is included by "
                          "default because Persyst finds ECG by channel NAME "

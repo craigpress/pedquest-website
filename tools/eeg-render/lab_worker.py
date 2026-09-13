@@ -243,6 +243,8 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
                "--duration", f"{duration_s:g}", "--format", ",".join(formats)]
         if options.get("includeAnswers"):
             cmd.append("--answers")
+        if cfg.render_jobs > 1:
+            cmd += ["--jobs", str(cfg.render_jobs)]
         if options.get("ekgChannel") is False:
             cmd.append("--no-ekg")
         # Never --embed-answers: realized events must not enter the learner file.
@@ -381,6 +383,9 @@ def main() -> int:
                    help="bundled tools/trend-sidecar (node); skipped when the file is absent")
     p.add_argument("--sidecar-timeout", dest="sidecar_timeout", type=float,
                    default=float(os.getenv("TREND_SIDECAR_TIMEOUT_S", "5400")))
+    p.add_argument("--render-jobs", dest="render_jobs", type=int,
+                   default=int(os.getenv("EEG_RENDER_JOBS", "1")),
+                   help="cores per export (eeg-render export --jobs); 1 = single process")
     p.add_argument("--min-age", dest="min_age", type=float,
                    default=float(os.getenv("EEG_LAB_CLAIM_MIN_AGE_S", "0")),
                    help="only claim pending jobs older than this many seconds (fallback host); 0 = any")
