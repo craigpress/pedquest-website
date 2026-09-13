@@ -16,7 +16,9 @@ Environment=EEG_LAB_DIR=/mnt/eeg-lab
 Environment=EEG_RENDER_BIN=/opt/pedquest-eeg-render/.venv/bin/eeg-render
 # 12 h / 24 h recordings take well over an hour to synthesise; the default 3600 s killed PQ-B-003 five times
 Environment=EEG_LAB_EXPORT_TIMEOUT_S=21600
-ExecStart=/opt/pedquest-eeg-render/.venv/bin/python /opt/pedquest-eeg-render/lab_worker.py --poll 10
+# 30 s, not 10: exports take minutes to hours, and every poll is a PostgREST request against a
+# small Supabase compute whose disk-IO budget ran out on 2026-09-13 (504s on both workers).
+ExecStart=/opt/pedquest-eeg-render/.venv/bin/python /opt/pedquest-eeg-render/lab_worker.py --poll 30
 WorkingDirectory=/opt/pedquest-eeg-render
 Restart=always
 RestartSec=5

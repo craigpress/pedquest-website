@@ -169,7 +169,17 @@ def main() -> int:
     db = Supabase()
     logging.info("PedQuEST render worker started")
     while True:
-        worked = process_one(db)
+        try:
+            worked = process_one(db)
+        except Exception as error:  # noqa: BLE001
+            # A Supabase 504 (small compute, exhausted disk-IO budget, 2026-09-13)
+            # used to kill the process: 119 systemd restarts in one day. Log it,
+            # back off a minute, and keep the process alive instead.
+            logging.error("poll failed: %s", str(error)[:300])
+            if args.once:
+                return 1
+            time.sleep(max(args.poll, 60.0))
+            continue
         if args.once:
             return 0
         if not worked:
