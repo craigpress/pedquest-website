@@ -112,6 +112,31 @@ ingress entry **before** the 404 catch-all:
 Verify from outside the LAN: `curl -sI --resolve eeglab.presshome.net:443:104.21.54.133 https://eeglab.presshome.net/healthz`
 should return `Server: openresty` and `ok`.
 
+## CraigsRig worker pool (added 2026-09-13)
+
+moltbot exports at ~8–9 min per recorded hour on one i5-8500T core. The desktop (Core Ultra 9
+285K, 24 cores) runs **six** `lab_worker.py` copies against the same queue — the claim is a
+conditional UPDATE, so mixed hosts never take the same job. Files: `C:\pedquest-worker\`
+(`run-pool.ps1` launcher, `register-task.ps1`, `.venv` with `pip install -e tools/eeg-render`,
+`work\`, `logs\worker-N-<stamp>.err.log`). Scheduled task **"PedQuEST EEG lab worker pool"**
+(SYSTEM, at startup + 2 min, no time limit; start by hand with `Start-ScheduledTask`). Credentials
+come from the repo's `.env.local`; the sidecar tool is the repo's `tools/trend-sidecar/dist/`.
+
+Store access is the **Windows NFS client** (`ServicesForNFS-ClientOnly` + `ClientForNFS-Infrastructure`)
+at the UNC path `\\10.100.10.102\export\eeg-lab`, with a second OMV export for client `10.100.10.20`:
+`rw,sync,no_subtree_check,all_squash,anonuid=0,anongid=100` + `insecure` (Windows uses high source
+ports). Files land as `root:users` like moltbot's. Two landmines:
+
+- SMB is the wrong transport for a service here (no per-user credentials from SYSTEM/SSH —
+  memory `error_localsystem_smb_three_layers`).
+- The Windows NFS client **evaluates mode bits as "other"** and ignores the `AnonymousUid`
+  registry mapping: it can create and write files but cannot read back anything that is not
+  world-readable, and `copystat` on the destination fails. The worker therefore never reads from
+  the store (sidecar computed from the local export; `_copy_to_store` ignores copystat errors).
+
+To stop the pool: `Stop-ScheduledTask` kills the launcher only — end the six `python.exe` processes
+under `C:\pedquest-worker\.venv` too, or they finish their current jobs first (preferable).
+
 ## Trends sidecar (`<recording>.trends.bin`)
 
 Every export gets the viewer's qEEG trends precomputed beside it by `tools/trend-sidecar` — the same
