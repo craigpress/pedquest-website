@@ -620,7 +620,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           </div>
         )}
         <span className="lv-wheel-hint" style={{ ...lbl, alignSelf: "center", textTransform: "none", letterSpacing: 0 }}>
-          strip: click seeks · drag selects a span to mark · Shift-drag scrubs{windowS ? " · wheel scrolls" : " · wheel pages"}
+          strip: click seeks · drag scrubs · Shift-drag selects a span to mark{windowS ? " · wheel scrolls" : " · wheel pages"}
         </span>
         {trendsFromCache && trendProgress >= 1 && (
           <span style={{ ...lbl, alignSelf: "center" }} title="Trends were restored from this browser's cache instead of recomputed">cached</span>

@@ -111,7 +111,7 @@ export default function TrendStrip({
   onScroll: (deltaS: number) => void;
   /** wheel when the whole record is shown: move the raw page by this many seconds */
   onPage?: (deltaS: number) => void;
-  /** drag on the strip selected [t0, t1]; the parent decides what to do with it (Shift-drag scrubs instead) */
+  /** Shift-drag on the strip selected [t0, t1]; the parent decides what to do with it (plain drag scrubs) */
   onSelect?: (t0: number, t1: number) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -402,7 +402,7 @@ export default function TrendStrip({
     const frac = (clientX - r.left - GUTTER) / (w - GUTTER - 8);
     return Math.min(durationS, Math.max(0, t0 + frac * span));
   };
-  // A press seeks; a drag selects a span (Shift-drag scrubs the cursor instead).
+  // A press seeks and a drag scrubs the cursor; Shift-drag selects a span to mark.
   const dragRef = useRef<{ x0: number; t: number; moved: boolean; scrub: boolean } | null>(null);
 
   // Wheel: zoomed in, it scrolls the trend window; on the whole record it
@@ -435,12 +435,12 @@ export default function TrendStrip({
     <div ref={wrapRef} style={{ width: "100%" }}>
       <canvas
         ref={canvasRef}
-        style={{ width: w, height: h, display: "block", cursor: onSelect ? "crosshair" : "pointer", touchAction: "pan-y" }}
+        style={{ width: w, height: h, display: "block", cursor: "pointer", touchAction: "pan-y" }}
         onPointerCancel={() => { dragRef.current = null; setSel(null); }}
         onPointerDown={(e) => {
           if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
-          const scrub = e.shiftKey || !onSelect;
+          const scrub = !e.shiftKey || !onSelect;
           dragRef.current = { x0: e.clientX, t, moved: false, scrub };
           try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
           if (scrub) onSeek(t);
