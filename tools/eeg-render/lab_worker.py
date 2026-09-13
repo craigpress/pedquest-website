@@ -253,23 +253,27 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
         for ext, key in mapping.items():
             src = produced.get(ext)
             if src:
-                shutil.copy2(src, dest / src.name)
+                _copy_to_store(src, dest / src.name)
                 artifacts[key] = f"eeglab://{recording_id}/{src.name}"
         # qEEG trends sidecar: the viewer's own engine (tools/trend-sidecar,
         # bundled to trend-sidecar.mjs) run once here, so no browser has to walk
-        # the whole recording again. Best effort: a failure logs and the job
-        # still completes; the viewer falls back to computing.
-        recording_file = next((dest / produced[e].name for e in ("edf", "lay") if e in produced), None)
-        if recording_file and os.path.exists(cfg.trend_sidecar):
+        # the whole recording again. Computed from the LOCAL export output, not
+        # the copy in the store: faster, and the Windows worker pool can write to
+        # the NFS store but not read from it. Best effort: a failure logs and the
+        # job still completes; the viewer falls back to computing.
+        recording_local = next((produced[e] for e in ("edf", "lay") if e in produced), None)
+        if recording_local and os.path.exists(cfg.trend_sidecar):
             try:
                 side = subprocess.run(
-                    ["node", cfg.trend_sidecar, str(recording_file)],
+                    ["node", cfg.trend_sidecar, str(recording_local), "--force"],
                     capture_output=True, text=True, timeout=cfg.sidecar_timeout, env=env, check=True,
                 )
                 info = json.loads(side.stdout.strip().splitlines()[-1])
-                artifacts["trends"] = f"eeglab://{recording_id}/{Path(info['path']).name}"
+                sidecar = Path(info["path"])
+                _copy_to_store(sidecar, dest / sidecar.name)
+                artifacts["trends"] = f"eeglab://{recording_id}/{sidecar.name}"
                 log.info("job %s: trends sidecar %s (%d epochs, %d bytes)",
-                         job["id"], Path(info["path"]).name, info.get("nT", 0), info.get("bytes", 0))
+                         job["id"], sidecar.name, info.get("nT", 0), info.get("bytes", 0))
             except Exception as error:  # noqa: BLE001 - never fail the export over the sidecar
                 log.warning("job %s: trends sidecar failed: %s", job["id"], str(error)[:400])
 
@@ -277,7 +281,7 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
         if key_file.exists():
             # The instructor copy sits beside the recording but is only ever
             # handed out through the editor-gated download route.
-            shutil.copy2(key_file, dest / key_file.name)
+            _copy_to_store(key_file, dest / key_file.name)
             artifacts["answers"] = f"eeglab://{recording_id}/{key_file.name}"
         (dest / "README.txt").write_text(
             f"{STAMP}\nrecording_id: {recording_id}\njob: {job['id']}\nspec_hash: {job.get('spec_hash')}\n"
@@ -310,6 +314,20 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
 
 
 _version_cache: dict[str, str] = {}
+
+
+def _copy_to_store(src: Path, dst: Path) -> None:
+    """Copy bytes into the recording store; timestamps are nice-to-have.
+
+    shutil.copy2 = copyfile + copystat, and copystat (chmod/utime on the
+    destination) is refused by the Windows NFS client, which cannot even read
+    back the files it creates. The bytes are what matter.
+    """
+    shutil.copyfile(src, dst)
+    try:
+        shutil.copystat(src, dst)
+    except OSError:
+        pass
 
 
 def _renderer_version(exe: str) -> str | None:
