@@ -119,15 +119,24 @@ class Lease:
                 log.warning("heartbeat for %s failed", self.job_id, exc_info=True)
 
 
-def _candidates(db: Supabase, limit: int = 5) -> list[dict]:
+def _candidates(db: Supabase, limit: int = 5, min_age_s: float = 0.0) -> list[dict]:
+    """Pending jobs oldest first, then running jobs whose lease has expired.
+
+    ``min_age_s`` > 0 makes this worker a fallback: it only takes pending jobs
+    that have sat unclaimed that long. With the CraigsRig pool polling every
+    30 s and moltbot at 120 s, a website request goes to the fast host whenever
+    it is up and to moltbot two minutes later when it is not. Expired leases are
+    always eligible - a stalled job should be rescued by whoever is free.
+    """
     base = f"/rest/v1/eeg_lab_jobs?stage=eq.export&select={JOB_COLUMNS}&order=created_at.asc&limit={limit}"
-    pending = db.request(f"{base}&status=eq.pending") or []
+    age_filter = f"&created_at=lt.{_q(iso(utcnow() - timedelta(seconds=min_age_s)))}" if min_age_s > 0 else ""
+    pending = db.request(f"{base}&status=eq.pending{age_filter}") or []
     expired = db.request(f"{base}&status=eq.running&lease_expires_at=lt.{_q(iso(utcnow()))}") or []
     return list(pending) + list(expired)
 
 
-def claim_job(db: Supabase, worker_id: str, lease_seconds: float) -> dict | None:
-    for job in _candidates(db):
+def claim_job(db: Supabase, worker_id: str, lease_seconds: float, min_age_s: float = 0.0) -> dict | None:
+    for job in _candidates(db, min_age_s=min_age_s):
         attempts = int(job.get("attempts") or 0)
         max_attempts = int(job.get("max_attempts") or 5)
         if attempts >= max_attempts:
@@ -341,7 +350,7 @@ def _renderer_version(exe: str) -> str | None:
 
 
 def process_one(db: Supabase, cfg: argparse.Namespace) -> bool:
-    job = claim_job(db, cfg.worker_id, cfg.lease)
+    job = claim_job(db, cfg.worker_id, cfg.lease, cfg.min_age)
     if not job:
         return False
     try:
@@ -372,6 +381,9 @@ def main() -> int:
                    help="bundled tools/trend-sidecar (node); skipped when the file is absent")
     p.add_argument("--sidecar-timeout", dest="sidecar_timeout", type=float,
                    default=float(os.getenv("TREND_SIDECAR_TIMEOUT_S", "5400")))
+    p.add_argument("--min-age", dest="min_age", type=float,
+                   default=float(os.getenv("EEG_LAB_CLAIM_MIN_AGE_S", "0")),
+                   help="only claim pending jobs older than this many seconds (fallback host); 0 = any")
     p.add_argument("--worker-id", default=f"{socket.gethostname()}:{os.getpid()}")
     p.add_argument("--once", action="store_true", help="process at most one job and exit")
     cfg = p.parse_args()

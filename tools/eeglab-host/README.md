@@ -78,8 +78,18 @@ scp tools/eeg-render/lab_worker.py moltbot:/opt/pedquest-eeg-render/lab_worker.p
 # the viewer's trend engine, bundled for Node (moltbot has node 24 for OpenClaw); the worker
 # runs it after every export to write <recording>.trends.bin beside the recording
 npm run trends:sidecar:build && scp tools/trend-sidecar/dist/trend-sidecar.mjs moltbot:/opt/pedquest-eeg-render/
-scp tools/eeglab-host/eeg-lab-export-worker.service moltbot:/etc/systemd/system/
-systemctl daemon-reload && systemctl enable --now eeg-lab-export-worker && journalctl -u eeg-lab-export-worker -n 5
+scp tools/eeglab-host/eeg-lab-export-worker@.service moltbot:/etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now eeg-lab-export-worker@1 eeg-lab-export-worker@2
+journalctl -u "eeg-lab-export-worker@*" -n 5
+```
+
+Two instances (2026-09-13; the box has 4 vCPU, an export needs ~400 MB and one core). The template
+sets `EEG_LAB_CLAIM_MIN_AGE_S=120`: **moltbot is the fallback host** — it only claims pending jobs
+that have waited two minutes, so a job requested on the website goes to the CraigsRig pool (below)
+whenever the desktop is up, and to moltbot otherwise. Expired leases are always fair game for either.
+The old single-instance `eeg-lab-export-worker.service` is retired.
+
+```sh
 ```
 
 ### 4. NPM proxy host

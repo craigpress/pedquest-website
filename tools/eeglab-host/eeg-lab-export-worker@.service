@@ -1,0 +1,31 @@
+# /etc/systemd/system/eeg-lab-export-worker@.service on moltbot (VM 200)
+# Template: one export worker per instance. `systemctl enable --now eeg-lab-export-worker@{1,2}`
+# runs two (moltbot has 4 vCPU and ~400 MB RSS per export; OpenClaw shares the box).
+# Shares the render worker's env file (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY).
+[Unit]
+Description=PedQuEST EEG Teaching Lab export worker %i (eeg_lab_jobs stage=export)
+After=network-online.target mnt-eeg\x2dlab.mount
+Wants=network-online.target
+RequiresMountsFor=/mnt/eeg-lab
+
+[Service]
+Type=simple
+EnvironmentFile=/root/.openclaw/workspace/config/case-image-worker.env
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=MPLCONFIGDIR=/opt/pedquest-eeg-render/.cache
+Environment=EEG_LAB_DIR=/mnt/eeg-lab
+Environment=EEG_RENDER_BIN=/opt/pedquest-eeg-render/.venv/bin/eeg-render
+# 12 h / 24 h recordings take well over an hour to synthesise; the default 3600 s killed PQ-B-003 five times
+Environment=EEG_LAB_EXPORT_TIMEOUT_S=21600
+# Fallback host: the CraigsRig pool (6 workers, 30 s poll) takes fresh jobs first; moltbot only claims
+# pending jobs that have waited two minutes, i.e. when the desktop is off or busy. Expired leases: always.
+Environment=EEG_LAB_CLAIM_MIN_AGE_S=120
+# 30 s, not 10: every poll is a PostgREST request against a small Supabase compute (disk-IO budget, 2026-09-13)
+ExecStart=/opt/pedquest-eeg-render/.venv/bin/python /opt/pedquest-eeg-render/lab_worker.py --poll 30 --worker-id moltbot:%i
+WorkingDirectory=/opt/pedquest-eeg-render
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
