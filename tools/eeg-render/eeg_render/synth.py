@@ -1989,8 +1989,19 @@ class Synthesizer:
         idx = np.arange(math.floor(t[0] / rr) - 1, math.ceil(t[-1] / rr) + 2, dtype=np.int64)
         beats = idx * rr + self._beat_jitter(idx)
         prof = np.zeros(t.size)
+        # Each beat touches ~0.5 s of signal, so work on that slice instead of
+        # the whole request: the full-array version was O(beats x samples) and
+        # cost more than all 21 EEG channels together (50 s per recorded hour).
+        # The slice is found generously with searchsorted and the ORIGINAL
+        # elementwise mask is then applied inside it, so every value that is
+        # added, and the order it is added in, is unchanged - the output is
+        # bit-identical to the previous loop.
         for b in beats:
-            d = t - b
+            i0 = max(0, int(np.searchsorted(t, b - 0.10, side="left")) - 1)
+            i1 = min(t.size, int(np.searchsorted(t, b + 0.40, side="right")) + 1)
+            if i1 <= i0:
+                continue
+            d = t[i0:i1] - b
             m = (d > -0.10) & (d < 0.40)
             if not m.any():
                 continue
@@ -1999,7 +2010,8 @@ class Synthesizer:
                    + 1.00 * np.exp(-0.5 * ((dd - 0.020) / 0.011) ** 2)
                    - 0.35 * np.exp(-0.5 * ((dd - 0.048) / 0.018) ** 2)
                    + 0.22 * np.exp(-0.5 * ((dd - 0.190) / 0.045) ** 2))
-            prof[m] += qrs
+            window = prof[i0:i1]
+            window[m] += qrs
         rows = np.zeros((self.n_elec, t.size))
         for i, e in enumerate(self.electrodes):
             x, y = mt.POSITIONS.get(e, (0.0, 0.0))
