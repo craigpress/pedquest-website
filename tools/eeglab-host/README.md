@@ -144,8 +144,15 @@ ports). Files land as `root:users` like moltbot's. Two landmines:
   world-readable, and `copystat` on the destination fails. The worker therefore never reads from
   the store (sidecar computed from the local export; `_copy_to_store` ignores copystat errors).
 
-To stop the pool: `Stop-ScheduledTask` kills the launcher only — end the six `python.exe` processes
-under `C:\pedquest-worker\.venv` too, or they finish their current jobs first (preferable).
+Each export uses `EEG_RENDER_JOBS` cores (`eeg-render export --jobs`, `export/parallel.py`; output is
+bit-identical at any job count): the pool sets 2 (6 × 2 = 12 of 24 cores), moltbot's template 2. Measured
+on the desktop for one recorded hour: ~53 s single-core, ~18 s at 4 cores (after the ECG slice fix and the
+single-pass tee; it was ~4 min when the pool started).
+
+To stop or restart the pool: `C:\pedquest-worker\restart-pool.ps1 stop|start|status` (elevated) —
+`stop` ends the launcher, the six workers and their eeg-render children; then release their rows
+(`update eeg_lab_jobs set status='pending', claimed_by=null, lease_expires_at=null where status='running'
+and claimed_by like 'craigsrig%'`) so the restarted pool reclaims them at once instead of after the lease.
 
 ## Trends sidecar (`<recording>.trends.bin`)
 
