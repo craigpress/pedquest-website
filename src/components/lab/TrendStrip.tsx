@@ -85,7 +85,7 @@ const WHEEL_NOTCH_PX = 60;
 
 export default function TrendStrip({
   trends, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress,
-  rows, palette, windowT0, windowS, baseline, theme, height, onSeek, onScroll, onPage,
+  rows, palette, windowT0, windowS, baseline, theme, height, onSeek, onScroll, onPage, onSelect,
 }: {
   trends: ViewerTrends | null;
   durationS: number;
@@ -111,10 +111,13 @@ export default function TrendStrip({
   onScroll: (deltaS: number) => void;
   /** wheel when the whole record is shown: move the raw page by this many seconds */
   onPage?: (deltaS: number) => void;
+  /** drag on the strip selected [t0, t1]; the parent decides what to do with it (Shift-drag scrubs instead) */
+  onSelect?: (t0: number, t1: number) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [w, setW] = useState(800);
+  const [sel, setSel] = useState<{ a: number; b: number } | null>(null);
   const natural = trendStripHeight(rows);
   const h = height && height > AXIS_H + 6 + rows.length * 8 ? Math.round(height) : natural;
   const scale = (h - AXIS_H - 6) / Math.max(1, natural - AXIS_H - 6);
@@ -359,6 +362,17 @@ export default function TrendStrip({
       ctx.fillRect(Math.max(GUTTER, x0), AXIS_H - 6, Math.min(w, x1) - Math.max(GUTTER, x0), 6);
     }
 
+    // drag selection in progress
+    if (sel) {
+      const x0 = Math.max(GUTTER, xOf(Math.min(sel.a, sel.b))), x1 = Math.min(w, xOf(Math.max(sel.a, sel.b)));
+      if (x1 > x0) {
+        ctx.fillStyle = "rgba(76,201,176,0.22)"; ctx.fillRect(x0, AXIS_H, x1 - x0, h - AXIS_H);
+        ctx.strokeStyle = accent; ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, AXIS_H + 0.5, x1 - x0 - 1, h - AXIS_H - 1);
+        ctx.fillStyle = accent; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = "10px var(--mono-font, monospace)";
+        ctx.fillText(`${formatClock(Math.min(sel.a, sel.b))} – ${formatClock(Math.max(sel.a, sel.b))}`, x0 + 4, AXIS_H + 3);
+      }
+    }
+
     // current page window
     const px0 = xOf(pageT0), px1 = Math.max(px0 + 2, xOf(pageT0 + pageS));
     if (px1 >= GUTTER && px0 <= w) {
@@ -381,14 +395,15 @@ export default function TrendStrip({
       ctx.fillStyle = accent;
       ctx.fillRect(GUTTER + (t0 / durationS) * plotW, sbY, Math.max(6, (span / durationS) * plotW), 3);
     }
-  }, [trends, bitmaps, base, baseline, filled, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress, w, h, scale, rowTop, rows, t0, span, windowS, theme]);
+  }, [trends, bitmaps, base, baseline, filled, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress, w, h, scale, rowTop, rows, t0, span, windowS, theme, sel]);
 
-  const seekAt = (clientX: number) => {
+  const timeAt = (clientX: number) => {
     const r = canvasRef.current!.getBoundingClientRect();
     const frac = (clientX - r.left - GUTTER) / (w - GUTTER - 8);
-    onSeek(Math.min(durationS, Math.max(0, t0 + frac * span)));
+    return Math.min(durationS, Math.max(0, t0 + frac * span));
   };
-  const dragging = useRef(false);
+  // A press seeks; a drag selects a span (Shift-drag scrubs the cursor instead).
+  const dragRef = useRef<{ x0: number; t: number; moved: boolean; scrub: boolean } | null>(null);
 
   // Wheel: zoomed in, it scrolls the trend window; on the whole record it
   // pages the raw EEG (one page per notch, 1 s with Shift). A passive listener
@@ -420,11 +435,35 @@ export default function TrendStrip({
     <div ref={wrapRef} style={{ width: "100%" }}>
       <canvas
         ref={canvasRef}
-        style={{ width: w, height: h, display: "block", cursor: "pointer", touchAction: "pan-y" }}
-        onPointerCancel={() => { dragging.current = false; }}
-        onPointerDown={(e) => { dragging.current = true; (e.target as HTMLElement).setPointerCapture(e.pointerId); seekAt(e.clientX); }}
-        onPointerMove={(e) => { if (dragging.current) seekAt(e.clientX); }}
-        onPointerUp={() => { dragging.current = false; }}
+        style={{ width: w, height: h, display: "block", cursor: onSelect ? "crosshair" : "pointer", touchAction: "pan-y" }}
+        onPointerCancel={() => { dragRef.current = null; setSel(null); }}
+        onPointerDown={(e) => {
+          if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
+          const t = timeAt(e.clientX);
+          const scrub = e.shiftKey || !onSelect;
+          dragRef.current = { x0: e.clientX, t, moved: false, scrub };
+          try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
+          if (scrub) onSeek(t);
+        }}
+        onPointerMove={(e) => {
+          const d = dragRef.current;
+          if (!d) return;
+          if (d.scrub) { onSeek(timeAt(e.clientX)); return; }
+          if (Math.abs(e.clientX - d.x0) > 4) d.moved = true;
+          if (d.moved) setSel({ a: d.t, b: timeAt(e.clientX) });
+        }}
+        onPointerUp={(e) => {
+          const d = dragRef.current;
+          dragRef.current = null;
+          if (!d || d.scrub) return;
+          if (d.moved && onSelect) {
+            const t1 = timeAt(e.clientX);
+            setSel(null);
+            onSelect(Math.min(d.t, t1), Math.max(d.t, t1));
+          } else {
+            onSeek(d.t);
+          }
+        }}
       />
     </div>
   );

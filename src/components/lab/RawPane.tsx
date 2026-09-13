@@ -58,6 +58,42 @@ export default function RawPane({
   const [drag, setDrag] = useState<{ a: number; b: number } | null>(null);
   const dragRef = useRef<{ x0: number; t0: number; moved: boolean } | null>(null);
 
+  // Drag-select past either edge of the page keeps going: the page turns at a
+  // rate set by how far past the edge the pointer is (0.3 – 3 pages/s), in
+  // steps of an eighth of a page so the reader is not asked for a new window
+  // every frame. The selection end rides the edge that is being pulled.
+  const autoRef = useRef<{ side: 1 | -1; overshoot: number; timer: number; last: number; acc: number } | null>(null);
+  const stopAuto = () => {
+    if (autoRef.current) { window.clearInterval(autoRef.current.timer); autoRef.current = null; }
+  };
+  const autoScroll = (side: 1 | -1, overshoot: number) => {
+    if (!onPage) return;
+    if (autoRef.current) { autoRef.current.side = side; autoRef.current.overshoot = overshoot; return; }
+    const st = { side, overshoot, timer: 0, last: performance.now(), acc: 0 };
+    // an interval, not requestAnimationFrame: the drag must keep paging even
+    // when the tab is throttled and frames stop
+    st.timer = window.setInterval(() => {
+      const now = performance.now();
+      const dt = Math.min(0.2, (now - st.last) / 1000);
+      st.last = now;
+      const pagesPerS = Math.min(3, 0.3 + st.overshoot / 80);
+      st.acc += st.side * pagesPerS * pageS * dt;
+      const step = pageS / 8;
+      if (Math.abs(st.acc) >= step) {
+        const move = Math.trunc(st.acc / step) * step;
+        st.acc -= move;
+        onPage(move);
+      }
+    }, 40);
+    autoRef.current = st;
+  };
+  useEffect(() => stopAuto, []);
+  useEffect(() => {
+    const a = autoRef.current, d = dragRef.current;
+    if (a && d) setDrag({ a: d.t0, b: a.side > 0 ? t0 + pageS : t0 });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the selection end follows the page while auto-scrolling
+  }, [t0, pageS]);
+
   // ── size ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const el = wrapRef.current;
@@ -227,10 +263,15 @@ export default function RawPane({
       ctx.fillText("100 µV", size.w - 8, size.h - 8 - barPx / 2);
     }
 
-    // drag selection
+    // drag selection (may extend past this page while auto-scrolling)
     if (drag) {
-      const x0 = xOf(Math.min(drag.a, drag.b)), x1 = xOf(Math.max(drag.a, drag.b));
-      ctx.fillStyle = "rgba(76,201,176,0.15)"; ctx.fillRect(x0, AXIS_H, x1 - x0, size.h - AXIS_H);
+      const a = Math.min(drag.a, drag.b), b = Math.max(drag.a, drag.b);
+      const x0 = Math.max(GUTTER, xOf(a)), x1 = Math.min(size.w, xOf(b));
+      if (x1 > x0) {
+        ctx.fillStyle = "rgba(76,201,176,0.15)"; ctx.fillRect(x0, AXIS_H, x1 - x0, size.h - AXIS_H);
+        ctx.fillStyle = accent; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = "11px var(--mono-font, monospace)";
+        ctx.fillText(`${formatClock(a)} – ${formatClock(b)} · ${(b - a).toFixed(1)} s`, x0 + 4, AXIS_H + 3);
+      }
     }
 
     // cursor
@@ -272,20 +313,27 @@ export default function RawPane({
       <canvas
         ref={canvasRef}
         style={{ width: size.w, height: size.h, display: "block", cursor: "crosshair", touchAction: "pan-y" }}
-        onPointerCancel={() => { dragRef.current = null; setDrag(null); }}
+        onPointerCancel={() => { stopAuto(); dragRef.current = null; setDrag(null); }}
         onPointerDown={(e) => {
           if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
           dragRef.current = { x0: e.clientX, t0: t, moved: false };
-          (e.target as HTMLElement).setPointerCapture(e.pointerId);
+          try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
         }}
         onPointerMove={(e) => {
           const d = dragRef.current;
           if (!d) return;
           if (Math.abs(e.clientX - d.x0) > 4) d.moved = true;
-          if (d.moved) setDrag({ a: d.t0, b: timeAt(e.clientX) });
+          if (!d.moved) return;
+          const r = canvasRef.current!.getBoundingClientRect();
+          const left = r.left + GUTTER, right = r.right - 8;
+          if (e.clientX > right) autoScroll(1, e.clientX - right);
+          else if (e.clientX < left) autoScroll(-1, left - e.clientX);
+          else stopAuto();
+          setDrag({ a: d.t0, b: timeAt(e.clientX) });
         }}
         onPointerUp={(e) => {
+          stopAuto();
           const d = dragRef.current;
           dragRef.current = null;
           if (!d) return;

@@ -617,9 +617,11 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             </span>
             <button type="button" style={mini} onClick={() => scrollWindow(windowS)} title="Forward one window">▶</button>
             <button type="button" style={mini} onClick={() => setWindowT0(maxWindowT0)} title="End">⏭</button>
-            <span className="lv-wheel-hint" style={{ fontSize: 11, color: "var(--text-muted)" }}>wheel over the strip to scroll</span>
           </div>
         )}
+        <span className="lv-wheel-hint" style={{ ...lbl, alignSelf: "center", textTransform: "none", letterSpacing: 0 }}>
+          strip: click seeks · drag selects a span to mark · Shift-drag scrubs{windowS ? " · wheel scrolls" : " · wheel pages"}
+        </span>
         {trendsFromCache && trendProgress >= 1 && (
           <span style={{ ...lbl, alignSelf: "center" }} title="Trends were restored from this browser's cache instead of recomputed">cached</span>
         )}
@@ -676,6 +678,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
                 rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme}
                 height={view === "trends" ? Math.max(naturalTrendH, mainH - 2) : trendPaneH - 2}
                 onScroll={scrollWindow} onPage={page}
+                onSelect={(a, b) => { seek(a); startDraft(a, b - a); }}
                 key={trendVersion === 0 ? "empty" : "live"}
               />
             </div>
