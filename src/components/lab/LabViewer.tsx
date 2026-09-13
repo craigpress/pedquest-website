@@ -12,7 +12,7 @@
 //
 // State lives here; the panes only paint and raise intents.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { btnGhost, mini } from "@/lib/admin-ui";
 import { EdfReader } from "@/lib/eeg/edf";
 import { LayReader, mergeLayComments } from "@/lib/eeg/lay";
@@ -22,13 +22,14 @@ import { buildMontage, VIEWER_MONTAGES, type ViewerMontageId } from "@/lib/eeg/m
 import {
   DEFAULT_FILTERS, HIGH_PASS_OPTIONS, LOW_PASS_OPTIONS, NOTCH_OPTIONS, type FilterSettings,
 } from "@/lib/eeg/filters";
-import { createTrendEngine, type ViewerTrends } from "@/lib/eeg/trends";
+import { createTrendEngine, defaultHopS, type ViewerTrends } from "@/lib/eeg/trends";
+import { loadCachedTrends, saveCachedTrends } from "@/lib/eeg/trend-cache";
 import { formatClock, type ViewerAnnotation, type ViewerAnnotationInput } from "@/lib/eeg/annotations";
 import { LocalAnnotationStore, RemoteAnnotationStore, type AnnotationStore } from "@/lib/eeg/annotation-store";
 import { SYNTHETIC_STAMP, type LabArtifact, type LabJob } from "@/lib/lab/types";
 import { DEFAULT_PALETTE, PALETTES, loadPalettePreference, savePalettePreference, type PaletteId } from "@/lib/eeg-palette";
 import RawPane from "./RawPane";
-import TrendStrip, { TREND_PANELS, TREND_WINDOWS } from "./TrendStrip";
+import TrendStrip, { TREND_PANELS, TREND_WINDOWS, trendStripHeight } from "./TrendStrip";
 import AnnotationPanel, { type Draft } from "./AnnotationPanel";
 
 export type ViewerSource =
@@ -40,11 +41,20 @@ export interface AnswerSpan { onsetS: number; offsetS: number; label: string }
 const PAGE_OPTIONS = [5, 10, 15, 20, 30, 60];
 const SENS_OPTIONS = [2, 3, 5, 7, 10, 15, 20, 30, 50];
 const AUX_SENS_OPTIONS = [10, 20, 50, 100, 200, 500, 1000];
+const PEN_OPTIONS: { w: number; label: string }[] = [
+  { w: 0.5, label: "Hairline" }, { w: 0.75, label: "Thin" }, { w: 1, label: "Normal" }, { w: 1.5, label: "Bold" },
+];
 const TREND_BLOCK_S = 60;
+/** the splitter never lets either pane get smaller than this */
+const MIN_PANE_PX = 90;
+
+type ViewMode = "both" | "trends" | "raw";
 
 interface Opened {
   reader: Recording;
   store: AnnotationStore;
+  /** identity of the recording bytes for the trend cache; null = do not cache */
+  cacheKey: string | null;
   /** for a .lay-backed recording: the parsed .lay, so a per-user copy can be exported */
   lay: LayReader | null;
   /** answer key found among the chosen files or offered by the job */
@@ -94,6 +104,15 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   const [trends, setTrends] = useState<ViewerTrends | null>(null);
   const [trendVersion, setTrendVersion] = useState(0);
   const [trendProgress, setTrendProgress] = useState(0);
+  const [trendsFromCache, setTrendsFromCache] = useState(false);
+
+  // layout: pen width, which panes show, and where the trend/raw splitter sits
+  const [penWidth, setPenWidth] = useState(0.75);
+  const [view, setView] = useState<ViewMode>("both");
+  const [trendH, setTrendH] = useState<number | null>(null);
+  const [mainH, setMainH] = useState(0);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const splitDrag = useRef<{ y0: number; h0: number } | null>(null);
 
   const [annotations, setAnnotations] = useState<ViewerAnnotation[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -107,14 +126,31 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   // remembered heat-map palette (shared with the image viewer) and viewer theme
   useEffect(() => {
     setPalette(loadPalettePreference());
-    try { const t = localStorage.getItem("pq-lab-theme"); if (t === "light" || t === "dark") setTheme(t); } catch { /* private mode */ }
+    try {
+      const t = localStorage.getItem("pq-lab-theme"); if (t === "light" || t === "dark") setTheme(t);
+      const p = Number(localStorage.getItem("pq-lab-pen")); if (PEN_OPTIONS.some((o) => o.w === p)) setPenWidth(p);
+      const v = localStorage.getItem("pq-lab-view"); if (v === "both" || v === "trends" || v === "raw") setView(v);
+      const h = Number(localStorage.getItem("pq-lab-trend-h")); if (h > 0) setTrendH(h);
+    } catch { /* private mode */ }
   }, []);
+  const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* ignore */ } };
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    try { localStorage.setItem("pq-lab-theme", next); } catch { /* ignore */ }
+    remember("pq-lab-theme", next);
   };
   const choosePalette = (id: PaletteId) => { setPalette(id); savePalettePreference(id); };
+  const choosePen = (w: number) => { setPenWidth(w); remember("pq-lab-pen", String(w)); };
+  const chooseView = (v: ViewMode) => { setView(v); remember("pq-lab-view", v); };
+
+  // the main column's height drives the trends-only view and the splitter limits
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setMainH(Math.floor(el.getBoundingClientRect().height)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [opened]);
 
   // ── open ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -132,16 +168,18 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
         const answers = key ? parseAnswerManifest(JSON.parse(await key.text())) : null;
         if (edf) {
           const reader = await EdfReader.open(new FileByteSource(edf));
+          const identity = `${edf.name}:${edf.size}:${edf.lastModified}`;
           return {
             reader, lay: null, answers, canFetchAnswers: false, title: edf.name,
-            store: new LocalAnnotationStore(`${edf.name}:${edf.size}:${edf.lastModified}`),
+            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}`,
           };
         }
         if (lay && dat) {
           const reader = await LayReader.open(await lay.text(), new FileByteSource(dat));
+          const identity = `${lay.name}:${dat.size}:${dat.lastModified}`;
           return {
             reader, lay: reader, answers, canFetchAnswers: false, title: lay.name,
-            store: new LocalAnnotationStore(`${lay.name}:${dat.size}:${dat.lastModified}`),
+            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}`,
           };
         }
         if (lay || dat) throw new Error("A Persyst recording needs both the .lay and the .dat file — select them together.");
@@ -158,14 +196,17 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
       const store = new RemoteAnnotationStore(job.id, authHeaders, isEditor);
       const canFetchAnswers = isEditor && job.options.includeAnswers && Boolean(job.artifacts?.answers);
       const title = job.recordingId ?? job.id;
+      // The recording bytes are fixed by (job, spec, renderer); a re-export
+      // under a new spec hash or renderer version is a different recording.
+      const cacheKey = `job:${job.id}:${job.specHash ?? "-"}:${job.rendererVersion ?? "-"}`;
       if (job.artifacts?.edf) {
         const reader = await EdfReader.open(await RangeByteSource.open(() => getUrl("edf")));
-        return { reader, store, lay: null, answers: null, canFetchAnswers, title };
+        return { reader, store, lay: null, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:edf` };
       }
       if (job.artifacts?.lay && job.artifacts?.dat) {
         const layText = await (await fetch(await getUrl("lay"))).text();
         const reader = await LayReader.open(layText, await RangeByteSource.open(() => getUrl("dat")));
-        return { reader, store, lay: reader, answers: null, canFetchAnswers, title };
+        return { reader, store, lay: reader, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:lay` };
       }
       throw new Error("This job has no viewable recording (needs EDF+ or .lay/.dat).");
     }
@@ -201,16 +242,27 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
     return () => { cancelled = true; };
   }, [opened, source.kind]);
 
-  // ── trends, progressively ───────────────────────────────────────────────
+  // ── trends: from the browser cache when this recording was seen before, else progressively ──
   useEffect(() => {
     if (!opened) return;
-    const { reader } = opened;
+    const { reader, cacheKey } = opened;
     if (!reader.sampleRate || !reader.durationS) return;
     let cancelled = false;
-    const engine = createTrendEngine(reader.durationS, reader.sampleRate, reader.labels);
-    setTrends(engine.trends);
-    const margin = engine.marginS();
+    setTrendsFromCache(false);
     (async () => {
+      const cached = cacheKey ? await loadCachedTrends(cacheKey) : null;
+      if (cancelled) return;
+      const expectedNT = Math.max(1, Math.floor(reader.durationS / defaultHopS(reader.durationS)));
+      if (cached && cached.nT === expectedNT) {
+        setTrends(cached);
+        setTrendVersion((v) => v + 1);
+        setTrendProgress(1);
+        setTrendsFromCache(true);
+        return;
+      }
+      const engine = createTrendEngine(reader.durationS, reader.sampleRate, reader.labels);
+      setTrends(engine.trends);
+      const margin = engine.marginS();
       for (let t0 = 0; t0 < reader.durationS && !cancelled; t0 += TREND_BLOCK_S) {
         const t1 = Math.min(reader.durationS, t0 + TREND_BLOCK_S);
         const win = await reader.readWindow(Math.max(0, t0 - margin), Math.min(reader.durationS, t1 + margin));
@@ -220,7 +272,9 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
         setTrendProgress(t1 / reader.durationS);
         await new Promise((r) => setTimeout(r, 0));
       }
-      if (!cancelled) setTrendProgress(1);
+      if (cancelled) return;
+      setTrendProgress(1);
+      if (cacheKey) void saveCachedTrends(cacheKey, engine.trends);
     })().catch((e) => console.error("[viewer] trend computation failed:", e));
     return () => { cancelled = true; };
   }, [opened]);
@@ -275,6 +329,32 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   const page = useCallback((deltaS: number) => {
     setPageT0((cur) => Math.min(maxT0, Math.max(0, cur + deltaS)));
   }, [maxT0]);
+
+  // ── trend / raw split ───────────────────────────────────────────────────
+  const naturalTrendH = useMemo(() => trendStripHeight(panelRows), [panelRows]);
+  const splitterPx = 8;
+  const trendPaneH = useMemo(() => {
+    if (view === "trends") return Math.max(naturalTrendH, mainH);
+    if (view === "raw") return 0;
+    const want = trendH ?? naturalTrendH;
+    const max = mainH ? Math.max(MIN_PANE_PX, mainH - splitterPx - MIN_PANE_PX) : Infinity;
+    return Math.round(Math.min(max, Math.max(MIN_PANE_PX, want)));
+  }, [view, trendH, naturalTrendH, mainH]);
+  const onSplitDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    splitDrag.current = { y0: e.clientY, h0: trendPaneH };
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
+  };
+  const onSplitMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = splitDrag.current;
+    if (!d) return;
+    setTrendH(d.h0 + (e.clientY - d.y0));
+  };
+  const onSplitUp = () => {
+    if (!splitDrag.current) return;
+    splitDrag.current = null;
+    remember("pq-lab-trend-h", String(trendPaneH));
+  };
+  const resetSplit = () => { setTrendH(null); try { localStorage.removeItem("pq-lab-trend-h"); } catch { /* ignore */ } };
 
   const startDraft = useCallback((onsetS: number, durationS: number) => {
     setDraft({ id: null, onsetS, durationS, kind: durationS > 0 ? "seizure" : "note", label: "", note: "" });
@@ -406,9 +486,16 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
         .lv-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 0 4px; }
         .lv-bar select { max-width: 100%; }
         .lv-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 10px; min-height: 0; }
-        .lv-main { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; min-height: 0; }
-        .lv-trend { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .lv-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+        .lv-main-trends, .lv-main-raw { grid-template-rows: minmax(0, 1fr); }
+        .lv-trend { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; min-height: 0; }
         .lv-raw { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; min-height: 0; }
+        .lv-split { display: flex; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; user-select: none; }
+        .lv-split span { width: 48px; height: 3px; border-radius: 2px; background: var(--border); transition: background .15s; }
+        .lv-split:hover span, .lv-split:active span { background: var(--accent-primary); }
+        .lv-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+        .lv-seg button { border: none !important; border-right: 1px solid var(--border) !important; }
+        .lv-seg button:last-child { border-right: none !important; }
         .lv-side { border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 0; background: var(--bg-card); }
         /* Phones and narrow tablets: the fixed-height, two-column workstation
            layout leaves the raw page a few pixels wide.  Stack everything, let
@@ -417,7 +504,8 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           .lv-root { display: flex; flex-direction: column; height: auto; }
           .lv-bar { gap: 8px 10px; }
           .lv-body { grid-template-columns: minmax(0, 1fr); }
-          .lv-main { display: flex; flex-direction: column; }
+          .lv-main { display: flex; flex-direction: column; gap: 6px; }
+          .lv-split { display: none; }
           .lv-raw { height: 60vh; min-height: 320px; }
           .lv-side { max-height: 55vh; overflow: auto; }
         }
@@ -479,6 +567,11 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             {NOTCH_OPTIONS.map((f) => <option key={f} value={f}>{f === 0 ? "off" : `${f} Hz`}</option>)}
           </select>
         ))}
+        {group("Pen", (
+          <select style={sel} value={penWidth} onChange={(e) => choosePen(Number(e.target.value))} title="Trace line width">
+            {PEN_OPTIONS.map((p) => <option key={p.w} value={p.w}>{p.label}</option>)}
+          </select>
+        ))}
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
           <button type="button" style={mini} onClick={() => setPageT0(0)} title="Home">⏮</button>
           <button type="button" style={mini} onClick={() => page(-pageS)} title="Previous page (←)">◀</button>
@@ -527,6 +620,9 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             <span className="lv-wheel-hint" style={{ fontSize: 11, color: "var(--text-muted)" }}>wheel over the strip to scroll</span>
           </div>
         )}
+        {trendsFromCache && trendProgress >= 1 && (
+          <span style={{ ...lbl, alignSelf: "center" }} title="Trends were restored from this browser's cache instead of recomputed">cached</span>
+        )}
         {group("Baseline", (
           <select style={sel} value={baselineId} onChange={(e) => setBaselineId(e.target.value)}>
             <option value="first5">First 5 min</option>
@@ -546,28 +642,73 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             {PALETTES.map((p) => <option key={p.id} value={p.id} title={p.hint}>{p.label}</option>)}
           </select>
         ))}
+        {group("Show", (
+          <div className="lv-seg" role="group" aria-label="Which panes to show">
+            {([["both", "Both"], ["trends", "Trends"], ["raw", "EEG"]] as [ViewMode, string][]).map(([id, label]) => (
+              <button
+                key={id} type="button" onClick={() => chooseView(id)} aria-pressed={view === id}
+                style={{
+                  ...mini, borderRadius: 0,
+                  background: view === id ? "var(--bg-card-hover)" : "transparent",
+                  color: view === id ? "var(--accent-primary)" : "var(--text-secondary)",
+                  fontWeight: view === id ? 700 : 500,
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ))}
       </div>
 
       {/* body */}
       <div className="lv-body">
-        <div className="lv-main">
-          <div className="lv-trend">
-            <TrendStrip
-              trends={trends} durationS={durationS} cursorT={cursorT} pageT0={pageT0} pageS={pageS}
-              annotations={annotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
-              rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme} onScroll={scrollWindow}
-              key={trendVersion === 0 ? "empty" : "live"}
-            />
-          </div>
-          <div className="lv-raw">
-            <RawPane
-              reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
-              sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
-              onCursor={setCursorT}
-              onSelect={(a, b) => { setCursorT(a); startDraft(a, b - a); }}
-              onLoading={setLoadingPage}
-            />
-          </div>
+        <div
+          ref={mainRef}
+          className={`lv-main lv-main-${view}`}
+          style={view === "both" ? { gridTemplateRows: `${trendPaneH}px ${splitterPx}px minmax(0, 1fr)` } : undefined}
+        >
+          {view !== "raw" && (
+            <div className="lv-trend" style={{ overflowY: view === "trends" ? "auto" : "hidden" }}>
+              <TrendStrip
+                trends={trends} durationS={durationS} cursorT={cursorT} pageT0={pageT0} pageS={pageS}
+                annotations={annotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
+                rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme}
+                height={view === "trends" ? Math.max(naturalTrendH, mainH - 2) : trendPaneH - 2}
+                onScroll={scrollWindow} onPage={page}
+                key={trendVersion === 0 ? "empty" : "live"}
+              />
+            </div>
+          )}
+          {view === "both" && (
+            <div
+              className="lv-split"
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Drag to resize the trend strip; double-click to reset"
+              title="Drag to resize · double-click to reset"
+              onPointerDown={onSplitDown}
+              onPointerMove={onSplitMove}
+              onPointerUp={onSplitUp}
+              onPointerCancel={onSplitUp}
+              onDoubleClick={resetSplit}
+            >
+              <span />
+            </div>
+          )}
+          {view !== "trends" && (
+            <div className="lv-raw">
+              <RawPane
+                reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
+                sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
+                penWidth={penWidth}
+                onCursor={setCursorT}
+                onSelect={(a, b) => { setCursorT(a); startDraft(a, b - a); }}
+                onLoading={setLoadingPage}
+                onPage={page}
+              />
+            </div>
+          )}
         </div>
         <div className="lv-side">
           {error && <div style={{ color: "var(--accent-secondary)", fontSize: 12.5, marginBottom: 8 }}>{error}</div>}

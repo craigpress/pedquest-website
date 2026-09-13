@@ -9,6 +9,8 @@
 import { hemisphereChannels } from "./montage";
 import { applyChain, designChain } from "./filters";
 
+/** Bump when anything below changes what a stored ViewerTrends means; invalidates the browser cache (trend-cache.ts). */
+export const TREND_ENGINE_VERSION = 2;
 export const TREND_FMAX_HZ = 20;
 export const TREND_WIN_S = 4;
 export const SR_EPOCH_S = 0.5;
@@ -178,9 +180,16 @@ export function createTrendEngine(durationS: number, fs: number, labels: string[
     if (!n) return;
     const t1 = t0 + n / fs;
     const hop = trends.hopS;
-    const e0 = Math.max(0, Math.ceil((t0 + margin - 0.5 * hop) / hop));
-    const e1 = Math.min(trends.nT - 1, Math.floor((t1 - margin - 0.5 * hop) / hop));
-    if (e1 < e0) return;
+    // The margin protects epochs from a truncated window at a BLOCK edge, where
+    // the next block will cover them properly. At the record's own ends there is
+    // no next block, so those epochs are computed here from whatever signal
+    // exists (windows clamp below) instead of being left blank — which used to
+    // hollow out the first and last 30 s of every strip, baseline included.
+    const atStart = t0 <= 1e-6;
+    const atEnd = t1 >= durationS - 1e-3;
+    const e0 = atStart ? 0 : Math.max(0, Math.ceil((t0 + margin - 0.5 * hop) / hop));
+    const e1 = atEnd ? trends.nT - 1 : Math.min(trends.nT - 1, Math.floor((t1 - margin - 0.5 * hop) / hop));
+    if (e1 < e0 || n < nfft) return;
 
     // Pre-filter copies once per block.
     const aeegSig: Record<Side, Float32Array | null> = { left: null, right: null };
@@ -210,9 +219,8 @@ export function createTrendEngine(durationS: number, fs: number, labels: string[
 
     for (let e = e0; e <= e1; e++) {
       const centre = Math.round((trends.t[e] - t0) * fs);
-      // spectrogram
-      const start = centre - half;
-      if (start < 0 || start + nfft > n) continue;
+      // spectrogram: the 4 s window slides inward at the record's ends
+      const start = Math.min(n - nfft, Math.max(0, centre - half));
       const off = e * nF;
       for (const s of sides) {
         const psd = trends.psd[s];

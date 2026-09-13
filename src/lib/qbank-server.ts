@@ -1,6 +1,7 @@
 // Server-only data access for the qEEG question bank. Uses the SERVICE-ROLE
 // client, so answers, rationales and unpublished drafts never depend on
 // client-side RLS. NEVER import this from a "use client" module.
+import { cache } from "react";
 import { createServerClient } from "@/lib/supabase";
 import {
   mapCase, mapReference, toPublicCase,
@@ -122,8 +123,12 @@ export async function getBankFacets(): Promise<BankFacets> {
   return facets;
 }
 
-/** Answer-stripped item for the learner page. Approved/published bank items only. */
-export async function getPublicBankItem(id: string): Promise<PublicCase | null> {
+/**
+ * Answer-stripped item for the learner page. Approved/published bank items only.
+ * Wrapped in React's per-request cache: the item page calls this from both
+ * generateMetadata and the body, which used to be four Supabase round trips.
+ */
+export const getPublicBankItem = cache(async function getPublicBankItem(id: string): Promise<PublicCase | null> {
   const supabase = createServerClient();
   if (!supabase) return null;
   const { data: rows } = await supabase.from("eeg_cases").select("*").eq("id", id).limit(1);
@@ -132,7 +137,7 @@ export async function getPublicBankItem(id: string): Promise<PublicCase | null> 
   const { data: opts } = await supabase
     .from("eeg_case_options").select("*").eq("case_id", row.id).order("sort_order");
   return toPublicCase(mapCase(row, opts ?? []));
-}
+});
 
 /**
  * Practice mode: a random published bank item this member has not answered.

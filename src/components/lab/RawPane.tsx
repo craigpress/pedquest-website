@@ -21,9 +21,12 @@ const AXIS_H = 20;
 
 interface Page { t0: number; fs: number; rows: Float32Array[]; fileAnnotations: EdfAnnotation[] }
 
+/** Wheel travel (px) that counts as one notch → one page. Trackpads send many small deltas. */
+const WHEEL_NOTCH_PX = 60;
+
 export default function RawPane({
   reader, t0, pageS, derivations, filters, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT,
-  theme, onCursor, onSelect, onLoading,
+  theme, penWidth = 0.75, onCursor, onSelect, onLoading, onPage,
 }: {
   reader: Recording;
   t0: number;
@@ -39,10 +42,14 @@ export default function RawPane({
   cursorT: number | null;
   /** re-reads the CSS tokens when it changes */
   theme: "dark" | "light";
+  /** trace line width in CSS px; review stations draw hairlines */
+  penWidth?: number;
   onCursor: (t: number) => void;
   /** drag-select a span; the parent decides what to do with it */
   onSelect: (t0: number, t1: number) => void;
   onLoading?: (busy: boolean) => void;
+  /** wheel over the page: move by this many seconds (one page per notch, 1 s with Shift) */
+  onPage?: (deltaS: number) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -178,17 +185,37 @@ export default function RawPane({
       const pxPerUv = PX_PER_MM / sensitivityUvPerMm;
       const pxPerUvAux = PX_PER_MM / auxSensitivityUvPerMm;
       const n = derived[0]?.length ?? 0;
-      const step = Math.max(1, Math.floor(n / (plotW * 2)));
-      ctx.lineWidth = 1;
+      // Draw at device resolution. Below ~2 samples per device pixel every
+      // sample is a vertex; above it each pixel column gets its min and max,
+      // so a spike is never dropped by decimation the way "every k-th sample"
+      // drops it (visible at 30–60 s/page on a long record).
+      const cols = Math.max(1, Math.floor(plotW * dpr));
+      const perCol = n / cols;
+      const envelope = perCol > 2;
+      ctx.lineWidth = penWidth;
+      ctx.lineJoin = "round";
       derived.forEach((row, i) => {
         const cy = layout.centres[i];
         const gain = derivations[i].aux ? pxPerUvAux : pxPerUv;
         ctx.strokeStyle = derivations[i].aux ? text : trace;
         ctx.beginPath();
-        for (let k = 0; k < n; k += step) {
-          const x = GUTTER + (k / n) * plotW;
-          const y = cy - row[k] * gain;
-          if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        if (!envelope) {
+          for (let k = 0; k < n; k++) {
+            const x = GUTTER + (k / n) * plotW;
+            const y = cy - row[k] * gain;
+            if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          }
+        } else {
+          for (let c = 0; c < cols; c++) {
+            const k0 = Math.floor(c * perCol), k1 = Math.min(n, Math.max(k0 + 1, Math.floor((c + 1) * perCol)));
+            let lo = Infinity, hi = -Infinity;
+            for (let k = k0; k < k1; k++) { const v = row[k]; if (v < lo) lo = v; if (v > hi) hi = v; }
+            if (lo === Infinity) continue;
+            const x = GUTTER + (c + 0.5) / dpr;
+            const yA = cy - (c % 2 === 0 ? hi : lo) * gain, yB = cy - (c % 2 === 0 ? lo : hi) * gain;
+            if (c === 0) ctx.moveTo(x, yA); else ctx.lineTo(x, yA);
+            ctx.lineTo(x, yB);
+          }
         }
         ctx.stroke();
       });
@@ -212,7 +239,26 @@ export default function RawPane({
       ctx.strokeStyle = accent; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size.h); ctx.stroke();
     }
-  }, [derived, page, derivations, layout, size, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT, drag, t0, pageS, theme]);
+  }, [derived, page, derivations, layout, size, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT, drag, t0, pageS, theme, penWidth]);
+
+  // ── wheel = paging ──────────────────────────────────────────────────────
+  // Non-passive so the document does not scroll while the page turns.
+  const wheelAcc = useRef(0);
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el || !onPage) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaMode === 1 ? (e.deltaY || e.deltaX) * 20 : (e.deltaY || e.deltaX);
+      wheelAcc.current += delta;
+      const notches = Math.trunc(wheelAcc.current / WHEEL_NOTCH_PX);
+      if (!notches) return;
+      wheelAcc.current -= notches * WHEEL_NOTCH_PX;
+      onPage(notches * (e.shiftKey ? 1 : pageS));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [onPage, pageS]);
 
   // ── pointer ─────────────────────────────────────────────────────────────
   const timeAt = (clientX: number) => {

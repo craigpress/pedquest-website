@@ -19,7 +19,11 @@ export async function GET(request: NextRequest) {
   }
 
   const p = request.nextUrl.searchParams;
-  const [items, facets] = await Promise.all([
+  // Which of these has this member already answered? Drives the "answered"
+  // marker and the practice pool. All three reads are independent, so they
+  // go out together rather than as a third round trip after the first two.
+  const supabase = createServerClient();
+  const [items, facets, answeredRows] = await Promise.all([
     listBankItems({
       domain: (p.get("domain") as QbankDomain) || null,
       difficulty: (p.get("difficulty") as Difficulty) || null,
@@ -28,19 +32,11 @@ export async function GET(request: NextRequest) {
       q: p.get("q"),
     }),
     getBankFacets(),
+    supabase
+      ? supabase.from("eeg_responses").select("case_id,is_correct").eq("user_id", caller.userId).then((r) => r.data ?? [])
+      : Promise.resolve([] as any[]),
   ]);
-
-  // Which of these has this member already answered? Drives the "answered"
-  // marker and the practice pool.
-  let answered: string[] = [];
-  const supabase = createServerClient();
-  if (supabase) {
-    const { data } = await supabase
-      .from("eeg_responses")
-      .select("case_id,is_correct")
-      .eq("user_id", caller.userId);
-    answered = ((data ?? []) as any[]).map((r) => r.case_id);
-  }
+  const answered = (answeredRows as any[]).map((r) => r.case_id);
 
   return NextResponse.json({ success: true, signedIn: true, items, facets, answered });
 }

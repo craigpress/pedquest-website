@@ -80,9 +80,12 @@ const DIVERGING: [number, string][] = [
   [0.0, "#1f4fd8"], [0.5, "#ffffff"], [1.0, "#e0202a"],
 ];
 
+/** Wheel travel (px) that counts as one notch when the wheel pages the raw EEG. */
+const WHEEL_NOTCH_PX = 60;
+
 export default function TrendStrip({
   trends, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress,
-  rows, palette, windowT0, windowS, baseline, theme, onSeek, onScroll,
+  rows, palette, windowT0, windowS, baseline, theme, height, onSeek, onScroll, onPage,
 }: {
   trends: ViewerTrends | null;
   durationS: number;
@@ -102,13 +105,19 @@ export default function TrendStrip({
   baseline: { t0: number; t1: number } | null;
   /** re-reads the CSS tokens when it changes */
   theme: "dark" | "light";
+  /** strip height in CSS px; rows scale to fill it. Omit for the natural height. */
+  height?: number | null;
   onSeek: (t: number) => void;
   onScroll: (deltaS: number) => void;
+  /** wheel when the whole record is shown: move the raw page by this many seconds */
+  onPage?: (deltaS: number) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [w, setW] = useState(800);
-  const h = trendStripHeight(rows);
+  const natural = trendStripHeight(rows);
+  const h = height && height > AXIS_H + 6 + rows.length * 8 ? Math.round(height) : natural;
+  const scale = (h - AXIS_H - 6) / Math.max(1, natural - AXIS_H - 6);
   const span = windowS ?? Math.max(1, durationS);
   const t0 = windowS ? windowT0 : 0;
 
@@ -123,9 +132,9 @@ export default function TrendStrip({
   const rowTop = useMemo(() => {
     const tops: Partial<Record<TrendRowId, number>> = {};
     let y = AXIS_H;
-    for (const r of rows) { tops[r] = y; y += ROW_DEFS[r].h; }
+    for (const r of rows) { tops[r] = y; y += ROW_DEFS[r].h * scale; }
     return tops as Record<TrendRowId, number>;
-  }, [rows]);
+  }, [rows, scale]);
 
   const filled = trends?.filled ?? 0;
 
@@ -193,7 +202,7 @@ export default function TrendStrip({
     const xOf = (t: number) => GUTTER + ((t - t0) / span) * plotW;
     const t1 = t0 + span;
     const has = (r: TrendRowId) => rows.includes(r);
-    const rh = (r: TrendRowId) => ROW_DEFS[r].h;
+    const rh = (r: TrendRowId) => ROW_DEFS[r].h * scale;
 
     // time axis
     ctx.font = "10px var(--mono-font, monospace)"; ctx.textBaseline = "top"; ctx.textAlign = "center";
@@ -372,7 +381,7 @@ export default function TrendStrip({
       ctx.fillStyle = accent;
       ctx.fillRect(GUTTER + (t0 / durationS) * plotW, sbY, Math.max(6, (span / durationS) * plotW), 3);
     }
-  }, [trends, bitmaps, base, baseline, filled, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress, w, h, rowTop, rows, t0, span, windowS, theme]);
+  }, [trends, bitmaps, base, baseline, filled, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress, w, h, scale, rowTop, rows, t0, span, windowS, theme]);
 
   const seekAt = (clientX: number) => {
     const r = canvasRef.current!.getBoundingClientRect();
@@ -381,18 +390,31 @@ export default function TrendStrip({
   };
   const dragging = useRef(false);
 
-  // Wheel scrolls the window; a passive listener would not let us stop the page scrolling.
+  // Wheel: zoomed in, it scrolls the trend window; on the whole record it
+  // pages the raw EEG (one page per notch, 1 s with Shift). A passive listener
+  // would not let us stop the document scrolling.
+  const wheelAcc = useRef(0);
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (!windowS) return;
+      const raw = e.deltaMode === 1 ? (e.deltaY || e.deltaX) * 20 : (e.deltaY || e.deltaX);
+      if (windowS) {
+        e.preventDefault();
+        onScroll(raw * (span / 1000));
+        return;
+      }
+      if (!onPage) return;
       e.preventDefault();
-      onScroll((e.deltaY || e.deltaX) * (span / 1000));
+      wheelAcc.current += raw;
+      const notches = Math.trunc(wheelAcc.current / WHEEL_NOTCH_PX);
+      if (!notches) return;
+      wheelAcc.current -= notches * WHEEL_NOTCH_PX;
+      onPage(notches * (e.shiftKey ? 1 : pageS));
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [windowS, span, onScroll]);
+  }, [windowS, span, onScroll, onPage, pageS]);
 
   return (
     <div ref={wrapRef} style={{ width: "100%" }}>

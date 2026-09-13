@@ -31,6 +31,7 @@ function ViewerInner() {
   const params = useSearchParams();
   const jobId = params.get("job");
   const [source, setSource] = useState<ViewerSource | null>(null);
+  const [job, setJob] = useState<LabJob | null>(null);
   const [jobError, setJobError] = useState<string | null>(null);
 
   const authHeaders = useCallback(async () => {
@@ -40,17 +41,25 @@ function ViewerInner() {
   }, []);
 
   useEffect(() => {
-    if (!jobId || !signedIn || roleLoading) return;
+    // The job read goes out as soon as there is a session — in parallel with
+    // /api/me, not after it. The source is assembled below once both are in.
+    if (!jobId || !signedIn) return;
     let cancelled = false;
     (async () => {
       const res = await fetch(`/api/admin/lab/jobs/${jobId}`, { headers: await authHeaders() });
       const json = await res.json();
       if (cancelled) return;
       if (!res.ok || !json.job) { setJobError(json.error || "Could not load the job."); return; }
-      setSource({ kind: "job", job: json.job as LabJob, authHeaders, isEditor });
+      setJob(json.job as LabJob);
     })().catch(() => { if (!cancelled) setJobError("Network error loading the job."); });
     return () => { cancelled = true; };
-  }, [jobId, signedIn, isEditor, roleLoading, authHeaders]);
+  }, [jobId, signedIn, authHeaders]);
+
+  useEffect(() => {
+    if (!job || roleLoading) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- assembling the source from two async results
+    setSource({ kind: "job", job, authHeaders, isEditor });
+  }, [job, roleLoading, isEditor, authHeaders]);
 
   if (userLoading || roleLoading) {
     return <div style={adminShellWide}><p style={{ color: "var(--text-muted)" }}>Loading…</p></div>;
