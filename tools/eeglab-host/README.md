@@ -75,6 +75,9 @@ grep -q eeg-lab /etc/fstab || echo "10.100.10.102:/export/eeg-lab  /mnt/eeg-lab 
 systemctl daemon-reload && mount /mnt/eeg-lab && touch /mnt/eeg-lab/.write-test && rm /mnt/eeg-lab/.write-test
 # renderer >= 0.3.8 is already installed in /opt/pedquest-eeg-render/.venv (deployed 2026-09-12 from git HEAD)
 scp tools/eeg-render/lab_worker.py moltbot:/opt/pedquest-eeg-render/lab_worker.py
+# the viewer's trend engine, bundled for Node (moltbot has node 24 for OpenClaw); the worker
+# runs it after every export to write <recording>.trends.bin beside the recording
+npm run trends:sidecar:build && scp tools/trend-sidecar/dist/trend-sidecar.mjs moltbot:/opt/pedquest-eeg-render/
 scp tools/eeglab-host/eeg-lab-export-worker.service moltbot:/etc/systemd/system/
 systemctl daemon-reload && systemctl enable --now eeg-lab-export-worker && journalctl -u eeg-lab-export-worker -n 5
 ```
@@ -108,6 +111,22 @@ ingress entry **before** the 404 catch-all:
 
 Verify from outside the LAN: `curl -sI --resolve eeglab.presshome.net:443:104.21.54.133 https://eeglab.presshome.net/healthz`
 should return `Server: openresty` and `ok`.
+
+## Trends sidecar (`<recording>.trends.bin`)
+
+Every export gets the viewer's qEEG trends precomputed beside it by `tools/trend-sidecar` — the same
+TypeScript engine the browser runs, so the strip is identical either way; the viewer tries the
+sidecar, then its IndexedDB cache, then computes. When `TREND_ENGINE_VERSION` (`src/lib/eeg/trends.ts`)
+is bumped, old sidecars are ignored (the viewer computes) until they are rewritten:
+
+```sh
+# on moltbot, with the worker's env for --update-db
+cd /opt/pedquest-eeg-render && set -a && . /root/.openclaw/workspace/config/case-image-worker.env && set +a
+node trend-sidecar.mjs --backfill /mnt/eeg-lab --update-db          # missing or stale only
+node trend-sidecar.mjs --backfill /mnt/eeg-lab --update-db --force  # rewrite all
+```
+
+Roughly 10–25 s per recording on moltbot; 2–5 MB per sidecar.
 
 ## After a host reboot (OMV or moltbot)
 
