@@ -220,8 +220,29 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // The publications page renders a static module generated at build time from
+  // this table (scripts/generate-publications.ts), so a deploy is what makes a
+  // new paper visible. Deploy hook URL: Vercel > Settings > Git > Deploy Hooks.
+  let rebuild: "triggered" | "skipped" | "failed" | "unconfigured" = "unconfigured";
+  const deployHook = process.env.VERCEL_PUBLICATION_DEPLOY_HOOK_URL;
+  if (deployHook) {
+    if (newArticles.length === 0) {
+      rebuild = "skipped";
+    } else {
+      try {
+        const res = await fetch(deployHook, { method: "POST" });
+        rebuild = res.ok ? "triggered" : "failed";
+        if (!res.ok) errors.push(`Deploy hook returned HTTP ${res.status}`);
+      } catch (e) {
+        rebuild = "failed";
+        errors.push(`Deploy hook threw: ${e}`);
+      }
+    }
+  }
+
   return NextResponse.json({
     scanned,
+    rebuild,
     newArticles: newArticles.map((a) => ({
       pmid: a.pmid,
       title: a.title,

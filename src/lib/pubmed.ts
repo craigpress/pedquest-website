@@ -59,7 +59,14 @@ export function parsePublicationType(xml: string): string[] {
 
 export function parseArticleIds(xml: string): { doi?: string; pmid?: string; pmcid?: string } {
   const ids: { doi?: string; pmid?: string; pmcid?: string } = {};
-  const idBlocks = xml.match(/<ArticleId IdType="[^"]*">[^<]*<\/ArticleId>/gi) || [];
+  // Only the article's own <ArticleIdList> (inside <PubmedData>) identifies this paper.
+  // Every cited paper in <ReferenceList> carries its own <ArticleId IdType="pubmed">,
+  // and scanning the whole record used to return the LAST cited PMID as the article's.
+  const ownIds =
+    xml
+      .replace(/<ReferenceList>[\s\S]*<\/ReferenceList>/i, "")
+      .match(/<PubmedData>[\s\S]*?<ArticleIdList>([\s\S]*?)<\/ArticleIdList>/i)?.[1] ?? "";
+  const idBlocks = ownIds.match(/<ArticleId IdType="[^"]*">[^<]*<\/ArticleId>/gi) || [];
   for (const block of idBlocks) {
     const typeMatch = block.match(/IdType="([^"]*)"/);
     const valueMatch = block.match(/>([^<]*)</);
