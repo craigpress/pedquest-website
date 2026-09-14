@@ -57,5 +57,10 @@ put the link in `src/data` or in any client component.
   derive it from the title; don't change it after people have registered.
 - Save as **Draft** to stage an event; only `published` rows reach `/events`.
 - An email-gated event can't be published without a join link.
+- Each talk has an optional **PedQuEST member id** (the `members.id` slug, e.g.
+  `laura-caligiuri`). When set, the presenter's name links to `/members/{id}`.
+- The seed in the migration is `ON CONFLICT DO NOTHING`: editing it never changes
+  a live row. Update live events in `/admin/events` (or an UPDATE like
+  `scripts/sql/2026-09-14-mnm-lecture-4.sql`) and keep the seed in step by hand.
 - Each row shows its registration count with **Copy emails** and **CSV** for
   follow-up.
