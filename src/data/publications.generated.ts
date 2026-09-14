@@ -4,7 +4,7 @@
 // `publications` table during `prebuild`. The PubMed scanner and /admin
 // write that table; hand edits here are overwritten on the next build.
 //
-// 329 publications.
+// 328 publications.
 
 import type { Publication } from "./publications";
 
@@ -92,23 +92,6 @@ export const publications: Publication[] = [
     pubType: "article",
     categories: [],
     keywords: ["Artificial intelligence","Brain death","Chatbot","Communication","Education","Ethics"],
-    isMemberPaper: true,
-    patientPopulation: "Pediatric",
-  },
-  {
-    id: "auto-42521378",
-    pmid: "42521378",
-    doi: "10.1016/j.pop.2026.03.011",
-    title: "Stimulant Use Disorder.",
-    authors: ["Austin Krueger J","Riviello C","Singer M"],
-    memberAuthorIds: ["james-riviello"],
-    journal: "Primary care",
-    year: 2026,
-    month: 9,
-    abstract: "Primary care providers (PCPs) are often tasked to care for those with stimulant use, both prescribed and illicit. The increasing use of stimulants across all age graphics has become more prevalent over the last several decades. The challenges of managing use and misuse are becoming more common for those in an office-based setting. With a wide range of uses including behavioral modification, narcolepsy and weight management, it is without doubt that a PCP may encounter stimulant use on a regular basis.",
-    pubType: "article",
-    categories: [],
-    keywords: ["Addiction","Cocaine","Methamphetamine","Primary care","Stimulant"],
     isMemberPaper: true,
     patientPopulation: "Pediatric",
   },
