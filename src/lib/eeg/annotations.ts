@@ -74,6 +74,8 @@ export interface ViewerAnnotation extends AnnotationTarget {
   note: string;
   /** who wrote it; null for local-file annotations */
   authorEmail: string | null;
+  /** display name from user_roles when the server knows one; null otherwise */
+  authorName: string | null;
   /** true when this row belongs to the signed-in viewer */
   mine: boolean;
   createdAt: string;

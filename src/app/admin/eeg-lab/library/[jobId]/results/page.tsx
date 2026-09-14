@@ -150,7 +150,11 @@ export default function ClassResultsPage() {
                     <tr key={k.keyIndex}>
                       <td style={td}>{n + 1}</td>
                       <td style={td}>{k.event.kind}</td>
-                      <td style={td}>{formatClock(k.event.onsetS)}</td>
+                      <td style={td}>
+                        <Link href={`/admin/eeg-lab/viewer?job=${data.job.id}&t=${Math.round(k.event.onsetS)}`} title="Open the viewer at this event (everyone's marks)">
+                          {formatClock(k.event.onsetS)}
+                        </Link>
+                      </td>
                       <td style={td}>{Math.round(k.event.offsetS - k.event.onsetS)} s</td>
                       <td style={td}>{k.event.region ? REGION_LABELS[k.event.region] : "—"}</td>
                       <td style={td}>{k.detectedBy} / {task.summary.learners}</td>
@@ -183,7 +187,7 @@ export default function ClassResultsPage() {
                     const s = l.scores[task.task.id];
                     const isOpen = open === l.userId;
                     return (
-                      <LearnerRows key={l.userId} learner={l} score={s} keyEvents={data.key} isOpen={isOpen} onToggle={() => setOpen(isOpen ? null : l.userId)} />
+                      <LearnerRows key={l.userId} jobId={data.job.id} learner={l} score={s} keyEvents={data.key} isOpen={isOpen} onToggle={() => setOpen(isOpen ? null : l.userId)} />
                     );
                   })}
                 </tbody>
@@ -224,18 +228,22 @@ function Tile({ label, value, small }: { label: string; value: string; small?: b
   );
 }
 
-function LearnerRows({ learner: l, score: s, keyEvents, isOpen, onToggle }: {
-  learner: Learner; score: LearnerScore; keyEvents: KeyEvent[]; isOpen: boolean; onToggle: () => void;
+function LearnerRows({ jobId, learner: l, score: s, keyEvents, isOpen, onToggle }: {
+  jobId: string; learner: Learner; score: LearnerScore; keyEvents: KeyEvent[]; isOpen: boolean; onToggle: () => void;
 }) {
   const loc = s.localization;
   const matchOf = (id: string) => s.matches.find((m) => m.markId === id);
+  // deep links into the viewer: this learner's marks only, landing on one mark when `t` is given
+  const viewerHref = (t?: number) => `/admin/eeg-lab/viewer?job=${jobId}&learner=${encodeURIComponent(l.email)}${t !== undefined ? `&t=${Math.round(t)}` : ""}`;
   return (
     <>
       <tr onClick={onToggle} style={{ cursor: "pointer" }}>
         <td style={td}>
           <span style={{ fontWeight: 600 }}>{name(l)}</span>
           {l.isTest && <span style={badge}>test</span>}
-          <div style={{ ...meta, fontSize: 12 }}>{l.email}</div>
+          <div style={{ ...meta, fontSize: 12 }}>
+            {l.email} · <Link href={viewerHref()} onClick={(e) => e.stopPropagation()}>open in viewer</Link>
+          </div>
         </td>
         <td style={td}>{l.marks.length}</td>
         <td style={td}>{s.keyCount ? `${s.detected} / ${s.keyCount}` : "—"}</td>
@@ -258,7 +266,11 @@ function LearnerRows({ learner: l, score: s, keyEvents, isOpen, onToggle }: {
                   return (
                     <tr key={m.id}>
                       <td style={td}><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: annotationColor(m.kind), marginRight: 6, verticalAlign: "middle" }} />{m.label || m.kind}</td>
-                      <td style={td}>{formatClock(m.onsetS)}{m.durationS > 0 ? ` – ${formatClock(m.onsetS + m.durationS)}` : ""}</td>
+                      <td style={td}>
+                        <Link href={viewerHref(m.onsetS)} title="Open the viewer at this mark">
+                          {formatClock(m.onsetS)}{m.durationS > 0 ? ` – ${formatClock(m.onsetS + m.durationS)}` : ""}
+                        </Link>
+                      </td>
                       <td style={td}>{describeTarget(m, (r) => TREND_LABELS[r] ?? r) || "—"}</td>
                       <td style={td}>{k ? `${k.kind} @ ${formatClock(k.onsetS)}` : (s.unmatchedMarkIds.includes(m.id) ? "no" : "—")}</td>
                       <td style={td}>{mt ? secs(mt.onsetLatencyS) : "—"}</td>

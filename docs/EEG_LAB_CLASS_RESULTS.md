@@ -17,6 +17,11 @@ Server gates: `requireRole(request, "teacher")` on `/api/admin/lab/jobs/[id]/res
 
 Teachers see the published library like a member (no recording page, no review queue) plus a **Class results** link per recording. The `/admin/eeg-lab/library/[jobId]/results` page is the teacher landing.
 
+### In the viewer
+
+- **Teacher:** the annotation panel's filter is a dropdown — everyone · mine only · one learner by display name — and it drives what the raw pane and trend strip draw, not just the list. Marks by others are dashed and carry the author's name (email on hover). A **Class results** link sits in the header. Deep links: `?job=…&t=<seconds>` seeks to a mark, `&learner=<email>` starts filtered to that learner; class results uses both (per learner, per mark, per key event).
+- **Learner:** the header states the task ("mark every electrographic seizure from onset to offset … and say which channels or region") and that marks are private to them and their instructors. They see only their own marks; `?all=1`, the answer key and the results route all refuse.
+
 ## What a mark is now
 
 `eeg_lab_annotations` = time + kind + **target**:

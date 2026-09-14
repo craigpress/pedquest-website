@@ -5,9 +5,11 @@ import { DEFAULT_TARGET, isAnnotationRegion, type ViewerAnnotation, type ViewerA
 export const ANNOTATION_COLUMNS =
   "id,job_id,user_id,user_email,onset_s,duration_s,kind,label,note,pane,trend_row,channels,region,created_at,updated_at";
 
-export function rowToAnnotation(input: unknown, callerUserId: string): ViewerAnnotation {
+/** `names` maps user_id → display name (from user_roles); pass it when listing everyone's marks so a teacher sees names, not emails. */
+export function rowToAnnotation(input: unknown, callerUserId: string, names?: Map<string, string>): ViewerAnnotation {
   const r = (typeof input === "object" && input !== null ? input : {}) as Record<string, unknown>;
   return {
+    authorName: (typeof r.user_id === "string" && names?.get(r.user_id)) || null,
     id: String(r.id),
     onsetS: Number(r.onset_s) || 0,
     durationS: Number(r.duration_s) || 0,

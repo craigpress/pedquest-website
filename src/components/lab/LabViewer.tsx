@@ -85,9 +85,19 @@ function downloadText(name: string, text: string, type = "text/plain") {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-export default function LabViewer({ source, onClose }: { source: ViewerSource; onClose?: () => void }) {
+export default function LabViewer({ source, onClose, initialT, initialAuthor }: {
+  source: ViewerSource;
+  onClose?: () => void;
+  /** deep link: seek here once the recording opens (seconds) */
+  initialT?: number | null;
+  /** deep link: start with this author's marks only (email); teachers arrive here from class results */
+  initialAuthor?: string | null;
+}) {
   const [opened, setOpened] = useState<Opened | null>(null);
   const [openError, setOpenError] = useState<string | null>(null);
+  // "all" | "mine" | author email — filters the list AND what the panes draw
+  const [authorFilter, setAuthorFilter] = useState<string>(initialAuthor || "all");
+  const appliedInitialT = useRef(false);
 
   const [pageT0, setPageT0] = useState(0);
   const [pageS, setPageS] = useState(10);
@@ -362,6 +372,19 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
     setPageT0((cur) => (t >= cur && t < cur + pageS ? cur : Math.min(maxT0, Math.max(0, t - pageS / 2))));
   }, [pageS, maxT0]);
 
+  // deep link (?t=): land on the mark once the recording is open, once only
+  useEffect(() => {
+    if (!opened || appliedInitialT.current || initialT == null || !Number.isFinite(initialT)) return;
+    appliedInitialT.current = true;
+    seek(Math.max(0, Math.min(durationS, initialT)));
+  }, [opened, initialT, durationS, seek]);
+
+  // what the panes draw follows the panel's author filter (everyone / mine / one learner)
+  const visibleAnnotations = useMemo(
+    () => annotations.filter((a) => authorFilter === "all" || (authorFilter === "mine" ? a.mine : a.authorEmail === authorFilter)),
+    [annotations, authorFilter],
+  );
+
   // keep the trend window around the raw page when paging past its edge
   useEffect(() => {
     if (!windowS) return;
@@ -565,6 +588,17 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           {reader.info.startDateTime && ` · ${reader.info.startDateTime.toLocaleString()}`}
           {fileAnnotationCount !== null && ` · ${fileAnnotationCount} file annotation${fileAnnotationCount === 1 ? "" : "s"}`}
         </div>
+        {source.kind === "job" && (
+          source.isInstructor ? (
+            <a href={`/admin/eeg-lab/library/${source.job.id}/results`} style={{ ...mini, textDecoration: "none" }} title="Every learner's marks graded against the answer key">
+              Class results
+            </a>
+          ) : (
+            <span style={{ fontSize: 12.5, color: "var(--text-secondary)" }} title="Your marks are private to you and your instructors">
+              <b>Your task:</b> mark every electrographic seizure from onset to offset (drag on the raw EEG or a trend row) and say which channels or region.
+            </span>
+          )
+        )}
         <button type="button" style={{ ...mini, marginLeft: "auto" }} onClick={toggleTheme} title="Toggle light / dark background">
           {theme === "dark" ? "\u2600 light" : "\u263E dark"}
         </button>
@@ -726,7 +760,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             <div className="lv-trend" style={{ overflowY: view === "trends" ? "auto" : "hidden" }}>
               <TrendStrip
                 trends={trends} durationS={durationS} cursorT={cursorT} pageT0={pageT0} pageS={pageS}
-                annotations={annotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
+                annotations={visibleAnnotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
                 rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme}
                 height={view === "trends" ? Math.max(naturalTrendH, mainH - 2) : trendPaneH - 2}
                 onScroll={scrollWindow} onPage={page}
@@ -756,7 +790,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
             <div className="lv-raw">
               <RawPane
                 reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
-                sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
+                sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={visibleAnnotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
                 penWidth={penWidth}
                 onCursor={(t, channel) => { lastPick.current = { pane: "raw", channels: channel ? [channel] : [] }; setCursorT(t); }}
                 onSelect={(a, b, channel) => { setCursorT(a); startDraft(a, b - a, { pane: "raw", channels: channel ? [channel] : [] }); }}
@@ -770,6 +804,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           {error && <div style={{ color: "var(--accent-secondary)", fontSize: 12.5, marginBottom: 8 }}>{error}</div>}
           <AnnotationPanel
             annotations={annotations} draft={draft} storeLabel={opened.store.label} busy={annBusy}
+            authorFilter={authorFilter} onAuthorFilter={setAuthorFilter}
             trendRows={trendRowOptions} channelOptions={channelOptions}
             onDraftChange={setDraft}
             onSave={(input, id) => void saveAnnotation(input, id)}

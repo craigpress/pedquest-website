@@ -40,7 +40,7 @@ export class LocalAnnotationStore implements AnnotationStore {
   async list() { return this.load(); }
   async create(input: ViewerAnnotationInput) {
     const row: ViewerAnnotation = {
-      id: crypto.randomUUID(), ...input, authorEmail: null, mine: true, createdAt: nowIso(), updatedAt: nowIso(),
+      id: crypto.randomUUID(), ...input, authorEmail: null, authorName: null, mine: true, createdAt: nowIso(), updatedAt: nowIso(),
     };
     this.save([...this.load(), row]);
     return row;

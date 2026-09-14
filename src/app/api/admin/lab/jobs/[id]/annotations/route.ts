@@ -5,6 +5,7 @@ import { hasRole, type Role } from "@/lib/roles";
 import { canSeeRecording } from "@/lib/lab/visibility";
 import { validateAnnotationInput } from "@/lib/eeg/annotations";
 import { ANNOTATION_COLUMNS, UUID_RE, rowToAnnotation } from "@/lib/lab/annotations-server";
+import { getRoleRowsByUserIds } from "@/lib/roles-server";
 
 export const runtime = "nodejs";
 
@@ -55,8 +56,14 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
     console.error("[EEG Lab] annotations list failed:", error.message);
     return NextResponse.json({ error: "Could not read annotations." }, { status: 500 });
   }
+  // names only when a teacher asked for everyone's marks: a learner's own list never needs them
+  let names: Map<string, string> | undefined;
+  if (all && data?.length) {
+    const ids = [...new Set((data as { user_id: string }[]).map((r) => r.user_id))];
+    names = new Map([...(await getRoleRowsByUserIds(ids)).values()].filter((r) => r.displayName).map((r) => [r.userId!, r.displayName!]));
+  }
   return NextResponse.json(
-    { success: true, annotations: (data ?? []).map((r) => rowToAnnotation(r, auth.userId)) },
+    { success: true, annotations: (data ?? []).map((r) => rowToAnnotation(r, auth.userId, names)) },
     { headers: { "Cache-Control": "no-store, private" } },
   );
 }

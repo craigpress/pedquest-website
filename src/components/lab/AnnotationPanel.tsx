@@ -3,7 +3,7 @@
 // Annotation list + editor beside the panes. The parent owns the rows and the
 // store; this component only renders and raises intents.
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { btnGhost, btnPrimary, fieldLabel, inp, mini } from "@/lib/admin-ui";
 import {
   ANNOTATION_KINDS, ANNOTATION_REGIONS, REGION_LABELS, annotationColor, describeTarget, formatClock,
@@ -17,7 +17,7 @@ export interface Draft extends AnnotationTarget {
 }
 
 export default function AnnotationPanel({
-  annotations, draft, storeLabel, busy, trendRows, channelOptions,
+  annotations, draft, storeLabel, busy, trendRows, channelOptions, authorFilter, onAuthorFilter,
   onDraftChange, onSave, onCancel, onDelete, onJump, onExport,
 }: {
   annotations: ViewerAnnotation[];
@@ -28,6 +28,9 @@ export default function AnnotationPanel({
   trendRows: { id: string; label: string }[];
   /** recording labels ∪ derivation labels, offered as chips under the channels field */
   channelOptions: string[];
+  /** "all" | "mine" | an author email — owned by the viewer so the panes filter with the list */
+  authorFilter: string;
+  onAuthorFilter: (f: string) => void;
   onDraftChange: (d: Draft) => void;
   onSave: (input: ViewerAnnotationInput, id: string | null) => void;
   onCancel: () => void;
@@ -35,11 +38,16 @@ export default function AnnotationPanel({
   onJump: (a: ViewerAnnotation) => void;
   onExport: () => void;
 }) {
-  const [filter, setFilter] = useState<"all" | "mine">("all");
+  const filter = authorFilter;
   // 40+ channel chips would push Region, Label and the Save button below the fold
   const [showChips, setShowChips] = useState(false);
   const others = annotations.some((a) => !a.mine);
-  useEffect(() => { if (!others) setFilter("all"); }, [others]);
+  // one entry per other author, named when the server knows a display name
+  const authors = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const a of annotations) if (!a.mine && a.authorEmail && !m.has(a.authorEmail)) m.set(a.authorEmail, a.authorName ?? a.authorEmail);
+    return [...m.entries()].map(([email, name]) => ({ email, name })).sort((x, y) => x.name.localeCompare(y.name));
+  }, [annotations]);
 
   // The channels field keeps the raw text while it is being typed, so a
   // trailing comma survives; it falls back to the draft's own list whenever a
@@ -53,7 +61,7 @@ export default function AnnotationPanel({
     onDraftChange({ ...draft, channels: list });
   };
   const shown = annotations
-    .filter((a) => filter === "all" || a.mine)
+    .filter((a) => filter === "all" || (filter === "mine" ? a.mine : a.authorEmail === filter))
     .slice()
     .sort((a, b) => a.onsetS - b.onsetS);
 
@@ -66,9 +74,11 @@ export default function AnnotationPanel({
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {others && (
-            <button type="button" style={mini} onClick={() => setFilter(filter === "all" ? "mine" : "all")}>
-              {filter === "all" ? "everyone" : "mine only"}
-            </button>
+            <select value={filter} style={{ ...mini, padding: "2px 6px" }} onChange={(e) => onAuthorFilter(e.target.value)} title="Whose marks to show on the recording and in this list">
+              <option value="all">everyone</option>
+              <option value="mine">mine only</option>
+              {authors.map((a) => <option key={a.email} value={a.email}>{a.name}</option>)}
+            </select>
           )}
           <button type="button" style={mini} onClick={onExport} disabled={!annotations.length}>export</button>
         </div>
@@ -197,7 +207,7 @@ export default function AnnotationPanel({
                 {describeTarget(a, trendRowLabel) && (
                   <span style={{ marginLeft: 8, color: "var(--text-muted)" }}>{describeTarget(a, trendRowLabel)}</span>
                 )}
-                {!a.mine && a.authorEmail && <span style={{ marginLeft: 8, color: "var(--text-muted)" }}>{a.authorEmail}</span>}
+                {!a.mine && a.authorEmail && <span style={{ marginLeft: 8, color: "var(--text-muted)" }} title={a.authorEmail}>{a.authorName ?? a.authorEmail}</span>}
               </div>
               <div style={{ color: "var(--text)", fontSize: 13.5 }}>{a.label || ANNOTATION_KINDS.find((k) => k.id === a.kind)?.label}</div>
               {a.note && <div style={{ color: "var(--text-muted)", fontSize: 12.5, whiteSpace: "pre-wrap" }}>{a.note}</div>}

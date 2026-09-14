@@ -31,6 +31,8 @@ function ViewerInner() {
   const params = useSearchParams();
   const router = useRouter();
   const jobId = params.get("job");
+  // deep links from class results: ?t=<seconds> lands on a mark, ?learner=<email> filters to one learner
+  const initialT = params.get("t") !== null && Number.isFinite(Number(params.get("t"))) ? Number(params.get("t")) : null;
   const [source, setSource] = useState<ViewerSource | null>(null);
   const [job, setJob] = useState<LabJob | null>(null);
   const [jobError, setJobError] = useState<string | null>(null);
@@ -101,7 +103,7 @@ function ViewerInner() {
           .lv-shell { padding: 12px 16px 16px; height: calc(100vh - 112px); min-height: 560px; box-sizing: border-box; }
           @media (max-width: 900px) { .lv-shell { height: auto; min-height: 0; padding: 8px 8px 24px; } }
         `}</style>
-        <LabViewer source={source} onClose={closeViewer} />
+        <LabViewer source={source} onClose={closeViewer} initialT={initialT} initialAuthor={params.get("learner")} />
       </div>
     );
   }
