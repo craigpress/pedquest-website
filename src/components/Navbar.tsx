@@ -297,7 +297,8 @@ export default function Navbar() {
 
         <nav
           className="mx-auto flex items-center justify-between px-5 lg:px-10"
-          style={{ maxWidth: 1320, height: 88 }}
+          // globals.css has an unlayered `* { margin: 0 }` that beats Tailwind's mx-auto, so centre explicitly
+          style={{ maxWidth: 1320, height: 88, margin: "0 auto" }}
         >
           {/* Logo / Brand */}
           <Link

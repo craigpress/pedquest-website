@@ -28,7 +28,8 @@ export default function Footer() {
     >
       <div
         className="mx-auto"
-        style={{ maxWidth: 1200, padding: "3.5rem 1.5rem 2rem" }}
+        // globals.css has an unlayered `* { margin: 0 }` that beats Tailwind's mx-auto, so centre explicitly
+        style={{ maxWidth: 1200, margin: "0 auto", padding: "3.5rem 1.5rem 2rem" }}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Column 1: Branding */}
