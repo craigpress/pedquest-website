@@ -36,6 +36,8 @@ export default function AnnotationPanel({
   onExport: () => void;
 }) {
   const [filter, setFilter] = useState<"all" | "mine">("all");
+  // 40+ channel chips would push Region, Label and the Save button below the fold
+  const [showChips, setShowChips] = useState(false);
   const others = annotations.some((a) => !a.mine);
   useEffect(() => { if (!others) setFilter("all"); }, [others]);
 
@@ -82,7 +84,8 @@ export default function AnnotationPanel({
               channels: draft.channels, region: draft.region,
             }, draft.id);
           }}
-          style={{ border: "1px solid var(--border-strong)", borderRadius: 10, padding: 12, display: "grid", gap: 10, background: "var(--bg)" }}
+          // the form must never push its own buttons out of the panel: it scrolls before the list does
+          style={{ border: "1px solid var(--border-strong)", borderRadius: 10, padding: 12, display: "grid", gap: 10, background: "var(--bg)", overflowY: "auto", minHeight: 0, flexShrink: 1 }}
         >
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <label>
@@ -123,11 +126,26 @@ export default function AnnotationPanel({
             )}
           </div>
           <label>
-            <span style={fieldLabel}>Channels</span>
+            <span style={fieldLabel}>Region</span>
+            <select value={draft.region ?? ""} style={inp}
+              onChange={(e) => onDraftChange({ ...draft, region: (e.target.value || null) as AnnotationRegion | null })}>
+              <option value="">Not stated</option>
+              {ANNOTATION_REGIONS.map((r) => <option key={r} value={r}>{REGION_LABELS[r]}</option>)}
+            </select>
+          </label>
+          <label>
+            <span style={{ ...fieldLabel, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              Channels
+              {channelOptions.length > 0 && (
+                <button type="button" style={{ ...mini, padding: "0 6px", fontSize: 11 }} onClick={() => setShowChips((v) => !v)}>
+                  {showChips ? "hide list" : "pick from list"}
+                </button>
+              )}
+            </span>
             <input value={channelText} style={inp} placeholder="e.g. C4 or C4-P4"
               onChange={(e) => { setTyped({ key: draftKey, text: e.target.value }); onDraftChange({ ...draft, channels: splitChannels(e.target.value) }); }} />
           </label>
-          {channelOptions.length > 0 && (
+          {showChips && channelOptions.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: -4 }}>
               {channelOptions.map((c) => {
                 const on = draft.channels.includes(c);
@@ -141,14 +159,6 @@ export default function AnnotationPanel({
               })}
             </div>
           )}
-          <label>
-            <span style={fieldLabel}>Region</span>
-            <select value={draft.region ?? ""} style={inp}
-              onChange={(e) => onDraftChange({ ...draft, region: (e.target.value || null) as AnnotationRegion | null })}>
-              <option value="">Not stated</option>
-              {ANNOTATION_REGIONS.map((r) => <option key={r} value={r}>{REGION_LABELS[r]}</option>)}
-            </select>
-          </label>
           <label>
             <span style={fieldLabel}>Label</span>
             <input value={draft.label} style={inp} maxLength={120} placeholder="e.g. rhythmic theta, L temporal"
