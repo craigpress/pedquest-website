@@ -144,8 +144,8 @@ VALUES
     '[
       {"presenter":"Dr. Mark Scheuer","title":"Brain Function Monitoring Using cEEG and Persyst qEEG Trending/Algorithms"},
       {"presenter":"Mr. Ethan Moyer","title":"From Multimodal Data to Clinical Intelligence in Pediatric Neurocritical Care"},
-      {"presenter":"Dr. Rej Guerriero","title":"qEEG: Utility and Challenges in Clinical Practice"},
-      {"presenter":"Dr. Neil Munjal","title":"Institutional Experience with the Zeto POC EEG Device and Implementation of Nurse-Led qEEG in the PICU"},
+      {"presenter":"Dr. Rej Guerriero","memberId":"rej-guerriero","title":"qEEG: Utility and Challenges in Clinical Practice"},
+      {"presenter":"Dr. Neil Munjal","memberId":"neil-munjal","title":"Institutional Experience with the Zeto POC EEG Device and Implementation of Nurse-Led qEEG in the PICU"},
       {"presenter":"Dr. Robert van den Berg","title":"Machine Learning for qEEG: New Tools for Monitoring and Prediction"}
     ]'::jsonb,
     'email', NULL,
@@ -158,16 +158,26 @@ VALUES
   (
     'mnm-lecture-4',
     'MNM Lecture 4',
-    'Save the date — topic to be announced',
-    'The fourth and final lecture of the series. Topic, speakers, and the Zoom link will be announced shortly.',
+    'Implementation Science in ICU EEG Monitoring',
+    'The fourth and final lecture of the series: curriculum development, quality improvement, risk-based EEG utilization, and process change in pediatric status epilepticus. The remaining time will be spent discussing topics for the small-group sessions at October''s in-person PNCRG meeting.',
     'PNCRG · Multimodal Neuromonitoring Subgroup',
     'https://www.pncrg.org/',
     '/images/events/pncrg-logo.png',
     '2026-09-17T14:00:00-04:00',
     '2026-09-17T16:00:00-04:00',
     'ET', 'virtual', 'Zoom',
-    '[]'::jsonb,
-    'none', NULL, NULL, NULL, NULL, NULL, 'published'
+    '[
+      {"presenter":"Dr. Laura Caligiuri","memberId":"laura-caligiuri","title":"Development of a QEEG Curriculum for PNCC Trainees"},
+      {"presenter":"Dr. Lindsey Morgan","memberId":"lindsey-morgan","title":"Quality Improvement in Pediatric Neurology: Cutting Time to EEG in Half"},
+      {"presenter":"Dr. France Fung","title":"Who Should We Monitor, and for How Long? Toward Risk-Based EEG Utilization in the PICU"},
+      {"presenter":"Dr. Adam Ostendorf","memberId":"adam-ostendorf","title":"Studying Process Change in Pediatric Status Epilepticus — Lessons Learned from QuITT-SE"}
+    ]'::jsonb,
+    'email', NULL,
+    'Free and open to anyone caring for or researching critically ill children. Enter your email and we''ll send you the Zoom link.',
+    'https://us06web.zoom.us/j/85435144655?pwd=bgGtOY3Map3ifRMdp5grZpqgLzrRXs.1',
+    '854 3514 4655',
+    '563262',
+    'published'
   ),
   (
     'pncrg-fall-2026',

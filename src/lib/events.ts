@@ -9,6 +9,8 @@ export interface EventTalk {
   presenter: string;
   institution?: string;
   title: string;
+  /** `members.id` slug — when set, the presenter's name links to /members/{memberId}. */
+  memberId?: string;
 }
 
 /** What the public page is allowed to see — no join link, no passcode. */

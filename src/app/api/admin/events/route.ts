@@ -25,6 +25,7 @@ function cleanTalks(input: any): EventTalk[] {
       presenter: String(t.presenter).slice(0, 200),
       title: String(t.title).slice(0, 400),
       ...(t.institution?.trim() ? { institution: String(t.institution).slice(0, 300) } : {}),
+      ...(/^[a-z0-9-]{1,80}$/.test(String(t.memberId ?? "").trim()) ? { memberId: String(t.memberId).trim() } : {}),
     }));
 }
 

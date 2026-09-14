@@ -357,6 +357,7 @@ function Editor({ edit, setEdit, onSave, onClose, busy }: {
                     <input style={{ ...inp, fontSize: 12.5 }} placeholder="Presenter (Dr. …)" value={t.presenter} onChange={(e) => setTalk(i, { presenter: e.target.value })} />
                     <input style={{ ...inp, fontSize: 12.5 }} placeholder="Institution (optional)" value={t.institution ?? ""} onChange={(e) => setTalk(i, { institution: e.target.value })} />
                   </div>
+                  <input style={{ ...inp, fontSize: 12.5 }} placeholder="PedQuEST member id (optional, e.g. laura-caligiuri) — links the presenter to /members/…" value={t.memberId ?? ""} onChange={(e) => setTalk(i, { memberId: e.target.value })} />
                 </div>
                 <button style={mini} onClick={() => set({ talks: edit.talks.filter((_, j) => j !== i) })} aria-label={`Remove presentation ${i + 1}`}>✕</button>
               </div>

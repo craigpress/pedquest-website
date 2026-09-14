@@ -89,7 +89,11 @@ function EventCard({ ev, featured }: { ev: PublicEvent; featured?: boolean }) {
                 <div>
                   <p className="ev-talk-title">{t.title}</p>
                   <p className="ev-talk-by">
-                    {t.presenter}
+                    {t.memberId ? (
+                      <Link href={`/members/${t.memberId}`} className="ev-talk-member">{t.presenter}</Link>
+                    ) : (
+                      t.presenter
+                    )}
                     {t.institution ? ` · ${t.institution}` : ""}
                   </p>
                 </div>
@@ -398,6 +402,8 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
           font-size: 0.95rem; font-weight: 600; line-height: 1.45; color: var(--ink);
         }
         .ev-talk-by { margin-top: 0.2rem; font-size: 0.85rem; color: var(--muted); }
+        .ev-talk-member { color: var(--accent-primary); text-decoration: underline; text-underline-offset: 2px; }
+        .ev-talk-member:hover { color: var(--accent-primary-hover); }
 
         /* CTA area */
         .ev-cta { margin-top: 1.75rem; }
