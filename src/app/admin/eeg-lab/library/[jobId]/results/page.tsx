@@ -172,7 +172,10 @@ export default function ClassResultsPage() {
                 <thead>
                   <tr>
                     <th style={th}>Learner</th><th style={th}>Marks</th><th style={th}>Detected</th><th style={th}>False alarms</th>
-                    <th style={th}>Median onset latency</th><th style={th}>Median duration error</th><th style={th}>Localization</th><th style={th}>Pane</th><th style={th}>Score</th>
+                    <th style={th}>Median onset latency</th><th style={th}>Median duration error</th>
+                    <th style={th} title="match · partial · miss · not stated">Localization</th>
+                    <th style={th} title="marks placed on the raw EEG · marks placed on a trend row">Pane</th>
+                    <th style={th}>Score</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -185,6 +188,16 @@ export default function ClassResultsPage() {
                   })}
                 </tbody>
               </table>
+            )}
+            {learners.length > 0 && (
+              <p style={{ ...meta, marginTop: 10 }}>
+                <b>Localization</b> = match · partial · miss · not stated: what the learner said about <i>where</i> (their named region,
+                else the channels they tagged, else a left/right trend row) against the key&apos;s onset region. Partial = same
+                hemisphere but a different lobe, or hemisphere-level only. Not stated is never counted as wrong.{" "}
+                <b>Pane</b> = how many of their marks were placed on the raw EEG versus on a trend row; a trend-first reader
+                usually shows up as later onsets and longer durations. <b>Score</b> = 50 % detection (F1), 30 % timing, 20 % localization.
+                Click a row for the mark-by-mark detail.
+              </p>
             )}
           </section>
 
