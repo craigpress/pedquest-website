@@ -53,3 +53,6 @@ tools/trend-sidecar/dist/
 
 # Session debug output: Edge-CDP screenshots, worker logs, one-off scripts
 artifacts/
+
+# Incremental TypeScript build state - regenerated on every compile
+tsconfig.tsbuildinfo
