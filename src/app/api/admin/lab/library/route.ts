@@ -131,5 +131,9 @@ export async function GET(request: NextRequest) {
     editor,
     role: auth.role,
     stamp: SYNTHETIC_STAMP,
+  }, {
+    // 138 KB that changes a few times a day: let the browser reuse it for a
+    // minute (back-navigation, filter changes) — private, never a shared cache
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=300" },
   });
 }

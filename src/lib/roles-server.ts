@@ -68,6 +68,41 @@ export async function ensureUserRole(email: string, userId?: string | null): Pro
   return isRole(existing.role) ? existing.role : "member";
 }
 
+/**
+ * The login-time upsert and the role read in ONE round trip: the row as it is
+ * (creating a 'member' row when there is none, backfilling user_id when it is
+ * missing). Every authenticated API call goes through this, so it must stay a
+ * single select on the hot path — the insert and the backfill only run when
+ * the row is actually missing or unlinked.
+ */
+export async function ensureRoleRow(email: string, userId: string): Promise<RoleRow | null> {
+  const supabase = createServerClient();
+  if (!supabase) return null;
+  const lower = email.toLowerCase();
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("email,role,user_id,is_test,display_name")
+    .eq("email", lower)
+    .maybeSingle();
+  if (error && (error.code === "42P01" || error.code === "PGRST205")) {
+    console.error("[Roles] public.user_roles does not exist. Apply supabase/migrations/20260903_qbank.sql.");
+    return null;
+  }
+  if (!data) {
+    const { error: insErr } = await supabase.from("user_roles").insert({ email: lower, user_id: userId, role: "member" });
+    if (insErr && insErr.code !== "23505") { console.error("[Roles] could not create role row:", insErr.message); return null; }
+    return { email: lower, role: "member", userId, isTest: false, displayName: null };
+  }
+  if (!data.user_id) {
+    // fire-and-forget: the answer does not depend on it
+    void supabase.from("user_roles").update({ user_id: userId }).eq("email", lower).then(({ error: e }) => {
+      if (e) console.error("[Roles] user_id backfill failed:", e.message);
+    });
+    data.user_id = userId;
+  }
+  return rowToRoleRow(data);
+}
+
 /** The full role row for an email (role, test flag, display name), or null when there is none. */
 export async function getRoleRow(email: string): Promise<RoleRow | null> {
   const supabase = createServerClient();

@@ -18,8 +18,11 @@ export function useUser() {
     async function getUser() {
       try {
         if (sb) {
-          const { data } = await sb.auth.getUser();
-          if (mounted) setUser(data.user ?? null);
+          // getSession reads the stored session (no network); getUser() made a
+          // round trip to Supabase Auth per mounted component. The server
+          // re-verifies the token on every API call, so the UI needs no more.
+          const { data } = await sb.auth.getSession();
+          if (mounted) setUser(data.session?.user ?? null);
         } else {
           // No Supabase — check localStorage fallback
           const stored = localStorage.getItem("pedquest_user_email");
@@ -75,6 +78,22 @@ export function useUser() {
 // Calling /api/me is also what registers a first-time member: the route upserts
 // the user_roles row and backfills user_id. That makes this hook the magic-link
 // login path's "upsert on login".
+// One /api/me request per page load, not one per component: ~24 components use
+// this hook, and a page used to fire five to seven identical calls. The result
+// is cached per access token in module memory; a new token (sign-in, refresh,
+// switch-user) is a new key, so nothing stale survives a session change.
+let roleCacheEntry: { token: string; promise: Promise<Role | null> } | null = null;
+
+function fetchRole(token: string): Promise<Role | null> {
+  if (roleCacheEntry?.token === token) return roleCacheEntry.promise;
+  const promise = fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } })
+    .then((res) => res.json())
+    .then((json) => (isRole(json?.role) ? json.role : null))
+    .catch(() => { if (roleCacheEntry?.token === token) roleCacheEntry = null; return null; });
+  roleCacheEntry = { token, promise };
+  return promise;
+}
+
 export function useRole() {
   const { user, loading: userLoading } = useUser();
   const [role, setRole] = useState<Role | null>(null);
@@ -96,9 +115,8 @@ export function useRole() {
           if (mounted) { setRole(null); setLoading(false); }
           return;
         }
-        const res = await fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } });
-        const json = await res.json();
-        if (mounted) setRole(isRole(json?.role) ? json.role : null);
+        const r = await fetchRole(token);
+        if (mounted) setRole(r);
       } catch {
         if (mounted) setRole(null);
       } finally {

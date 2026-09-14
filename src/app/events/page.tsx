@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import EventsView from "@/components/EventsView";
 import { getPublicEvents } from "@/lib/events-server";
 
-export const dynamic = "force-dynamic";
+// cached render, regenerated every 5 min and on admin saves (revalidatePath)
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Events — PedQuEST",

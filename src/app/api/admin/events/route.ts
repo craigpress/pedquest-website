@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/admin-auth";
 import { mapEventRow, type EventTalk } from "@/lib/events";
@@ -63,6 +64,8 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (!auth.ok) return auth.response;
   const supabase = createServerClient()!;
+  // /events is a cached render (revalidate = 300); an admin write must show up at once
+  revalidatePath("/events");
 
   let body: any;
   try {

@@ -4,7 +4,8 @@ import QuestionBankBrowser from "./QuestionBankBrowser";
 import ResearchDisclaimer from "@/components/ResearchDisclaimer";
 import { getBankFacets } from "@/lib/qbank-server";
 
-export const dynamic = "force-dynamic";
+// cached render (facet counts only), regenerated every 5 min and when an item is approved/published
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "qEEG Question Bank — PedQuEST",

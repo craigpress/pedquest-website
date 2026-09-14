@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
 import { getEditorItem } from "@/lib/qbank-server";
@@ -124,6 +125,8 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const supabase = createServerClient()!;
+  // the bank page's facet counts are a cached render (revalidate = 300); a status change must show up at once
+  revalidatePath("/education/question-bank");
 
   let body: any;
   try { body = await request.json(); } catch {

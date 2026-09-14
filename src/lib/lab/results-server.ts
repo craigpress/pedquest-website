@@ -51,10 +51,27 @@ export interface JobResults {
 
 export type JobResultsOutcome = { ok: true; results: JobResults } | { ok: false; status: number; error: string };
 
+// A rendered answer key is immutable for the life of its artifact path, so a
+// warm function keeps parsed keys in memory: the course page grades every
+// assignment on each load and would otherwise fetch the same three files from
+// the recording store every time (~100 ms each). Short TTL so a re-rendered
+// job under the same path is picked up within minutes.
+const keyCache = new Map<string, { at: number; key: KeyEvent[] }>();
+const KEY_TTL_MS = 10 * 60 * 1000;
+
 /** Fetch and parse the recording's answer key; null with a reason when there is none or it cannot be read. */
 export async function loadAnswerKey(job: ReturnType<typeof rowToJob>): Promise<{ key: KeyEvent[]; error: string | null }> {
   const answersPath = job.options.includeAnswers ? job.artifacts?.answers : undefined;
   if (!answersPath) return { key: [], error: "This recording has no answer key, so marks are listed but not graded." };
+  const cacheId = `${job.id}|${answersPath}`;
+  const hit = keyCache.get(cacheId);
+  if (hit && Date.now() - hit.at < KEY_TTL_MS) return { key: hit.key, error: null };
+  const out = await fetchAnswerKey(answersPath);
+  if (!out.error) keyCache.set(cacheId, { at: Date.now(), key: out.key });
+  return out;
+}
+
+async function fetchAnswerKey(answersPath: string): Promise<{ key: KeyEvent[]; error: string | null }> {
   try {
     let text: string;
     if (isEeglabPath(answersPath)) {
