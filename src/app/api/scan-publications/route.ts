@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  for (const [surname, memberId] of Object.entries(authorMap)) {
+  for (const memberId of Object.values(authorMap)) {
     const memberName = memberIdToName(memberId);
     try {
       await delay(350);
@@ -104,18 +104,19 @@ export async function GET(request: NextRequest) {
             continue;
           }
 
-          // Verify the author is actually a consortium member by matching surname
-          const authorSurnames = article.authors.map((a) => a.split(" ")[0]);
-          if (!authorSurnames.some((s) => s.toLowerCase() === surname.toLowerCase())) {
-            continue;
-          }
-
           // Resolve EVERY consortium member on this paper — not just the one whose
           // search surfaced it — so co-authored papers are tagged with all members.
           // Since the PMID is added to seenPmids below, later per-member searches will
           // skip it; capturing all members here is what prevents co-authors being lost.
+          //
+          // The searched member must match by surname AND initials (MEMBER_NAME_MAP
+          // variants, e.g. "Riviello JJ"). A surname-only gate imported "Riviello C"
+          // as James Riviello; PubMed author search is surname-based, so the initials
+          // check here is the only thing that rejects namesakes.
           const paperMemberIds = matchMemberAuthors(article.authors);
-          if (!paperMemberIds.includes(memberId)) paperMemberIds.push(memberId);
+          if (!paperMemberIds.includes(memberId)) {
+            continue;
+          }
 
           seenPmids.add(pmid);
           seenPmids.add(article.pmid);

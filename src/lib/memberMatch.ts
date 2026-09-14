@@ -158,17 +158,37 @@ export const MEMBER_DISPLAY_NAMES: Record<string, string> = {
   "carlos-castillo-pinto": "Carlos Castillo Pinto",
 };
 
+/** Split "van den Berg R" into { surname: "van den berg", initials: "R" }. */
+function splitAuthor(s: string): { surname: string; initials: string } {
+  const norm = s.trim().replace(/\s+/g, " ");
+  const i = norm.lastIndexOf(" ");
+  if (i === -1) return { surname: norm.toLowerCase(), initials: "" };
+  return { surname: norm.slice(0, i).toLowerCase(), initials: norm.slice(i + 1).toUpperCase() };
+}
+
+/**
+ * An author string matches a variant when the surnames are equal and the
+ * initials agree as far as both go: "Press CA" matches variant "Press C"
+ * (extra initials tolerated) and "Riviello J" matches variant "Riviello JJ"
+ * (PubMed sometimes lists only the first initial). "Riviello C" matches
+ * nothing — the first initial must agree, which is what rejects namesakes.
+ */
+function authorMatchesVariant(author: string, variant: string): boolean {
+  const a = splitAuthor(author);
+  const v = splitAuthor(variant);
+  if (!a.surname || a.surname !== v.surname) return false;
+  if (!a.initials || !v.initials) return a.initials === v.initials;
+  return a.initials.startsWith(v.initials) || v.initials.startsWith(a.initials);
+}
+
 /**
  * Return the member ID for a single PubMed-style author string ("Press CA"),
- * or null if it does not match any consortium member. A variant matches when
- * the author string equals it or starts with it (so "Press CA" matches the
- * "Press C" variant, tolerating extra initials).
+ * or null if it does not match any consortium member.
  */
 export function matchAuthorToMember(author: string): string | null {
-  const norm = author.trim();
-  if (!norm) return null;
+  if (!author.trim()) return null;
   for (const [memberId, variants] of Object.entries(MEMBER_NAME_MAP)) {
-    if (variants.some((v) => norm === v || norm.startsWith(v))) {
+    if (variants.some((v) => authorMatchesVariant(author, v))) {
       return memberId;
     }
   }
@@ -182,12 +202,8 @@ export function matchAuthorToMember(author: string): string | null {
 export function matchMemberAuthors(authors: string[]): string[] {
   const matched: string[] = [];
   for (const [memberId, variants] of Object.entries(MEMBER_NAME_MAP)) {
-    for (const author of authors) {
-      const norm = author.trim();
-      if (variants.some((v) => norm === v || norm.startsWith(v))) {
-        if (!matched.includes(memberId)) matched.push(memberId);
-        break;
-      }
+    if (authors.some((author) => variants.some((v) => authorMatchesVariant(author, v)))) {
+      matched.push(memberId);
     }
   }
   return matched;
