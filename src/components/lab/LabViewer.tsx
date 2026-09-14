@@ -28,6 +28,7 @@ import { decodeTrends, TREND_SIDECAR_EXT } from "@/lib/eeg/trend-sidecar";
 import { DEFAULT_TARGET, formatClock, type AnnotationTarget, type ViewerAnnotation, type ViewerAnnotationInput } from "@/lib/eeg/annotations";
 import { LocalAnnotationStore, RemoteAnnotationStore, type AnnotationStore } from "@/lib/eeg/annotation-store";
 import { SYNTHETIC_STAMP, type LabArtifact, type LabJob } from "@/lib/lab/types";
+import type { SubmissionState } from "@/lib/courses/types";
 import { DEFAULT_PALETTE, PALETTES, loadPalettePreference, savePalettePreference, type PaletteId } from "@/lib/eeg-palette";
 import RawPane from "./RawPane";
 import TrendStrip, { TREND_PANELS, TREND_WINDOWS, trendRowLabel, trendStripHeight, type TrendRowId } from "./TrendStrip";
@@ -36,6 +37,25 @@ import AnnotationPanel, { type Draft } from "./AnnotationPanel";
 export type ViewerSource =
   | { kind: "file"; files: File[] }
   | { kind: "job"; job: LabJob; authHeaders: () => Promise<Record<string, string>>; isInstructor: boolean };
+
+/**
+ * Course context when the recording was opened from an assignment rather than
+ * the library: what this learner was asked to do, where they are, and the two
+ * writes the header offers. The page owns the state — `my` is re-read after
+ * each callback resolves, so the header follows the server, not a guess.
+ */
+export interface ViewerAssignment {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  title: string;
+  instructions: string;
+  dueAt: string | null;
+  my: SubmissionState;
+  canManage: boolean;
+  onSubmit: () => Promise<void>;
+  onReopen: () => Promise<void>;
+}
 
 export interface AnswerSpan { onsetS: number; offsetS: number; label: string }
 
@@ -85,16 +105,20 @@ function downloadText(name: string, text: string, type = "text/plain") {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-export default function LabViewer({ source, onClose, initialT, initialAuthor }: {
+export default function LabViewer({ source, onClose, initialT, initialAuthor, assignment }: {
   source: ViewerSource;
   onClose?: () => void;
   /** deep link: seek here once the recording opens (seconds) */
   initialT?: number | null;
   /** deep link: start with this author's marks only (email); teachers arrive here from class results */
   initialAuthor?: string | null;
+  /** set when ?course= and ?assignment= named a course assignment */
+  assignment?: ViewerAssignment;
 }) {
   const [opened, setOpened] = useState<Opened | null>(null);
   const [openError, setOpenError] = useState<string | null>(null);
+  /** disables the turn-in button while its POST is in flight */
+  const [assignmentBusy, setAssignmentBusy] = useState(false);
   // "all" | "mine" | author email — filters the list AND what the panes draw
   const [authorFilter, setAuthorFilter] = useState<string>(initialAuthor || "all");
   const appliedInitialT = useRef(false);
@@ -582,6 +606,11 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor }: 
       {/* header */}
       <div className="lv-bar" style={{ alignItems: "center" }}>
         {onClose && <button type="button" style={mini} onClick={onClose} title="Back to where you opened this recording">← Back</button>}
+        {assignment && (
+          <a href={`/courses/${assignment.courseId}`} style={{ ...mini, textDecoration: "none" }} title={assignment.courseTitle}>
+            ← Course
+          </a>
+        )}
         <div style={{ fontWeight: 600, color: "var(--text)" }}>{opened.title}</div>
         <div style={{ fontFamily: "var(--mono-font)", fontSize: 12, color: "var(--text-muted)" }}>
           {reader.info.format} · {formatClock(durationS)} · {reader.sampleRate} Hz · {reader.labels.length} ch
@@ -589,7 +618,38 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor }: 
           {fileAnnotationCount !== null && ` · ${fileAnnotationCount} file annotation${fileAnnotationCount === 1 ? "" : "s"}`}
         </div>
         {source.kind === "job" && (
-          source.isInstructor ? (
+          assignment ? (
+            <>
+              <span style={{ fontSize: 12.5, color: "var(--text-secondary)" }} title={assignment.courseTitle}>
+                <b>{assignment.title}</b>
+                {assignment.instructions && ` · ${assignment.instructions}`}
+                {assignment.dueAt && ` · due ${new Date(assignment.dueAt).toLocaleDateString()}`}
+              </span>
+              {assignment.canManage ? (
+                <a href={`/admin/eeg-lab/library/${source.job.id}/results?course=${assignment.courseId}`} style={{ ...mini, textDecoration: "none" }} title="This course's learners, graded against the answer key">
+                  Class results
+                </a>
+              ) : assignment.my.status === "returned" ? (
+                <span style={{ ...mini, cursor: "default" }} title="Your instructor reviewed this one">Returned ✓</span>
+              ) : assignment.my.status === "submitted" ? (
+                <button
+                  type="button" style={mini} disabled={assignmentBusy}
+                  title="Turned in — reopen it to keep marking"
+                  onClick={() => { setAssignmentBusy(true); void assignment.onReopen().finally(() => setAssignmentBusy(false)); }}
+                >
+                  Done ✓ · Reopen
+                </button>
+              ) : (
+                <button
+                  type="button" style={mini} disabled={assignmentBusy}
+                  title="Turn this recording in to your instructor"
+                  onClick={() => { setAssignmentBusy(true); void assignment.onSubmit().finally(() => setAssignmentBusy(false)); }}
+                >
+                  Done with this EEG
+                </button>
+              )}
+            </>
+          ) : source.isInstructor ? (
             <a href={`/admin/eeg-lab/library/${source.job.id}/results`} style={{ ...mini, textDecoration: "none" }} title="Every learner's marks graded against the answer key">
               Class results
             </a>

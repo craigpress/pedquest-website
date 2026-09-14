@@ -9,12 +9,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, card, eyebrow, h1, meta, mini } from "@/lib/admin-ui";
 import { REGION_LABELS, annotationColor, describeTarget, formatClock } from "@/lib/eeg/annotations";
 import type { ClassSummary, KeyEvent, LearnerMark, LearnerScore, MarkTask } from "@/lib/lab/scoring";
+import { SUBMISSION_COLORS, SUBMISSION_LABELS, type SubmissionState } from "@/lib/courses/types";
 
 interface Learner {
   userId: string; email: string; displayName: string | null; role: string; isTest: boolean; isInstructor: boolean;
@@ -27,6 +28,8 @@ interface Results {
   key: KeyEvent[];
   tasks: { task: MarkTask; summary: ClassSummary }[];
   learners: Learner[];
+  /** present when scoped to a course: roster-only learners plus each one's submission state */
+  course: { id: string; title: string; assignmentId: string | null; dueAt: string | null; submissions: Record<string, Partial<SubmissionState>> } | null;
 }
 
 const name = (l: Learner) => l.displayName ?? l.email;
@@ -40,6 +43,8 @@ const TREND_LABELS: Record<string, string> = {
 
 export default function ClassResultsPage() {
   const { jobId } = useParams<{ jobId: string }>();
+  // ?course=<id>: roster-only view for that course's teachers (a course instructor need not be a site teacher)
+  const courseId = useSearchParams().get("course");
   const { isTeacher, loading: roleLoading } = useRole();
   const [data, setData] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,11 +58,12 @@ export default function ClassResultsPage() {
   }, []);
 
   useEffect(() => {
-    if (!isTeacher || !jobId) return;
+    if ((!isTeacher && !courseId) || !jobId) return;
     let live = true;
     (async () => {
       try {
-        const res = await fetch(`/api/admin/lab/jobs/${jobId}/results`, { headers: await authHeaders(), cache: "no-store" });
+        const url = `/api/admin/lab/jobs/${jobId}/results${courseId ? `?course=${encodeURIComponent(courseId)}` : ""}`;
+        const res = await fetch(url, { headers: await authHeaders(), cache: "no-store" });
         const json = await res.json();
         if (!res.ok) throw new Error(json?.error ?? `HTTP ${res.status}`);
         if (live) setData(json as Results);
@@ -66,14 +72,14 @@ export default function ClassResultsPage() {
       }
     })();
     return () => { live = false; };
-  }, [isTeacher, jobId, authHeaders]);
+  }, [isTeacher, courseId, jobId, authHeaders]);
 
   const task = data?.tasks.find((t) => t.task.id === taskId) ?? data?.tasks[0] ?? null;
   const learners = useMemo(() => (data?.learners ?? []).filter((l) => !l.isInstructor), [data]);
   const instructors = useMemo(() => (data?.learners ?? []).filter((l) => l.isInstructor), [data]);
 
   if (roleLoading) return <main style={adminShellWide}><p style={meta}>Loading…</p></main>;
-  if (!isTeacher) {
+  if (!isTeacher && !courseId) {
     return (
       <main style={adminShellWide}>
         <h1 style={h1}>Teacher access required</h1>
@@ -97,6 +103,7 @@ export default function ClassResultsPage() {
           )}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {data?.course && <Link href={`/courses/${data.course.id}`} style={mini}>← Course · {data.course.title}</Link>}
           <Link href={`/admin/eeg-lab/viewer?job=${jobId}`} style={mini}>Open in viewer</Link>
           <Link href={`/admin/eeg-lab/library/${jobId}`} style={mini}>Recording page</Link>
           <Link href="/admin/eeg-lab/library" style={mini}>← Library</Link>
@@ -179,15 +186,19 @@ export default function ClassResultsPage() {
                     <th style={th}>Median onset latency</th><th style={th}>Median duration error</th>
                     <th style={th} title="match · partial · miss · not stated">Localization</th>
                     <th style={th} title="marks placed on the raw EEG · marks placed on a trend row">Pane</th>
+                    {data.course && <th style={th}>Course status</th>}
                     <th style={th}>Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   {learners.map((l) => {
-                    const s = l.scores[task.task.id];
+                    // a roster student with no marks yet has no score object at all
+                    const s = l.scores[task.task.id] ?? EMPTY_SCORE;
                     const isOpen = open === l.userId;
                     return (
-                      <LearnerRows key={l.userId} jobId={data.job.id} learner={l} score={s} keyEvents={data.key} isOpen={isOpen} onToggle={() => setOpen(isOpen ? null : l.userId)} />
+                      <LearnerRows key={l.userId} jobId={data.job.id} learner={l} score={s} keyEvents={data.key} isOpen={isOpen}
+                        submission={data.course ? (data.course.submissions[l.userId] ?? { status: "not_started" }) : null}
+                        onToggle={() => setOpen(isOpen ? null : l.userId)} />
                     );
                   })}
                 </tbody>
@@ -228,9 +239,13 @@ function Tile({ label, value, small }: { label: string; value: string; small?: b
   );
 }
 
-function LearnerRows({ jobId, learner: l, score: s, keyEvents, isOpen, onToggle }: {
-  jobId: string; learner: Learner; score: LearnerScore; keyEvents: KeyEvent[]; isOpen: boolean; onToggle: () => void;
+function LearnerRows({ jobId, learner: l, score: s, keyEvents, isOpen, submission, onToggle }: {
+  jobId: string; learner: Learner; score: LearnerScore; keyEvents: KeyEvent[]; isOpen: boolean;
+  /** course scope only: this learner's submission state for the assignment on this recording */
+  submission: Partial<SubmissionState> | null;
+  onToggle: () => void;
 }) {
+  const subStatus = submission?.status ?? "not_started";
   const loc = s.localization;
   const matchOf = (id: string) => s.matches.find((m) => m.markId === id);
   // deep links into the viewer: this learner's marks only, landing on one mark when `t` is given
@@ -252,11 +267,19 @@ function LearnerRows({ jobId, learner: l, score: s, keyEvents, isOpen, onToggle 
         <td style={td}>{secs(s.medianDurationErrorS)}</td>
         <td style={td} title="match / partial / miss / not stated">{loc.match} · {loc.partial} · {loc.miss} · {loc.not_stated}</td>
         <td style={td}>{s.byPane.raw} raw · {s.byPane.trend} trend</td>
+        {submission && (
+          <td style={td}>
+            <span style={{ ...badge, marginLeft: 0, borderColor: SUBMISSION_COLORS[subStatus], color: SUBMISSION_COLORS[subStatus] }}>
+              {SUBMISSION_LABELS[subStatus]}{submission.late ? " · late" : ""}
+            </span>
+            {submission.submittedAt && <div style={{ ...meta, fontSize: 11 }}>{submission.submittedAt.slice(0, 10)}</div>}
+          </td>
+        )}
         <td style={{ ...td, fontWeight: 600 }}>{s.composite ?? "—"}</td>
       </tr>
       {isOpen && (
         <tr>
-          <td colSpan={9} style={{ ...td, background: "var(--bg-subtle, transparent)" }}>
+          <td colSpan={submission ? 10 : 9} style={{ ...td, background: "var(--bg-subtle, transparent)" }}>
             <table style={{ ...tbl, fontSize: 13 }}>
               <thead><tr><th style={th}>Mark</th><th style={th}>Time</th><th style={th}>Target</th><th style={th}>Matched</th><th style={th}>Latency</th><th style={th}>Localization</th><th style={th}>Note</th></tr></thead>
               <tbody>
@@ -359,6 +382,14 @@ function Timeline({ durationS, keyEvents, task, learners, instructors, onPick }:
     </div>
   );
 }
+
+/** a roster student who has not marked anything yet */
+const EMPTY_SCORE: LearnerScore = {
+  taskId: "", keyCount: 0, markCount: 0, detected: 0, sensitivity: null, falseAlarms: 0, precision: null, f1: null,
+  medianOnsetLatencyS: null, medianAbsLatencyS: null, medianDurationErrorS: null, meanOverlap: null,
+  localization: { match: 0, partial: 0, miss: 0, not_stated: 0 }, byPane: { raw: 0, trend: 0 }, composite: null,
+  matches: [], unmatchedMarkIds: [], missedKeyIndexes: [],
+};
 
 const tbl: React.CSSProperties = { width: "100%", borderCollapse: "collapse", fontSize: 14 };
 const th: React.CSSProperties = { textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--border)", fontSize: 12, color: "var(--text-muted)", fontWeight: 600, whiteSpace: "nowrap" };

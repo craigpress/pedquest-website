@@ -10,6 +10,7 @@ type MenuLink = { href: string; label: string; hint: string };
 
 /** Learner-facing EEG destinations. A dropdown on desktop, rows in the mobile drawer. */
 const labLinks: MenuLink[] = [
+  { href: "/courses", label: "Courses", hint: "Your classes and the EEGs assigned to you" },
   { href: "/education/question-bank", label: "Question bank", hint: "Practice qEEG questions" },
   { href: "/admin/eeg-lab/library", label: "EEG Library", hint: "Find a teaching recording" },
   { href: "/admin/eeg-lab/viewer", label: "EEG Viewer", hint: "Open a recording in the browser" },

@@ -4,7 +4,10 @@ import { requireRole } from "@/lib/admin-auth";
 import { hasRole } from "@/lib/roles";
 import { LAB_JOB_COLUMNS, resolveArtifact, rowToJob } from "@/lib/lab/jobs";
 import { canSeeRecording } from "@/lib/lab/visibility";
-import { eeglabConfigured, isEeglabPath, signEeglabUrl } from "@/lib/lab/eeglab-store";
+import {
+  eeglabConfigured, isEeglabPath, sameOriginProxyEnabled, signEeglabUrl, signStreamPath,
+  streamProxyConfigured,
+} from "@/lib/lab/eeglab-store";
 import {
   isLabArtifact, LAB_ARTIFACT_LABELS, LAB_BUCKET, LAB_SIGNED_URL_TTL_S, SYNTHETIC_STAMP,
 } from "@/lib/lab/types";
@@ -78,6 +81,32 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   if (!decision.ok) {
     return NextResponse.json({ error: decision.reason }, { status: decision.status });
   }
+  const instructorCopy = decision.instructorCopy;
+
+  const respond = (url: string, via: "proxy" | "direct") => NextResponse.json({
+    success: true,
+    artifact,
+    label: LAB_ARTIFACT_LABELS[artifact],
+    instructorCopy,
+    url,
+    via,
+    expiresInS: LAB_SIGNED_URL_TTL_S,
+    expiresAt: new Date(Date.now() + LAB_SIGNED_URL_TTL_S * 1000).toISOString(),
+    recordingId: job.recordingId,
+    stamp: SYNTHETIC_STAMP,
+  }, {
+    // A signed URL must never sit in a shared cache or a CDN.
+    headers: { "Cache-Control": "no-store, private" },
+  });
+
+  // The recording store answers CORS for pedquest.org alone, so on any other
+  // origin (localhost, a preview deployment) the viewer cannot read the bytes
+  // at all. With the proxy on, hand back a relative path on this origin and let
+  // /stream fetch the store server-side; the HMAC carries the fact that the two
+  // gates above already passed, since the browser's Range reads send no token.
+  if (sameOriginProxyEnabled() && streamProxyConfigured()) {
+    return respond(signStreamPath(id, artifact, LAB_SIGNED_URL_TTL_S), "proxy");
+  }
 
   // Two stores. Rows written by tools/eeg-render/lab_worker.py point at the
   // homelab recording store (eeglab://…) and get a nginx secure_link URL;
@@ -106,18 +135,5 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
     url = signed.signedUrl;
   }
 
-  return NextResponse.json({
-    success: true,
-    artifact,
-    label: LAB_ARTIFACT_LABELS[artifact],
-    instructorCopy: decision.instructorCopy,
-    url,
-    expiresInS: LAB_SIGNED_URL_TTL_S,
-    expiresAt: new Date(Date.now() + LAB_SIGNED_URL_TTL_S * 1000).toISOString(),
-    recordingId: job.recordingId,
-    stamp: SYNTHETIC_STAMP,
-  }, {
-    // A signed URL must never sit in a shared cache or a CDN.
-    headers: { "Cache-Control": "no-store, private" },
-  });
+  return respond(url, "direct");
 }

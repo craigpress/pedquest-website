@@ -1,153 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
-import { canSeeRecording } from "@/lib/lab/visibility";
-import { LAB_JOB_COLUMNS, rowToJob } from "@/lib/lab/jobs";
-import { LAB_BUCKET } from "@/lib/lab/types";
-import { isEeglabPath, signEeglabUrl, eeglabConfigured } from "@/lib/lab/eeglab-store";
-import { getRoleRowsByUserIds } from "@/lib/roles-server";
-import { hasRole, type Role } from "@/lib/roles";
-import { DEFAULT_TARGET, isAnnotationRegion } from "@/lib/eeg/annotations";
-import {
-  DISCHARGE_TASK, SEIZURE_TASK, parseAnswerKey, scoreLearner, summariseClass,
-  type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask,
-} from "@/lib/lab/scoring";
+import { computeJobResults } from "@/lib/lab/results-server";
+import { canManageCourse, requireCourse, identitiesByEmail } from "@/lib/courses/server";
+import { createServerClient } from "@/lib/supabase";
+import type { SubmissionState } from "@/lib/courses/types";
 
 export const runtime = "nodejs";
 
 // Class results for one lab recording: every learner's marks graded against
-// the answer key. Teachers and up.
+// the answer key (src/lib/lab/results-server.ts). Teachers and up.
 //
-// GET /api/admin/lab/jobs/<uuid>/results
+// GET /api/admin/lab/jobs/<uuid>/results[?course=<uuid>]
 //
-// The answer key never leaves the server unredacted for a learner — this
-// route is the one place the key and the marks meet, and it is gated on the
-// same role as the key download. Marks by instructors (teacher+) are returned
-// too, flagged by role, so a teacher can see their own reference marks beside
-// the class without them counting in the class summary.
+// With `course`, the caller must manage that course and the learners are
+// restricted to its roster; each learner then also carries the course
+// submission state for the assignment that uses this recording.
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NO_STORE = { headers: { "Cache-Control": "no-store" } };
 
-type AnnotationRow = {
-  id: string; user_id: string; user_email: string; onset_s: number; duration_s: number; kind: string;
-  label: string; note: string; pane: string | null; trend_row: string | null; channels: string[] | null; region: string | null;
-  created_at: string;
-};
-
-export interface ResultsLearner {
-  userId: string;
-  email: string;
-  displayName: string | null;
-  role: Role;
-  isTest: boolean;
-  isInstructor: boolean;
-  marks: (LearnerMark & { label: string; note: string; createdAt: string })[];
-  scores: Record<string, LearnerScore>;
-}
-
-export interface ResultsTask { task: MarkTask; summary: ClassSummary }
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireRole(request, "teacher");
-  if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  const courseId = request.nextUrl.searchParams.get("course");
 
-  const supabase = createServerClient();
-  if (!supabase) return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
-
-  const { data: jobRow } = await supabase.from("eeg_lab_jobs").select(LAB_JOB_COLUMNS).eq("id", id).maybeSingle();
-  if (!jobRow) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  const job = rowToJob(jobRow);
-  const raw = jobRow as unknown as { review_status: string; author_id: string | null; title: string | null };
-  if (!canSeeRecording({ userId: auth.userId, role: auth.role }, { reviewStatus: raw.review_status, authorId: raw.author_id })) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  if (!courseId) {
+    const auth = await requireRole(request, "teacher");
+    if (!auth.ok) return auth.response;
+    const out = await computeJobResults(id, { userId: auth.userId, role: auth.role });
+    if (!out.ok) return NextResponse.json({ error: out.error }, { status: out.status });
+    return NextResponse.json({ success: true, ...out.results, course: null }, NO_STORE);
   }
 
-  // ── answer key ──
-  let key: KeyEvent[] = [];
-  let keyError: string | null = null;
-  const answersPath = job.options.includeAnswers ? job.artifacts?.answers : undefined;
-  if (!answersPath) keyError = "This recording has no answer key, so marks are listed but not graded.";
-  else {
-    try {
-      let text: string;
-      if (isEeglabPath(answersPath)) {
-        if (!eeglabConfigured()) throw new Error("recording store not configured");
-        const res = await fetch(signEeglabUrl(answersPath, 120), { cache: "no-store" });
-        if (!res.ok) throw new Error(`answer key HTTP ${res.status}`);
-        text = await res.text();
-      } else {
-        const { data, error } = await supabase.storage.from(LAB_BUCKET).download(answersPath);
-        if (error || !data) throw new Error(error?.message ?? "download failed");
-        text = await data.text();
-      }
-      key = parseAnswerKey(JSON.parse(text));
-    } catch (e) {
-      keyError = `Could not load the answer key (${e instanceof Error ? e.message : "unknown error"}); marks are listed but not graded.`;
-    }
-  }
+  // course scope: managers of that course, even a member-role instructor who is not a site teacher
+  const gate = await requireCourse(request, courseId, "manage");
+  if (!gate.ok) return gate.response;
+  if (!canManageCourse(gate.viewerRole)) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  const students = gate.members.filter((m) => m.role === "student");
+  const ids = await identitiesByEmail(students.map((s) => s.email));
+  const userIds = students.map((s) => s.user_id ?? ids.get(s.email)?.userId ?? null).filter((x): x is string => !!x);
+  const out = await computeJobResults(id, { userId: gate.caller.userId, role: gate.caller.role }, { onlyUserIds: new Set(userIds) });
+  if (!out.ok) return NextResponse.json({ error: out.error }, { status: out.status });
 
-  // ── marks ──
-  const { data: annRows, error: annErr } = await supabase
-    .from("eeg_lab_annotations")
-    .select("id,user_id,user_email,onset_s,duration_s,kind,label,note,pane,trend_row,channels,region,created_at")
-    .eq("job_id", id)
-    .order("onset_s");
-  if (annErr) return NextResponse.json({ error: annErr.message }, { status: 500 });
-  const rows = (annRows ?? []) as AnnotationRow[];
-
-  const byUser = new Map<string, AnnotationRow[]>();
-  for (const r of rows) byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), r]);
-  const roleRows = await getRoleRowsByUserIds([...byUser.keys()]);
-
-  // Tasks that apply: seizures always (that is what these recordings are for);
-  // discharges only when the key or a learner mentions them.
-  const tasks: MarkTask[] = [SEIZURE_TASK];
-  if (key.some((k) => DISCHARGE_TASK.keyKinds.includes(k.kind)) || rows.some((r) => r.kind === "discharge")) tasks.push(DISCHARGE_TASK);
-
-  const learners: ResultsLearner[] = [...byUser.entries()].map(([userId, list]) => {
-    const roleRow = roleRows.get(userId);
-    const role: Role = roleRow?.role ?? "member";
-    const marks = list.map((r) => ({
-      id: r.id,
-      onsetS: Number(r.onset_s),
-      durationS: Number(r.duration_s ?? 0),
-      kind: r.kind,
-      pane: r.pane === "trend" ? "trend" as const : "raw" as const,
-      trendRow: r.trend_row ?? DEFAULT_TARGET.trendRow,
-      channels: Array.isArray(r.channels) ? r.channels : [],
-      region: isAnnotationRegion(r.region) ? r.region : null,
-      label: r.label ?? "",
-      note: r.note ?? "",
-      createdAt: r.created_at,
-    }));
-    const scores: Record<string, LearnerScore> = {};
-    for (const t of tasks) scores[t.id] = scoreLearner(t, key, marks);
-    return {
-      userId,
-      email: list[0].user_email,
-      displayName: roleRow?.displayName ?? null,
-      role,
-      isTest: roleRow?.isTest ?? false,
-      isInstructor: hasRole(role, "teacher"),
-      marks,
-      scores,
+  // submission state per learner for the assignment(s) on this recording in this course
+  const supabase = createServerClient()!;
+  const { data: asg } = await supabase.from("eeg_course_assignments").select("id,due_at").eq("course_id", courseId).eq("job_id", id);
+  const asgIds = (asg ?? []).map((a: any) => a.id as string);
+  const dueAt = (asg ?? [])[0]?.due_at ?? null;
+  const { data: subs } = asgIds.length
+    ? await supabase.from("eeg_course_submissions").select("user_id,status,opened_at,submitted_at,returned_at,feedback").in("assignment_id", asgIds)
+    : { data: [] as any[] };
+  const submissions: Record<string, Partial<SubmissionState>> = {};
+  for (const s of (subs ?? []) as any[]) {
+    submissions[s.user_id] = {
+      status: s.status, openedAt: s.opened_at, submittedAt: s.submitted_at, returnedAt: s.returned_at, feedback: s.feedback ?? "",
+      late: Boolean(s.submitted_at && dueAt && Date.parse(s.submitted_at) > Date.parse(dueAt)),
     };
-  }).sort((a, b) => (a.displayName ?? a.email).localeCompare(b.displayName ?? b.email));
-
-  const classLearners = learners.filter((l) => !l.isInstructor);
-  const taskResults: ResultsTask[] = tasks.map((t) => ({
-    task: t,
-    summary: summariseClass(t, key, classLearners.map((l) => l.scores[t.id])),
-  }));
+  }
+  // roster students with no marks still belong in a course view
+  const seen = new Set(out.results.learners.map((l) => l.userId));
+  const missing = students
+    .map((s) => ({ s, uid: s.user_id ?? ids.get(s.email)?.userId ?? null }))
+    .filter(({ uid }) => uid && !seen.has(uid))
+    .map(({ s, uid }) => ({
+      userId: uid!, email: s.email, displayName: ids.get(s.email)?.displayName ?? null, role: "member" as const,
+      isTest: ids.get(s.email)?.isTest ?? false, isInstructor: false, marks: [], scores: {},
+    }));
 
   return NextResponse.json({
     success: true,
-    job: { id: job.id, title: raw.title, durationS: job.durationS, recordingId: job.recordingId, hasAnswerKey: key.length > 0 },
-    keyError,
-    key,
-    tasks: taskResults,
-    learners,
-  }, { headers: { "Cache-Control": "no-store" } });
+    ...out.results,
+    learners: [...out.results.learners, ...missing],
+    course: { id: gate.course.id, title: gate.course.title, assignmentId: asgIds[0] ?? null, dueAt, submissions },
+  }, NO_STORE);
 }

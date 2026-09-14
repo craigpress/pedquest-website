@@ -7,14 +7,23 @@
 // that lab job's recording through signed URLs. Any signed-in member; the
 // answer key overlay and the console links stay editor-only.
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRole, useUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, btnPrimary, card, eyebrow, h1 } from "@/lib/admin-ui";
 import type { LabJob } from "@/lib/lab/types";
-import LabViewer, { type ViewerSource } from "@/components/lab/LabViewer";
+import type { CourseAssignment, SubmissionState } from "@/lib/courses/types";
+import LabViewer, { type ViewerAssignment, type ViewerSource } from "@/components/lab/LabViewer";
+
+/** GET /api/courses/[courseId]/assignments/[assignmentId] */
+interface AssignmentPayload {
+  assignment: CourseAssignment;
+  my: SubmissionState;
+  course: { id: string; title: string };
+  canManage: boolean;
+}
 
 export default function ViewerPage() {
   return (
@@ -33,6 +42,11 @@ function ViewerInner() {
   const jobId = params.get("job");
   // deep links from class results: ?t=<seconds> lands on a mark, ?learner=<email> filters to one learner
   const initialT = params.get("t") !== null && Number.isFinite(Number(params.get("t"))) ? Number(params.get("t")) : null;
+  // deep link from a course: ?course=&assignment= adds the task header and the turn-in button
+  const courseId = params.get("course");
+  const assignmentId = params.get("assignment");
+  const [assignmentData, setAssignmentData] = useState<AssignmentPayload | null>(null);
+  const markedOpen = useRef(false);
   const [source, setSource] = useState<ViewerSource | null>(null);
   const [job, setJob] = useState<LabJob | null>(null);
   const [jobError, setJobError] = useState<string | null>(null);
@@ -59,6 +73,64 @@ function ViewerInner() {
     })().catch(() => { if (!cancelled) setJobError("Network error loading the job."); });
     return () => { cancelled = true; };
   }, [jobId, signedIn, authHeaders]);
+
+  const assignmentPath = courseId && assignmentId ? `/api/courses/${courseId}/assignments/${assignmentId}` : null;
+
+  useEffect(() => {
+    if (!assignmentPath || !signedIn) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch(assignmentPath, { headers: await authHeaders() });
+      const json = await res.json();
+      // a stale or foreign link just drops the course context; the recording still opens
+      if (!cancelled && res.ok && json.success) setAssignmentData(json as AssignmentPayload);
+    })().catch(() => { /* the viewer works without the course context */ });
+    return () => { cancelled = true; };
+  }, [assignmentPath, signedIn, authHeaders]);
+
+  // Opening the recording from a course is what moves a learner to "in progress";
+  // once per mount, and never for the teacher looking at it.
+  useEffect(() => {
+    if (!assignmentPath || !assignmentData || assignmentData.canManage || markedOpen.current) return;
+    markedOpen.current = true;
+    (async () => {
+      const res = await fetch(`${assignmentPath}/submission`, {
+        method: "POST", headers: await authHeaders(), body: JSON.stringify({ action: "open" }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setAssignmentData((prev) => (prev ? { ...prev, my: json.submission as SubmissionState } : prev));
+      }
+    })().catch(() => { /* marking it opened is best-effort */ });
+  }, [assignmentPath, assignmentData, authHeaders]);
+
+  const submissionAction = useCallback(async (action: "submit" | "unsubmit") => {
+    if (!assignmentPath) return;
+    const res = await fetch(`${assignmentPath}/submission`, {
+      method: "POST", headers: await authHeaders(), body: JSON.stringify({ action }),
+    });
+    const json = await res.json();
+    if (res.ok && json.success) {
+      setAssignmentData((prev) => (prev ? { ...prev, my: json.submission as SubmissionState } : prev));
+    }
+  }, [assignmentPath, authHeaders]);
+
+  const viewerAssignment: ViewerAssignment | undefined = useMemo(() => {
+    if (!assignmentData || !courseId) return undefined;
+    const a = assignmentData.assignment;
+    return {
+      id: a.id,
+      courseId,
+      courseTitle: assignmentData.course.title,
+      title: a.title,
+      instructions: a.instructions,
+      dueAt: a.dueAt,
+      my: assignmentData.my,
+      canManage: assignmentData.canManage,
+      onSubmit: () => submissionAction("submit"),
+      onReopen: () => submissionAction("unsubmit"),
+    };
+  }, [assignmentData, courseId, submissionAction]);
 
   useEffect(() => {
     if (!job || roleLoading) return;
@@ -103,7 +175,7 @@ function ViewerInner() {
           .lv-shell { padding: 12px 16px 16px; height: calc(100vh - 112px); min-height: 560px; box-sizing: border-box; }
           @media (max-width: 900px) { .lv-shell { height: auto; min-height: 0; padding: 8px 8px 24px; } }
         `}</style>
-        <LabViewer source={source} onClose={closeViewer} initialT={initialT} initialAuthor={params.get("learner")} />
+        <LabViewer source={source} onClose={closeViewer} initialT={initialT} initialAuthor={params.get("learner")} assignment={viewerAssignment} />
       </div>
     );
   }

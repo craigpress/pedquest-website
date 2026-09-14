@@ -174,6 +174,93 @@ async function bankAnswerTarget(sb: SupabaseClient): Promise<{ caseId: string; c
   return correct && wrong ? { caseId, correct, wrong } : null;
 }
 
+// ── demo course ──────────────────────────────────────────────────────────
+// One course taught by the fake teacher with the ten learners enrolled and
+// three published seizure recordings assigned. Submission states are spread so
+// the course page has every colour: PQ-A-013 (past due) mostly turned in,
+// two of them late, one returned with feedback; PQ-A-012 opened by two
+// students; PQ-A-020 untouched.
+
+export const COURSE_TITLE = "qEEG Seizure Detection — Fall 2026";
+const DAY = 86400_000;
+const COURSE_ASSIGNMENTS: { jobId: string; dueInDays: number; instructions: string }[] = [
+  { jobId: TEST_JOB_ID, dueInDays: -5, instructions: "Mark every electrographic seizure from onset to offset. Tag the channel where each starts and name the region." },
+  { jobId: "5288abb7-ae3a-4941-b305-1373f8e53264", dueInDays: 7, instructions: "Two generalized seizures. Mark onset to offset; note how the flame looks on both FFT rows." },
+  { jobId: "a5c9791b-8680-4c49-b891-2843b4d83c0e", dueInDays: 21, instructions: "Eight hours with artefact. Mark seizures only — decide what is chest PT or movement and leave it unmarked." },
+];
+/** persona → state on PQ-A-013 (assignment 1) */
+const A013_STATE: Record<Persona, "submitted" | "late" | "returned" | "in_progress"> = {
+  careful: "submitted", trend_reader: "submitted", misses_one: "submitted", over_caller: "late",
+  onset_only: "submitted", wrong_side: "late", late_one: "in_progress", artifact_only: "in_progress",
+};
+
+async function seedCourse(sb: SupabaseClient) {
+  const teacher = TEST_USERS.find((u) => u.role === "teacher")!;
+  const { data: roleRows } = await sb.from("user_roles").select("email,user_id").in("email", TEST_USERS.map(emailOf));
+  const uid = new Map((roleRows ?? []).map((r) => [String(r.email), String(r.user_id)]));
+  const ownerId = uid.get(emailOf(teacher));
+  if (!ownerId) throw new Error("teacher account missing; run seed first");
+
+  let { data: course } = await sb.from("eeg_courses").select("id").eq("owner_id", ownerId).eq("title", COURSE_TITLE).maybeSingle();
+  if (!course) {
+    const { data, error } = await sb.from("eeg_courses").insert({
+      title: COURSE_TITLE, owner_id: ownerId, owner_email: emailOf(teacher),
+      description: "Twelve weeks of qEEG seizure detection on synthetic long-term recordings. Mark the seizures, say where they start, then compare against the class.",
+      starts_at: new Date(Date.now() - 30 * DAY).toISOString(), ends_at: new Date(Date.now() + 60 * DAY).toISOString(),
+    }).select("id").single();
+    if (error || !data) throw new Error(`course: ${error?.message}`);
+    course = data;
+  }
+  const courseId = course.id as string;
+
+  // roster: every learner as a student (existing rows untouched)
+  const { data: existing } = await sb.from("eeg_course_members").select("email").eq("course_id", courseId);
+  const have = new Set((existing ?? []).map((m) => String(m.email)));
+  const rows = TEST_USERS.filter((u) => u.role === "member" && !have.has(emailOf(u)))
+    .map((u) => ({ course_id: courseId, email: emailOf(u), user_id: uid.get(emailOf(u)) ?? null, role: "student", added_by: ownerId }));
+  if (rows.length) { const { error } = await sb.from("eeg_course_members").insert(rows); if (error) throw new Error(`members: ${error.message}`); }
+
+  // assignments, in order
+  const { data: asgExisting } = await sb.from("eeg_course_assignments").select("id,job_id").eq("course_id", courseId);
+  const asgByJob = new Map((asgExisting ?? []).map((a) => [String(a.job_id), String(a.id)]));
+  for (const [i, a] of COURSE_ASSIGNMENTS.entries()) {
+    if (asgByJob.has(a.jobId)) continue;
+    const { data, error } = await sb.from("eeg_course_assignments").insert({
+      course_id: courseId, job_id: a.jobId, instructions: a.instructions, task_id: "seizure",
+      due_at: new Date(Date.now() + a.dueInDays * DAY).toISOString(), sort_order: i, created_by: ownerId,
+    }).select("id").single();
+    if (error || !data) throw new Error(`assignment ${a.jobId}: ${error?.message}`);
+    asgByJob.set(a.jobId, data.id);
+  }
+
+  // submissions
+  const a013 = asgByJob.get(TEST_JOB_ID)!, a012 = asgByJob.get(COURSE_ASSIGNMENTS[1].jobId)!;
+  const due013 = Date.now() - 5 * DAY;
+  const subs: Record<string, unknown>[] = [];
+  for (const u of TEST_USERS) {
+    if (!u.persona) continue;
+    const userId = uid.get(emailOf(u)); if (!userId) continue;
+    const state = A013_STATE[u.persona];
+    const opened = new Date(due013 - 3 * DAY).toISOString();
+    // every row carries every column: a multi-row upsert sends one shape, and missing keys arrive as NULLs
+    const blank = { submitted_at: null, returned_at: null, feedback: "" };
+    if (state === "in_progress") subs.push({ assignment_id: a013, user_id: userId, email: emailOf(u), status: "in_progress", opened_at: opened, ...blank });
+    else {
+      const submittedAt = new Date(state === "late" ? due013 + DAY : due013 - DAY).toISOString();
+      const returned = u.persona === "careful" && u.first === "Priya";
+      subs.push({
+        assignment_id: a013, user_id: userId, email: emailOf(u), status: returned ? "returned" : "submitted", opened_at: opened, submitted_at: submittedAt,
+        returned_at: returned ? new Date(due013 + 2 * DAY).toISOString() : null,
+        feedback: returned ? "Clean work — all three caught, right-sided channels every time. Next: try the same read from the FFT rows alone." : "",
+      });
+    }
+    if (u.persona === "careful") subs.push({ assignment_id: a012, user_id: userId, email: emailOf(u), status: "in_progress", opened_at: new Date(Date.now() - DAY).toISOString(), ...blank });
+  }
+  const { error: subErr } = await sb.from("eeg_course_submissions").upsert(subs, { onConflict: "assignment_id,user_id" });
+  if (subErr) throw new Error(`submissions: ${subErr.message}`);
+  console.log(`course "${COURSE_TITLE}" ${courseId}: ${TEST_USERS.length - 1} students, ${asgByJob.size} assignments, ${subs.length} submission rows`);
+}
+
 // ── commands ─────────────────────────────────────────────────────────────
 
 async function status(sb: SupabaseClient) {
@@ -237,9 +324,13 @@ async function seed(sb: SupabaseClient) {
     console.log(`  ${nameOf(u).padEnd(20)} ${u.role.padEnd(7)} ${u.persona ?? "-"}`);
   }
   console.log(`seeded ${TEST_USERS.length} accounts, ${markTotal} marks on ${TEST_JOB_ID}`);
+  await seedCourse(sb);
 }
 
 async function reset(sb: SupabaseClient) {
+  // the demo course first: members/assignments/submissions cascade from it
+  const { data: courses } = await sb.from("eeg_courses").select("id").eq("title", COURSE_TITLE).eq("owner_email", emailOf(TEST_USERS.find((u) => u.role === "teacher")!));
+  for (const c of courses ?? []) { await sb.from("eeg_courses").delete().eq("id", c.id); console.log(`  removed course ${c.id}`); }
   for (const u of TEST_USERS) {
     const email = emailOf(u);
     const user = await findUserByEmail(sb, email);

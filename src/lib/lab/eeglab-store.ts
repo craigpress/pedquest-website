@@ -10,7 +10,7 @@
 // The md5 input order is nginx's, from `secure_link_md5 "$secure_link_expires$uri <secret>"`.
 // Same TTL as the Supabase signed URLs; the viewer re-mints on 403/410.
 
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 
 export const EEGLAB_SCHEME = "eeglab://";
 
@@ -36,4 +36,42 @@ export function signEeglabUrl(path: string, ttlS: number, now = Date.now()): str
   const md5 = createHash("md5").update(`${expires}${uri} ${secret}`).digest("base64")
     .replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
   return `${base}${uri}?md5=${md5}&expires=${expires}`;
+}
+
+// ── same-origin proxy ──────────────────────────────────────────────────────
+//
+// The store answers CORS for https://pedquest.org only, so a browser on
+// http://localhost:3456 cannot Range-read a recording at all — every request
+// dies as "Failed to fetch" before the signed URL is even evaluated. With the
+// proxy on, the download route hands back a relative path on this origin and
+// /api/admin/lab/jobs/<id>/stream fetches the store server-side, where CORS
+// does not apply. Production keeps serving direct store URLs: the bytes then
+// never transit the Next server.
+
+export function sameOriginProxyEnabled(): boolean {
+  return process.env.EEG_LAB_SAME_ORIGIN_PROXY === "1" || process.env.NODE_ENV === "development";
+}
+
+/**
+ * The stream route is fetched by the browser with NO Bearer token — a Range
+ * request from the EDF reader carries no headers we control. So the download
+ * route (which DID run requireRole + resolveArtifact) mints this HMAC, and the
+ * stream route treats a valid one as proof that an authorized caller already
+ * passed both gates. Same secret as the nginx link, same short TTL.
+ */
+export function streamSignature(jobId: string, artifact: string, exp: number): string {
+  const secret = process.env.EEG_LAB_URL_SECRET ?? "";
+  if (!secret) throw new Error("EEG_LAB_URL_SECRET is not set.");
+  return createHmac("sha256", secret).update(`${jobId}|${artifact}|${exp}`).digest("hex");
+}
+
+export function streamProxyConfigured(): boolean {
+  return Boolean(process.env.EEG_LAB_URL_SECRET);
+}
+
+/** Relative on purpose: same origin is the whole point, and fetch() resolves it. */
+export function signStreamPath(jobId: string, artifact: string, ttlS: number, now = Date.now()): string {
+  const exp = Math.floor(now / 1000) + ttlS;
+  const sig = streamSignature(jobId, artifact, exp);
+  return `/api/admin/lab/jobs/${jobId}/stream?artifact=${encodeURIComponent(artifact)}&exp=${exp}&sig=${sig}`;
 }

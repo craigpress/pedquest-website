@@ -76,8 +76,76 @@ Class roll-up: per key event, who detected it and the median latency; mean sensi
 
 Each learner also has one answer on the approved bank item (60 % correct) so the stats exclusion can be checked: the item's public `/api/cases/[id]/stats` total must not include them. `reset` deletes the annotations, the bank answers and the auth users (`user_roles` cascades).
 
+## Courses (migration `20260915_eeg_courses.sql`)
+
+The classroom layer, shaped like Google Classroom / Canvas: **course → roster → assignments → one submission state per
+student per assignment**, with the gradebook and every KPI derived rather than stored.
+
+- **Tables:** `eeg_courses` (owner = the teacher who created it), `eeg_course_members` (email-keyed like `user_roles`; `user_id`
+  backfilled on the student's first visit; role student | instructor), `eeg_course_assignments` (one published recording +
+  instructions + due date + scoring task), `eeg_course_submissions` (`in_progress` | `submitted` | `returned`, opened/submitted/
+  returned timestamps, feedback). RLS on, no policies — the routes gate in code (`src/lib/courses/server.ts`).
+- **Who can do what:** *manage* = owner, an instructor member, or a site admin — create (teacher+), edit, add/remove students,
+  assign/remove recordings, return with feedback, see the gradebook and course-scoped class results. *View* = any student on
+  the roster — their assignments, own status, feedback. Anyone else gets 404. A course instructor need not hold the site
+  `teacher` role; the course itself grants them the instructor view of *that* course.
+- **Submission states:** `not_started` (no row, no marks) → `in_progress` (opened from the course, or any mark exists) →
+  `submitted` ("Done with this EEG" in the viewer or on the course page; can be reopened) → `returned` (teacher wrote feedback).
+  `late` = submitted after the due date. Grades are not stored: each teacher view re-runs the class-results scoring on the
+  student's current marks, and a **student sees no score** — only their status and the teacher's feedback.
+- **KPIs (course page, teachers):** students, assignments, completion (turned-in cells / students × assignments), on-time share of
+  turned-in cells with a due date, mean composite score, mean sensitivity, false alarms per learner, median onset latency; per
+  assignment a stacked not-started / in-progress / done / returned bar with mean score and late count; per student done/total,
+  mean score, last activity. Class results accepts `?course=<id>` to restrict to the roster and adds a course-status column.
+- **Routes:** `GET|POST /api/courses`, `GET|PATCH|DELETE /api/courses/[id]`, `POST|DELETE …/members`, `GET /api/courses/people?q=`
+  (teacher+, consortium members ∪ accounts), `POST …/assignments`, `GET|PATCH|DELETE …/assignments/[aid]`,
+  `POST …/assignments/[aid]/submission` (`open` | `submit` | `unsubmit` by the student, `return` by a manager). Recordings are
+  picked from the existing `/api/admin/lab/library`; only published ones can be assigned.
+- **Pages:** `/courses` (My courses · Teaching · New course), `/courses/[id]` (teacher: KPIs, assignments, gradebook, add
+  students/EEGs; student: assignment list with Open / Done / Reopen). The viewer takes `&course=&assignment=`: it records
+  "opened", shows the assignment title, instructions and due date in the header, and offers Done / Reopen; "← Course" goes back.
+- **Demo course** from `npm run test-learners -- seed`: "qEEG Seizure Detection — Fall 2026" owned by Eleanor Whitfield, ten
+  students, three assignments (PQ-A-013 past due — eight turned in, two late, one returned with feedback, two in progress;
+  PQ-A-012 opened by two; PQ-A-020 untouched). `reset` removes it first (everything under it cascades).
+
 ## Verified 2026-09-14 (local dev against production Supabase)
 
 Admin (throwaway `is_test` admin, deleted afterwards) → `/admin/users` shows test badges and Switch-to only on test rows, counts exclude tests → switch to Priya: banner, session is Priya, library shows member view, `annotations` returns her 3 marks with targets, `?all=1` still returns 3, results and answer key 403 → Return to admin restores the admin session → switch to Eleanor: library shows Class results on every recording and no recording pages; results page renders 10 learners with the expected per-persona numbers. Stats endpoint on the approved bank item: 11 responses in the table, 10 from test accounts, total reported 1.
 
 Not verifiable from localhost: the viewer itself (the recording store's CORS allows pedquest.org only) — the annotation-panel target fields were type-checked and are exercised on production.
+
+## Localhost: same-origin recording proxy
+
+The homelab recording store (`eeglab.presshome.net`) sends
+`Access-Control-Allow-Origin` for `https://pedquest.org` only. So on any other
+origin the viewer's Range reads die as "Failed to fetch" before the signed URL
+is ever evaluated — a CORS failure, not an auth failure, and no amount of
+re-signing fixes it. That is why the viewer was previously untestable from
+`http://localhost`.
+
+`GET /api/admin/lab/jobs/<id>/stream?artifact=<a>&exp=<unix>&sig=<hex>` proxies
+the bytes on this origin. It fetches the store server-side (where CORS does not
+apply), forwards the incoming `Range` and `If-None-Match`, and streams the
+response back with `Content-Type`, `Content-Length`, `Content-Range`,
+`Accept-Ranges`, `ETag` and `Last-Modified` copied through and
+`Cache-Control: private, no-store`. `HEAD` is handled the same way.
+
+**How it authenticates.** The browser fetches this URL with no Bearer token —
+`RangeByteSource` sends `Range` and nothing else. So `sig` *is* the
+authentication: `HMAC-SHA256(EEG_LAB_URL_SECRET, "<jobId>|<artifact>|<exp>")`,
+hex, compared with `timingSafeEqual`. The download route mints it only after
+`requireRole` **and** `resolveArtifact` have both passed, so the stream route
+does not re-run the role gate — it would be re-asking a question already
+answered by a caller it can no longer see. It still checks job state: not
+`done`, or no such artifact, is refused. Missing or wrong `sig` → 403; a valid
+signature past its `exp` → 410. Same TTL as the store links
+(`LAB_SIGNED_URL_TTL_S`, 120 s); the viewer re-mints on 403.
+
+**When it is used.** `sameOriginProxyEnabled()` is true when
+`EEG_LAB_SAME_ORIGIN_PROXY=1` or `NODE_ENV === "development"`. Then
+`/download` returns the relative `/api/admin/lab/jobs/<id>/stream?…` path as its
+`url` and reports `via: "proxy"`; everything else in the response is unchanged.
+Production does **not** set the flag, so it keeps returning direct store /
+Supabase Storage URLs (`via: "direct"`) and the bytes never transit the Next
+server. With `EEG_LAB_URL_SECRET` unset there is no HMAC to mint, and the route
+falls through to the direct URL regardless of the flag.
