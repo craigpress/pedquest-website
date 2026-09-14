@@ -10,6 +10,7 @@ import {
   INSTRUCTOR_ARTIFACTS,
   LAB_RETENTION_DAYS,
   SYNTHETIC_STAMP,
+  isLabReviewStatus,
   type LabArtifact,
   type LabFormat,
   type LabJob,
@@ -24,7 +25,9 @@ import {
 export const LAB_JOB_COLUMNS =
   "id,stage,status,spec,duration_s,formats,options,recording_id,spec_hash," +
   "renderer_version,artifacts,report,error,attempts,max_attempts,last_exit_code," +
-  "requested_by,parent_job_id,expires_at,created_at,updated_at";
+  "requested_by,parent_job_id,expires_at,created_at,updated_at," +
+  "review_status,author_id,source,qbank_id,title,description,grandfathered," +
+  "submitted_at,reviewed_by,reviewed_at,published_at";
 
 /**
  * sha256 over the spec with sorted keys, matching the renderer sidecar's
@@ -162,6 +165,17 @@ export function rowToJob(input: unknown): LabJob {
     expiresAt: str(row.expires_at),
     createdAt: str(row.created_at) ?? new Date(0).toISOString(),
     updatedAt: str(row.updated_at) ?? new Date(0).toISOString(),
+    reviewStatus: (isLabReviewStatus(row.review_status) ? row.review_status : "draft"),
+    authorId: str(row.author_id),
+    source: row.source === "ai" ? "ai" : "team",
+    qbankId: str(row.qbank_id),
+    title: str(row.title),
+    description: str(row.description),
+    grandfathered: row.grandfathered === true,
+    submittedAt: str(row.submitted_at),
+    reviewedBy: str(row.reviewed_by),
+    reviewedAt: str(row.reviewed_at),
+    publishedAt: str(row.published_at),
   };
 }
 

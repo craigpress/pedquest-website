@@ -18,6 +18,7 @@ const labLinks: MenuLink[] = [
 /** Editor-only destinations. A menu on desktop, rows in the mobile drawer. */
 const editorLinks: MenuLink[] = [
   { href: "/admin/qbank", label: "Question bank review", hint: "Review queue and drafts" },
+  { href: "/admin/eeg-lab/review", label: "EEG review queue", hint: "Recordings awaiting peer review" },
   { href: "/admin/eeg-lab", label: "EEG Lab console", hint: "Build and queue recordings" },
   { href: "/admin", label: "Admin dashboard", hint: "Members, publications, events" },
 ];

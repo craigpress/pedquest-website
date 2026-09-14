@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
 import { hasRole } from "@/lib/roles";
 import { LAB_JOB_COLUMNS, rowToJob } from "@/lib/lab/jobs";
+import { canSeeRecording } from "@/lib/lab/visibility";
 import { SYNTHETIC_STAMP, type LabJob } from "@/lib/lab/types";
 
 export const runtime = "nodejs";
@@ -51,6 +52,11 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
     return NextResponse.json({ error: "Could not read the job." }, { status: 500 });
   }
   if (!data) return NextResponse.json({ error: "Job not found." }, { status: 404 });
+  // Unpublished recordings are the author's (and the reviewers') until they
+  // are published. A 404, not a 403: the id alone must not confirm existence.
+  if (!canSeeRecording(auth, rowToJob(data))) {
+    return NextResponse.json({ error: "Job not found." }, { status: 404 });
+  }
 
   if (!editor) {
     const job: LabJob = { ...rowToJob(data), spec: null, report: null };

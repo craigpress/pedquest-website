@@ -19,14 +19,32 @@ import { useRole, useUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, btnGhost, card, eyebrow, fieldLabel, h1, inp, meta, mini } from "@/lib/admin-ui";
 import {
-  LAB_ARTIFACT_LABELS, SYNTHETIC_STAMP, isInstructorArtifact, type LabArtifact,
+  LAB_ARTIFACT_LABELS, LAB_REVIEW_STATUS_LABELS, SYNTHETIC_STAMP, isInstructorArtifact,
+  type LabArtifact,
 } from "@/lib/lab/types";
-import { labelize, type LibraryEntry, type LibraryFacets } from "@/lib/lab/library";
+import { displayTitle, labelize, type LibraryEntry, type LibraryFacets } from "@/lib/lab/library";
 
 type Filters = {
   kind: string; age: string; background: string; event: string; domain: string; source: string;
 };
 const EMPTY_FILTERS: Filters = { kind: "", age: "", background: "", event: "", domain: "", source: "" };
+
+const REVIEW_STATUS_COLOR: Record<string, string> = {
+  published: "var(--accent-tertiary)",
+  pending_review: "var(--accent-primary)",
+  draft: "var(--text-muted)",
+  archived: "var(--accent-secondary)",
+};
+
+const REVIEW_CHIPS: { value: string; label: string; adminOnly?: boolean }[] = [
+  { value: "", label: "All" },
+  { value: "published", label: "Published" },
+  { value: "pending_review", label: "Pending review" },
+  { value: "mine", label: "My recordings" },
+  { value: "legacy", label: "Legacy (not yet reviewed)" },
+  { value: "draft", label: "Drafts", adminOnly: true },
+  { value: "archived", label: "Archived", adminOnly: true },
+];
 
 function humanDuration(seconds: number): string {
   const mins = Math.round(seconds / 60);
@@ -55,10 +73,11 @@ function triggerDownload(url: string) {
 
 export default function LibraryPage() {
   const { user, loading: userLoading } = useUser();
-  const { isEditor, loading: roleLoading } = useRole();
+  const { isEditor, isAdmin, loading: roleLoading } = useRole();
   const signedIn = !!user;
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [review, setReview] = useState("");
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
   const [facets, setFacets] = useState<LibraryFacets | null>(null);
   const [total, setTotal] = useState(0);
@@ -77,8 +96,9 @@ export default function LibraryPage() {
     const p = new URLSearchParams();
     if (q.trim()) p.set("q", q.trim());
     for (const [k, v] of Object.entries(filters)) if (v) p.set(k, v);
+    if (isEditor && review) p.set("review", review);
     return p.toString();
-  }, [q, filters]);
+  }, [q, filters, review, isEditor]);
 
   // Debounced fetch: the search runs server-side over the whole library, and
   // a keystroke every 250 ms is cheap against a few hundred metadata rows.
@@ -176,6 +196,9 @@ export default function LibraryPage() {
         .lib-dl { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 6px 8px; border-radius: 8px;
           border: 1px dashed var(--border); }
         .lib-dl-label { font-family: var(--mono-font); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-right: 2px; }
+        .lib-desc { color: var(--text-muted); font-size: 13px; line-height: 1.5; margin: 2px 0 0; max-width: 70ch;
+          display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .lib-review-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
         @media (max-width: 960px) { .lib-filters { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 560px) { .lib-filters { grid-template-columns: 1fr 1fr; } }
       `}</style>
@@ -188,7 +211,10 @@ export default function LibraryPage() {
           {isEditor ? " and by what was authored into it" : ""}. Open one in the browser viewer, or download it
           for Persyst or EDFbrowser.
           {isEditor && (
-            <> Build new recordings in the <Link href="/admin/eeg-lab">lab console</Link>.</>
+            <>
+              {" "}Build new recordings in the <Link href="/admin/eeg-lab">lab console</Link>. Recordings appear
+              here for members once an editor other than the author publishes them.
+            </>
           )}{" "}
           All recordings are {SYNTHETIC_STAMP.toLowerCase()}s.
         </p>
@@ -225,7 +251,31 @@ export default function LibraryPage() {
         {error && <p style={{ color: "var(--accent-secondary)", marginTop: 8 }}>{error}</p>}
       </section>
 
-      <section style={{ ...card, padding: "4px 18px 18px", marginTop: 16 }}>
+      {isEditor && (
+        <div className="lib-review-chips" style={{ marginTop: 16 }}>
+          {REVIEW_CHIPS.filter((c) => !c.adminOnly || isAdmin).map((c) => {
+            const count = c.value === "" ? total : facets?.review?.[c.value] ?? 0;
+            const active = review === c.value;
+            return (
+              <button
+                key={c.value || "all"}
+                type="button"
+                style={{
+                  ...mini,
+                  borderColor: active ? "var(--accent-primary)" : "var(--border)",
+                  color: c.value ? (REVIEW_STATUS_COLOR[c.value] ?? "var(--text-secondary)") : "var(--text-secondary)",
+                  fontWeight: active ? 700 : 500,
+                }}
+                onClick={() => setReview(c.value)}
+              >
+                {c.label} · {count}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <section style={{ ...card, padding: "4px 18px 18px", marginTop: isEditor ? 0 : 16 }}>
         {!loading && entries.length === 0 && (
           <p style={{ ...meta, marginTop: 14 }}>
             {total === 0 ? "No finished recordings yet." : "Nothing matches. Loosen a filter or try another word."}
@@ -234,7 +284,7 @@ export default function LibraryPage() {
         {entries.map((e) => {
           const s = e.summary;
           const qn = e.question;
-          const title = qn?.title ?? (s.kind === "aeeg" ? "aEEG recording" : "Teaching recording");
+          const title = displayTitle(e);
           const expanded = !!open[e.jobId];
           const hasMore = !!(qn?.learningObjective || qn?.imageCaption || qn?.teachingPoints.length || s.annotations.length);
           const hasEdf = !!e.artifacts.edf;
@@ -254,6 +304,23 @@ export default function LibraryPage() {
                 </div>
                 <span style={meta}>{e.recordingId ?? e.jobId.slice(0, 8)} · {shortDate(e.createdAt)}</span>
               </div>
+
+              {e.description && <p className="lib-desc">{e.description}</p>}
+
+              {isEditor && (
+                <div className="lib-chips">
+                  <span className="lib-chip" style={{ borderColor: REVIEW_STATUS_COLOR[e.reviewStatus], color: REVIEW_STATUS_COLOR[e.reviewStatus] }}>
+                    {LAB_REVIEW_STATUS_LABELS[e.reviewStatus]}
+                  </span>
+                  {e.authorship === "ai" && <span className="lib-chip">AI generated</span>}
+                  {e.authorEmail && <span style={meta}>{e.authorEmail}</span>}
+                  {e.grandfathered && (
+                    <span className="lib-chip" style={{ borderColor: "var(--accent-secondary)", color: "var(--accent-secondary)" }}>
+                      Legacy · not yet reviewed
+                    </span>
+                  )}
+                </div>
+              )}
 
               <div className="lib-chips">
                 <span className="lib-chip">{labelize(s.kind)}</span>
@@ -326,6 +393,11 @@ export default function LibraryPage() {
                 {qn && (isEditor || qn.status === "approved" || qn.status === "published") && (
                   <Link href={isEditor ? `/admin/qbank/${qn.caseId}` : `/education/question-bank/${qn.caseId}`} style={mini}>
                     Open question
+                  </Link>
+                )}
+                {isEditor && (
+                  <Link href={`/admin/eeg-lab/library/${e.jobId}`} style={mini}>
+                    {e.reviewStatus === "pending_review" || e.grandfathered ? "Review" : "Recording page"}
                   </Link>
                 )}
                 {hasMore && (

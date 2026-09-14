@@ -13,8 +13,8 @@ import {
   SPREADS, defaultAnnotation, defaultEvent, defaultGuidedScenario, randomSeed,
 } from "@/lib/lab/spec";
 import {
-  LAB_ARTIFACT_LABELS, LAB_FORMATS, LAB_MMX_PRESETS, LAB_PERSYST_PANELS, SYNTHETIC_STAMP,
-  isInstructorArtifact, isLabTerminal,
+  LAB_ARTIFACT_LABELS, LAB_FORMATS, LAB_MMX_PRESETS, LAB_PERSYST_PANELS, LAB_REVIEW_STATUS_LABELS,
+  SYNTHETIC_STAMP, isInstructorArtifact, isLabTerminal,
   type GuidedEvent, type GuidedScenario, type LabArtifact, type LabFormat, type LabJob,
   type LabMode, type LabValidation,
 } from "@/lib/lab/types";
@@ -41,6 +41,13 @@ const STATUS_COLOR: Record<string, string> = {
   done: "var(--accent-tertiary)",
   error: "var(--accent-secondary)",
   cancelled: "var(--text-muted)",
+};
+
+const REVIEW_STATUS_COLOR: Record<string, string> = {
+  published: "var(--accent-tertiary)",
+  pending_review: "var(--accent-primary)",
+  draft: "var(--text-muted)",
+  archived: "var(--accent-secondary)",
 };
 
 function relativeAge(iso: string): string {
@@ -936,12 +943,13 @@ export default function AdminEegLabPage() {
         <Link href="/admin/eeg-lab/library" style={btnGhost}>EEG Library</Link>
         <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Lab Viewer</Link>
         <Link href="/admin/qbank" style={btnGhost}>Question bank</Link>
+        <Link href="/admin/eeg-lab/review" style={mini}>Review queue</Link>
       </div>
     </div>
   );
 
   function jobRow(job: LabJob) {
-    const bank = job.requestedBy?.startsWith("qbank:") ? job.requestedBy.slice("qbank:".length) : null;
+    const bank = job.qbankId ?? (job.requestedBy?.startsWith("qbank:") ? job.requestedBy.slice("qbank:".length) : null);
     return (
           <div className="lab-job" key={job.id}>
             <div className="lab-chips">
@@ -966,6 +974,14 @@ export default function AdminEegLabPage() {
               )}
               <span style={meta}>{relativeAge(job.createdAt)}</span>
               {job.attempts > 1 && <span style={meta}>attempt {job.attempts}/{job.maxAttempts}</span>}
+              {job.stage === "export" && (
+                <span style={{
+                  fontFamily: "var(--mono-font)", fontSize: 11, textTransform: "uppercase", letterSpacing: ".05em",
+                  color: REVIEW_STATUS_COLOR[job.reviewStatus] ?? "var(--text-muted)",
+                }}>
+                  {LAB_REVIEW_STATUS_LABELS[job.reviewStatus]}
+                </span>
+              )}
             </div>
 
             {job.error && (
@@ -996,6 +1012,11 @@ export default function AdminEegLabPage() {
                     style={{ ...mini, borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }}
                   >
                     Open in viewer
+                  </Link>
+                )}
+                {job.status === "done" && job.stage === "export" && (
+                  <Link href={`/admin/eeg-lab/library/${job.id}`} style={mini}>
+                    {job.reviewStatus === "draft" ? "Submit for review" : "Recording page"}
                   </Link>
                 )}
                 {(Object.keys(job.artifacts) as LabArtifact[]).map((artifact) => (

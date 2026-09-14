@@ -12,7 +12,7 @@
  * Pure functions only: the API route feeds rows in, the page renders what
  * comes out.
  */
-import type { LabArtifact, LabFormat } from "./types";
+import { isLabReviewStatus, type LabArtifact, type LabFormat, type LabReviewStatus, type LabSource } from "./types";
 
 type Json = Record<string, unknown>;
 
@@ -83,6 +83,20 @@ export interface LibraryEntry {
   requestedBy: string | null;
   summary: LibrarySummary;
   question: LibraryQuestion | null;
+  // editorial (migration 20260914_eeg_lab_review)
+  /** authored title; null until the author accepts or edits the suggestion */
+  title: string | null;
+  description: string | null;
+  reviewStatus: LabReviewStatus;
+  /** "team" = an editor queued it; "ai" = the bank export script did */
+  authorship: LabSource;
+  authorId: string | null;
+  /** editors only — the author's email, resolved by the route */
+  authorEmail: string | null;
+  /** published at migration time without a review */
+  grandfathered: boolean;
+  submittedAt: string | null;
+  publishedAt: string | null;
   /** lower-cased haystack the search runs over */
   searchText: string;
 }
@@ -195,6 +209,73 @@ export function qbankIdOf(requestedBy: string | null): string | null {
   return requestedBy?.startsWith("qbank:") ? requestedBy.slice("qbank:".length) : null;
 }
 
+/** The bank link: the column since 20260914, the requested_by convention before it. */
+export function qbankIdOfRow(row: Json): string | null {
+  return str(row.qbank_id) ?? qbankIdOf(str(row.requested_by));
+}
+
+// ── suggested title / description ──────────────────────────────────────────
+//
+// Both are learner-visible once the recording is published, so neither may
+// name what was authored into the record (background type, events, aEEG
+// pattern): those are the answers. What they may say is what a learner needs
+// to pick a recording — kind, age band, channels, montage, duration, and the
+// question it was made for. The author edits before submitting; the reviewer
+// sees the final text.
+
+export function humanDuration(durationS: number): string {
+  if (durationS >= 3600) {
+    const h = durationS / 3600;
+    return `${Number.isInteger(h) ? h : h.toFixed(1)} h`;
+  }
+  return `${Math.round(durationS / 60)} min`;
+}
+
+const KIND_TITLES: Record<string, string> = {
+  aeeg: "aEEG recording",
+  qeeg_panel: "qEEG trend recording",
+  composite: "qEEG trend recording",
+  raw_eeg: "raw EEG recording",
+  raw_page: "raw EEG recording",
+  page: "raw EEG recording",
+};
+
+function ageLabel(ageGroup: string | null, pmaWeeks: number | null): string | null {
+  if (!ageGroup) return null;
+  const base = labelize(ageGroup);
+  return pmaWeeks !== null ? `${base} (${pmaWeeks} wk PMA)` : base;
+}
+
+export function suggestTitle(s: LibrarySummary, q: LibraryQuestion | null, durationS: number): string {
+  if (q?.title) return q.qbankId ? `${q.qbankId} · ${q.title}` : q.title;
+  const kind = KIND_TITLES[s.kind] ?? `${labelize(s.kind)} recording`;
+  const age = s.ageGroup ? labelize(s.ageGroup) : null;
+  const head = age ? `${age.charAt(0).toUpperCase()}${age.slice(1)} ${kind}` : `${kind.charAt(0).toUpperCase()}${kind.slice(1)}`;
+  return `${head}, ${humanDuration(durationS)}`;
+}
+
+export function suggestDescription(s: LibrarySummary, q: LibraryQuestion | null, durationS: number): string {
+  const kind = KIND_TITLES[s.kind] ?? `${labelize(s.kind)} recording`;
+  const bits: string[] = [];
+  const age = ageLabel(s.ageGroup, s.pmaWeeks);
+  bits.push(`Synthetic ${humanDuration(durationS)} ${age ? `${age} ` : ""}${kind}`);
+  const tech: string[] = [];
+  if (s.channels) {
+    const n = s.channels.split(",").length;
+    tech.push(n > 1 ? `${n} channels` : s.channels);
+  }
+  if (s.montage) tech.push(`${labelize(s.montage)} montage`);
+  const first = tech.length ? `${bits[0]} (${tech.join(", ")}).` : `${bits[0]}.`;
+  const out = [first];
+  if (q) {
+    const facets = [q.domain && labelize(q.domain), q.population && labelize(q.population), q.difficulty && labelize(q.difficulty)]
+      .filter((x): x is string => !!x);
+    out.push(`Recorded for question-bank item ${q.qbankId}${facets.length ? ` (${facets.join(", ")})` : ""}.`);
+  }
+  out.push("Open it in the browser viewer or download it for a review station. Not a patient recording.");
+  return out.join(" ");
+}
+
 function strings(v: unknown): string[] {
   if (Array.isArray(v)) return v.filter((s): s is string => typeof s === "string");
   if (typeof v === "string") {
@@ -229,6 +310,9 @@ export function buildSearchText(entry: Omit<LibraryEntry, "searchText">): string
   const q = entry.question;
   const bits: (string | null | undefined)[] = [
     entry.recordingId, entry.jobId, entry.requestedBy, entry.rendererVersion, entry.source,
+    entry.title, entry.description, entry.reviewStatus, labelize(entry.reviewStatus),
+    entry.authorship === "ai" ? "ai generated" : null, entry.authorEmail,
+    entry.grandfathered ? "legacy unreviewed" : null,
     s.kind, labelize(s.kind), s.ageGroup, s.channels, s.montage,
     s.background, s.background && labelize(s.background), s.backgroundDetail,
     s.aeegPattern, s.sleepWakeCycling,
@@ -241,11 +325,25 @@ export function buildSearchText(entry: Omit<LibraryEntry, "searchText">): string
   return bits.filter((b): b is string => !!b).join(" \n ").toLowerCase();
 }
 
-export function rowToEntry(row: Json, cases: Map<string, LibraryQuestion>): LibraryEntry {
+export function rowToEntry(
+  row: Json,
+  cases: Map<string, LibraryQuestion>,
+  authors: Map<string, string> = new Map(),
+): LibraryEntry {
   const requestedBy = str(row.requested_by);
-  const qbankId = qbankIdOf(requestedBy);
+  const qbankId = qbankIdOfRow(row);
   const question = qbankId ? cases.get(qbankId) ?? null : null;
+  const authorId = str(row.author_id);
   const base: Omit<LibraryEntry, "searchText"> = {
+    title: str(row.title),
+    description: str(row.description),
+    reviewStatus: isLabReviewStatus(row.review_status) ? row.review_status : "draft",
+    authorship: row.source === "ai" ? "ai" : "team",
+    authorId,
+    authorEmail: authorId ? authors.get(authorId) ?? null : null,
+    grandfathered: row.grandfathered === true,
+    submittedAt: str(row.submitted_at),
+    publishedAt: str(row.published_at),
     jobId: String(row.id),
     recordingId: str(row.recording_id),
     createdAt: str(row.created_at) ?? new Date(0).toISOString(),
@@ -276,6 +374,7 @@ export function redactForLearner(entry: LibraryEntry): LibraryEntry {
   const q = entry.question;
   const base: Omit<LibraryEntry, "searchText"> = {
     ...entry,
+    authorEmail: null,
     summary: {
       ...s,
       background: null,
@@ -290,6 +389,11 @@ export function redactForLearner(entry: LibraryEntry): LibraryEntry {
   return { ...base, searchText: buildSearchText(base) };
 }
 
+/** The title a card shows: the authored one, else the same suggestion the author was offered. */
+export function displayTitle(entry: LibraryEntry): string {
+  return entry.title ?? suggestTitle(entry.summary, entry.question, entry.durationS);
+}
+
 // ── query ──────────────────────────────────────────────────────────────────
 
 export interface LibraryQuery {
@@ -300,10 +404,21 @@ export interface LibraryQuery {
   event: string | null;
   domain: string | null;
   source: "bank" | "adhoc" | null;
+  /** editorial filter; "legacy" = published without a review (grandfathered) */
+  review: LabReviewStatus | "legacy" | "mine" | null;
+  /** the caller, for review = "mine" */
+  viewerId?: string | null;
 }
 
 /** Every whitespace-separated term must appear somewhere in the entry. */
 export function matches(entry: LibraryEntry, query: LibraryQuery): boolean {
+  if (query.review === "legacy") {
+    if (!entry.grandfathered) return false;
+  } else if (query.review === "mine") {
+    if (!query.viewerId || entry.authorId !== query.viewerId) return false;
+  } else if (query.review && entry.reviewStatus !== query.review) {
+    return false;
+  }
   if (query.kind && entry.summary.kind !== query.kind) return false;
   if (query.age && entry.summary.ageGroup !== query.age) return false;
   if (query.background && entry.summary.background !== query.background) return false;
@@ -321,15 +436,20 @@ export interface LibraryFacets {
   event: Record<string, number>;
   domain: Record<string, number>;
   source: Record<string, number>;
+  /** review_status counts plus "legacy" (grandfathered) and "mine" (the caller's) */
+  review: Record<string, number>;
 }
 
 /** Counts over the FULL library, so a filter never hides its own alternatives. */
-export function facets(entries: LibraryEntry[]): LibraryFacets {
-  const out: LibraryFacets = { kind: {}, age: {}, background: {}, event: {}, domain: {}, source: {} };
+export function facets(entries: LibraryEntry[], viewerId: string | null = null): LibraryFacets {
+  const out: LibraryFacets = { kind: {}, age: {}, background: {}, event: {}, domain: {}, source: {}, review: {} };
   const bump = (bucket: Record<string, number>, key: string | null) => {
     if (key) bucket[key] = (bucket[key] ?? 0) + 1;
   };
   for (const e of entries) {
+    bump(out.review, e.reviewStatus);
+    if (e.grandfathered) bump(out.review, "legacy");
+    if (viewerId && e.authorId === viewerId) bump(out.review, "mine");
     bump(out.kind, e.summary.kind);
     bump(out.age, e.summary.ageGroup);
     bump(out.background, e.summary.background);

@@ -29,12 +29,25 @@ interface Review {
   id: string; reviewer: string | null; reviewerEmail: string | null;
   decision: string; notes: string | null; createdAt: string;
 }
+interface LinkedRecording {
+  jobId: string; recordingId: string | null; title: string | null;
+  status: string; reviewStatus: string; grandfathered: boolean; authorId: string | null;
+}
 interface EditorItem {
   case: EegCase;
   references: CaseReference[];
   revisions: Revision[];
   reviews: Review[];
   renderJob: { id: string; status: string; imageUrl: string | null; error: string | null } | null;
+  /** lab recordings made for this question (20260914_eeg_lab_review) */
+  recordings?: LinkedRecording[];
+}
+
+/** A recording the reviewer can sign off together with the question. */
+function recordingNeedsReview(r: LinkedRecording): boolean {
+  if (r.status !== "done") return false;
+  if (r.reviewStatus === "draft" || r.reviewStatus === "pending_review") return true;
+  return r.reviewStatus === "published" && r.grandfathered;
 }
 
 interface Form {
@@ -103,6 +116,8 @@ export default function AdminQbankItemPage() {
   const [progress, setProgress] = useState<string | null>(null);
   const [showRegion, setShowRegion] = useState(true);
   const [reviewNotes, setReviewNotes] = useState("");
+  // job ids of this question's lab recordings the reviewer also signs off
+  const [alsoRecordings, setAlsoRecordings] = useState<string[]>([]);
   const [publishDate, setPublishDate] = useState("");
   const [diffPair, setDiffPair] = useState<[number, number] | null>(null);
 
@@ -184,12 +199,20 @@ export default function AdminQbankItemPage() {
     setProgress("Recording your review…");
     let result;
     try {
-      result = await post({ action: "review", decision, notes: notes || null }, `Recorded: ${decision.replace("_", " ")}.`);
+      result = await post({
+        action: "review", decision, notes: notes || null,
+        ...(decision === "approved" && alsoRecordings.length ? { alsoRecordings } : {}),
+      }, `Recorded: ${decision.replace("_", " ")}.`);
     } finally {
       if (!result) setProgress(null);
     }
     if (!result) return;
     setReviewNotes("");
+    setAlsoRecordings([]);
+    if (result.recordings?.failed?.length) {
+      const failed = result.recordings.failed as { jobId: string; error: string }[];
+      setError(`The question was approved, but ${failed.length} recording(s) were not published: ${failed.map((f) => f.error).join("; ")}.`);
+    }
     // For an AI item, "request changes" queues an automatic revision. Run it
     // now so the editor sees the revised draft + new image without waiting for
     // the weekly cron. If it fails, the job stays queued for the cron.
@@ -419,6 +442,31 @@ export default function AdminQbankItemPage() {
               style={{ ...inp, resize: "vertical" }}
               placeholder="Required for changes-requested and rejected."
             />
+            {(item.recordings ?? []).some(recordingNeedsReview) && (
+              <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
+                <span style={fieldLabel}>EEG recordings of this question</span>
+                <p style={{ ...meta, margin: 0 }}>
+                  Recordings are reviewed on their own. If you also opened the full record and it matches this
+                  question, tick it and Approve publishes it to the EEG Library as well.
+                </p>
+                {(item.recordings ?? []).filter(recordingNeedsReview).map((r) => (
+                  <label key={r.jobId} style={{ ...meta, display: "flex", gap: 8, alignItems: "center", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={alsoRecordings.includes(r.jobId)}
+                      onChange={(e) => setAlsoRecordings((s) => e.target.checked ? [...s, r.jobId] : s.filter((x) => x !== r.jobId))}
+                    />
+                    <span>
+                      I reviewed the full EEG recording <strong>{r.recordingId ?? r.jobId.slice(0, 8)}</strong>
+                      {r.title ? ` — ${r.title}` : ""}
+                      {r.grandfathered ? " (legacy, never reviewed)" : r.reviewStatus === "draft" ? " (not yet submitted)" : ""}
+                    </span>
+                    <a href={`/admin/eeg-lab/viewer?job=${r.jobId}`} target="_blank" rel="noreferrer" style={mini}>Open in viewer</a>
+                    <a href={`/admin/eeg-lab/library/${r.jobId}`} target="_blank" rel="noreferrer" style={mini}>Recording page</a>
+                  </label>
+                ))}
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
               <button type="button" style={btnPrimary} onClick={() => review("approved")} disabled={busy}>Approve</button>
               <button type="button" style={btnGhost} onClick={() => review("changes_requested")} disabled={busy}>Request changes</button>

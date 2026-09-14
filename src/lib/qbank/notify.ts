@@ -16,7 +16,7 @@ export interface PendingItemNotice {
   caseStatus: string;
 }
 
-async function editorEmails(supabase: SupabaseClient): Promise<string[]> {
+export async function editorEmails(supabase: SupabaseClient): Promise<string[]> {
   const { data, error } = await supabase
     .from("user_roles")
     .select("email,role")

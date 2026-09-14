@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
-import { hasRole } from "@/lib/roles";
+import { hasRole, type Role } from "@/lib/roles";
+import { canSeeRecording } from "@/lib/lab/visibility";
 import { validateAnnotationInput } from "@/lib/eeg/annotations";
 import { ANNOTATION_COLUMNS, UUID_RE, rowToAnnotation } from "@/lib/lab/annotations-server";
 
@@ -16,15 +17,20 @@ export const runtime = "nodejs";
 // Open to any signed-in member since 2026-09-13 (the viewer is a learner
 // tool); marks are per user, and `all=1` stays editor-only.
 
-async function loadJob(id: string) {
+type JobRow = { id: string; duration_s: number; status: string; review_status: string; author_id: string | null };
+
+/** The job, or null when it does not exist OR the caller may not see it (same 404 either way). */
+async function loadJob(id: string, viewer: { userId: string; role: Role }) {
   const supabase = createServerClient();
   if (!supabase) return { supabase: null, job: null };
   const { data } = await supabase
     .from("eeg_lab_jobs")
-    .select("id,duration_s,status")
+    .select("id,duration_s,status,review_status,author_id")
     .eq("id", id)
     .maybeSingle();
-  return { supabase, job: data as { id: string; duration_s: number; status: string } | null };
+  const row = data as JobRow | null;
+  const visible = row && canSeeRecording(viewer, { reviewStatus: row.review_status, authorId: row.author_id });
+  return { supabase, job: visible ? row : null };
 }
 
 export async function GET(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -33,7 +39,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Not a job id." }, { status: 400 });
 
-  const { supabase, job } = await loadJob(id);
+  const { supabase, job } = await loadJob(id, auth);
   if (!supabase) return NextResponse.json({ error: "The teaching lab is not configured." }, { status: 503 });
   if (!job) return NextResponse.json({ error: "Job not found." }, { status: 404 });
 
@@ -57,7 +63,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Not a job id." }, { status: 400 });
 
-  const { supabase, job } = await loadJob(id);
+  const { supabase, job } = await loadJob(id, auth);
   if (!supabase) return NextResponse.json({ error: "The teaching lab is not configured." }, { status: 503 });
   if (!job) return NextResponse.json({ error: "Job not found." }, { status: 404 });
 

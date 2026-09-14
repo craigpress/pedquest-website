@@ -183,6 +183,9 @@ export async function POST(request: NextRequest) {
       recording_id: newRecordingId(),
       spec_hash: specHash(block),
       requested_by: auth.userId,
+      author_id: auth.userId,
+      source: "team",
+      review_status: "draft",
       expires_at: retentionExpiry(),
     })
     .select(LAB_JOB_COLUMNS)
@@ -220,7 +223,15 @@ export async function GET(request: NextRequest) {
     .select(LAB_JOB_COLUMNS)
     .order("created_at", { ascending: false })
     .limit(limit);
-  if (mine) query = query.eq("requested_by", auth.userId);
+  if (mine) query = query.eq("author_id", auth.userId);
+  // Editors see published recordings, everything submitted for review and their
+  // own; admins see all (src/lib/lab/visibility.ts). Follow-on stages inherit
+  // their parent's author, so they follow it here.
+  if (auth.role !== "admin") {
+    query = query.or(
+      `review_status.eq.published,review_status.eq.pending_review,author_id.eq.${auth.userId},author_id.is.null`,
+    );
+  }
 
   const { data, error } = await query;
   if (error) {

@@ -53,7 +53,70 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   const { id } = await ctx.params;
   const item = await getEditorItem(id);
   if (!item) return NextResponse.json({ error: "Item not found." }, { status: 404 });
-  return NextResponse.json({ success: true, item, role: auth.role });
+  // The lab recordings made for this question, so the reviewer can sign the
+  // full record off in the same sitting (see `alsoRecordings` in review).
+  const recordings = await linkedRecordings(id);
+  return NextResponse.json({ success: true, item: { ...item, recordings }, role: auth.role });
+}
+
+interface LinkedRecording {
+  jobId: string; recordingId: string | null; title: string | null;
+  status: string; reviewStatus: string; grandfathered: boolean; authorId: string | null;
+}
+
+async function linkedRecordings(caseId: string): Promise<LinkedRecording[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+  const { data: c } = await supabase.from("eeg_cases").select("qbank_id").eq("id", caseId).maybeSingle();
+  const qbankId = (c as { qbank_id?: string | null } | null)?.qbank_id;
+  if (!qbankId) return [];
+  const { data } = await supabase
+    .from("eeg_lab_jobs")
+    .select("id,recording_id,title,status,review_status,grandfathered,author_id")
+    .eq("stage", "export").eq("qbank_id", qbankId)
+    .order("created_at", { ascending: false });
+  return ((data ?? []) as any[]).map((r) => ({
+    jobId: String(r.id), recordingId: r.recording_id ?? null, title: r.title ?? null,
+    status: String(r.status), reviewStatus: String(r.review_status ?? "draft"),
+    grandfathered: r.grandfathered === true, authorId: r.author_id ?? null,
+  }));
+}
+
+/**
+ * Approve the recordings the reviewer ticked along with the question. Each one
+ * goes through the same gate as the recording page: it must belong to this
+ * question, the export must be done, and the reviewer must not be its author.
+ * The trigger in 20260914_eeg_lab_review.sql has the last word.
+ */
+async function approveLinkedRecordings(
+  supabase: NonNullable<ReturnType<typeof createServerClient>>,
+  caseId: string, jobIds: string[], reviewer: { userId: string; email: string }, notes: string | null,
+): Promise<{ published: string[]; failed: { jobId: string; error: string }[] }> {
+  const out = { published: [] as string[], failed: [] as { jobId: string; error: string }[] };
+  if (!jobIds.length) return out;
+  const linked = await linkedRecordings(caseId);
+  const byId = new Map(linked.map((r) => [r.jobId, r]));
+  for (const jobId of jobIds) {
+    const r = byId.get(jobId);
+    if (!r) { out.failed.push({ jobId, error: "not a recording of this question" }); continue; }
+    if (r.status !== "done") { out.failed.push({ jobId, error: "the export has not finished" }); continue; }
+    if (r.reviewStatus === "published" && !r.grandfathered) { out.published.push(jobId); continue; }
+    if (r.reviewStatus === "archived") { out.failed.push({ jobId, error: "archived — reopen it on the recording page" }); continue; }
+    if (r.authorId && r.authorId === reviewer.userId) { out.failed.push({ jobId, error: "you made this recording (four-eyes rule)" }); continue; }
+    const { error: revErr } = await supabase.from("eeg_lab_reviews").insert({
+      job_id: jobId, reviewer: reviewer.userId, reviewer_email: reviewer.email, decision: "approved",
+      notes: notes ? `Reviewed with the question. ${notes}` : "Reviewed with the question.",
+    });
+    if (revErr) { out.failed.push({ jobId, error: revErr.message }); continue; }
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("eeg_lab_jobs").update({
+      review_status: "published", grandfathered: false, reviewed_by: reviewer.userId, reviewed_at: now,
+      submitted_at: r.reviewStatus === "draft" ? now : undefined,
+    }).eq("id", jobId);
+    if (error) { out.failed.push({ jobId, error: error.message.replace(/^.*?ERROR:\s*/i, "") }); continue; }
+    out.published.push(jobId);
+  }
+  return out;
 }
 
 export async function POST(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -217,6 +280,14 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     const { error } = await supabase.from("eeg_cases").update(patch).eq("id", id);
     if (error) return dbError(error, "Could not update the item's status.");
 
+    // "I also reviewed the full EEG recording" — publish the ticked lab
+    // recordings of this question in the same act. Only on approval.
+    let recordings: Awaited<ReturnType<typeof approveLinkedRecordings>> | null = null;
+    if (decision === "approved" && Array.isArray(body.alsoRecordings) && body.alsoRecordings.length) {
+      const ids = (body.alsoRecordings as unknown[]).filter((v): v is string => typeof v === "string");
+      recordings = await approveLinkedRecordings(supabase, id, ids, { userId: auth.userId, email: auth.email }, notes);
+    }
+
     // For an AI-generated item, "request changes" queues an automatic revision:
     // the feedback is fed back to the model, the item is re-critiqued and
     // re-rendered, and it returns to the review queue as a new version. The
@@ -233,7 +304,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       regeneration = { queued: !!jobId, jobId };
     }
 
-    return NextResponse.json({ success: true, status: patch.status, regeneration });
+    return NextResponse.json({ success: true, status: patch.status, regeneration, recordings });
   }
 
   // ---------------- regenerate (AI item: revise from feedback) ----------------

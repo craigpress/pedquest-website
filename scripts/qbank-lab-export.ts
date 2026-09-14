@@ -112,6 +112,10 @@ async function main(): Promise<void> {
       recording_id: newRecordingId(),
       spec_hash: hash,
       requested_by: `qbank:${id}`,
+      qbank_id: id,
+      source: "ai",
+      author_id: null,
+      review_status: "draft",
       expires_at: null,
     });
     if (insErr) throw new Error(`${id}: enqueue failed: ${insErr.message}`);

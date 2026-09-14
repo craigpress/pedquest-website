@@ -43,7 +43,8 @@ log = logging.getLogger("eeg-lab-export")
 
 JOB_COLUMNS = (
     "id,stage,status,spec,duration_s,formats,options,recording_id,spec_hash,"
-    "renderer_version,attempts,max_attempts,claimed_by,lease_expires_at,parent_job_id,created_at"
+    "renderer_version,attempts,max_attempts,claimed_by,lease_expires_at,parent_job_id,created_at,"
+    "author_id,source,qbank_id"
 )
 STAMP = "SYNTHETIC — NOT A PATIENT RECORDING"
 
@@ -333,6 +334,10 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
                 "spec_hash": job.get("spec_hash"), "parent_job_id": job["id"],
                 "artifacts": {k: v for k, v in artifacts.items() if k in ("lay", "dat")},
                 "requested_by": None,
+                # follow-on stages belong to the same author, so an editor's
+                # console shows them next to the export (visibility filter)
+                "author_id": job.get("author_id"), "source": job.get("source") or "team",
+                "qbank_id": job.get("qbank_id"),
             })
             log.info("job %s: queued persyst stage", job["id"])
     finally:

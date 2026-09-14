@@ -43,6 +43,38 @@ export function isLabTerminal(status: string): boolean {
   return (LAB_TERMINAL_STATUSES as string[]).includes(status);
 }
 
+// ── editorial review (migration 20260914_eeg_lab_review) ───────────────────
+//
+// `status` above is the worker's pipeline state. `reviewStatus` is the site's
+// editorial state, one gate: draft → pending_review → published, or archived.
+
+export type LabReviewStatus = "draft" | "pending_review" | "published" | "archived";
+export const LAB_REVIEW_STATUSES: LabReviewStatus[] = ["draft", "pending_review", "published", "archived"];
+export function isLabReviewStatus(value: unknown): value is LabReviewStatus {
+  return typeof value === "string" && (LAB_REVIEW_STATUSES as string[]).includes(value);
+}
+export const LAB_REVIEW_STATUS_LABELS: Record<LabReviewStatus, string> = {
+  draft: "Draft",
+  pending_review: "Pending review",
+  published: "Published",
+  archived: "Archived",
+};
+
+/** Who made it: an editor ("team") or the bank export script ("ai"), as for eeg_cases.source. */
+export type LabSource = "team" | "ai";
+
+export type LabReviewDecision = "approved" | "changes_requested" | "rejected";
+export const LAB_REVIEW_DECISIONS: LabReviewDecision[] = ["approved", "changes_requested", "rejected"];
+
+export interface LabReview {
+  id: string;
+  reviewer: string | null;
+  reviewerEmail: string | null;
+  decision: LabReviewDecision;
+  notes: string | null;
+  createdAt: string;
+}
+
 // ── artifacts ──────────────────────────────────────────────────────────────
 
 /** Output containers the exporter can write (`eeg-render export --format`). */
@@ -183,6 +215,21 @@ export interface LabJob {
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+  // editorial (20260914_eeg_lab_review)
+  reviewStatus: LabReviewStatus;
+  /** the editor who queued it; null for bank exports (source "ai") */
+  authorId: string | null;
+  source: LabSource;
+  /** the question-bank item this recording was made for, if any */
+  qbankId: string | null;
+  title: string | null;
+  description: string | null;
+  /** published at migration time without a review; a real review clears it */
+  grandfathered: boolean;
+  submittedAt: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  publishedAt: string | null;
 }
 
 // ── request / response shapes ──────────────────────────────────────────────

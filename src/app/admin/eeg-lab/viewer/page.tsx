@@ -7,7 +7,7 @@
 // that lab job's recording through signed URLs. Any signed-in member; the
 // answer key overlay and the console links stay editor-only.
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRole, useUser } from "@/lib/auth";
@@ -33,6 +33,8 @@ function ViewerInner() {
   const [source, setSource] = useState<ViewerSource | null>(null);
   const [job, setJob] = useState<LabJob | null>(null);
   const [jobError, setJobError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const authHeaders = useCallback(async () => {
     const sb = getSupabase();
@@ -101,22 +103,44 @@ function ViewerInner() {
         <p style={{ color: "var(--accent-secondary)", marginTop: 8 }}>{jobError ?? "Loading job…"}</p>
       )}
       <div style={{ ...card, padding: 20, marginTop: 20, display: "grid", gap: 12 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ color: "var(--text)", fontWeight: 600 }}>Open from this computer</span>
+        <div style={{ display: "grid", gap: 6 }}>
+          <span style={{ color: "var(--text)", fontWeight: 600 }}>Open a recording from this computer</span>
           <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
             One <code>.edf</code> file, or a Persyst <code>.lay</code> and <code>.dat</code> pair selected together.
             Add the matching <code>.answers.json</code> to overlay the answer key. Nothing is uploaded — the file
             is read in your browser, and annotations are kept in this browser.
           </span>
-          <input
-            type="file" multiple accept=".edf,.lay,.dat,.json"
-            onChange={(e) => {
-              const files = Array.from(e.target.files ?? []);
+          <div
+            onDragOver={(e) => { e.preventDefault(); }}
+            onDragEnter={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const files = Array.from(e.dataTransfer.files ?? []);
               if (files.length) setSource({ kind: "file", files });
             }}
-            style={{ marginTop: 6 }}
-          />
-        </label>
+            style={{
+              marginTop: 6, padding: 24, borderRadius: 12, textAlign: "center",
+              border: `1px dashed ${dragOver ? "var(--accent-primary)" : "var(--border)"}`,
+              background: dragOver ? "color-mix(in srgb, var(--accent-primary) 6%, transparent)" : "transparent",
+            }}
+          >
+            <button type="button" style={btnPrimary} onClick={() => fileInputRef.current?.click()}>
+              Choose EEG files…
+            </button>
+            <div style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 10 }}>or drag and drop them here</div>
+            <input
+              ref={fileInputRef}
+              type="file" multiple accept=".edf,.lay,.dat,.json"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                if (files.length) setSource({ kind: "file", files });
+              }}
+              style={{ display: "none" }}
+            />
+          </div>
+        </div>
         <div>
           <Link
             href={isEditor ? "/admin/eeg-lab" : "/admin/eeg-lab/library"}

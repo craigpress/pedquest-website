@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
 import { hasRole } from "@/lib/roles";
 import { LAB_JOB_COLUMNS, resolveArtifact, rowToJob } from "@/lib/lab/jobs";
+import { canSeeRecording } from "@/lib/lab/visibility";
 import { eeglabConfigured, isEeglabPath, signEeglabUrl } from "@/lib/lab/eeglab-store";
 import {
   isLabArtifact, LAB_ARTIFACT_LABELS, LAB_BUCKET, LAB_SIGNED_URL_TTL_S, SYNTHETIC_STAMP,
@@ -70,6 +71,9 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   if (!data) return NextResponse.json({ error: "Job not found." }, { status: 404 });
 
   const job = rowToJob(data);
+  if (!canSeeRecording(auth, job)) {
+    return NextResponse.json({ error: "Job not found." }, { status: 404 });
+  }
   const decision = resolveArtifact(job, artifact, hasRole(auth.role, "editor"));
   if (!decision.ok) {
     return NextResponse.json({ error: decision.reason }, { status: decision.status });
