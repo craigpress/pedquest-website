@@ -146,7 +146,7 @@ VALUES
       {"presenter":"Mr. Ethan Moyer","title":"From Multimodal Data to Clinical Intelligence in Pediatric Neurocritical Care"},
       {"presenter":"Dr. Rej Guerriero","memberId":"rej-guerriero","title":"qEEG: Utility and Challenges in Clinical Practice"},
       {"presenter":"Dr. Neil Munjal","memberId":"neil-munjal","title":"Institutional Experience with the Zeto POC EEG Device and Implementation of Nurse-Led qEEG in the PICU"},
-      {"presenter":"Dr. Robert van den Berg","title":"Machine Learning for qEEG: New Tools for Monitoring and Prediction"}
+      {"presenter":"Dr. Robert van den Berg","memberId":"robert-van-den-berg","title":"Machine Learning for qEEG: New Tools for Monitoring and Prediction"}
     ]'::jsonb,
     'email', NULL,
     'Free and open to anyone caring for or researching critically ill children. Enter your email and we''ll send you the Zoom link.',
