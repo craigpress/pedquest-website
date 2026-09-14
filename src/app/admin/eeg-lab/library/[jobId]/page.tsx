@@ -255,7 +255,10 @@ export default function RecordingPage() {
             </p>
           )}
         </div>
-        <Link href="/admin/eeg-lab/library" style={mini}>← Library</Link>
+        <div style={{ display: "flex", gap: 8, alignSelf: "flex-start", flexWrap: "wrap" }}>
+          <Link href="/admin/eeg-lab/library" style={mini}>← Library</Link>
+          <Link href="/admin/eeg-lab/review" style={mini}>Review queue</Link>
+        </div>
       </div>
 
       {error && (

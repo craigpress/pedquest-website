@@ -548,7 +548,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
       `}</style>
       {/* header */}
       <div className="lv-bar" style={{ alignItems: "center" }}>
-        {onClose && <button type="button" style={mini} onClick={onClose}>← close</button>}
+        {onClose && <button type="button" style={mini} onClick={onClose} title="Back to where you opened this recording">← Back</button>}
         <div style={{ fontWeight: 600, color: "var(--text)" }}>{opened.title}</div>
         <div style={{ fontFamily: "var(--mono-font)", fontSize: 12, color: "var(--text-muted)" }}>
           {reader.info.format} · {formatClock(durationS)} · {reader.sampleRate} Hz · {reader.labels.length} ch

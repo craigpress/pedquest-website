@@ -9,7 +9,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRole, useUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, btnPrimary, card, eyebrow, h1 } from "@/lib/admin-ui";
@@ -29,6 +29,7 @@ function ViewerInner() {
   const { isEditor, loading: roleLoading } = useRole();
   const signedIn = !!user;
   const params = useSearchParams();
+  const router = useRouter();
   const jobId = params.get("job");
   const [source, setSource] = useState<ViewerSource | null>(null);
   const [job, setJob] = useState<LabJob | null>(null);
@@ -63,6 +64,21 @@ function ViewerInner() {
     setSource({ kind: "job", job, authHeaders, isEditor });
   }, [job, roleLoading, isEditor, authHeaders]);
 
+  // Closing a recording returns to wherever it was opened from — the library,
+  // a recording page, the review queue or a question — not to this picker.
+  // A file picked here has no "from", so it just closes to the picker.
+  const closeViewer = useCallback(() => {
+    if (!jobId) { setSource(null); return; }
+    const cameFromSite = typeof document !== "undefined"
+      && document.referrer.startsWith(window.location.origin)
+      && !document.referrer.includes("/admin/eeg-lab/viewer")
+      && window.history.length > 1;
+    if (cameFromSite) { router.back(); return; }
+    // opened in a new tab or from a bookmark: the recording's own page for
+    // editors, the library for everyone else
+    router.push(isEditor ? `/admin/eeg-lab/library/${jobId}` : "/admin/eeg-lab/library");
+  }, [jobId, isEditor, router]);
+
   if (userLoading || roleLoading) {
     return <div style={adminShellWide}><p style={{ color: "var(--text-muted)" }}>Loading…</p></div>;
   }
@@ -84,7 +100,7 @@ function ViewerInner() {
           .lv-shell { padding: 12px 16px 16px; height: calc(100vh - 112px); min-height: 560px; box-sizing: border-box; }
           @media (max-width: 900px) { .lv-shell { height: auto; min-height: 0; padding: 8px 8px 24px; } }
         `}</style>
-        <LabViewer source={source} onClose={() => setSource(null)} />
+        <LabViewer source={source} onClose={closeViewer} />
       </div>
     );
   }
