@@ -74,7 +74,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   if (!canSeeRecording(auth, job)) {
     return NextResponse.json({ error: "Job not found." }, { status: 404 });
   }
-  const decision = resolveArtifact(job, artifact, hasRole(auth.role, "editor"));
+  const decision = resolveArtifact(job, artifact, hasRole(auth.role, "teacher"));
   if (!decision.ok) {
     return NextResponse.json({ error: decision.reason }, { status: decision.status });
   }

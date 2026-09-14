@@ -25,17 +25,17 @@ import {
 import { createTrendEngine, defaultHopS, type ViewerTrends } from "@/lib/eeg/trends";
 import { loadCachedTrends, saveCachedTrends } from "@/lib/eeg/trend-cache";
 import { decodeTrends, TREND_SIDECAR_EXT } from "@/lib/eeg/trend-sidecar";
-import { formatClock, type ViewerAnnotation, type ViewerAnnotationInput } from "@/lib/eeg/annotations";
+import { DEFAULT_TARGET, formatClock, type AnnotationTarget, type ViewerAnnotation, type ViewerAnnotationInput } from "@/lib/eeg/annotations";
 import { LocalAnnotationStore, RemoteAnnotationStore, type AnnotationStore } from "@/lib/eeg/annotation-store";
 import { SYNTHETIC_STAMP, type LabArtifact, type LabJob } from "@/lib/lab/types";
 import { DEFAULT_PALETTE, PALETTES, loadPalettePreference, savePalettePreference, type PaletteId } from "@/lib/eeg-palette";
 import RawPane from "./RawPane";
-import TrendStrip, { TREND_PANELS, TREND_WINDOWS, trendStripHeight } from "./TrendStrip";
+import TrendStrip, { TREND_PANELS, TREND_WINDOWS, trendRowLabel, trendStripHeight, type TrendRowId } from "./TrendStrip";
 import AnnotationPanel, { type Draft } from "./AnnotationPanel";
 
 export type ViewerSource =
   | { kind: "file"; files: File[] }
-  | { kind: "job"; job: LabJob; authHeaders: () => Promise<Record<string, string>>; isEditor: boolean };
+  | { kind: "job"; job: LabJob; authHeaders: () => Promise<Record<string, string>>; isInstructor: boolean };
 
 export interface AnswerSpan { onsetS: number; offsetS: number; label: string }
 
@@ -120,6 +120,9 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
 
   const [annotations, setAnnotations] = useState<ViewerAnnotation[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
+  // where the last click landed, so "A" / "mark at cursor" aims at the same
+  // place the eye is on: a trend row, or a raw row's derivation
+  const lastPick = useRef<Partial<AnnotationTarget>>({ pane: "raw" });
   const [annBusy, setAnnBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,15 +195,15 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
         throw new Error("Choose an .edf file, or a .lay and .dat pair.");
       }
 
-      const { job, authHeaders, isEditor } = source;
+      const { job, authHeaders, isInstructor } = source;
       const getUrl = async (artifact: LabArtifact) => {
         const res = await fetch(`/api/admin/lab/jobs/${job.id}/download?artifact=${artifact}`, { headers: await authHeaders() });
         const json = await res.json();
         if (!res.ok || !json.url) throw new Error(json.error || `Could not open the ${artifact} artifact.`);
         return json.url as string;
       };
-      const store = new RemoteAnnotationStore(job.id, authHeaders, isEditor);
-      const canFetchAnswers = isEditor && job.options.includeAnswers && Boolean(job.artifacts?.answers);
+      const store = new RemoteAnnotationStore(job.id, authHeaders, isInstructor);
+      const canFetchAnswers = isInstructor && job.options.includeAnswers && Boolean(job.artifacts?.answers);
       const title = job.recordingId ?? job.id;
       // The recording bytes are fixed by (job, spec, renderer); a re-export
       // under a new spec hash or renderer version is a different recording.
@@ -324,6 +327,13 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   const answerSpans = useMemo(() => (showKey && answers ? answers : []), [showKey, answers]);
 
   const panelRows = useMemo(() => (TREND_PANELS.find((p) => p.id === panelId) ?? TREND_PANELS[0]).rows, [panelId]);
+  const trendRowOptions = useMemo(() => panelRows.map((id: TrendRowId) => ({ id, label: trendRowLabel(id) })), [panelRows]);
+  // both vocabularies a learner might name: what the file records and what the montage derives
+  const channelOptions = useMemo(() => {
+    const out = [...(opened?.reader.labels ?? [])];
+    for (const d of derivations) if (!out.includes(d.label)) out.push(d.label);
+    return out;
+  }, [opened, derivations]);
   const windowS = useMemo(() => {
     const s = TREND_WINDOWS.find((w) => w.id === windowId)?.s ?? null;
     return s && s < durationS ? s : null;
@@ -391,8 +401,8 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
   };
   const resetSplit = () => { setTrendH(null); try { localStorage.removeItem("pq-lab-trend-h"); } catch { /* ignore */ } };
 
-  const startDraft = useCallback((onsetS: number, durationS: number) => {
-    setDraft({ id: null, onsetS, durationS, kind: durationS > 0 ? "seizure" : "note", label: "", note: "" });
+  const startDraft = useCallback((onsetS: number, durationS: number, target?: Partial<AnnotationTarget>) => {
+    setDraft({ ...DEFAULT_TARGET, ...target, id: null, onsetS, durationS, kind: durationS > 0 ? "seizure" : "note", label: "", note: "" });
   }, []);
 
   // ── keyboard ────────────────────────────────────────────────────────────
@@ -407,7 +417,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
         case "PageUp": e.preventDefault(); page(-pageS * 5); break;
         case "Home": e.preventDefault(); setPageT0(0); break;
         case "End": e.preventDefault(); setPageT0(maxT0); break;
-        case "a": case "A": if (cursorT !== null && !draft) { e.preventDefault(); startDraft(cursorT, 0); } break;
+        case "a": case "A": if (cursorT !== null && !draft) { e.preventDefault(); startDraft(cursorT, 0, lastPick.current); } break;
         case "Escape": setDraft(null); break;
         case "+": case "=": setSensitivity((s) => SENS_OPTIONS[Math.max(0, SENS_OPTIONS.indexOf(s) - 1)] ?? s); break;
         case "-": case "_": setSensitivity((s) => SENS_OPTIONS[Math.min(SENS_OPTIONS.length - 1, SENS_OPTIONS.indexOf(s) + 1)] ?? s); break;
@@ -619,7 +629,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
           {cursorT !== null && (
-            <button type="button" style={mini} onClick={() => startDraft(cursorT, 0)} disabled={!!draft}>
+            <button type="button" style={mini} onClick={() => startDraft(cursorT, 0, lastPick.current)} disabled={!!draft}>
               + mark at {formatClock(cursorT)}
             </button>
           )}
@@ -720,7 +730,8 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
                 rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme}
                 height={view === "trends" ? Math.max(naturalTrendH, mainH - 2) : trendPaneH - 2}
                 onScroll={scrollWindow} onPage={page}
-                onSelect={(a, b) => { seek(a); startDraft(a, b - a); }}
+                onSelect={(a, b) => { seek(a); startDraft(a, b - a, { pane: "trend", trendRow: null }); }}
+                onPick={(t, row) => { lastPick.current = { pane: "trend", trendRow: row }; seek(t); }}
                 key={trendVersion === 0 ? "empty" : "live"}
               />
             </div>
@@ -747,8 +758,8 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
                 reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
                 sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={annotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
                 penWidth={penWidth}
-                onCursor={setCursorT}
-                onSelect={(a, b) => { setCursorT(a); startDraft(a, b - a); }}
+                onCursor={(t, channel) => { lastPick.current = { pane: "raw", channels: channel ? [channel] : [] }; setCursorT(t); }}
+                onSelect={(a, b, channel) => { setCursorT(a); startDraft(a, b - a, { pane: "raw", channels: channel ? [channel] : [] }); }}
                 onLoading={setLoadingPage}
                 onPage={page}
               />
@@ -759,6 +770,7 @@ export default function LabViewer({ source, onClose }: { source: ViewerSource; o
           {error && <div style={{ color: "var(--accent-secondary)", fontSize: 12.5, marginBottom: 8 }}>{error}</div>}
           <AnnotationPanel
             annotations={annotations} draft={draft} storeLabel={opened.store.label} busy={annBusy}
+            trendRows={trendRowOptions} channelOptions={channelOptions}
             onDraftChange={setDraft}
             onSave={(input, id) => void saveAnnotation(input, id)}
             onCancel={() => setDraft(null)}

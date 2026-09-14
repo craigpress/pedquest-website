@@ -189,21 +189,21 @@ export type ArtifactDecision =
  * Decide whether this artifact may be handed out, given the job and the
  * caller's role.
  *
- * `callerIsEditor` is passed in rather than inferred so the check stands on its
- * own: if the route's own gate is ever relaxed to serve learners, the answer
- * key still refuses.
+ * `callerIsInstructor` (teacher, editor or admin) is passed in rather than
+ * inferred so the check stands on its own: if the route's own gate is ever
+ * relaxed to serve learners, the answer key still refuses.
  */
 export function resolveArtifact(
   job: LabJob,
   artifact: LabArtifact,
-  callerIsEditor: boolean,
+  callerIsInstructor: boolean,
 ): ArtifactDecision {
   const instructorCopy = INSTRUCTOR_ARTIFACTS.includes(artifact);
 
-  if (instructorCopy && !callerIsEditor) {
+  if (instructorCopy && !callerIsInstructor) {
     return {
       ok: false, status: 403,
-      reason: "The answer key is the instructor copy. Editor access is required.",
+      reason: "The answer key is the instructor copy. Teacher access is required.",
     };
   }
   if (artifact === "answers" && !job.options.includeAnswers) {

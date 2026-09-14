@@ -47,6 +47,11 @@ const ROW_DEFS: Record<TrendRowId, RowDef> = {
   adr_vs: { id: "adr_vs", label: "α/δ vs BL", h: 34, needsBaseline: true },
 };
 
+/** Display name for a row id, for annotation targets. Unknown ids (an older mark) pass through. */
+export function trendRowLabel(id: string): string {
+  return ROW_DEFS[id as TrendRowId]?.label ?? id;
+}
+
 export interface TrendPanel { id: string; label: string; rows: TrendRowId[] }
 export const TREND_PANELS: TrendPanel[] = [
   { id: "standard", label: "Standard", rows: ["aeeg_left", "aeeg_right", "psd_left", "psd_right", "asym_spec", "sr", "adr", "asym"] },
@@ -85,7 +90,7 @@ const WHEEL_NOTCH_PX = 60;
 
 export default function TrendStrip({
   trends, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress,
-  rows, palette, windowT0, windowS, baseline, theme, height, onSeek, onScroll, onPage, onSelect,
+  rows, palette, windowT0, windowS, baseline, theme, height, onSeek, onScroll, onPage, onSelect, onPick,
 }: {
   trends: ViewerTrends | null;
   durationS: number;
@@ -113,6 +118,8 @@ export default function TrendStrip({
   onPage?: (deltaS: number) => void;
   /** Shift-drag on the strip selected [t0, t1]; the parent decides what to do with it (plain drag scrubs) */
   onSelect?: (t0: number, t1: number) => void;
+  /** a plain click (no drag): which row it landed on, so a mark can be aimed at that trend */
+  onPick?: (t: number, row: TrendRowId | null) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -402,8 +409,15 @@ export default function TrendStrip({
     const frac = (clientX - r.left - GUTTER) / (w - GUTTER - 8);
     return Math.min(durationS, Math.max(0, t0 + frac * span));
   };
+  /** the row whose band the pointer is over; null above the first row or past the last */
+  const rowAt = (clientY: number): TrendRowId | null => {
+    const r = canvasRef.current!.getBoundingClientRect();
+    const y = clientY - r.top;
+    for (const id of rows) if (y >= rowTop[id] && y < rowTop[id] + ROW_DEFS[id].h * scale) return id;
+    return null;
+  };
   // A press seeks and a drag scrubs the cursor; Shift-drag selects a span to mark.
-  const dragRef = useRef<{ x0: number; t: number; moved: boolean; scrub: boolean } | null>(null);
+  const dragRef = useRef<{ x0: number; t: number; moved: boolean; scrub: boolean; row: TrendRowId | null } | null>(null);
 
   // Wheel: zoomed in, it scrolls the trend window; on the whole record it
   // pages the raw EEG (one page per notch, 1 s with Shift). A passive listener
@@ -441,21 +455,24 @@ export default function TrendStrip({
           if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
           const scrub = !e.shiftKey || !onSelect;
-          dragRef.current = { x0: e.clientX, t, moved: false, scrub };
+          dragRef.current = { x0: e.clientX, t, moved: false, scrub, row: rowAt(e.clientY) };
           try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
           if (scrub) onSeek(t);
         }}
         onPointerMove={(e) => {
           const d = dragRef.current;
           if (!d) return;
-          if (d.scrub) { onSeek(timeAt(e.clientX)); return; }
           if (Math.abs(e.clientX - d.x0) > 4) d.moved = true;
+          if (d.scrub) { onSeek(timeAt(e.clientX)); return; }
           if (d.moved) setSel({ a: d.t, b: timeAt(e.clientX) });
         }}
         onPointerUp={(e) => {
           const d = dragRef.current;
           dragRef.current = null;
-          if (!d || d.scrub) return;
+          if (!d) return;
+          // a click that never dragged aims the next mark at this row
+          if (!d.moved) onPick?.(d.t, d.row);
+          if (d.scrub) return;
           if (d.moved && onSelect) {
             const t1 = timeAt(e.clientX);
             setSel(null);

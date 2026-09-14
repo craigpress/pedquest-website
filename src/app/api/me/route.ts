@@ -22,5 +22,7 @@ export async function GET(request: NextRequest) {
     email: caller.email,
     userId: caller.userId,
     role: caller.role,
+    displayName: caller.displayName,
+    isTest: caller.isTest,
   });
 }

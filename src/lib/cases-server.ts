@@ -2,6 +2,7 @@
 // correct answers / regions / responses never depend on client-side RLS.
 // NEVER import this from a "use client" module.
 import { createServerClient } from "@/lib/supabase";
+import { getTestUserIds } from "@/lib/roles-server";
 import {
   isLearnerVisible, mapCase, mapReference, toPublicCase,
   type CaseReference, type EegCase, type PublicCase, type CaseStats,
@@ -90,11 +91,17 @@ export async function getCaseStats(caseId: string): Promise<CaseStats> {
   const empty: CaseStats = { total: 0, correctCount: 0, optionCounts: {}, points: [] };
   const supabase = createServerClient();
   if (!supabase) return empty;
-  const { data, error } = await supabase
-    .from("eeg_responses")
-    .select("selected_option_id,pointed_x,pointed_y,is_correct")
-    .eq("case_id", caseId);
-  if (error || !data) return empty;
+  const [{ data: rows, error }, testIds] = await Promise.all([
+    supabase
+      .from("eeg_responses")
+      .select("user_id,selected_option_id,pointed_x,pointed_y,is_correct")
+      .eq("case_id", caseId),
+    getTestUserIds(),
+  ]);
+  if (error || !rows) return empty;
+  // Synthetic test learners answer too (that is how the exclusion is tested);
+  // they never count toward the community numbers.
+  const data = (rows as any[]).filter((r) => !r.user_id || !testIds.has(String(r.user_id)));
   const stats: CaseStats = { total: data.length, correctCount: 0, optionCounts: {}, points: [] };
   for (const r of data as any[]) {
     if (r.is_correct) stats.correctCount++;

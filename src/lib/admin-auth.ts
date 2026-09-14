@@ -6,10 +6,17 @@
 // email allowlist — grant roles at /admin/users, not in code.
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-import { ensureUserRole } from "@/lib/roles-server";
-import { hasRole, type Role } from "@/lib/roles";
+import { ensureUserRole, getRoleRow } from "@/lib/roles-server";
+import { hasRole, ROLE_LABELS, type Role } from "@/lib/roles";
 
-export type AuthOk = { ok: true; email: string; userId: string; role: Role };
+export type AuthOk = {
+  ok: true;
+  email: string;
+  userId: string;
+  role: Role;
+  isTest: boolean;
+  displayName: string | null;
+};
 export type AuthCheck = AuthOk | { ok: false; response: NextResponse };
 
 /**
@@ -37,10 +44,18 @@ export async function requireRole(request: NextRequest, minimum: Role): Promise<
   // guarantees the caller has a 'member' row with its user_id filled in.
   const role = await ensureUserRole(email, data.user.id);
   if (!hasRole(role, minimum)) {
-    const label = minimum === "admin" ? "Admin" : "Editor";
+    const label = ROLE_LABELS[minimum];
     return { ok: false, response: NextResponse.json({ error: `${label} access required.` }, { status: 403 }) };
   }
-  return { ok: true, email, userId: data.user.id, role: role as Role };
+  const row = await getRoleRow(email);
+  return {
+    ok: true,
+    email,
+    userId: data.user.id,
+    role: role as Role,
+    isTest: row?.isTest ?? false,
+    displayName: row?.displayName ?? null,
+  };
 }
 
 /** Back-compat wrapper: the existing admin routes call this. */
@@ -59,7 +74,7 @@ export async function requireEditor(request: NextRequest): Promise<AuthCheck> {
  */
 export async function resolveCaller(
   request: NextRequest,
-): Promise<{ email: string; userId: string; role: Role } | null> {
+): Promise<{ email: string; userId: string; role: Role; isTest: boolean; displayName: string | null } | null> {
   const header = request.headers.get("authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   if (!token) return null;
@@ -69,5 +84,12 @@ export async function resolveCaller(
   const email = data?.user?.email?.toLowerCase();
   if (error || !email || !data.user) return null;
   const role = (await ensureUserRole(email, data.user.id)) ?? "member";
-  return { email, userId: data.user.id, role };
+  const row = await getRoleRow(email);
+  return {
+    email,
+    userId: data.user.id,
+    role,
+    isTest: row?.isTest ?? false,
+    displayName: row?.displayName ?? null,
+  };
 }

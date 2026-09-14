@@ -291,6 +291,7 @@ export default function RecordingPage() {
                 Answer key · instructor
               </button>
             )}
+            <Link href={`/admin/eeg-lab/library/${job.id}/results`} style={mini}>Class results</Link>
           </div>
         </section>
 

@@ -5,8 +5,11 @@
 //     for recordings opened from disk (nothing server-side to attach them to).
 //   - RemoteAnnotationStore: /api/admin/lab/jobs/<id>/annotations, one row per
 //     mark per user, so an instructor can read a learner's marks.
+//
+// Both carry the mark's target (pane / trend row / channels / region) with its
+// time; the remote store round-trips it as JSON, the local one in localStorage.
 
-import type { ViewerAnnotation, ViewerAnnotationInput } from "./annotations";
+import { DEFAULT_TARGET, type ViewerAnnotation, type ViewerAnnotationInput } from "./annotations";
 
 export interface AnnotationStore {
   readonly label: string;
@@ -26,7 +29,9 @@ export class LocalAnnotationStore implements AnnotationStore {
   private load(): ViewerAnnotation[] {
     try {
       const raw = localStorage.getItem(this.key);
-      return raw ? (JSON.parse(raw) as ViewerAnnotation[]) : [];
+      if (!raw) return [];
+      // rows stored before marks had a target: fill it in on the way out
+      return (JSON.parse(raw) as ViewerAnnotation[]).map((r) => ({ ...DEFAULT_TARGET, ...r }));
     } catch { return []; }
   }
   private save(rows: ViewerAnnotation[]) {
@@ -56,7 +61,7 @@ export class RemoteAnnotationStore implements AnnotationStore {
   constructor(
     private readonly jobId: string,
     private readonly headers: () => Promise<Record<string, string>>,
-    /** editors may ask for everyone's marks */
+    /** teachers and up may ask for everyone's marks */
     private readonly includeOthers: boolean,
   ) {}
 

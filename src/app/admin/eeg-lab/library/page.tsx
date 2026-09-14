@@ -73,7 +73,7 @@ function triggerDownload(url: string) {
 
 export default function LibraryPage() {
   const { user, loading: userLoading } = useUser();
-  const { isEditor, isAdmin, loading: roleLoading } = useRole();
+  const { isEditor, isAdmin, isTeacher, loading: roleLoading } = useRole();
   const signedIn = !!user;
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -399,6 +399,9 @@ export default function LibraryPage() {
                   <Link href={`/admin/eeg-lab/library/${e.jobId}`} style={mini}>
                     {e.reviewStatus === "pending_review" || e.grandfathered ? "Review" : "Recording page"}
                   </Link>
+                )}
+                {isTeacher && (
+                  <Link href={`/admin/eeg-lab/library/${e.jobId}/results`} style={mini}>Class results</Link>
                 )}
                 {hasMore && (
                   <button type="button" style={mini} onClick={() => setOpen((o) => ({ ...o, [e.jobId]: !expanded }))}>

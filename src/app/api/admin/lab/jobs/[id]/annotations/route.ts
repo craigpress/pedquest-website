@@ -11,11 +11,15 @@ export const runtime = "nodejs";
 // Viewer annotations on one lab recording.
 //
 // GET  /api/admin/lab/jobs/<uuid>/annotations         → the caller's own marks
-// GET  /api/admin/lab/jobs/<uuid>/annotations?all=1   → everyone's (editors only)
+// GET  /api/admin/lab/jobs/<uuid>/annotations?all=1   → everyone's (teachers and up)
 // POST /api/admin/lab/jobs/<uuid>/annotations         → create one, owned by the caller
 //
 // Open to any signed-in member since 2026-09-13 (the viewer is a learner
-// tool); marks are per user, and `all=1` stays editor-only.
+// tool); marks are per user, and `all=1` needs `teacher` — seeing the class's
+// marks is a teaching act, not an editing one.
+//
+// A mark carries its target alongside its time: `pane`, `trend_row`,
+// `channels`, `region` (migration 20260915_teacher_role_test_users_annotation_targets).
 
 type JobRow = { id: string; duration_s: number; status: string; review_status: string; author_id: string | null };
 
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   if (!supabase) return NextResponse.json({ error: "The teaching lab is not configured." }, { status: 503 });
   if (!job) return NextResponse.json({ error: "Job not found." }, { status: 404 });
 
-  const all = request.nextUrl.searchParams.get("all") === "1" && hasRole(auth.role, "editor");
+  const all = request.nextUrl.searchParams.get("all") === "1" && hasRole(auth.role, "teacher");
   let q = supabase.from("eeg_lab_annotations").select(ANNOTATION_COLUMNS).eq("job_id", id).order("onset_s");
   if (!all) q = q.eq("user_id", auth.userId);
   const { data, error } = await q;
@@ -77,6 +81,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     .insert({
       job_id: id, user_id: auth.userId, user_email: auth.email,
       onset_s: v.onsetS, duration_s: v.durationS, kind: v.kind, label: v.label, note: v.note,
+      pane: v.pane, trend_row: v.trendRow, channels: v.channels, region: v.region,
     })
     .select(ANNOTATION_COLUMNS)
     .single();

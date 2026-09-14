@@ -26,7 +26,7 @@ export default function ViewerPage() {
 
 function ViewerInner() {
   const { user, loading: userLoading } = useUser();
-  const { isEditor, loading: roleLoading } = useRole();
+  const { isEditor, isTeacher, loading: roleLoading } = useRole();
   const signedIn = !!user;
   const params = useSearchParams();
   const router = useRouter();
@@ -60,9 +60,10 @@ function ViewerInner() {
 
   useEffect(() => {
     if (!job || roleLoading) return;
+    // teachers (not just editors) see everyone's marks and the answer key
     // eslint-disable-next-line react-hooks/set-state-in-effect -- assembling the source from two async results
-    setSource({ kind: "job", job, authHeaders, isEditor });
-  }, [job, roleLoading, isEditor, authHeaders]);
+    setSource({ kind: "job", job, authHeaders, isInstructor: isTeacher });
+  }, [job, roleLoading, isTeacher, authHeaders]);
 
   // Closing a recording returns to wherever it was opened from — the library,
   // a recording page, the review queue or a question — not to this picker.

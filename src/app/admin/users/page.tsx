@@ -6,6 +6,7 @@ import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { ROLES, ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/roles";
 import { adminShell, btnGhost, card, eyebrow, h1, inp, meta, mini } from "@/lib/admin-ui";
+import { switchToUser } from "@/lib/impersonation";
 
 interface UserRow {
   email: string;
@@ -17,8 +18,10 @@ interface UserRow {
   memberName: string | null;
   institution: string | null;
   grantedAt: string | null;
+  isTest: boolean;
+  displayName: string | null;
 }
-interface Counts { admin: number; editor: number; member: number; unassigned: number }
+interface Counts { admin: number; editor: number; teacher: number; member: number; unassigned: number; test: number }
 
 export default function AdminUsersPage() {
   const { isAdmin, loading: roleLoading } = useRole();
@@ -29,7 +32,8 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | Role | "unassigned">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | Role | "unassigned" | "test">("all");
+  const [switching, setSwitching] = useState<string | null>(null);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
 
@@ -80,15 +84,28 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function switchTo(email: string) {
+    setSwitching(email);
+    setError(null);
+    try {
+      await switchToUser(email, authHeaders);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not switch to that account.");
+      setSwitching(null);
+    }
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return users.filter((u) => {
       if (roleFilter === "unassigned" && u.role) return false;
-      if (roleFilter !== "all" && roleFilter !== "unassigned" && u.role !== roleFilter) return false;
+      if (roleFilter === "test" && !u.isTest) return false;
+      if (roleFilter !== "all" && roleFilter !== "unassigned" && roleFilter !== "test" && u.role !== roleFilter) return false;
       if (!q) return true;
       return (
         u.email.includes(q) ||
         (u.memberName ?? "").toLowerCase().includes(q) ||
+        (u.displayName ?? "").toLowerCase().includes(q) ||
         (u.institution ?? "").toLowerCase().includes(q)
       );
     });
@@ -130,7 +147,8 @@ export default function AdminUsersPage() {
         </p>
         {counts && (
           <p style={{ ...meta, marginTop: 8 }}>
-            {counts.admin} admin · {counts.editor} editor · {counts.member} member · {counts.unassigned} no role
+            {counts.admin} admin · {counts.editor} editor · {counts.teacher} teacher · {counts.member} member ·{" "}
+            {counts.unassigned} no role · {counts.test} test
           </p>
         )}
       </div>
@@ -145,7 +163,7 @@ export default function AdminUsersPage() {
           aria-label="Search accounts"
         />
         <div className="users-filters" role="group" aria-label="Filter by role">
-          {(["all", ...ROLES, "unassigned"] as const).map((r) => (
+          {(["all", ...ROLES, "unassigned", "test"] as const).map((r) => (
             <button
               key={r}
               type="button"
@@ -156,7 +174,7 @@ export default function AdminUsersPage() {
                 color: roleFilter === r ? "var(--accent-primary)" : "var(--text-secondary)",
               }}
             >
-              {r === "all" ? "All" : r === "unassigned" ? "No role" : ROLE_LABELS[r]}
+              {r === "all" ? "All" : r === "unassigned" ? "No role" : r === "test" ? "Test" : ROLE_LABELS[r]}
             </button>
           ))}
         </div>
@@ -180,16 +198,41 @@ export default function AdminUsersPage() {
           {filtered.map((u) => (
             <div className="users-row" key={u.email}>
               <div>
-                <div style={{ fontWeight: 600, color: "var(--text)" }}>
-                  {u.memberName || u.email}
+                <div style={{ fontWeight: 600, color: "var(--text)", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span>{u.displayName || u.memberName || u.email}</span>
+                  {u.isTest && (
+                    <span style={{
+                      fontFamily: "var(--mono-font)", fontSize: 10.5, letterSpacing: ".08em",
+                      textTransform: "uppercase", padding: "2px 7px", borderRadius: 6,
+                      border: "1px solid var(--accent-primary)", color: "var(--accent-primary)", fontWeight: 600,
+                    }}>
+                      test
+                    </span>
+                  )}
                 </div>
                 <div style={{ ...meta, marginTop: 4, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  {u.memberName && <span>{u.email}</span>}
+                  {(u.displayName || u.memberName) && <span>{u.email}</span>}
                   {u.institution && <span>{u.institution}</span>}
                   <span>{u.userId ? (u.lastSignInAt ? `last sign-in ${u.lastSignInAt.slice(0, 10)}` : "never signed in") : "no account yet"}</span>
                 </div>
               </div>
               <div className="users-roles">
+                {u.isTest && (
+                  <button
+                    type="button"
+                    disabled={switching === u.email}
+                    onClick={() => void switchTo(u.email)}
+                    style={{
+                      ...mini,
+                      borderColor: "var(--accent-primary)",
+                      color: "var(--accent-primary)",
+                      fontWeight: 600,
+                      opacity: switching === u.email ? 0.5 : 1,
+                    }}
+                  >
+                    {switching === u.email ? "Switching…" : "Switch to"}
+                  </button>
+                )}
                 {ROLES.map((r) => {
                   const active = u.role === r;
                   return (

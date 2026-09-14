@@ -11,7 +11,7 @@ import type { EdfAnnotation } from "@/lib/eeg/edf";
 import type { Recording } from "@/lib/eeg/recording";
 import { applyChain, designChain, settlingMarginS, type FilterSettings } from "@/lib/eeg/filters";
 import { applyMontage, type Derivation } from "@/lib/eeg/montage";
-import { annotationColor, type ViewerAnnotation } from "@/lib/eeg/annotations";
+import { annotationColor, describeTarget, type ViewerAnnotation } from "@/lib/eeg/annotations";
 import { formatClock } from "@/lib/eeg/annotations";
 
 /** CSS px per mm at 96 dpi; sensitivity is quoted in µV/mm like a review station. */
@@ -44,9 +44,10 @@ export default function RawPane({
   theme: "dark" | "light";
   /** trace line width in CSS px; review stations draw hairlines */
   penWidth?: number;
-  onCursor: (t: number) => void;
+  /** `channel` is the derivation row the press landed on, so the mark can name it */
+  onCursor: (t: number, channel: string | null) => void;
   /** drag-select a span; the parent decides what to do with it */
-  onSelect: (t0: number, t1: number) => void;
+  onSelect: (t0: number, t1: number, channel: string | null) => void;
   onLoading?: (busy: boolean) => void;
   /** wheel over the page: move by this many seconds (one page per notch, 1 s with Shift) */
   onPage?: (deltaS: number) => void;
@@ -56,7 +57,7 @@ export default function RawPane({
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [page, setPage] = useState<Page | null>(null);
   const [drag, setDrag] = useState<{ a: number; b: number } | null>(null);
-  const dragRef = useRef<{ x0: number; t0: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{ x0: number; t0: number; moved: boolean; channel: string | null } | null>(null);
 
   // Drag-select past either edge of the page keeps going: the page turns at a
   // rate set by how far past the edge the pointer is (0.3 – 3 pages/s), in
@@ -201,7 +202,9 @@ export default function RawPane({
       ctx.strokeStyle = c; ctx.lineWidth = a.mine ? 1.5 : 1; ctx.setLineDash(a.mine ? [] : [4, 3]);
       ctx.beginPath(); ctx.moveTo(x0, AXIS_H); ctx.lineTo(x0, size.h); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = c; ctx.textAlign = "left"; ctx.textBaseline = "top";
-      ctx.fillText(a.label || a.kind, x0 + 4, size.h - 14);
+      // the span stays full height — the target is named in the caption instead
+      const target = describeTarget(a);
+      ctx.fillText(`${a.label || a.kind}${target ? ` · ${target}` : ""}`, x0 + 4, size.h - 14);
     }
 
     // file annotations (bedside)
@@ -307,6 +310,14 @@ export default function RawPane({
     const frac = (clientX - r.left - GUTTER) / (size.w - GUTTER - 8);
     return Math.min(t0 + pageS, Math.max(t0, t0 + frac * pageS));
   };
+  /** the derivation whose trace band the press landed in — nearest centre wins */
+  const channelAt = (clientY: number): string | null => {
+    const r = canvasRef.current!.getBoundingClientRect();
+    const y = clientY - r.top;
+    let best = -1, bestD = Infinity;
+    layout.centres.forEach((cy, i) => { const d = Math.abs(cy - y); if (d < bestD) { bestD = d; best = i; } });
+    return best < 0 ? null : derivations[best].label;
+  };
 
   return (
     <div ref={wrapRef} style={{ position: "relative", width: "100%", height: "100%", minHeight: 320 }}>
@@ -317,7 +328,7 @@ export default function RawPane({
         onPointerDown={(e) => {
           if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
-          dragRef.current = { x0: e.clientX, t0: t, moved: false };
+          dragRef.current = { x0: e.clientX, t0: t, moved: false, channel: channelAt(e.clientY) };
           try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
         }}
         onPointerMove={(e) => {
@@ -340,9 +351,9 @@ export default function RawPane({
           if (d.moved) {
             const t1 = timeAt(e.clientX);
             setDrag(null);
-            onSelect(Math.min(d.t0, t1), Math.max(d.t0, t1));
+            onSelect(Math.min(d.t0, t1), Math.max(d.t0, t1), d.channel);
           } else {
-            onCursor(d.t0);
+            onCursor(d.t0, d.channel);
           }
         }}
       />

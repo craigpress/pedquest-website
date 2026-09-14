@@ -8,6 +8,9 @@ export const runtime = "nodejs";
 
 // PATCH / DELETE one annotation. Only its author may change it — an instructor
 // reads a learner's marks, never edits them, so the comparison stays honest.
+//
+// PATCH replaces the whole mark, target columns (`pane`, `trend_row`,
+// `channels`, `region`) included, so retargeting is an ordinary edit.
 
 type Ctx = { params: Promise<{ id: string; annotationId: string }> };
 
@@ -43,7 +46,10 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
   const v = parsed.value;
   const { data, error } = await r.supabase
     .from("eeg_lab_annotations")
-    .update({ onset_s: v.onsetS, duration_s: v.durationS, kind: v.kind, label: v.label, note: v.note })
+    .update({
+      onset_s: v.onsetS, duration_s: v.durationS, kind: v.kind, label: v.label, note: v.note,
+      pane: v.pane, trend_row: v.trendRow, channels: v.channels, region: v.region,
+    })
     .eq("id", r.annotationId)
     .select(ANNOTATION_COLUMNS)
     .single();

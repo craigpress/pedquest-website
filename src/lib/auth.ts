@@ -116,6 +116,8 @@ export function useRole() {
     loading: userLoading || loading,
     isAdmin: hasRole(role, "admin"),
     isEditor: hasRole(role, "editor"),
+    /** teacher, editor or admin: may see every learner's marks, the class results and the answer key */
+    isTeacher: hasRole(role, "teacher"),
   };
 }
 

@@ -24,6 +24,8 @@ interface UserRow {
   memberName: string | null;
   institution: string | null;
   grantedAt: string | null;
+  isTest: boolean;
+  displayName: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -35,6 +37,7 @@ export async function GET(request: NextRequest) {
   const blank = (email: string): UserRow => ({
     email, role: null, userId: null, lastSignInAt: null, createdAt: null,
     memberId: null, memberName: null, institution: null, grantedAt: null,
+    isTest: false, displayName: null,
   });
 
   // ---- Supabase auth users (paginated) ----
@@ -58,13 +61,17 @@ export async function GET(request: NextRequest) {
   }
 
   // ---- roles (may include emails with no auth user yet) ----
-  const { data: roles } = await supabase.from("user_roles").select("email,role,granted_at,user_id");
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("email,role,granted_at,user_id,is_test,display_name");
   for (const r of (roles ?? []) as any[]) {
     const email = String(r.email).toLowerCase();
     const row = byEmail.get(email) ?? blank(email);
     row.role = isRole(r.role) ? r.role : null;
     row.grantedAt = r.granted_at ?? null;
     row.userId = row.userId ?? r.user_id ?? null;
+    row.isTest = r.is_test === true;
+    row.displayName = r.display_name ?? null;
     byEmail.set(email, row);
   }
 
@@ -85,21 +92,27 @@ export async function GET(request: NextRequest) {
   }
 
   const users = [...byEmail.values()].sort((a, b) => {
-    const rank = { admin: 0, editor: 1, member: 2 } as Record<string, number>;
-    const ra = a.role ? rank[a.role] : 3;
-    const rb = b.role ? rank[b.role] : 3;
+    const rank = { admin: 0, editor: 1, teacher: 2, member: 3 } as Record<string, number>;
+    const ra = a.role ? rank[a.role] : 4;
+    const rb = b.role ? rank[b.role] : 4;
     if (ra !== rb) return ra - rb;
     return a.email.localeCompare(b.email);
   });
+
+  // Synthetic accounts are excluded from the per-role counts so the tiles keep
+  // reporting the size of the real user base; they get their own `test` count.
+  const real = users.filter((u) => !u.isTest);
 
   return NextResponse.json({
     success: true,
     users,
     counts: {
-      admin: users.filter((u) => u.role === "admin").length,
-      editor: users.filter((u) => u.role === "editor").length,
-      member: users.filter((u) => u.role === "member").length,
-      unassigned: users.filter((u) => !u.role).length,
+      admin: real.filter((u) => u.role === "admin").length,
+      editor: real.filter((u) => u.role === "editor").length,
+      teacher: real.filter((u) => u.role === "teacher").length,
+      member: real.filter((u) => u.role === "member").length,
+      unassigned: real.filter((u) => !u.role).length,
+      test: users.filter((u) => u.isTest).length,
     },
   });
 }
@@ -120,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
   if (!isRole(role)) {
-    return NextResponse.json({ error: "Role must be member, editor or admin." }, { status: 400 });
+    return NextResponse.json({ error: "Role must be member, teacher, editor or admin." }, { status: 400 });
   }
 
   const { data: current } = await supabase
@@ -152,6 +165,8 @@ export async function POST(request: NextRequest) {
     if (users.length < 200) break;
   }
 
+  // ON CONFLICT DO UPDATE only touches the columns present in the payload, so
+  // is_test and display_name survive a role change made from this screen.
   const { error } = await supabase
     .from("user_roles")
     .upsert(
