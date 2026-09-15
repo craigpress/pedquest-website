@@ -104,7 +104,16 @@ async function chatOpenWebUi(req: ChatRequest): Promise<ChatResult> {
       }),
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`OpenWebUI returned ${res.status}`);
+    if (!res.ok) {
+      const body = await res.text();
+      let detail = body;
+      try {
+        const parsed = JSON.parse(body) as { detail?: string; error?: string | { message?: string } };
+        detail = parsed.detail ?? (typeof parsed.error === "string" ? parsed.error : parsed.error?.message) ?? body;
+      } catch {}
+      const suffix = detail.trim() ? `: ${detail.trim().slice(0, 800)}` : "";
+      throw new Error(`OpenWebUI returned ${res.status}${suffix}`);
+    }
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const text = json.choices?.[0]?.message?.content?.trim() ?? "";
     if (!text) throw new Error("OpenWebUI returned an empty completion");
