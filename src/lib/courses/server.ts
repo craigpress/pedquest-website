@@ -4,8 +4,9 @@
 // "use client" module.
 //
 // One rule decides everything: a caller MANAGES a course when they own it,
-// are enrolled as an instructor, or are a site admin; a caller VIEWS a course
-// when they manage it or are enrolled as a student. Students are matched by
+// are enrolled as an instructor, are a site admin, or are an editor and the
+// course is a demo (owned by a test account); a caller VIEWS a course when
+// they manage it or are enrolled as a student. Students are matched by
 // email (enrolment can precede the first sign-in); user_id is backfilled on
 // the way through so marks and submissions can be joined.
 
@@ -48,11 +49,13 @@ export type Caller = { userId: string; email: string; role: Role };
 
 // ── access ────────────────────────────────────────────────────────────────
 
-export function viewerRoleFor(course: CourseRow, members: MemberRow[], caller: Caller): CourseViewerRole | null {
+export function viewerRoleFor(course: CourseRow, members: MemberRow[], caller: Caller, ownerIsTest = false): CourseViewerRole | null {
   if (hasRole(caller.role, "admin")) return "admin";
   if (course.owner_id === caller.userId) return "owner";
   const me = members.find((m) => m.email === caller.email.toLowerCase());
   if (me?.role === "instructor") return "instructor";
+  // demo classes: every editor can run them so they can show the feature
+  if (ownerIsTest && hasRole(caller.role, "editor")) return "instructor";
   if (me?.role === "student") return "student";
   return null;
 }
@@ -77,7 +80,9 @@ export async function requireCourse(request: NextRequest, courseId: string, need
   if (!course) return { ok: false, response: NextResponse.json({ error: "Not found." }, { status: 404 }) };
   const caller: Caller = { userId: auth.userId, email: auth.email.toLowerCase(), role: auth.role };
   const roster = (members ?? []) as MemberRow[];
-  const viewerRole = viewerRoleFor(course as CourseRow, roster, caller);
+  const ownerEmail = (course as CourseRow).owner_email.toLowerCase();
+  const ownerIsTest = (await identitiesByEmail([ownerEmail])).get(ownerEmail)?.isTest ?? false;
+  const viewerRole = viewerRoleFor(course as CourseRow, roster, caller, ownerIsTest);
   if (!viewerRole || (need === "manage" && !canManageCourse(viewerRole))) {
     return { ok: false, response: NextResponse.json({ error: "Not found." }, { status: 404 }) };
   }
@@ -114,9 +119,22 @@ export async function identitiesByEmail(emails: string[]): Promise<Map<string, I
 
 // ── mapping ───────────────────────────────────────────────────────────────
 
-function toSummary(c: CourseRow, extra: Pick<CourseSummary, "ownerName" | "studentCount" | "assignmentCount" | "myRole" | "progress" | "completion">): CourseSummary {
+function toSummary(
+  c: CourseRow,
+  members: MemberRow[],
+  identities: Map<string, Identity>,
+  extra: Pick<CourseSummary, "studentCount" | "assignmentCount" | "myRole" | "progress" | "completion">,
+): CourseSummary {
+  const ownerEmail = c.owner_email.toLowerCase();
+  const owner = identities.get(ownerEmail);
+  const teachers = [
+    { email: ownerEmail, displayName: owner?.displayName ?? null },
+    ...members.filter((m) => m.role === "instructor" && m.email !== ownerEmail)
+      .map((m) => ({ email: m.email, displayName: identities.get(m.email)?.displayName ?? null })),
+  ];
   return {
     id: c.id, title: c.title, description: c.description, status: c.status, ownerId: c.owner_id, ownerEmail: c.owner_email,
+    ownerName: owner?.displayName ?? null, teachers, isDemo: owner?.isTest ?? false,
     startsAt: c.starts_at, endsAt: c.ends_at, createdAt: c.created_at, ...extra,
   };
 }
@@ -169,6 +187,12 @@ export async function listCoursesFor(caller: Caller): Promise<{ teaching: Course
   if (!hasRole(caller.role, "admin")) {
     const clauses = [`owner_id.eq.${caller.userId}`];
     if (memberCourseIds.length) clauses.push(`id.in.(${memberCourseIds.join(",")})`);
+    if (hasRole(caller.role, "editor")) {
+      // demo classes are the ones test accounts own
+      const { data: testUsers } = await supabase.from("user_roles").select("user_id").eq("is_test", true).not("user_id", "is", null);
+      const testIds = ((testUsers ?? []) as { user_id: string }[]).map((u) => u.user_id);
+      if (testIds.length) clauses.push(`owner_id.in.(${testIds.join(",")})`);
+    }
     courseQuery = courseQuery.or(clauses.join(","));
   }
   const { data: courseRows } = await courseQuery;
@@ -176,12 +200,15 @@ export async function listCoursesFor(caller: Caller): Promise<{ teaching: Course
   if (!courses.length) return { teaching: [], enrolled: [] };
   const ids = courses.map((c) => c.id);
 
-  const [{ data: allMembers }, { data: assignments }, owners] = await Promise.all([
+  const [{ data: allMembers }, { data: assignments }] = await Promise.all([
     supabase.from("eeg_course_members").select(MEMBER_COLUMNS).in("course_id", ids),
     supabase.from("eeg_course_assignments").select("id,course_id,published").in("course_id", ids).eq("published", true),
-    identitiesByEmail(courses.map((c) => c.owner_email)),
   ]);
   const members = (allMembers ?? []) as MemberRow[];
+  const identities = await identitiesByEmail([
+    ...courses.map((c) => c.owner_email),
+    ...members.filter((m) => m.role === "instructor").map((m) => m.email),
+  ]);
   const asg = (assignments ?? []) as { id: string; course_id: string }[];
   const { data: subs } = asg.length
     ? await supabase.from("eeg_course_submissions").select("assignment_id,user_id,email,status").in("assignment_id", asg.map((a) => a.id))
@@ -197,21 +224,16 @@ export async function listCoursesFor(caller: Caller): Promise<{ teaching: Course
     const asgIds = new Set(cAsg.map((a) => a.id));
     const studentEmails = new Set(students.map((s) => s.email));
     const cDone = doneSubs.filter((s) => asgIds.has(s.assignment_id) && studentEmails.has(String(s.email).toLowerCase()));
-    const viewerRole = viewerRoleFor(c, roster, caller);
+    const viewerRole = viewerRoleFor(c, roster, caller, identities.get(c.owner_email.toLowerCase())?.isTest ?? false);
     if (!viewerRole) continue;
-    const base = {
-      ownerName: owners.get(c.owner_email.toLowerCase())?.displayName ?? null,
-      studentCount: students.length,
-      assignmentCount: cAsg.length,
-      myRole: viewerRole,
-    };
+    const base = { studentCount: students.length, assignmentCount: cAsg.length, myRole: viewerRole };
     if (canManageCourse(viewerRole)) {
       const cells = students.length * cAsg.length;
-      teaching.push(toSummary(c, { ...base, progress: null, completion: cells ? cDone.length / cells : null }));
+      teaching.push(toSummary(c, roster, identities, { ...base, progress: null, completion: cells ? cDone.length / cells : null }));
     }
     if (viewerRole === "student") {
       const myDone = cDone.filter((s) => String(s.email).toLowerCase() === caller.email).length;
-      enrolled.push(toSummary(c, { ...base, progress: { done: myDone, total: cAsg.length }, completion: null }));
+      enrolled.push(toSummary(c, roster, identities, { ...base, progress: { done: myDone, total: cAsg.length }, completion: null }));
     }
   }
   return { teaching, enrolled };
@@ -265,7 +287,6 @@ export async function getCourseDetail(gate: Extract<CourseGate, { ok: true }>): 
   };
   const subFor = (assignmentId: string, userId: string | null) => (userId ? subs.find((s) => s.assignment_id === assignmentId && s.user_id === userId) : undefined);
 
-  const ownerName = identities.get(course.owner_email.toLowerCase())?.displayName ?? null;
   const published = assignments.filter((a) => a.published);
 
   // ── student view ──
@@ -276,7 +297,7 @@ export async function getCourseDetail(gate: Extract<CourseGate, { ok: true }>): 
     });
     const done = my.filter((a) => isDone(a.my.status)).length;
     return {
-      ...toSummary(course, { ownerName, studentCount: students.length, assignmentCount: published.length, myRole: viewerRole, progress: { done, total: published.length }, completion: null }),
+      ...toSummary(course, members, identities, { studentCount: students.length, assignmentCount: published.length, myRole: viewerRole, progress: { done, total: published.length }, completion: null }),
       canManage: false,
       assignments: my,
     };
@@ -360,7 +381,7 @@ export async function getCourseDetail(gate: Extract<CourseGate, { ok: true }>): 
   };
 
   return {
-    ...toSummary(course, { ownerName, studentCount: students.length, assignmentCount: published.length, myRole: viewerRole, progress: null, completion: kpis.completion }),
+    ...toSummary(course, members, identities, { studentCount: students.length, assignmentCount: published.length, myRole: viewerRole, progress: null, completion: kpis.completion }),
     canManage: true,
     roster,
     assignments,

@@ -85,10 +85,14 @@ student per assignment**, with the gradebook and every KPI derived rather than s
   backfilled on the student's first visit; role student | instructor), `eeg_course_assignments` (one published recording +
   instructions + due date + scoring task), `eeg_course_submissions` (`in_progress` | `submitted` | `returned`, opened/submitted/
   returned timestamps, feedback). RLS on, no policies — the routes gate in code (`src/lib/courses/server.ts`).
-- **Who can do what:** *manage* = owner, an instructor member, or a site admin — create (teacher+), edit, add/remove students,
+- **Who can do what:** *manage* = owner, an instructor member, a site admin, or (since 2026-09-14) any editor on a **demo class** —
+  a course owned by a test account, flagged `isDemo` and chipped "Demo class" — so every editor can open the seeded Fall 2026 course
+  and show the feature. Manage = create (teacher+), edit, add/remove students,
   assign/remove recordings, return with feedback, see the gradebook and course-scoped class results. *View* = any student on
   the roster — their assignments, own status, feedback. Anyone else gets 404. A course instructor need not hold the site
-  `teacher` role; the course itself grants them the instructor view of *that* course.
+  `teacher` role; the course itself grants them the instructor view of *that* course. A course lists all its teachers
+  (`teachers`: owner first, then instructor members) on cards and headers; add co-teachers with "Add as instructors". Only the
+  owner or an admin can delete.
 - **Submission states:** `not_started` (no row, no marks) → `in_progress` (opened from the course, or any mark exists) →
   `submitted` ("Done with this EEG" in the viewer or on the course page; can be reopened) → `returned` (teacher wrote feedback).
   `late` = submitted after the due date. Grades are not stored: each teacher view re-runs the class-results scoring on the

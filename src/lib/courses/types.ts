@@ -38,6 +38,10 @@ export interface CourseSummary {
   ownerId: string;
   ownerEmail: string;
   ownerName: string | null;
+  /** everyone who teaches it: the owner first, then instructor members */
+  teachers: { email: string; displayName: string | null }[];
+  /** owned by a test account — a demo class every editor can open and run */
+  isDemo: boolean;
   startsAt: string | null;
   endsAt: string | null;
   createdAt: string;
@@ -170,4 +174,9 @@ export function isSubmissionStatus(v: unknown): v is SubmissionStatus {
 
 export function isDone(s: SubmissionStatus): boolean {
   return s === "submitted" || s === "returned";
+}
+
+/** "Eleanor Whitfield, Priya Nair" — the owner first. */
+export function teacherNames(c: Pick<CourseSummary, "teachers">): string {
+  return c.teachers.map((t) => t.displayName ?? t.email).join(", ");
 }

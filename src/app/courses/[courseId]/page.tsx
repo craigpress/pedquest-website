@@ -17,7 +17,7 @@ import {
 } from "@/lib/admin-ui";
 import { displayTitle, humanDuration, type LibraryEntry } from "@/lib/lab/library";
 import {
-  COURSE_STATUS_LABELS, SUBMISSION_COLORS, SUBMISSION_LABELS, isDone,
+  COURSE_STATUS_LABELS, SUBMISSION_COLORS, SUBMISSION_LABELS, isDone, teacherNames,
   type CourseAssignment, type CourseDetail, type CourseDetailStudent, type CourseDetailTeacher,
   type CoursePerson, type CourseStatus, type SubmissionState, type SubmissionStatus,
 } from "@/lib/courses/types";
@@ -64,6 +64,14 @@ function secs(v: number | null): string {
 
 function StatusChip({ status }: { status: CourseStatus }) {
   return <span style={{ ...meta, color: STATUS_COLOR[status], fontWeight: 600 }}>● {COURSE_STATUS_LABELS[status]}</span>;
+}
+
+function DemoChip() {
+  return (
+    <span title="Owned by a test account; every editor can run it to demonstrate courses" style={{ ...meta, color: "var(--accent-secondary)", fontWeight: 600 }}>
+      Demo class
+    </span>
+  );
 }
 
 function ProgressBar({ done, total }: { done: number; total: number }) {
@@ -353,7 +361,8 @@ function TeacherView({ course, courseId, authHeaders, reload }: {
           <h1 style={{ ...h1, marginTop: 6 }}>{course.title}</h1>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8, alignItems: "center" }}>
             <StatusChip status={course.status} />
-            <span style={meta}>{course.ownerName ?? course.ownerEmail}</span>
+            {course.isDemo && <DemoChip />}
+            <span style={meta}>{teacherNames(course)}</span>
             {(course.startsAt || course.endsAt) && (
               <span style={meta}>{shortDate(course.startsAt)}{course.endsAt ? ` → ${shortDate(course.endsAt)}` : ""}</span>
             )}
@@ -754,7 +763,7 @@ function StudentView({ course, courseId, authHeaders, reload }: {
         <div>
           <span style={eyebrow}>EEG Teaching Lab · Course</span>
           <h1 style={{ ...h1, marginTop: 6 }}>{course.title}</h1>
-          <div style={{ ...meta, marginTop: 8 }}>{course.ownerName ?? course.ownerEmail}</div>
+          <div style={{ ...meta, marginTop: 8 }}>{teacherNames(course)}</div>
           {course.description && (
             <p style={{ color: "var(--text-secondary)", marginTop: 8, maxWidth: 680 }}>{course.description}</p>
           )}

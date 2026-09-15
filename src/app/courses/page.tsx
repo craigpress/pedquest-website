@@ -18,7 +18,7 @@ import { getSupabase } from "@/lib/supabase";
 import {
   adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, inp, meta, mini,
 } from "@/lib/admin-ui";
-import { COURSE_STATUS_LABELS, type CourseStatus, type CourseSummary } from "@/lib/courses/types";
+import { COURSE_STATUS_LABELS, teacherNames, type CourseStatus, type CourseSummary } from "@/lib/courses/types";
 
 const STATUS_COLOR: Record<CourseStatus, string> = {
   draft: "var(--text-muted)",
@@ -35,6 +35,15 @@ function shortDate(iso: string | null): string {
 function StatusChip({ status }: { status: CourseStatus }) {
   return (
     <span style={{ ...meta, color: STATUS_COLOR[status], fontWeight: 600 }}>● {COURSE_STATUS_LABELS[status]}</span>
+  );
+}
+
+/** Test-account course every editor can open — labelled so nobody mistakes it for a real class. */
+function DemoChip() {
+  return (
+    <span title="Owned by a test account; every editor can run it to demonstrate courses" style={{ ...meta, color: "var(--accent-secondary)", fontWeight: 600 }}>
+      Demo class
+    </span>
   );
 }
 
@@ -176,7 +185,7 @@ export default function CoursesPage() {
                   <span style={{ color: "var(--text)", fontWeight: 600, fontSize: 15 }}>{c.title}</span>
                   <StatusChip status={c.status} />
                 </div>
-                <span style={meta}>{c.ownerName ?? c.ownerEmail}</span>
+                <span style={meta}>{teacherNames(c)}</span>
                 <ProgressBar done={c.progress?.done ?? 0} total={c.progress?.total ?? c.assignmentCount} />
               </Link>
             ))}
@@ -237,6 +246,7 @@ export default function CoursesPage() {
                     <span style={{ color: "var(--text)", fontWeight: 600, fontSize: 15 }}>{c.title}</span>
                     <StatusChip status={c.status} />
                   </div>
+                  <span style={meta}>{teacherNames(c)}{c.isDemo && <> · <DemoChip /></>}</span>
                   <span style={meta}>
                     {c.studentCount} student{c.studentCount === 1 ? "" : "s"} · {c.assignmentCount} assignment{c.assignmentCount === 1 ? "" : "s"}
                     {c.completion !== null && ` · ${Math.round(c.completion * 100)}% done`}

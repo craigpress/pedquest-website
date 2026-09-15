@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
     success: true,
     course: {
       id: c.id, title: c.title, description: c.description, status: c.status, ownerId: c.owner_id, ownerEmail: c.owner_email,
-      ownerName: auth.displayName ?? null, startsAt: c.starts_at, endsAt: c.ends_at, createdAt: c.created_at,
+      ownerName: auth.displayName ?? null, teachers: [{ email: c.owner_email, displayName: auth.displayName ?? null }], isDemo: auth.isTest,
+      startsAt: c.starts_at, endsAt: c.ends_at, createdAt: c.created_at,
       studentCount: 0, assignmentCount: 0, myRole: "owner", progress: null, completion: null,
     },
   }, { status: 201, ...NO_STORE });
