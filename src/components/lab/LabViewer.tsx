@@ -18,7 +18,7 @@ import { EdfReader } from "@/lib/eeg/edf";
 import { LayReader, mergeLayComments } from "@/lib/eeg/lay";
 import { FileByteSource, RangeByteSource } from "@/lib/eeg/sources";
 import type { Recording } from "@/lib/eeg/recording";
-import { buildMontage, VIEWER_MONTAGES, type ViewerMontageId } from "@/lib/eeg/montage";
+import { buildMontage, missingElectrodes, MONTAGE_GROUPS, VIEWER_MONTAGES, type ViewerMontageId } from "@/lib/eeg/montage";
 import {
   DEFAULT_FILTERS, HIGH_PASS_OPTIONS, LOW_PASS_OPTIONS, NOTCH_OPTIONS, type FilterSettings,
 } from "@/lib/eeg/filters";
@@ -673,7 +673,19 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
       <div className="lv-bar">
         {group("Montage", (
           <select style={sel} value={montageId} onChange={(e) => setMontageId(e.target.value as ViewerMontageId)}>
-            {VIEWER_MONTAGES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+            {MONTAGE_GROUPS.map((g) => (
+              <optgroup key={g} label={g}>
+                {VIEWER_MONTAGES.filter((m) => m.group === g).map((m) => {
+                  const missing = missingElectrodes(m, reader.labels);
+                  const why = missing.length ? `Needs ${missing.join("/")} — not in this recording` : undefined;
+                  return (
+                    <option key={m.id} value={m.id} disabled={!!why} title={why}>
+                      {m.label}{why ? ` — needs ${missing.join("/")}` : ""}
+                    </option>
+                  );
+                })}
+              </optgroup>
+            ))}
           </select>
         ))}
         {group("Timebase", (
