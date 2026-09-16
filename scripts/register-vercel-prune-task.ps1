@@ -2,11 +2,10 @@
 # The task runs scripts/prune-vercel-deployments.mjs, which keeps the newest
 # few Vercel deployments and deletes the rest (Hobby Deployment-Storage cap).
 #
-# One-time setup BEFORE this helps: create a Vercel API token at
-#   https://vercel.com/account/tokens   (scope: the craigpress team)
-# and save it (no quotes, single line) to:
-#   $env:USERPROFILE\.vercel-prune-token
-# The task reads the token from there, so it never appears in the task command.
+# No token or one-time setup is needed: the script shells out to the `vercel`
+# CLI, which is already logged in on this machine (the same login your terminal
+# `vercel ...` commands use). The task runs as the interactive user, so it
+# inherits that same CLI login.
 #
 # Run this script once (normal PowerShell, no elevation needed):
 #   pwsh -File scripts/register-vercel-prune-task.ps1
@@ -42,5 +41,5 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
   -Principal $principal -Settings $settings -Force | Out-Null
 
 Write-Host "Registered '$taskName' (Mondays 6:15 AM). Log: $log"
-Write-Host "Token file expected at: $env:USERPROFILE\.vercel-prune-token"
-Write-Host "Test now with:  node `"$script`" --dry-run"
+Write-Host "No token needed - it uses your logged-in vercel CLI."
+Write-Host "Test now with a dry run of: $script"
