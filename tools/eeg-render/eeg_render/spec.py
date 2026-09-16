@@ -166,6 +166,33 @@ def synchrony_default(pma: float) -> float:
     return float(_np.interp(pma, [p[0] for p in SYNCHRONY_PMA], [p[1] for p in SYNCHRONY_PMA]))
 
 
+#: Delta brushes as discrete events (0.3.12, ``background.delta_brushes: "riding"``):
+#: a 0.3-1.5 Hz delta wave with a 10-20 Hz burst riding on it, appearing at
+#: 24-26 w, most abundant 28-34 w, rare by 37-38 w and gone at term (rec 2446,
+#: ch. 3; Craig's review of the P5 pages, 2026-09-16: term candidates showed
+#: brushes and the fast bursts had no delta wave of their own).  Breakpoints are
+#: (pma, rate per minute, slow-wave peak-to-peak uV); rates are set so a 30 s
+#: page at the peak age shows one or two.  Kept apart from GRAPHOELEMENT_PMA so
+#: a legacy spec with a PMA does not acquire brush events silently.
+DELTA_BRUSH_PMA: List[Tuple[float, float, float]] = [
+    (24.0, 0.3, 60.0), (26.0, 1.0, 100.0), (30.0, 3.0, 150.0), (33.0, 3.5, 160.0),
+    (35.0, 2.0, 140.0), (37.0, 0.8, 110.0), (38.5, 0.2, 90.0), (40.0, 0.0, 0.0),
+]
+#: rate / amplitude when ``"riding"`` is requested without a PMA
+DELTA_BRUSH_NO_PMA = {"rate_per_min": 2.0, "amplitude_uv": 120.0}
+
+
+def delta_brush_defaults(pma: Optional[float]) -> Dict[str, float]:
+    import numpy as _np
+    if pma is None:
+        return dict(DELTA_BRUSH_NO_PMA)
+    xs = [p[0] for p in DELTA_BRUSH_PMA]
+    if pma < xs[0] or pma > xs[-1]:
+        return {"rate_per_min": 0.0, "amplitude_uv": 0.0}
+    return {"rate_per_min": float(_np.interp(pma, xs, [p[1] for p in DELTA_BRUSH_PMA])),
+            "amplitude_uv": float(_np.interp(pma, xs, [p[2] for p in DELTA_BRUSH_PMA]))}
+
+
 def pma_defaults(pma: float) -> Dict[str, float]:
     """Interpolate PMA_TABLE at ``pma`` weeks (clamped to the table)."""
     import numpy as _np
@@ -411,6 +438,15 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     bg.setdefault("slow_fraction", ad["slow_fraction"])
     bg.setdefault("reactivity", "present")
     bg.setdefault("delta_brushes", bool(ad["delta_brushes"]))
+    # 0.3.12 opt-in: "riding" turns the 0.3.10 delta-gated fast stream off and
+    # schedules brush EVENTS (delta wave + riding fast burst) by PMA instead.
+    # Only the string form adds ``delta_brush_events`` to the normalized spec,
+    # so a legacy bool spec keeps its hash and its samples.
+    if bg["delta_brushes"] == "riding":
+        bg["delta_brushes"] = False
+        bg["delta_brush_events"] = True
+    else:
+        bg["delta_brushes"] = bool(bg["delta_brushes"])
     bg.setdefault("baseline_ecg_uv", float(ad["baseline_ecg_uv"]))
     preset = BACKGROUND_PRESETS[bg["type"]]
     bs = dict(bg.get("burst_suppression", {}) or {})
@@ -440,6 +476,8 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     ge_in = dict(bg.get("graphoelements", {}) or {})
     ge = graphoelement_defaults(float(pma)) if (pma is not None and age == "neonate") else {
         name: {"rate_per_min": 0.0, "amplitude_uv": 0.0} for name in GRAPHOELEMENT_PMA}
+    if bg.get("delta_brush_events") and age == "neonate":
+        ge["delta_brush"] = delta_brush_defaults(None if pma is None else float(pma))
     for name, row in ge_in.items():
         row = dict(row or {})
         if row.get("enabled") is False:
@@ -600,6 +638,16 @@ def spec_warnings(image: Dict[str, Any]) -> List[str]:
     bg = spec.get("background") or {}
     if age == "adult":
         out.append("age_group adult uses engineering presets (10 Hz, 30 uV) not yet validated against adult references")
+    if age == "neonate" and bg.get("delta_brushes") is True:
+        pma = bg.get("pma_weeks")
+        out.append("delta_brushes: true is the 0.3.10 delta-gated fast stream: 13-Hz bursts recurring at delta rate "
+                   "head-wide with no delta wave of their own" + (f", at PMA {pma} w where brushes should be rare or absent" if pma is not None and float(pma) >= 37.0 else "")
+                   + "; set background.delta_brushes: \"riding\" for PMA-scheduled delta-wave brushes (0.3.12)")
+    if age == "neonate" and bg.get("delta_brush_events"):
+        pma = bg.get("pma_weeks")
+        if pma is not None and float(pma) >= 40.0 and float(((bg.get("graphoelements") or {}).get("delta_brush") or {}).get("rate_per_min", 0) or 0) <= 0:
+            out.append(f"delta_brushes riding at PMA {pma} w schedules no brushes (they are gone by term); "
+                       "set graphoelements.delta_brush.rate_per_min to force some")
     if bg.get("reactivity") in ("unknown", "unclear"):
         out.append(f"reactivity {bg['reactivity']!r} is synthesized as no stimulus response and recorded as such")
     if (bg.get("type") in ("suppressed", "low_voltage", "burst_suppression") and bg.get("reactivity") != "present"

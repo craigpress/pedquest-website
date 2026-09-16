@@ -232,7 +232,9 @@ _BACKGROUND = {
         # montage can land entirely in the tail (P5 seed sweep: 27-160 uV for one
         # 40-uV request).  2.0 keeps a hot electrode; absent = unchanged.
         "channel_gain_max": {"type": "number", "minimum": 1, "maximum": 10},
-        "delta_brushes": {"type": "boolean"},
+        # true/false: the 0.3.10 delta-gated fast stream; "riding" (0.3.12): discrete
+        # delta-wave brushes scheduled by PMA (spec.DELTA_BRUSH_PMA)
+        "delta_brushes": {"anyOf": [{"type": "boolean"}, {"const": "riding"}]},
         "baseline_ecg_uv": {"type": "number", "minimum": 0, "maximum": 30},
         # neonates only: postmenstrual age drives the discontinuity defaults
         # (interburst interval, its spread, burst length, interburst floor,
@@ -254,7 +256,7 @@ _BACKGROUND = {
                     },
                 }
                 for name in ("occipital_delta", "temporal_theta", "temporal_alpha", "stop",
-                             "frontal_sharp", "anterior_slow", "midline_theta")
+                             "frontal_sharp", "anterior_slow", "midline_theta", "delta_brush")
             },
         },
         # fraction of bursts that are interhemispherically synchronous

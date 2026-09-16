@@ -987,6 +987,9 @@ class Synthesizer:
         "frontal_sharp": (0.45, 0.0, (0.0, 0.0), "bilateral", False),
         "anterior_slow": (3.0, 0.35, (1.5, 2.0), "bilateral", False),
         "midline_theta": (1.5, 0.3, (5.0, 9.0), "midline", True),
+        # 0.3.12: a delta brush is one slow wave (~0.7-1.6 s) with a 10-20 Hz
+        # burst riding on it; one side per event, inside bursts when discontinuous
+        "delta_brush": (1.1, 0.30, (10.0, 20.0), "unilateral", True),
     }
     #: Spatial fields (electrode weight; the unilateral ones list the LEFT
     #: field and are mirrored for the right).
@@ -998,6 +1001,8 @@ class Synthesizer:
         "frontal_sharp": {"Fp1": 1.0, "Fp2": 1.0, "F3": 0.6, "F4": 0.6, "Fz": 0.6, "F7": 0.45, "F8": 0.45},
         "anterior_slow": {"Fp1": 1.0, "Fp2": 1.0, "F3": 1.0, "F4": 1.0, "Fz": 0.9, "F7": 0.6, "F8": 0.6, "C3": 0.3, "C4": 0.3, "Cz": 0.3},
         "midline_theta": {"Cz": 1.0, "C3": 0.4, "C4": 0.4, "Fz": 0.35, "Pz": 0.35},
+        # rolandic / temporal / occipital, the regions brushes favour
+        "delta_brush": {"C3": 1.0, "Cz": 0.5, "T3": 0.6, "O1": 0.7, "P3": 0.55, "T5": 0.4, "F3": 0.3},
     }
     _MIRROR = {"Fp1": "Fp2", "F7": "F8", "F3": "F4", "T3": "T4", "C3": "C4", "T5": "T6", "P3": "P4", "O1": "O2"}
 
@@ -1061,6 +1066,15 @@ class Synthesizer:
                     wave = (np.exp(-0.5 * ((d - 0.10) / 0.055) ** 2)
                             - 0.75 * np.exp(-0.5 * ((d - 0.27) / 0.085) ** 2))
                     sig = -amp * 0.5 * wave
+                elif name == "delta_brush":
+                    # a delta wave (one surface-negative half-cycle, ``amp`` peak-to-peak)
+                    # with a fast burst riding on it: the burst envelope follows the slow
+                    # wave and peaks at ~30 % of the slow wave's amplitude
+                    u = (t - t0) / max(dur, 1e-3)
+                    win = np.where((u > 0) & (u < 1), np.sin(np.pi * np.clip(u, 0, 1)), 0.0)
+                    slow = -amp * 0.5 * win
+                    fast = amp * 0.5 * 0.30 * win ** 2 * np.sin(2 * np.pi * freq * (t - t0) + phase)
+                    sig = slow + fast
                 else:
                     u = (t - t0) / max(dur, 1e-3)
                     win = np.where((u > 0) & (u < 1), np.sin(np.pi * np.clip(u, 0, 1)) ** 1.5, 0.0)
