@@ -1,0 +1,15 @@
+# Keep non-runtime files out of Vercel deployments to reduce Deployment Storage.
+# Verified 2026-09-16: none of these are imported by the Next.js app or its
+# build. The Python renderer (tools/eeg-render) is a separate Moltbot worker —
+# the app only references the Supabase rows it writes, never the Python source.
+# design-assets/ is a logo archive (~9 MB, incl. a 5.8 MB Test_Logo.png),
+# docs/ are the EEG Atlas planning notes, backups/ and homelab/ are reference.
+#
+# NOTE: public/ (served static assets, incl. the ~35 MB question-bank PNGs),
+# src/, content/qbank/ (traced into functions), scripts/ (run in prebuild) and
+# supabase/ are all required and stay in the deployment.
+design-assets
+tools
+docs
+backups
+homelab

@@ -328,7 +328,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop nav links */}
-          <ul className="hidden lg:flex items-center gap-1.5 list-none m-0 p-0">
+          <ul className="hidden xl:flex items-center gap-1.5 list-none m-0 p-0">
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
@@ -383,7 +383,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {/* Editor console — editors and admins */}
             {!userLoading && user && isEditor && (
-              <div className="hidden lg:block">
+              <div className="hidden xl:block">
                 <NavMenu id="editor-menu" label="Editor" links={editorLinks} pathname={pathname} variant="pill" align="right" />
               </div>
             )}
@@ -391,7 +391,7 @@ export default function Navbar() {
             {!userLoading && user && (
               <Link
                 href="/profile"
-                className="hidden lg:flex items-center gap-2 no-underline transition-all duration-200"
+                className="hidden xl:flex items-center gap-2 no-underline transition-all duration-200"
                 title="My Profile"
                 style={{
                   padding: member?.photoUrl ? "0" : "0.45rem 0.85rem",
@@ -430,10 +430,10 @@ export default function Navbar() {
             )}
 
             {/* Log in — desktop only, hidden when logged in */}
-            {!userLoading && !user && (
+            {!user && (
               <Link
                 href="/login"
-                className="hidden lg:flex items-center no-underline transition-all duration-200"
+                className="hidden xl:flex items-center whitespace-nowrap no-underline transition-all duration-200"
                 style={{
                   fontSize: "0.85rem",
                   fontWeight: 600,
@@ -451,7 +451,7 @@ export default function Navbar() {
             {!user && (
               <Link
                 href="/join"
-                className="hidden lg:flex items-center no-underline transition-all duration-200"
+                className="hidden xl:flex items-center whitespace-nowrap no-underline transition-all duration-200"
                 style={{
                   fontSize: "0.85rem",
                   fontWeight: 700,
@@ -482,7 +482,7 @@ export default function Navbar() {
               aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileOpen}
               aria-controls="mobile-nav-menu"
-              className="flex lg:hidden items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200"
+              className="flex xl:hidden items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200"
               style={{
                 background: mobileOpen ? "var(--accent-primary)" : "var(--bg-card-hover)",
                 color: mobileOpen ? "white" : "var(--text-secondary)",
@@ -498,7 +498,7 @@ export default function Navbar() {
       {/* Mobile slide-down menu */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden"
+          className="fixed inset-0 z-40 xl:hidden"
           style={{ top: 92 }}
         >
           {/* Backdrop */}
@@ -567,7 +567,7 @@ export default function Navbar() {
                 </li>
               )}
               {/* Mobile log in — hidden when logged in */}
-              {!userLoading && !user && (
+              {!user && (
                 <li className="mt-3">
                   <Link
                     href="/login"

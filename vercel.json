@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "eeg-teaching-lab": false
+    }
+  },
   "crons": [
     {
       "path": "/api/keepalive",
