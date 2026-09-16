@@ -106,8 +106,16 @@ export interface QbankQuestion {
 
 export const QBANK_ID_PATTERN = /^PQ-[A-Z]-[0-9]{3}$/;
 
-/** Public path of a rendered bank image, by convention `<ID>.png`. */
+/** Public path of a rendered bank image, by convention `<ID>.png`.
+ *
+ * Serves from the deployment's `/public` folder by default. Set
+ * `NEXT_PUBLIC_QBANK_IMAGE_BASE` (e.g. a Supabase public-bucket URL) to serve
+ * the PNGs off the deployment instead, which keeps ~35 MB of images out of
+ * every Vercel build — see `scripts/migrate-qbank-images-to-supabase.mjs`.
+ * A trailing slash on the base is optional. */
 export function imagePathForId(id: string): string {
+  const base = process.env.NEXT_PUBLIC_QBANK_IMAGE_BASE;
+  if (base) return `${base.replace(/\/+$/, "")}/${id}.png`;
   return `/images/qbank/${id}.png`;
 }
 

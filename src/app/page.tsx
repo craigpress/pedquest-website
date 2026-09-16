@@ -229,6 +229,39 @@ const IMPACT_STATS: { label: string; value: number; note: string }[] = [
   },
 ];
 
+// Work produced by the consortium itself, kept separate from the members'
+// individual output counted above so the site never presents a member's own
+// paper as PedQuEST's. Citations verified against PubMed and the AES 2025
+// program (2026-09-16); the abstract has no DOI, so it carries no link.
+const CONSORTIUM_WORK: { tag: string; title: string; cite: string; href?: string }[] = [
+  {
+    tag: "Consortium abstract",
+    title:
+      "Development of a Multicenter EEG Research Consortium and Data Platform to Advance Pediatric Quantitative EEG Research",
+    cite: "Press CA, Benedetti GM, … Wagenaar JB. American Epilepsy Society Annual Meeting; 2025 (poster 2.172).",
+  },
+  {
+    tag: "qEEG evidence",
+    title: "Predicting pediatric cardiac arrest outcomes using early quantitative EEG",
+    cite: "Benedetti GM, … Press CA. Resuscitation. 2025;218:110838.",
+    href: "https://doi.org/10.1016/j.resuscitation.2025.110838",
+  },
+  {
+    tag: "qEEG methods",
+    title:
+      "Review of Noninvasive Neuromonitoring Modalities in Children II: EEG and Quantitative EEG",
+    cite: "Benedetti GM, Guerriero RM, Press CA. Neurocrit Care. 2023;39(3):618–638.",
+    href: "https://doi.org/10.1007/s12028-023-01686-5",
+  },
+  {
+    tag: "qEEG practice",
+    title:
+      "The Spectrum of Quantitative EEG Utilization Across North America: A Cross-Sectional Survey",
+    cite: "Benedetti GM, … Press CA. Pediatr Neurol. 2023;141:1–8.",
+    href: "https://doi.org/10.1016/j.pediatrneurol.2022.12.016",
+  },
+];
+
 const PUB_CHART_FROM = 2015;
 const PUB_CHART_TO = 2026;
 const pubsByYear: { year: number; count: number }[] = (() => {
@@ -314,10 +347,12 @@ export default function HomePage() {
         <div className="home-container">
           <div className="section-head">
             <span className="section-eyebrow">Consortium at a glance</span>
-            <h2 className="section-h2">Evidence, not adjectives.</h2>
+            <h2 className="section-h2">Membership and scientific contributions</h2>
             <p className="section-sub">
-              Every figure is computed from the live member and publication
-              registry, and updates as members join and papers are indexed.
+              The counts and the chart below reflect our members&apos; own
+              peer-reviewed scholarship, indexed live from PubMed as members
+              join and papers are published. Work produced by the PedQuEST
+              consortium itself is listed separately below.
             </p>
           </div>
           <div className="impact-grid">
@@ -334,7 +369,7 @@ export default function HomePage() {
             </div>
             <div className="impact-chart">
               <div className="chart-head">
-                <span className="chart-title">Peer-reviewed output by year</span>
+                <span className="chart-title">Members&apos; peer-reviewed output by year</span>
                 <span className="chart-tag">{PUB_CHART_TO} partial</span>
               </div>
               <PubYearChart data={pubsByYear} />
@@ -343,6 +378,36 @@ export default function HomePage() {
                 <span>&apos;{String(PUB_CHART_TO).slice(2)}</span>
               </div>
             </div>
+          </div>
+          {/* Consortium's own contributions — distinct from members' individual output above */}
+          <div style={{ marginTop: "2.75rem" }}>
+            <span className="section-eyebrow">From the consortium</span>
+            <p className="section-sub" style={{ marginTop: "0.35rem", marginBottom: "1.25rem" }}>
+              Scholarship that describes PedQuEST and its qEEG methods, led by
+              consortium members.
+            </p>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "0.75rem" }}>
+              {CONSORTIUM_WORK.map((w) => (
+                <li
+                  key={w.title}
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "1rem 1.15rem" }}
+                >
+                  <span style={{ display: "inline-block", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--accent-primary)", marginBottom: "0.35rem" }}>
+                    {w.tag}
+                  </span>
+                  {w.href ? (
+                    <a href={w.href} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontWeight: 600, color: "var(--text)", textDecoration: "none" }}>
+                      {w.title}
+                    </a>
+                  ) : (
+                    <span style={{ display: "block", fontWeight: 600, color: "var(--text)" }}>{w.title}</span>
+                  )}
+                  <span style={{ display: "block", marginTop: "0.3rem", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                    {w.cite}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
