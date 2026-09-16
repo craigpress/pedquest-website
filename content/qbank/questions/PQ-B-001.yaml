@@ -134,6 +134,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 1
     seed: 8100001
     age_group: neonate
     sample_rate: 256

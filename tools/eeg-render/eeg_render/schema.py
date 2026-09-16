@@ -74,6 +74,9 @@ _EVOLUTION = {
         "end_hz": {"type": "number", "minimum": 0.2, "maximum": 30},
         "amplitude_start_uv": _pos,
         "amplitude_end_uv": _pos,
+        # sweep: one log-frequency glide (0.3.x); recruit (0.4.0): low-voltage fast
+        # onset, stepwise slowing with amplitude build-up, late clonic bursting
+        "profile": {"enum": ["sweep", "recruit"]},
     },
 }
 
@@ -143,6 +146,10 @@ _EVENT = {
         # rhythmic_pattern, opt-in: every run lasts at least this many cycles
         # (ACNS needs six); run_duration_s alone is a mean with spread
         "min_cycles": {"type": "integer", "minimum": 1, "maximum": 100},
+        # 0.4.0: amplitude waxing/waning of a run (0.15 was the 0.3.x constant) and
+        # run-to-run repetition-rate wander as a fraction of frequency_hz
+        "fluctuation": {"type": "number", "minimum": 0, "maximum": 1},
+        "rate_jitter": {"type": "number", "minimum": 0, "maximum": 0.5},
         "sharpness": {"type": "string"},
         # seizure
         "onset_min": _num,
@@ -193,6 +200,8 @@ _EVENT = {
         "duration_s": _pos,
         "channels": {"type": "array", "items": {"type": "string"}},
         "intensity": {"enum": ["low", "medium", "high"]},
+        # artifact waveform model: 1 = 0.3.x, 2 = 0.4.0 (patting in bouts, atlas-style chewing)
+        "model": {"type": "integer", "minimum": 1, "maximum": 2},
         # state change
         "to": {"enum": ["sleep", "wake", "arousal"]},
     },
@@ -222,6 +231,17 @@ _BACKGROUND = {
         # record never engages the burst-envelope blink gate, so an
         # unresponsive patient needs this set explicitly.
         "blink_rate_per_min": {"type": "number", "minimum": 0, "maximum": 60},
+        # 0.4.0: peak blink voltage at Fp (0.3.x fixed 95; version-2 default 160)
+        "blink_amplitude_uv": {"type": "number", "minimum": 0, "maximum": 500},
+        # 0.4.0: what amplitude_uv (and the events' amplitudes) mean - the referential
+        # synthesis scale (0.3.x) or the peak-to-peak a reader measures on the display montage
+        "amplitude_reference": {"enum": ["referential", "display"]},
+        # 0.4.0: posterior dominant rhythm field - broad (0.3.x) or focal (occipital-parietal)
+        "pdr_field": {"enum": ["broad", "focal"]},
+        # 0.4.0 (Craig, P5 C05): interburst interval as a [lo, hi] range in seconds and the
+        # interburst voltage in absolute microvolts; both override the PMA/preset values
+        "ibi_range_s": {"type": "array", "items": _pos, "minItems": 2, "maxItems": 2},
+        "ibi_floor_uv": {"type": "number", "minimum": 0, "maximum": 200},
         # EEG Atlas P5 (0.3.11), opt-in: multiplier on the posterior dominant
         # rhythm stream (1.0 = the 0.3.10 mix, which leaves the spectral peak
         # in the delta band whatever dominant_hz asks).
@@ -279,6 +299,9 @@ _BACKGROUND = {
                 "side": {"enum": ["left", "right"]},
                 "attenuation_pct": {"type": "number", "minimum": 0, "maximum": 100},
                 "slowing_hz": {"type": "number", "minimum": 0, "maximum": 10},
+                # gradient: scales with distance from the midline (0.3.x); hemispheric:
+                # full attenuation on every electrode of that side (0.4.0, Craig P5 C04)
+                "profile": {"enum": ["gradient", "hemispheric"]},
             },
         },
         "burst_suppression": {
@@ -385,6 +408,8 @@ _SOURCE = {
 
 _COMMON = {
     "seed": {"type": "integer"},
+    # which DEFAULTS an omitted key gets: 1 = 0.3.x (the committed bank is pinned to it), 2 = 0.4.0
+    "spec_version": {"type": "integer", "minimum": 1, "maximum": 2},
     "age_group": {"enum": AGE_GROUPS},
     "sample_rate": {"type": "integer", "minimum": 100, "maximum": 1024},
     "channels": {"enum": list({"standard_19", "neonatal_9", "neonatal_reduced"})},

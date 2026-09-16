@@ -179,6 +179,23 @@ BLINK_RATE_HZ = 0.25
 #: A wrong model is worse than an honest constant.
 ICTAL_GAIN = 2.0
 
+#: 0.4.0 ``amplitude_reference: display``: delivered / requested ratios of the
+#: 0.3.x referential scale, measured with the EEG Atlas P4 estimators (1-s
+#: peak-to-peak, median over the display-montage derivations of the region,
+#: 0.5-30 Hz) so that dividing by them makes the request come out on the page.
+#: ``background``: continuous backgrounds on the bipolar montage (P4: 0.85-0.86;
+#: the neonatal reduced montage measured the same to two figures).  ``ictal``:
+#: ``amplitude_end_uv`` at the end of a focal run (P4/P5: 1.5-1.7x).
+#: ``periodic`` / ``rda``: LPD 3.6-3.7x and LRDA 1.7x on the maximal derivation.
+#: Re-measure with tests/test_display_calibration.py after touching any
+#: waveform template; that test holds delivered within 15 % of requested.
+#: The background is not in this table: it is self-calibrated per spec in
+#: ``Synthesizer._calibrate_display`` (a 40 s background-only synthesis measured on
+#: the spec's own display montage), because the delivered ratio depends on the
+#: mix (PDR gain and field, dominant frequency, montage).  Event constants below
+#: were measured with calibrate_display.py on 2026-09-16.
+DISPLAY_CAL: Dict[str, float] = {"ictal": 2.45, "periodic": 4.4, "rda": 2.9}
+
 #: Spatial correlation length of the per-electrode background noise, in head
 #: units (adjacent 10-20 electrodes sit ~0.5 apart).  Volume conduction blurs
 #: a cortical source over several centimetres of scalp, so neighbouring
@@ -505,6 +522,9 @@ class SeizureInstance:
     morph: str = "ictal"
     fluctuate: float = 0.22
     plus_fast: float = 0.0
+    #: frequency/amplitude trajectory: ``sweep`` (0.3.x log glide) or ``recruit``
+    #: (0.4.0: low-voltage fast onset, stepwise slowing, build-up, late clonic bursting)
+    profile: str = "sweep"
 
     @property
     def t1(self) -> float:
@@ -599,6 +619,13 @@ class Synthesizer:
         # the *display* montage; a bipolar derivation of partially correlated
         # electrodes runs ~6x its RMS peak-to-peak.
         self.amp_rms = float(bg["amplitude_uv"]) / 6.4
+        # 0.4.0: with ``amplitude_reference: display`` the request is what the
+        # reader measures on the display montage, so undo the measured shortfall
+        # (DISPLAY_CAL) and drop the hidden per-type multipliers: a suppressed
+        # record is authored as the voltage wanted on screen.
+        self.display_ref = bg.get("amplitude_reference") == "display"
+        self._calibrating = False          # True only inside _calibrate_display()
+        self.spec_version = int(spec.get("spec_version") or 1)
         # 1/f exponent and delta content are separate knobs: real scalp EEG
         # sits around alpha 1.5-2.5 at every age.  Pushing alpha to 3 to
         # express "slow" leaves almost no 2-15 Hz power, which then makes the
@@ -621,6 +648,10 @@ class Synthesizer:
         self._collect_seizures()
         self.artifacts = [e for e in spec["events"] if e["type"] == "artifact"]
         self.stimulations = [e for e in spec["events"] if e["type"] == "stimulation"]
+        # 0.4.0 ``amplitude_reference: display``: last, once everything a segment needs exists
+        self.display_scale = 1.0
+        if self.display_ref:
+            self._calibrate_display()
 
     # ---------------- streams ----------------
 
@@ -659,7 +690,10 @@ class Synthesizer:
 
         self.st_broad = self._mk("broad", bg_shape(f, self.alpha), near_uniform, common=0.45)
         self.st_delta = self._mk("delta", band_shape(f, 1.6, 1.5, order=1.0), near_uniform, common=0.55)
-        self.st_pdr = self._mk("pdr", band_shape(f, self.dominant_hz, 1.45), post, common=0.65)
+        # 0.4.0 (Craig, P5 C13): a focal posterior field for the dominant rhythm keeps it
+        # occipito-parietal instead of leaking into central and frontal derivations
+        post_pdr = np.power(post, 2.2) if self.bg.get("pdr_field") == "focal" else post
+        self.st_pdr = self._mk("pdr", band_shape(f, self.dominant_hz, 1.45), post_pdr, common=0.65)
         self.st_pdr_slow = self._mk(
             "pdrslow",
             band_shape(f, max(0.8, self.dominant_hz - float((self.bg.get("asymmetry") or {}).get("slowing_hz") or 2.0)), 1.1),
@@ -696,9 +730,13 @@ class Synthesizer:
             att = float(asym.get("attenuation_pct", 0.0)) / 100.0
             slw = float(asym.get("slowing_hz", 0.0))
             sign = -1.0 if asym["side"] == "left" else 1.0
+            hemispheric = asym.get("profile") == "hemispheric"
             for i, e in enumerate(ch):
                 x = mt.POSITIONS.get(e, (0.0, 0.0))[0]
-                lateral = float(np.clip(sign * x, 0.0, 1.0))
+                # gradient (0.3.x): C3 at x~0.5 got half the attenuation, Fp1 a third, so a
+                # "40 %" request never read as 40 %; hemispheric (0.4.0, Craig P5 C04): every
+                # electrode clear of the midline gets the full figure
+                lateral = float(smoothstep(sign * x / 0.25)) if hemispheric else float(np.clip(sign * x, 0.0, 1.0))
                 self.gain_asym[i] = 1.0 - att * lateral
                 self.slow_side[i] = lateral * min(1.0, slw / 3.0)
 
@@ -963,11 +1001,18 @@ class Synthesizer:
         if sel.size == 0:
             return rows
         prof = np.zeros(t.size)
+        sharp = self.spec_version >= 2      # 0.4.0 (Craig, P5 C20): fast rise, slower decay
         for tt in sel:
             d = t - tt
-            m = (d > -0.05) & (d < 0.45)
-            prof[m] += np.exp(-0.5 * ((d[m] - 0.14) / 0.075) ** 2)
-        prof = prof * BLINK_UV * wake
+            if sharp:
+                m = (d > -0.06) & (d < 0.65)
+                dd = d[m]
+                prof[m] += np.where(dd < 0.10, np.exp(-0.5 * ((dd - 0.10) / 0.035) ** 2),
+                                    np.exp(-(dd - 0.10) / 0.13))
+            else:
+                m = (d > -0.05) & (d < 0.45)
+                prof[m] += np.exp(-0.5 * ((d[m] - 0.14) / 0.075) ** 2)
+        prof = prof * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * wake
         for i, e in enumerate(self.electrodes):
             rows[i] = prof * _BLINK_FIELD.get(e, 0.04)
         return rows
@@ -1001,9 +1046,14 @@ class Synthesizer:
         "frontal_sharp": {"Fp1": 1.0, "Fp2": 1.0, "F3": 0.6, "F4": 0.6, "Fz": 0.6, "F7": 0.45, "F8": 0.45},
         "anterior_slow": {"Fp1": 1.0, "Fp2": 1.0, "F3": 1.0, "F4": 1.0, "Fz": 0.9, "F7": 0.6, "F8": 0.6, "C3": 0.3, "C4": 0.3, "Cz": 0.3},
         "midline_theta": {"Cz": 1.0, "C3": 0.4, "C4": 0.4, "Fz": 0.35, "Pz": 0.35},
-        # rolandic / temporal / occipital, the regions brushes favour
+        # rolandic / temporal / occipital, the regions brushes favour (the PMA-dependent
+        # central vs occipito-temporal weighting is applied in graphoelement_rows)
         "delta_brush": {"C3": 1.0, "Cz": 0.5, "T3": 0.6, "O1": 0.7, "P3": 0.55, "T5": 0.4, "F3": 0.3},
     }
+    #: beta-delta complexes are CENTRAL at 27-30 w and OCCIPITO-TEMPORAL at 31-33 w
+    #: (Hrachovy/Mizrahi/Kellaway); central ones are gone by 36-37 w, occipital by 39 w
+    _BRUSH_FIELD_CENTRAL = {"C3": 1.0, "Cz": 0.55, "F3": 0.35, "T3": 0.35, "P3": 0.4}
+    _BRUSH_FIELD_OCCTEMP = {"O1": 1.0, "T3": 0.85, "T5": 0.8, "P3": 0.6, "C3": 0.35}
     _MIRROR = {"Fp1": "Fp2", "F7": "F8", "F3": "F4", "T3": "T4", "C3": "C4", "T5": "T6", "P3": "P4", "O1": "O2"}
 
     def _build_graphoelement_schedule(self) -> None:
@@ -1069,12 +1119,26 @@ class Synthesizer:
                 elif name == "delta_brush":
                     # a delta wave (one surface-negative half-cycle, ``amp`` peak-to-peak)
                     # with a fast burst riding on it: the burst envelope follows the slow
-                    # wave and peaks at ~30 % of the slow wave's amplitude
+                    # wave.  The delta wave dominates (Craig, 0.4.0); the burst is about a
+                    # fifth of it, rising to a third at 34-35 w when the beta inside the
+                    # complexes is "extremely high voltage" (Hrachovy/Mizrahi).
+                    pma_b = float(self.bg.get("pma_weeks") or 32.0)
+                    ratio = 0.34 if 33.5 <= pma_b <= 35.5 else 0.22
                     u = (t - t0) / max(dur, 1e-3)
                     win = np.where((u > 0) & (u < 1), np.sin(np.pi * np.clip(u, 0, 1)), 0.0)
                     slow = -amp * 0.5 * win
-                    fast = amp * 0.5 * 0.30 * win ** 2 * np.sin(2 * np.pi * freq * (t - t0) + phase)
+                    fast = amp * 0.5 * ratio * win ** 2 * np.sin(2 * np.pi * freq * (t - t0) + phase)
                     sig = slow + fast
+                    # field by maturity: central before 31 w, occipito-temporal after
+                    fld = self._BRUSH_FIELD_CENTRAL if pma_b < 31.0 else self._BRUSH_FIELD_OCCTEMP
+                    w = np.zeros(self.n_elec)
+                    for e, v in fld.items():
+                        if lat == "unilateral" and side > 0 and e in self._MIRROR:
+                            e = self._MIRROR[e]
+                        if e in self._idx:
+                            w[self._idx[e]] = max(w[self._idx[e]], v)
+                    target += np.outer(w, sig)
+                    continue
                 else:
                     u = (t - t0) / max(dur, 1e-3)
                     win = np.where((u > 0) & (u < 1), np.sin(np.pi * np.clip(u, 0, 1)) ** 1.5, 0.0)
@@ -1187,6 +1251,7 @@ class Synthesizer:
                     amp_end=float(evo["amplitude_end_uv"]),
                     spread=ev["spread"], postictal_s=float(ev["postictal_attenuation_s"]),
                     morph=ev.get("morphology") or "ictal",
+                    profile=str(evo.get("profile") or "sweep"),
                     index=i,
                 ))
             elif ev["type"] == "seizure_cluster":
@@ -1216,6 +1281,7 @@ class Synthesizer:
                         amp_end=float(evo["amplitude_end_uv"]),
                         spread=z["spread"], postictal_s=float(z["postictal_attenuation_s"]),
                         morph=z.get("morphology") or "ictal",
+                        profile=str(evo.get("profile") or "sweep"),
                         index=i, ordinal=k, kind="seizure_cluster",
                     ))
                     t += step
@@ -1245,6 +1311,8 @@ class Synthesizer:
                     amp_start=float(evo["amplitude_start_uv"]), amp_end=float(evo["amplitude_end_uv"]),
                     spread=ev.get("spread", "none"), postictal_s=0.0,
                     morph=ev.get("morphology") or "rda", muscle=ev.get("muscle", "none"),
+                    # an ictal-morphology BRD (0.4.0 default) waxes and wanes like the real thing
+                    fluctuate=0.35 if (ev.get("morphology") or "rda") == "ictal" else 0.22,
                     index=i, kind="brd",
                 ))
             elif ev["type"] == "rhythmic_pattern":
@@ -1331,7 +1399,8 @@ class Synthesizer:
         plus = str(ev.get("plus_modifier") or "").lower()
         morph = "periodic" if ev.get("periodic") else "rda"
         plus_fast = 0.30 if ("+f" in plus or "fast" in plus) else 0.0
-        fluct = 0.45 if "fluctuat" in modifier else 0.15
+        fluct = float(ev.get("fluctuation", 0.45 if "fluctuat" in modifier else 0.15))
+        rate_jitter = float(ev.get("rate_jitter", 0.0))     # 0.4.0: run-to-run repetition-rate wander
         duty_gap = 0.55 if "intermittent" in modifier else 0.30
 
         pat = str(ev.get("pattern") or "").upper()
@@ -1360,9 +1429,11 @@ class Synthesizer:
                 if min_cycles:
                     dur = max(dur, min_cycles / (f0 * fmul))
                 dur = min(dur, end - t)
+                # drawn only when asked for, so version-1 specs keep their RNG stream
+                fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
                 out.append(SeizureInstance(
                     t0=t, duration_s=dur, onset_region=region,
-                    start_hz=f0 * fmul, end_hz=f0 * fmul, amp_start=amp, amp_end=amp,
+                    start_hz=f0 * fmul * fj, end_hz=f0 * fmul * fj, amp_start=amp, amp_end=amp,
                     spread="none", postictal_s=0.0, index=i, ordinal=k * len(generators) + gi,
                     kind="rhythmic_pattern", morph=morph, fluctuate=fluct,
                     plus_fast=plus_fast,
@@ -1614,8 +1685,146 @@ class Synthesizer:
             wave = wave + plus_fast * np.sin(9.0 * p + psi[1]) * (0.5 + 0.5 * np.sin(p))
         return wave
 
+    def _ictal_gain(self, inst: SeizureInstance) -> float:
+        """ICTAL_GAIN, corrected under the display amplitude reference (0.4.0)."""
+        if not self.display_ref:
+            return ICTAL_GAIN
+        key = inst.morph if (inst.kind == "rhythmic_pattern" and inst.morph in DISPLAY_CAL) else "ictal"
+        return ICTAL_GAIN / DISPLAY_CAL[key]
+
+    def _calibrate_display(self) -> None:
+        """Scale ``amp_rms`` so the background's 1-s peak-to-peak on the display montage equals ``amplitude_uv``.
+
+        Synthesizes 40 s of background only (events, blinks, graphoelements and
+        artifacts skipped) at a fixed offset, derives the spec's display montage,
+        band-passes 0.5-30 Hz like the EEG Atlas P4 estimators and takes the
+        median 1-s peak-to-peak (80th percentile for burst-type backgrounds,
+        where the request means the bursts).  A fixed window and a single
+        scalar keep every later request window-independent.
+        """
+        # background voltage is read away from the frontopolar derivations, where blinks live
+        pairs = [p for p in mt.montage_pairs(self.spec.get("montage", "longitudinal_bipolar"), self.electrodes)
+                 if p[1] and not any(str(e).upper().startswith("FP") for e in p)]
+        if not pairs:
+            return
+        # The background waxes and wanes by +-20 % over minutes (slow AM, channel AM),
+        # so one window would calibrate to one swing of it: four 60 s windows spread
+        # over the record, pooled.  Short records use what they have.
+        dur = float(self.duration_s)
+        if dur >= 400.0:
+            starts = [30.0, 0.25 * dur, 0.50 * dur, 0.75 * dur]
+            span = 60.0
+        else:
+            starts = [0.0]
+            span = max(10.0, dur - 5.0)
+        hi = min(30.0, self.fs / 2.0 - 1.0)
+        sos = sps.butter(4, [0.5, hi], btype="bandpass", fs=self.fs, output="sos")
+        n = int(self.fs)
+        chunks = []
+        self._calibrating = True
+        try:
+            for t0 in starts:
+                t1 = min(t0 + span, dur)
+                _, x = self.segment(t0, t1)
+                rows = sps.sosfiltfilt(sos, self.derive(x, pairs), axis=-1)
+                m = rows.shape[1] // n
+                if m:
+                    # divide out this window's slow envelope: the record-wide median of
+                    # that envelope is put back below, so the calibration targets the
+                    # long-run page, not whichever swing these windows caught
+                    e = float(np.mean(self.slow_am(np.linspace(t0, t1, max(8, int(t1 - t0))))))
+                    chunks.append(np.ptp(rows[:, : m * n].reshape(rows.shape[0], m, n), axis=2) / max(e, 1e-6))
+        finally:
+            self._calibrating = False
+        if not chunks:
+            return
+        record_env = float(np.median(self.slow_am(np.arange(0.0, max(dur, 1.0), 1.0))))
+        p2p = np.concatenate(chunks, axis=1) * record_env
+        bursty = self.bg["type"] in ("discontinuous", "excessively_discontinuous", "trace_alternant",
+                                     "burst_suppression", "hypsarrhythmia")
+        measured = float(np.percentile(p2p, 80) if bursty else np.median(p2p))
+        if measured > 1e-6:
+            self.display_scale = float(np.clip(float(self.bg["amplitude_uv"]) / measured, 0.25, 4.0))
+            self.amp_rms *= self.display_scale
+
+    def _recruit_breakpoints(self, inst: SeizureInstance):
+        """Log-frequency breakpoints (u_k, f_k) of a recruiting run, drawn once per run.
+
+        Real focal seizures (P4 against CHB-MIT / Siena: 19-34 dominant-frequency
+        changes per minute against our 3-9) start as low-voltage fast activity,
+        slow in steps while the amplitude builds, and end in clonic bursting.
+        Everything is drawn from the record seed here so a chunk boundary
+        cannot change the run (test_partition_independence).
+        """
+        key = (inst.index, inst.ordinal)
+        cache = self.__dict__.setdefault("_recruit_cache", {})
+        if key in cache:
+            return cache[key]
+        rng = substream(self.seed, "recruit", inst.index, inst.ordinal)
+        dur = max(inst.duration_s, 1.0)
+        f_start, f_end = max(inst.start_hz, 0.5), max(inst.end_hz, 0.5)
+        f_onset = float(np.clip(f_start * rng.uniform(2.0, 3.0), f_start * 1.5, 22.0))
+        # steps every 2.5-5 s through the middle 70 % of the run; at least 4
+        n_mid = max(4, int(round(0.70 * dur / float(rng.uniform(2.5, 5.0)))))
+        u = np.concatenate([[0.0, 0.15], np.linspace(0.15, 0.85, n_mid + 1)[1:], [1.0]])
+        logf = np.empty_like(u)
+        logf[0] = math.log(f_onset)
+        logf[1] = math.log(f_start)
+        # mean-reverting random walk around the start->end glide (log domain)
+        dev = 0.0
+        for k in range(2, u.size - 1):
+            frac = (u[k] - 0.15) / 0.70
+            glide = math.log(f_start) + (math.log(f_end) - math.log(f_start)) * frac
+            dev = 0.55 * dev + float(rng.normal(0.0, 0.16))
+            logf[k] = glide + dev
+        logf[-1] = math.log(f_end * float(rng.uniform(0.65, 0.85)))    # terminal slowing
+        f = np.clip(np.exp(logf), 0.5, 25.0)
+        # cumulative phase at each breakpoint: exact integral of a geometric glide
+        cum = np.zeros_like(u)
+        for k in range(1, u.size):
+            du = (u[k] - u[k - 1]) * dur
+            f0, f1 = f[k - 1], f[k]
+            cum[k] = cum[k - 1] + (du * (f1 - f0) / math.log(f1 / f0) if abs(f1 - f0) > 1e-9 else du * f0)
+        clonic_hz = float(rng.uniform(1.2, 2.2))
+        clonic_ph = float(rng.uniform(0, 2 * np.pi))
+        cache[key] = (u, f, cum, clonic_hz, clonic_ph)
+        return cache[key]
+
+    def _recruit_phase(self, inst: SeizureInstance, t: np.ndarray):
+        dur = max(inst.duration_s, 1.0)
+        u = (t - inst.t0) / dur
+        live = (u >= 0.0) & (u <= 1.0)
+        if not live.any():
+            return None, u, None, None
+        uu = np.clip(u, 0.0, 1.0)
+        bu, bf, cum, clonic_hz, clonic_ph = self._recruit_breakpoints(inst)
+        k = np.clip(np.searchsorted(bu, uu, side="right") - 1, 0, bu.size - 2)
+        u0, u1 = bu[k], bu[k + 1]
+        f0, f1 = bf[k], bf[k + 1]
+        s = np.clip((uu - u0) / np.maximum(u1 - u0, 1e-9), 0.0, 1.0)
+        ratio = f1 / f0
+        f_inst = f0 * np.power(ratio, s)
+        seg = np.where(np.abs(ratio - 1.0) > 1e-9,
+                       (u1 - u0) * dur * f0 * (np.power(ratio, s) - 1.0) / np.log(np.where(np.abs(ratio - 1.0) > 1e-9, ratio, 2.0)),
+                       (u1 - u0) * dur * f0 * s)
+        phase = 2 * np.pi * (cum[k] + seg)
+        # amplitude: quarter-voltage onset, build to amplitude_end by 75 %, fall off at the end
+        a = np.interp(uu, [0.0, 0.15, 0.75, 1.0],
+                      [0.25 * inst.amp_start, inst.amp_start, inst.amp_end, 0.55 * inst.amp_end])
+        amp = a / 2.9 * self._ictal_gain(inst)
+        ramp = 0.04
+        amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
+        # clonic bursting over the last third: the run breaks into groups at 1-2 Hz
+        w = smoothstep((uu - 0.68) / 0.15)
+        amp = amp * (1.0 - 0.45 * w * (0.5 - 0.5 * np.cos(2 * np.pi * clonic_hz * (t - inst.t0) + clonic_ph)))
+        amp = amp * (1.0 + inst.fluctuate * 0.6 * np.sin(2 * np.pi * 0.11 * uu * dur + clonic_ph))
+        amp = amp * live
+        return phase, uu, amp, np.clip(f_inst, 0.2, 30.0)
+
     def _ictal_phase(self, inst: SeizureInstance, t: np.ndarray):
         """Instantaneous phase / progress / amplitude of a log-sweeping run."""
+        if inst.profile == "recruit" and inst.morph == "ictal":
+            return self._recruit_phase(inst, t)
         dur = max(inst.duration_s, 1.0)
         u = (t - inst.t0) / dur
         live = (u >= 0.0) & (u <= 1.0)
@@ -1655,7 +1864,7 @@ class Synthesizer:
         # amplitude_*_uv is the peak-to-peak of the ictal run; a rhythmic,
         # sharply contoured discharge runs ~2.9x its RMS peak-to-peak.
         amp = ((inst.amp_start + (inst.amp_end - inst.amp_start) * uu)
-               / 2.9 * ICTAL_GAIN)
+               / 2.9 * self._ictal_gain(inst))
         ramp = 0.07 if inst.kind != "rhythmic_pattern" else 0.14
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
         # cycle-group waxing and waning
@@ -1903,10 +2112,79 @@ class Synthesizer:
                 out += sig * (w * (0.85 + 0.3 * substream(self.seed, "artg", k).random(self.n_elec)))[:, None] * live[None, :]
         return out
 
+    def _artifact_schedule(self, ev: Dict, kind: str):
+        """Bout / burst timetable of a model-2 artifact over its own window, drawn once.
+
+        patting: bouts of 3-8 s of patting separated by 1-4 s pauses, each bout
+        at its own rate (a parent's hand is not a metronome; Craig, P5 C12).
+        chewing: individual chews 0.25-0.4 s long at irregular ~0.75 s
+        intervals grouped into bouts, as on the EEG Atlas chewing page (P5 C16).
+        """
+        k = next((j for j, e in enumerate(self.artifacts) if e is ev), 0)
+        cache = self.__dict__.setdefault("_art_sched", {})
+        if k in cache:
+            return cache[k]
+        rng = substream(self.seed, "artsched", k)
+        a0, a1 = self._event_window(ev)
+        bouts: List[Tuple[float, float, float]] = []      # (start, end, rate_hz)
+        t = a0
+        f_base = float(ev.get("frequency_hz", 1.9 if kind == "patting" else 1.35))
+        while t < a1:
+            on = float(np.clip(rng.lognormal(math.log(5.0), 0.35), 3.0, 8.0)) if kind == "patting" else float(np.clip(rng.lognormal(math.log(6.0), 0.4), 3.0, 12.0))
+            off = float(np.clip(rng.lognormal(math.log(2.0), 0.5), 1.0, 4.0))
+            bouts.append((t, min(t + on, a1), f_base * float(np.clip(rng.normal(1.0, 0.12), 0.75, 1.25))))
+            t += on + off
+        chews: List[Tuple[float, float]] = []               # (start, duration) of single chews
+        if kind == "emg_chewing":
+            for b0, b1, fr in bouts:
+                tc = b0
+                while tc < b1:
+                    chews.append((tc, float(np.clip(rng.normal(0.32, 0.05), 0.22, 0.45))))
+                    tc += float(np.clip(rng.lognormal(math.log(1.0 / fr), 0.22), 0.4, 1.6))
+        cache[k] = (bouts, chews)
+        return cache[k]
+
+    def _artifact_waveform_v2(self, kind: str, ev: Dict, t: np.ndarray, i0: int, gain: float):
+        n = t.size
+        bouts, chews = self._artifact_schedule(ev, kind)
+        if kind == "patting":
+            sig = np.zeros(n)
+            for b0, b1, fr in bouts:
+                edge = np.clip(np.minimum((t - b0) / 0.4, (b1 - t) / 0.4), 0.0, 1.0)
+                gate = 0.5 - 0.5 * np.cos(np.pi * edge)
+                ph = 2 * np.pi * fr * (t - b0)
+                # a pat is a sharp mechanical transient with a slow rebound, not a sine
+                w = np.sin(ph) + 0.55 * np.sin(2 * ph + 0.4) + 0.30 * np.sin(3 * ph + 1.1) + 0.12 * np.sin(4 * ph + 0.7)
+                sig += gate * w
+            return sig * 90.0 * gain / 1.35
+        if kind == "emg_chewing":
+            base = self._oa(self.st_emg, i0, n, 1)[0]
+            env = np.zeros(n)
+            slow = np.zeros(n)
+            for c0, cd in chews:
+                d = (t - c0) / cd
+                m = (d > 0) & (d < 1)
+                env[m] += np.sin(np.pi * d[m]) ** 1.5
+                # glossokinetic / jaw slow wave under each chew, frontotemporal
+                ms = (d > -0.2) & (d < 1.6)
+                slow[ms] += np.exp(-0.5 * ((d[ms] - 0.6) / 0.45) ** 2)
+            emg = base * np.clip(env, 0.0, 1.5) * 48.0 * gain
+            rows = np.zeros((self.n_elec, n))
+            temporal = _profile(self.electrodes, _TEMPORAL, 0.15)
+            frontal = _profile(self.electrodes, _ANTERIOR, 0.1)
+            for i in range(self.n_elec):
+                rows[i] = emg * (0.12 + 0.88 * temporal[i]) - slow * 14.0 * gain * (0.4 * frontal[i] + 0.6 * temporal[i])
+            return rows
+        return None
+
     def _artifact_waveform(self, kind: str, ev: Dict, t: np.ndarray, i0: int,
                            rng: np.random.Generator, gain: float):
         n = t.size
         fs = self.fs
+
+        model = int(ev.get("model", 1) or 1)
+        if model >= 2 and kind in ("emg_chewing", "patting"):
+            return self._artifact_waveform_v2(kind, ev, t, i0, gain)
 
         if kind == "emg_chewing":
             base = self._oa(self.st_emg, i0, n, 1)[0]
@@ -2165,7 +2443,8 @@ class Synthesizer:
         preset_scale = {
             "suppressed": 0.06, "low_voltage": 0.28,
         }.get(self.bg["type"], 1.10 if self.bg["type"] == "burst_suppression" else 1.0)
-        x *= preset_scale
+        if not self.display_ref:      # 0.4.0 display reference: the author states the on-screen voltage
+            x *= preset_scale
 
         # Per-electrode burst envelope (edge lag + regional tilt); ``env`` below
         # carries the head-wide factors and is what the blink gate reuses.
@@ -2250,6 +2529,8 @@ class Synthesizer:
                   * (self.amp_rms * 0.55 * shape)[None, :])
 
         # --- ictal activity (not scaled by the background envelope) -------
+        if self._calibrating:
+            return t, x            # background only: what the display calibration measures
         x += self._seizure_block(t)
         # multifocal spikes (hypsarrhythmia), attenuated through a decrement
         x += self._multifocal_spike_rows(t) * (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]

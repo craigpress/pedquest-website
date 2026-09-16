@@ -131,6 +131,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 1
     seed: 8100006
     age_group: adolescent
     sample_rate: 256
