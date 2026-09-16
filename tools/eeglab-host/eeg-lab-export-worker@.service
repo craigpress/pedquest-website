@@ -24,7 +24,7 @@ Environment=EEG_LAB_CLAIM_MIN_AGE_S=120
 # cores per export (two instances x 2 = the box's 4 vCPU when both are busy)
 Environment=EEG_RENDER_JOBS=2
 # 30 s, not 10: every poll is a PostgREST request against a small Supabase compute (disk-IO budget, 2026-09-13)
-ExecStart=/opt/pedquest-eeg-render/.venv/bin/python /opt/pedquest-eeg-render/lab_worker.py --poll 30 --worker-id moltbot:%i
+ExecStart=/opt/pedquest-eeg-render/.venv/bin/python /opt/pedquest-eeg-render/lab_worker.py --poll 120 --worker-id moltbot:%i
 WorkingDirectory=/opt/pedquest-eeg-render
 Restart=always
 RestartSec=5
