@@ -420,7 +420,7 @@ def _margin_time(t: np.ndarray, k: int, fs: float) -> np.ndarray:
 
 
 #: Heart rate by age band, used both for the ECG artifact and the baseline ECG.
-_ECG_HR = {"neonate": 145.0, "infant": 130.0, "child": 100.0, "adolescent": 80.0}
+_ECG_HR = {"neonate": 145.0, "infant": 130.0, "child": 100.0, "adolescent": 80.0, "adult": 72.0}
 
 
 def _piecewise(times: Sequence[float], values: Sequence[float], t: np.ndarray) -> np.ndarray:
@@ -607,6 +607,8 @@ class Synthesizer:
         self.alpha = 1.10 + 1.55 * float(bg["slow_fraction"])
         self.slow_fraction = float(bg["slow_fraction"])
         self.dominant_hz = float(bg["dominant_hz"])
+        # EEG Atlas P5 opt-in; 1.0 reproduces the 0.3.10 mix bit for bit
+        self.pdr_gain = float(bg.get("pdr_gain", 1.0))
 
         self._build_streams()
         self._build_slow_am()
@@ -765,6 +767,13 @@ class Synthesizer:
         # 12% suppressed epochs with no change of spec.
         scalp = [self._idx[e] for e in self.scalp]
         self._ch_gain = gain / float(np.median(gain[scalp]))
+        cap = self.bg.get("channel_gain_max")          # EEG Atlas P5 opt-in
+        if cap is not None:
+            # clip the tail, re-anchor the scalp median, clip once more so no
+            # electrode ends above the cap after re-anchoring
+            g = np.minimum(self._ch_gain, float(cap))
+            g = g / float(np.median(g[scalp]))
+            self._ch_gain = np.minimum(g, float(cap))
 
     def channel_am(self, t: np.ndarray) -> np.ndarray:
         return np.vstack([
@@ -931,14 +940,17 @@ class Synthesizer:
         at construction from the record seed, so which chunk asks for a given
         second cannot change where the blinks are.
         """
-        if BLINK_RATE_HZ <= 0:
+        rate = BLINK_RATE_HZ
+        if self.bg.get("blink_rate_per_min") is not None:      # EEG Atlas P5 opt-in
+            rate = float(self.bg["blink_rate_per_min"]) / 60.0
+        if rate <= 0:
             self._blink_t = np.empty(0)
             return
         rng = substream(self.seed, "blinks")
         span = self.duration_s + 120.0
         # inter-blink intervals are lognormal-ish, not a metronome
-        n = max(1, int(span * BLINK_RATE_HZ * 1.6))
-        gaps = _lognorm(rng, n, 0.55) / BLINK_RATE_HZ
+        n = max(1, int(span * rate * 1.6))
+        gaps = _lognorm(rng, n, 0.55) / rate
         times = np.cumsum(gaps) - 60.0
         self._blink_t = times[times < span]
 
@@ -1208,6 +1220,19 @@ class Synthesizer:
                     morph=ev.get("morphology") or "ictal",
                     index=i, kind="status_epilepticus",
                 ))
+            elif ev["type"] == "brd":
+                # neonatal brief rhythmic discharge (EEG Atlas P5): a short
+                # rhythmic run keyed as its own kind, never as a seizure
+                evo = ev["evolution"]
+                out.append(SeizureInstance(
+                    t0=float(ev["onset_min"]) * 60.0, duration_s=float(ev["duration_s"]),
+                    onset_region=ev["onset_region"],
+                    start_hz=float(evo["start_hz"]), end_hz=float(evo["end_hz"]),
+                    amp_start=float(evo["amplitude_start_uv"]), amp_end=float(evo["amplitude_end_uv"]),
+                    spread=ev.get("spread", "none"), postictal_s=0.0,
+                    morph=ev.get("morphology") or "rda", muscle=ev.get("muscle", "none"),
+                    index=i, kind="brd",
+                ))
             elif ev["type"] == "rhythmic_pattern":
                 out.extend(self._rpp_instances(ev, i))
             elif ev["type"] in ("spasm", "spasm_cluster"):
@@ -1287,6 +1312,7 @@ class Synthesizer:
         f0 = float(ev["frequency_hz"])
         amp = float(ev["amplitude_uv"])
         run = max(float(ev["run_duration_s"]), 4.0)
+        min_cycles = int(ev.get("min_cycles") or 0)         # EEG Atlas P5 opt-in
         modifier = str(ev.get("modifier") or "").lower()
         plus = str(ev.get("plus_modifier") or "").lower()
         morph = "periodic" if ev.get("periodic") else "rda"
@@ -1316,7 +1342,10 @@ class Synthesizer:
             end = float(ev["onset_min"]) * 60.0 + float(ev["duration_min"]) * 60.0
             k = 0
             while t < end - 1.0 and k < 4000:
-                dur = min(run * float(_lognorm(grng, 1, 0.18)[0]), end - t)
+                dur = run * float(_lognorm(grng, 1, 0.18)[0])
+                if min_cycles:
+                    dur = max(dur, min_cycles / (f0 * fmul))
+                dur = min(dur, end - t)
                 out.append(SeizureInstance(
                     t0=t, duration_s=dur, onset_region=region,
                     start_hz=f0 * fmul, end_hz=f0 * fmul, amp_start=amp, amp_end=amp,
@@ -2052,7 +2081,7 @@ class Synthesizer:
 
         pdr_w = (1.0 - 0.55 * sleep) * (1.0 - 0.55 * temp_slow)
         if self.age != "neonate":
-            x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * pdr_w)[None, :]
+            x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
             x += self._stream_signal(self.st_theta, i0, n) * (0.30 + 0.25 * sleep)[None, :]
         else:
             x += self._stream_signal(self.st_theta, i0, n) * 0.22

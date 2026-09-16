@@ -18,7 +18,7 @@ from typing import List, Optional
 
 from . import RENDERER_VERSION
 from .render import render_image
-from .spec import SpecError, load_question, normalize, spec_hash, style_warnings, validate_image
+from .spec import SpecError, load_question, normalize, spec_hash, spec_warnings, style_warnings, validate_image
 
 DEFAULT_OUT = "public/images/qbank"
 
@@ -48,8 +48,11 @@ def cmd_render(args) -> int:
             png, sidecar = render_image(q.ident, q.image, out_dir, q.point_to_feature)
             _write_sidecar(out_dir, q.ident, sidecar)
             print(f"{q.ident}: {png}  ({sidecar['spec_hash'][:19]}...)")
-            for w in style_warnings(normalize(q.image)):
+            norm_q = normalize(q.image)
+            for w in style_warnings(norm_q):
                 print(f"  warn: {w}")
+            for w in spec_warnings(norm_q):
+                print(f"  acns: {w}")
             ok += 1
         except Exception as exc:
             print(f"ERROR {src}: {exc}", file=sys.stderr)
@@ -152,6 +155,8 @@ def cmd_validate(args) -> int:
         print(f"OK      {q.ident}  {norm['kind']}  {spec_hash(norm)}")
         for w in style_warnings(norm):
             print(f"  warn: {w}")
+        for w in spec_warnings(norm):
+            print(f"  acns: {w}")
         if q.point_to_feature:
             events = norm["spec"].get("events") or (
                 norm["spec"].get("qeeg_panel", {}).get("events") if

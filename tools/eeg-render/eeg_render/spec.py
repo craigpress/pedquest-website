@@ -38,6 +38,9 @@ AGE_DEFAULTS: Dict[str, Dict[str, Any]] = {
               "type": "continuous", "delta_brushes": False, "baseline_ecg_uv": 2.0},
     "adolescent": {"dominant_hz": 9.5, "amplitude_uv": 35.0, "slow_fraction": 0.30,
                    "type": "continuous", "delta_brushes": False, "baseline_ecg_uv": 2.0},
+    # EEG Atlas P5 (0.3.11): engineering presets, not yet validated against adult references
+    "adult": {"dominant_hz": 10.0, "amplitude_uv": 30.0, "slow_fraction": 0.25,
+              "type": "continuous", "delta_brushes": False, "baseline_ecg_uv": 2.0},
 }
 
 #: how each background type maps onto the unified burst/interburst engine.
@@ -572,6 +575,69 @@ def _normalize_style(kind: str, style: Dict[str, Any]) -> Dict[str, Any]:
     return st
 
 
+_RPP_ACNS_HZ = (0.5, 4.0)
+
+
+def spec_warnings(image: Dict[str, Any]) -> List[str]:
+    """ACNS advisories for a *normalized* image (EEG Atlas P5, 0.3.11).
+
+    Never an error: the renderer emits what it is asked for, and legacy specs
+    must keep validating.  These say where a request steps outside the ACNS
+    definitions the Atlas contracts pin, or where a 0.3.10 default is
+    physiologically inconsistent with the requested state.
+    """
+    from .schema import RPP_PATTERNS
+    kind = image["kind"]
+    spec = image["spec"]
+    if kind == "composite":
+        out: List[str] = []
+        for sub in ("qeeg_panel", "eeg_page"):
+            if sub in spec:
+                out.extend(f"{sub}: {w}" for w in spec_warnings({"kind": sub, "spec": spec[sub]}))
+        return out
+    out = []
+    age = spec.get("age_group")
+    bg = spec.get("background") or {}
+    if age == "adult":
+        out.append("age_group adult uses engineering presets (10 Hz, 30 uV) not yet validated against adult references")
+    if bg.get("reactivity") in ("unknown", "unclear"):
+        out.append(f"reactivity {bg['reactivity']!r} is synthesized as no stimulus response and recorded as such")
+    if (bg.get("type") in ("suppressed", "low_voltage", "burst_suppression") and bg.get("reactivity") != "present"
+            and bg.get("blink_rate_per_min") is None):
+        out.append("spontaneous blinks stay at the 15/min awake default in a suppressed / low-voltage record; "
+                   "set background.blink_rate_per_min: 0 for an unresponsive patient")
+    if age == "neonate" and bg.get("type") in ("suppressed", "burst_suppression"):
+        ge = bg.get("graphoelements") or {}
+        loud = [k for k, v in ge.items() if isinstance(v, dict) and v.get("enabled", True)
+                and float(v.get("amplitude_uv", 0) or 0) > 0 and float(v.get("rate_per_min", 0) or 0) > 0]
+        if loud:
+            out.append("PMA-table graphoelements (" + ", ".join(sorted(loud)) +
+                       ") are emitted at full amplitude in a suppressed background; "
+                       "set graphoelements.<name>.enabled: false if that is not intended")
+    for i, ev in enumerate(spec.get("events") or []):
+        t = ev.get("type")
+        if t == "seizure" and age == "neonate" and float(ev.get("duration_s", 0)) < 10.0:
+            out.append(f"events[{i}]: a {ev.get('duration_s')}-s neonatal run is below the 10-s ACNS seizure minimum; "
+                       "use type brd for a brief rhythmic discharge")
+        if t == "brd":
+            if float(ev.get("duration_s", 0)) >= 10.0:
+                out.append(f"events[{i}]: a BRD lasts < 10 s; {ev.get('duration_s')} s is a seizure")
+            if age != "neonate":
+                out.append(f"events[{i}]: BRD is a neonatal term; older patients use BIRDs (rhythmic_pattern)")
+        if t == "rhythmic_pattern":
+            f = float(ev.get("frequency_hz", 0) or 0)
+            if not (_RPP_ACNS_HZ[0] <= f <= _RPP_ACNS_HZ[1]):
+                out.append(f"events[{i}]: {f} Hz is outside the ACNS rhythmic/periodic range "
+                           f"{_RPP_ACNS_HZ[0]}-{_RPP_ACNS_HZ[1]} Hz")
+            pat = str(ev.get("pattern") or "")
+            if pat.upper() not in {p.upper() for p in RPP_PATTERNS}:
+                out.append(f"events[{i}]: pattern {pat!r} is not an ACNS main term ({', '.join(RPP_PATTERNS)})")
+            run = float(ev.get("run_duration_s", 0) or 0)
+            if f > 0 and run * f < 6.0 and not ev.get("min_cycles"):
+                out.append(f"events[{i}]: run_duration_s {run} at {f} Hz is under six cycles; set min_cycles: 6")
+    return out
+
+
 def style_warnings(image: Dict[str, Any]) -> List[str]:
     """``style`` keys the renderer carries but does not draw."""
     out: List[str] = []
@@ -642,6 +708,19 @@ def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
         if kind == "spasm_cluster":
             e.setdefault("interval_s", 12.0)
             e.setdefault("count", 12)
+    elif kind == "brd":
+        e.setdefault("onset_min", 0.0)
+        e.setdefault("duration_s", 5.0)
+        e.setdefault("onset_region", "left_central")
+        e.setdefault("spread", "none")
+        e.setdefault("postictal_attenuation_s", 0.0)
+        e.setdefault("muscle", "none")
+        e.setdefault("morphology", "rda")
+        evo = {"start_hz": 2.0, "end_hz": 2.0, "amplitude_start_uv": 50.0, "amplitude_end_uv": 50.0}
+        given = e.get("evolution")
+        if isinstance(given, dict):
+            evo.update(given)
+        e["evolution"] = evo
     elif kind == "tonic_seizure":
         # Tonic seizure: diffuse electrodecrement, then generalized paroxysmal
         # fast activity (15-25 Hz) building in amplitude with tonic EMG; brief

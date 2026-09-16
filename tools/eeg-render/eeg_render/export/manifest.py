@@ -161,6 +161,13 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             spec_event_index=int(inst.index),
             cluster_ordinal=int(inst.ordinal),
         ))
+        # EEG Atlas P5: ACNS advisories travel with the key, never change the signal
+        if inst.kind == "brd":
+            rows[-1]["acns_advisory"] = ("brief rhythmic discharge: evolving rhythmic activity shorter than "
+                                        "the 10-s neonatal seizure minimum")
+        elif synth.age == "neonate" and inst.kind in ("seizure", "seizure_cluster") and (inst.t1 - inst.t0) < 10.0:
+            rows[-1]["acns_advisory"] = ("shorter than the 10-s ACNS neonatal electrographic seizure minimum; "
+                                        "consider type brd")
 
     for ev in getattr(synth, "artifacts", []):
         a0 = float(ev["at_min"]) * 60.0

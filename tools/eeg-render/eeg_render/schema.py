@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-AGE_GROUPS = ["neonate", "infant", "child", "adolescent"]
+AGE_GROUPS = ["neonate", "infant", "child", "adolescent", "adult"]
 BACKGROUND_TYPES = [
     "continuous", "discontinuous", "burst_suppression", "suppressed",
     "low_voltage", "excessively_discontinuous", "trace_alternant",
@@ -112,6 +112,9 @@ _EVENT = {
                 # tonic seizure: electrodecrement, then generalized paroxysmal
                 # fast activity building in amplitude with tonic EMG
                 "tonic_seizure",
+                # neonatal brief rhythmic discharge: evolving rhythmic activity
+                # shorter than the 10-s seizure minimum (ACNS neonatal)
+                "brd",
             ]
         },
         # how much scalp muscle an ictal run recruits: none (electrographic /
@@ -137,6 +140,9 @@ _EVENT = {
         "modifier": {"type": ["string", "null"]},
         "plus_modifier": {"type": ["string", "null"]},
         "periodic": {"type": "boolean"},
+        # rhythmic_pattern, opt-in: every run lasts at least this many cycles
+        # (ACNS needs six); run_duration_s alone is a mean with spread
+        "min_cycles": {"type": "integer", "minimum": 1, "maximum": 100},
         "sharpness": {"type": "string"},
         # seizure
         "onset_min": _num,
@@ -210,7 +216,22 @@ _BACKGROUND = {
         "slow_fraction": {"type": "number", "minimum": 0, "maximum": 1},
         "amplitude_gain_at_h": {"type": "array", "items": {"type": "array", "items": _num, "minItems": 2, "maxItems": 2}},
         "ibi_floor_at_h": {"type": "array", "items": {"type": "array", "items": _num, "minItems": 2, "maxItems": 2}},
-        "reactivity": {"enum": ["present", "absent"]},
+        "reactivity": {"enum": ["present", "absent", "unknown", "unclear"]},
+        # EEG Atlas P5 (0.3.11), opt-in: spontaneous blinks per minute (0 = none;
+        # absent = the 15/min awake default).  A suppressed or low-voltage
+        # record never engages the burst-envelope blink gate, so an
+        # unresponsive patient needs this set explicitly.
+        "blink_rate_per_min": {"type": "number", "minimum": 0, "maximum": 60},
+        # EEG Atlas P5 (0.3.11), opt-in: multiplier on the posterior dominant
+        # rhythm stream (1.0 = the 0.3.10 mix, which leaves the spectral peak
+        # in the delta band whatever dominant_hz asks).
+        "pdr_gain": {"type": "number", "minimum": 0, "maximum": 8},
+        # EEG Atlas P5 (0.3.11), opt-in: cap on the per-electrode gain draw relative
+        # to the median scalp electrode.  The 0.3.10 draw has a log-sd 0.5 high
+        # tail anchored on all 19 scalp electrodes, so a 9-electrode neonatal
+        # montage can land entirely in the tail (P5 seed sweep: 27-160 uV for one
+        # 40-uV request).  2.0 keeps a hot electrode; absent = unchanged.
+        "channel_gain_max": {"type": "number", "minimum": 1, "maximum": 10},
         "delta_brushes": {"type": "boolean"},
         "baseline_ecg_uv": {"type": "number", "minimum": 0, "maximum": 30},
         # neonates only: postmenstrual age drives the discontinuity defaults
