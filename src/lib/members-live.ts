@@ -63,11 +63,20 @@ export async function getPublicMembers(
 ): Promise<Member[]> {
   if (!client) return snapshotMembers.map(toPublicSnapshot);
 
-  const { data, error } = await client
-    .from("members")
-    .select(PUBLIC_COLUMNS)
-    .eq("status", "active")
-    .order("sort_order", { ascending: true });
+  // Time-box so a slow or unavailable Supabase cannot hang this page's build-time
+  // static generation (Next aborts a page at 60 s and fails the whole deploy);
+  // the committed snapshot is the fallback and ISR refreshes once Supabase is back.
+  const timeout = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+    setTimeout(() => resolve({ data: null, error: { message: "getPublicMembers timed out" } }), 8000),
+  );
+  const { data, error } = (await Promise.race([
+    client
+      .from("members")
+      .select(PUBLIC_COLUMNS)
+      .eq("status", "active")
+      .order("sort_order", { ascending: true }),
+    timeout,
+  ])) as { data: unknown[] | null; error: unknown };
 
   if (error || !data) return snapshotMembers.map(toPublicSnapshot);
   return (data as unknown as PublicRow[]).map(rowToPublicMember);
