@@ -107,11 +107,22 @@ export async function getBankFacets(): Promise<BankFacets> {
   const empty: BankFacets = { total: 0, byDomain: {}, byDifficulty: {}, byPopulation: {}, bySetting: {} };
   const supabase = createServerClient();
   if (!supabase) return empty;
-  const { data, error } = await supabase
-    .from("eeg_cases")
-    .select("domain,difficulty,population,setting")
-    .eq("in_bank", true)
-    .in("status", LEARNER_STATUSES);
+  // Time-box the query: a slow or unavailable Supabase must not hang the build's
+  // static generation of /education/question-bank, which Next aborts at 60 s and
+  // then fails the whole deploy (the eeg_cases read stalled for minutes during
+  // the 2026-09 Supabase IO-budget timeouts). On timeout we fall back to empty
+  // counts; ISR revalidation restores the real numbers once Supabase is healthy.
+  const timeout = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+    setTimeout(() => resolve({ data: null, error: { message: "getBankFacets timed out" } }), 8000),
+  );
+  const { data, error } = (await Promise.race([
+    supabase
+      .from("eeg_cases")
+      .select("domain,difficulty,population,setting")
+      .eq("in_bank", true)
+      .in("status", LEARNER_STATUSES),
+    timeout,
+  ])) as { data: { domain?: string; difficulty?: string; population?: string; setting?: string }[] | null; error: unknown };
   if (error || !data) return empty;
   const facets: BankFacets = { total: data.length, byDomain: {}, byDifficulty: {}, byPopulation: {}, bySetting: {} };
   for (const r of data as any[]) {

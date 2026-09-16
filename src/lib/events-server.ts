@@ -10,11 +10,16 @@ import { mapEventRow, toPublicEvent, type AdminEvent, type PublicEvent } from "@
 export async function getPublicEvents(): Promise<PublicEvent[]> {
   const supabase = createServerClient();
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("status", "published")
-    .order("starts_at", { ascending: true });
+  // Time-box so a slow/unavailable Supabase cannot hang this page's build-time
+  // static generation (Next aborts a page at 60 s and fails the whole deploy);
+  // ISR revalidation restores the real events once Supabase is healthy.
+  const timeout = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+    setTimeout(() => resolve({ data: null, error: { message: "getPublicEvents timed out" } }), 8000),
+  );
+  const { data, error } = (await Promise.race([
+    supabase.from("events").select("*").eq("status", "published").order("starts_at", { ascending: true }),
+    timeout,
+  ])) as { data: any[] | null; error: unknown };
   if (error || !data) return [];
   return data.map((r: any) => toPublicEvent(mapEventRow(r)));
 }
