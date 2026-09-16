@@ -153,10 +153,34 @@ def process_one(db: Supabase) -> bool:
     return True
 
 
+class Backoff:
+    """Idle poll schedule: ``base`` seconds right after work, doubling to ``idle_max`` while nothing arrives.
+
+    An editor who has just approved a case gets the next render within ``base``
+    seconds; an idle worker settles at ``idle_max`` so it stops costing a small
+    Supabase compute anything (2026-09-16). Same shape as lab_worker.Backoff.
+    """
+
+    def __init__(self, base: float, idle_max: float | None = None) -> None:
+        self.base = max(1.0, float(base))
+        self.idle_max = max(self.base, float(idle_max)) if idle_max else self.base
+        self.current = self.base
+
+    def reset(self) -> None:
+        self.current = self.base
+
+    def next_idle(self) -> float:
+        wait = self.current
+        self.current = min(self.idle_max, self.current * 2)
+        return wait
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env-file")
-    parser.add_argument("--poll", type=float, default=10.0)
+    parser.add_argument("--poll", type=float, default=10.0, help="seconds between polls while jobs keep arriving")
+    parser.add_argument("--idle-poll", dest="idle_poll", type=float, default=None,
+                        help="ceiling the poll interval doubles up to while the queue stays empty; default 6 x --poll")
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--log")
     args = parser.parse_args()
@@ -167,23 +191,26 @@ def main() -> int:
         filename=args.log,
     )
     db = Supabase()
-    logging.info("PedQuEST render worker started")
+    backoff = Backoff(args.poll, args.idle_poll or args.poll * 6)
+    logging.info("PedQuEST render worker started; poll %.0f-%.0f s", backoff.base, backoff.idle_max)
     while True:
         try:
             worked = process_one(db)
         except Exception as error:  # noqa: BLE001
             # A Supabase 504 (small compute, exhausted disk-IO budget, 2026-09-13)
             # used to kill the process: 119 systemd restarts in one day. Log it,
-            # back off a minute, and keep the process alive instead.
+            # back off at least a minute, and keep the process alive instead.
             logging.error("poll failed: %s", str(error)[:300])
             if args.once:
                 return 1
-            time.sleep(max(args.poll, 60.0))
+            time.sleep(max(backoff.next_idle(), 60.0))
             continue
         if args.once:
             return 0
-        if not worked:
-            time.sleep(max(1.0, args.poll))
+        if worked:
+            backoff.reset()
+        else:
+            time.sleep(backoff.next_idle())
 
 
 if __name__ == "__main__":

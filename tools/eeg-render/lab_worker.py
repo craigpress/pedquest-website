@@ -120,20 +120,63 @@ class Lease:
                 log.warning("heartbeat for %s failed", self.job_id, exc_info=True)
 
 
+def _candidate_filter(now: datetime, min_age_s: float = 0.0) -> str:
+    """The PostgREST ``or=`` clause selecting claimable rows in ONE request.
+
+    Pending jobs (older than ``min_age_s`` when set) or running jobs whose lease
+    has expired. Until 2026-09-16 these were two requests per poll; nine
+    pollers made that 34 reads a minute against a Nano Postgres.
+    """
+    pending = "status.eq.pending"
+    if min_age_s > 0:
+        pending = f"and(status.eq.pending,created_at.lt.{_q(iso(now - timedelta(seconds=min_age_s)))})"
+    expired = f"and(status.eq.running,lease_expires_at.lt.{_q(iso(now))})"
+    return f"or=({pending},{expired})"
+
+
+def _order_candidates(rows: list[dict]) -> list[dict]:
+    """Pending jobs oldest first, then expired-lease running jobs oldest first."""
+    return sorted(rows, key=lambda r: (0 if r.get("status") == "pending" else 1, str(r.get("created_at") or "")))
+
+
 def _candidates(db: Supabase, limit: int = 5, min_age_s: float = 0.0) -> list[dict]:
     """Pending jobs oldest first, then running jobs whose lease has expired.
 
     ``min_age_s`` > 0 makes this worker a fallback: it only takes pending jobs
-    that have sat unclaimed that long. With the CraigsRig pool polling every
-    30 s and moltbot at 120 s, a website request goes to the fast host whenever
-    it is up and to moltbot two minutes later when it is not. Expired leases are
-    always eligible - a stalled job should be rescued by whoever is free.
+    that have sat unclaimed that long. With the CraigsRig pool polling first and
+    moltbot two minutes behind, a website request goes to the fast host whenever
+    it is up and to moltbot when it is not. Expired leases are always eligible -
+    a stalled job should be rescued by whoever is free. One request per poll;
+    the index ``eeg_lab_jobs_claim_idx`` (stage, status, lease_expires_at,
+    created_at) covers it.
     """
     base = f"/rest/v1/eeg_lab_jobs?stage=eq.export&select={JOB_COLUMNS}&order=created_at.asc&limit={limit}"
-    age_filter = f"&created_at=lt.{_q(iso(utcnow() - timedelta(seconds=min_age_s)))}" if min_age_s > 0 else ""
-    pending = db.request(f"{base}&status=eq.pending{age_filter}") or []
-    expired = db.request(f"{base}&status=eq.running&lease_expires_at=lt.{_q(iso(utcnow()))}") or []
-    return list(pending) + list(expired)
+    rows = db.request(f"{base}&{_candidate_filter(utcnow(), min_age_s)}") or []
+    return _order_candidates(list(rows))
+
+
+class Backoff:
+    """Idle poll schedule: ``base`` seconds right after work, doubling to ``idle_max`` while nothing arrives.
+
+    A busy queue is drained at ``base``; an idle worker settles at ``idle_max``
+    (2 min for the lab pool, 5 min for the moltbot fallbacks, 1 min for the
+    question-bank renderer), which is where nine pollers stop mattering to a
+    small Supabase compute. ``reset()`` after any claimed job.
+    """
+
+    def __init__(self, base: float, idle_max: float | None = None) -> None:
+        self.base = max(1.0, float(base))
+        self.idle_max = max(self.base, float(idle_max)) if idle_max else self.base
+        self.current = self.base
+
+    def reset(self) -> None:
+        self.current = self.base
+
+    def next_idle(self) -> float:
+        """Seconds to sleep after an empty poll; grows for the following one."""
+        wait = self.current
+        self.current = min(self.idle_max, self.current * 2)
+        return wait
 
 
 def claim_job(db: Supabase, worker_id: str, lease_seconds: float, min_age_s: float = 0.0) -> dict | None:
@@ -395,7 +438,11 @@ def main() -> int:
                    help="mounted recording store (OMV shared folder eeg-lab)")
     p.add_argument("--workdir", default=os.getenv("EEG_LAB_WORKDIR", "/var/tmp"))
     p.add_argument("--eeg-render", default=os.getenv("EEG_RENDER_BIN", "eeg-render"))
-    p.add_argument("--poll", type=float, default=float(os.getenv("POLL_INTERVAL_SECONDS", "10")))
+    p.add_argument("--poll", type=float, default=float(os.getenv("POLL_INTERVAL_SECONDS", "10")),
+                   help="seconds between polls while jobs keep arriving")
+    p.add_argument("--idle-poll", dest="idle_poll", type=float,
+                   default=float(os.getenv("IDLE_POLL_SECONDS", "0")) or None,
+                   help="ceiling the poll interval doubles up to while the queue stays empty; default 4 x --poll")
     p.add_argument("--lease", type=float, default=600.0)
     p.add_argument("--timeout", type=float, default=float(os.getenv("EEG_LAB_EXPORT_TIMEOUT_S", "3600")))
     p.add_argument("--trend-sidecar", dest="trend_sidecar",
@@ -414,22 +461,26 @@ def main() -> int:
     cfg = p.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     db = Supabase()
-    log.info("export worker %s; store %s; renderer %s", cfg.worker_id, cfg.store, cfg.eeg_render)
+    backoff = Backoff(cfg.poll, cfg.idle_poll or cfg.poll * 4)
+    log.info("export worker %s; store %s; renderer %s; poll %.0f-%.0f s", cfg.worker_id, cfg.store, cfg.eeg_render,
+             backoff.base, backoff.idle_max)
     while True:
         try:
             worked = process_one(db, cfg)
         except Exception as error:
             # A missing table (migration not applied) or an outage: say so once
-            # a minute rather than once a poll.
+            # a minute rather than once a poll, and do not hammer a struggling database.
             log.error("poll failed: %s", str(error)[:300])
             worked = False
             if not cfg.once:
-                time.sleep(max(cfg.poll, 60.0))
+                time.sleep(max(backoff.next_idle(), 60.0))
                 continue
         if cfg.once:
             return 0
-        if not worked:
-            time.sleep(cfg.poll)
+        if worked:
+            backoff.reset()
+        else:
+            time.sleep(backoff.next_idle())
 
 
 if __name__ == "__main__":
