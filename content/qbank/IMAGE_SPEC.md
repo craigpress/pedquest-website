@@ -48,14 +48,14 @@ background:
     temporal_theta:  {enabled: false}                         # 26-32 w; temporal_alpha at 33 w; stop 22-30 w;
                                                               # frontal_sharp 34-48 w; anterior_slow 35-46 w; midline_theta
   synchrony: 0.8               # neonates: fraction of bursts interhemispherically synchronous (PMA default)
-  multifocal_spikes:           # six independent foci of erratic sharp-and-slow-wave trains; hypsarrhythmia
-    rate_per_s: 3.6            # defaults to 3.6/s head-wide (>50% of 1 s bins, BASED grade 5) at 520 uV
-    amplitude_uv: 520
+  multifocal_spikes:           # six independent asynchronous LPD-like foci; hypsarrhythmia
+    rate_per_s: 2.0            # default: about 20-30 discrete discharges per 15-second page
+    amplitude_uv: 180          # peak-to-peak at the focus; lower than the chaotic slow background
   reactivity: present | absent  # applied to any `stimulation` event
 ```
 
-`type: hypsarrhythmia` defaults to 260 uV chaotic 1.5 Hz slow (slow_fraction 0.95) with the shared
-head-wide component cut so regions are asynchronous, multifocal spikes as above, and NREM-sleep
+`type: hypsarrhythmia` defaults to 280 uV chaotic 1.3 Hz slow (slow_fraction 0.95) with the shared
+head-wide component cut so regions are asynchronous, multifocal discharges as above, and NREM-sleep
 fragmentation into grouped bursts (from any `state_change: sleep`).
 
 Seizure-type events (`seizure`, `seizure_cluster`, `status_epilepticus`, `spasm`, `tonic_seizure`) take

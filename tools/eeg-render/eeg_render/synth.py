@@ -242,17 +242,23 @@ SENSOR_RMS_UV = 0.25
 _SMOOTH_EPS = 1e-12
 
 
+def _periodic_template(x: np.ndarray) -> np.ndarray:
+    """LPD/GPD sharp transient plus its after-going slow wave."""
+    return (np.exp(-0.5 * ((x - 0.16) / 0.033) ** 2)
+            - 0.55 * np.exp(-0.5 * ((x - 0.24) / 0.045) ** 2)
+            + 0.42 * np.exp(-0.5 * ((x - 0.46) / 0.13) ** 2))
+
+
 def _periodic_norm() -> tuple:
-    """Mean/RMS of the periodic-discharge template (computed once)."""
+    """Mean/RMS/peak-to-peak of the periodic template (computed once)."""
     x = np.linspace(0.0, 1.0, 4096, endpoint=False)
-    w = (np.exp(-0.5 * ((x - 0.16) / 0.033) ** 2)
-         - 0.55 * np.exp(-0.5 * ((x - 0.24) / 0.045) ** 2)
-         + 0.42 * np.exp(-0.5 * ((x - 0.46) / 0.13) ** 2))
+    w = _periodic_template(x)
     m = float(w.mean())
-    return m, float(np.sqrt(np.mean((w - m) ** 2)))
+    rms = float(np.sqrt(np.mean((w - m) ** 2)))
+    return m, rms, float((w.max() - w.min()) / rms)
 
 
-_PERIODIC_MEAN, _PERIODIC_RMS = _periodic_norm()
+_PERIODIC_MEAN, _PERIODIC_RMS, _PERIODIC_PTP = _periodic_norm()
 
 
 # --------------------------------------------------------------------------
@@ -1406,10 +1412,10 @@ class Synthesizer:
         amp = float(ms.get("amplitude_uv", 0.0) or 0.0)
         if rate <= 0 or amp <= 0:
             return
-        # Erratic multifocal discharges, "like lots of BIPDs": six independent
-        # foci across both hemispheres, each with its own irregular clock
-        # (log-normal intervals, sd 0.55, so runs bunch and thin out), each
-        # discharge a 70-110 ms sharp wave with a large after-going slow wave.
+        # Erratic multifocal discharges: six independent LPD-like generators
+        # across both hemispheres, each with its own irregular clock.  These
+        # reuse the periodic-discharge complex below rather than a separate,
+        # broader spike kernel, so they remain discrete on a 15-second page.
         # ``rate_per_s`` is the head-wide total; per focus it is rate / 6.
         rng = substream(self.seed, "multifocal")
         span = self.duration_s + 120.0
@@ -1433,10 +1439,9 @@ class Synthesizer:
             times = np.cumsum(_lognorm(rng, n, 0.55) / per) - 60.0
             times = times[times < span]
             m = times.size
-            width = rng.uniform(0.07, 0.11, m)       # sharp waves, not spikes
+            width = rng.uniform(0.85, 1.15, m)       # duration scale of the LPD complex
             amps = amp * _lognorm(rng, m, 0.30)
-            slow = rng.uniform(1.0, 1.7, m)          # big after-going slow wave
-            ev.append(np.column_stack([times, np.full(m, fi, float), width, amps, slow]))
+            ev.append(np.column_stack([times, np.full(m, fi, float), width, amps]))
         allev = np.vstack(ev)
         self._mf_spikes = allev[np.argsort(allev[:, 0])]
 
@@ -1446,13 +1451,15 @@ class Synthesizer:
         if ev is None or t.size == 0:
             return rows
         sel = ev[(ev[:, 0] > t[0] - 1.0) & (ev[:, 0] < t[-1] + 0.2)]
-        for t0, fi, width, amp, slow in sel:
+        for t0, fi, width, amp in sel:
             d = t - t0
-            spike = -np.exp(-0.5 * (d / (width / 2.355)) ** 2)
-            # broad after-going slow wave (~400 ms), opposite polarity
-            after = slow * np.exp(-0.5 * ((d - 0.32) / 0.16) ** 2)
+            x = d / width
+            live = (x >= 0.0) & (x < 1.0)
+            complex_ = ((_periodic_template(x) - _PERIODIC_MEAN)
+                        / _PERIODIC_RMS / _PERIODIC_PTP)
+            complex_ *= live
             w = self._gen_weights(self.electrodes[int(fi)], mt.PINNED_FALLOFF)
-            rows += np.outer(w, (spike + after) * amp * 0.5)
+            rows += np.outer(w, complex_ * amp)
         return rows
 
     def _seizure_block(self, t: np.ndarray) -> np.ndarray:
@@ -1548,9 +1555,7 @@ class Synthesizer:
                     / np.interp(f, _SW_FREQS, _SW_RMSS))
         elif morph == "periodic":
             x = np.mod(p / (2 * np.pi), 1.0)
-            wave = (np.exp(-0.5 * ((x - 0.16) / 0.033) ** 2)
-                    - 0.55 * np.exp(-0.5 * ((x - 0.24) / 0.045) ** 2)
-                    + 0.42 * np.exp(-0.5 * ((x - 0.46) / 0.13) ** 2))
+            wave = _periodic_template(x)
             wave = (wave - _PERIODIC_MEAN) / _PERIODIC_RMS
         else:
             expo = 1.30 if morph == "ictal" else 2.60

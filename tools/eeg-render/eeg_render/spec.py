@@ -65,13 +65,11 @@ BACKGROUND_PRESETS: Dict[str, Dict[str, float]] = {
 #: review 10.3389/fneur.2022.960454) grades definite epileptic encephalopathy
 #: as >3 spike foci with >50% of 1 s bins containing a spike in the most
 #: epileptic 5 min of sleep, plus grouped multifocal spikes and paroxysmal
-#: voltage attenuations - so the default rate is above one spike per second
-#: head-wide, a quarter of them arriving as grouped multifocal runs, and the
-#: spikes must stand out of the slow: 280 uV peak-to-peak at the focus.
+#: voltage attenuations.  Six asynchronous focal clocks produce about 24
+#: discrete discharges per 15-second page; each uses the LPD morphology and is
+#: lower voltage than the chaotic background rather than obscuring it.
 HYPSARRHYTHMIA_DEFAULTS = {"amplitude_uv": 280.0, "dominant_hz": 1.3, "slow_fraction": 0.95,
-                           # six independent foci, ~0.6 discharges/s each: erratic
-                           # bilateral independent periodic-discharge-like trains
-                           "multifocal_spikes": {"rate_per_s": 3.6, "amplitude_uv": 520.0}}
+                           "multifocal_spikes": {"rate_per_s": 2.0, "amplitude_uv": 180.0}}
 
 #: Maturation of neonatal discontinuity by postmenstrual age (weeks).  Columns:
 #: mean interburst interval (s), log-normal spread of the IBI, mean burst

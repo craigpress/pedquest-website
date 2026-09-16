@@ -6,14 +6,9 @@ synthesized multichannel EEG with the same algorithms a review station uses -
 they are not drawn.
 """
 
-# 0.3.8 changes the waveform for GENERALIZED events only: the field now reaches
-# the electrode rim and is frontally maximal, and a spike-and-wave morphology is
-# available whose spike keeps its millisecond width as the rate evolves.  Focal
-# regions are byte-identical to 0.3.7 (asserted in tests).
-#
-# ``spec_hash`` mixes this string in, so the bump marks all 52 rendered images
-# stale.  It does NOT regenerate anything - only ``render-all`` does that, and
-# it is deliberately not being run while the morphology work is in flight.
-RENDERER_VERSION = "0.3.9"
+# 0.3.10 gives hypsarrhythmia six asynchronous focal generators that reuse the
+# lower-voltage LPD sharp-slow morphology. Existing qbank PNGs are byte-identical
+# to 0.3.9; their sidecars were restamped after representative render checks.
+RENDERER_VERSION = "0.3.10"
 
 __all__ = ["RENDERER_VERSION"]
