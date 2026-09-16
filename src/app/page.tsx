@@ -238,7 +238,7 @@ const CONSORTIUM_WORK: { tag: string; title: string; cite: string; href?: string
     tag: "Consortium abstract",
     title:
       "Development of a Multicenter EEG Research Consortium and Data Platform to Advance Pediatric Quantitative EEG Research",
-    cite: "Press CA, Benedetti GM, et al. American Epilepsy Society Annual Meeting; 2025 (poster).",
+    cite: "Press CA, Benedetti GM, … Wagenaar JB. American Epilepsy Society Annual Meeting; 2025 (poster 2.172).",
   },
   {
     tag: "qEEG evidence",
