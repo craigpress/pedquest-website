@@ -25,6 +25,9 @@ import {
 import { formatEvidence, type RetrievedArticle } from "./retrieve";
 import { verifyPmids } from "./verify";
 import { questionToRows, type QbankQuestion } from "./question";
+import { validateRenderImage } from "./image-spec-validation";
+import { fullElectrodeNeonatalImage, qbankRecordingBlock, recordingDurationSeconds } from "../lab/qbank-recording";
+import { buildJobOptions, newRecordingId, specHash as labSpecHash } from "../lab/jobs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -170,11 +173,12 @@ export interface RevisionOutcome {
   caseId: string;
   ok: boolean;
   renderJobId?: string | null;
+  labJobId?: string | null;
   critic?: CriticReport;
   error?: string;
 }
 
-/** Run one queued revision job end to end: revise → critic → write → render. */
+/** Run one queued revision job end to end: revise → validate → write → render/export. */
 export async function processRevisionJob(
   supabase: SupabaseClient,
   jobId: string,
@@ -232,22 +236,72 @@ export async function processRevisionJob(
     return failJob(`the critic rejected the revision: ${reasons}`, { draft: revised.question, critic_report: critic });
   }
 
+  const normalizedImage = fullElectrodeNeonatalImage(revised.question.image);
+  if (!normalizedImage) {
+    return failJob("the revised item has no usable image block", {
+      draft: revised.question, critic_report: critic,
+    });
+  }
+  revised.question.image = normalizedImage as unknown as QbankQuestion["image"];
+
+  const imageErrors = validateRenderImage(revised.question.image);
+  if (imageErrors.length) {
+    return failJob(`the renderer rejected the revised image spec: ${imageErrors.join("; ")}`, {
+      draft: revised.question, critic_report: critic,
+    });
+  }
+  const recording = qbankRecordingBlock(revised.question.image);
+  if (!recording) {
+    return failJob("the revised image cannot be converted to a full EEG recording", {
+      draft: revised.question, critic_report: critic,
+    });
+  }
+
   try {
     await writeRevisedCase(supabase, caseId, revised.question);
   } catch (e) {
     return failJob((e as Error).message, { draft: revised.question, critic_report: critic });
   }
 
-  const { data: renderRow } = await supabase
+  const { data: renderRow, error: renderError } = await supabase
     .from("eeg_case_render_jobs")
     .insert({ case_id: caseId, spec: revised.question.image.spec, status: "pending" })
     .select("id").single();
+  if (renderError) {
+    return failJob(`the revised item was saved but its image could not be queued: ${renderError.message}`, {
+      draft: revised.question, critic_report: critic,
+    });
+  }
+
+  const requestedBy = `qbank:${revised.question.id}:revision:${jobId}`;
+  const { data: labRow, error: labError } = await supabase
+    .from("eeg_lab_jobs")
+    .insert({
+      stage: "export", status: "pending", spec: recording,
+      duration_s: recordingDurationSeconds(recording), formats: ["lay", "edf"],
+      options: buildJobOptions({ mode: "expert", includeAnswers: true, runPersyst: false }),
+      recording_id: newRecordingId(), spec_hash: labSpecHash(recording),
+      requested_by: requestedBy, qbank_id: revised.question.id, source: "ai",
+      author_id: null, review_status: "draft", expires_at: null,
+      title: revised.question.title,
+    })
+    .select("id").single();
+  if (labError) {
+    return failJob(`the revised item was saved but its full EEG could not be queued: ${labError.message}`, {
+      draft: revised.question, critic_report: critic,
+    });
+  }
 
   await supabase.from("eeg_case_generation_jobs")
     .update({ status: "drafted", draft: revised.question, critic_report: critic, model: revised.model })
     .eq("id", jobId);
 
-  return { jobId, caseId, ok: true, renderJobId: (renderRow as any)?.id ?? null, critic };
+  return {
+    jobId, caseId, ok: true,
+    renderJobId: (renderRow as any)?.id ?? null,
+    labJobId: (labRow as any)?.id ?? null,
+    critic,
+  };
 }
 
 /** Drain queued revision jobs (called by the weekly cron). Also resets jobs

@@ -24,7 +24,7 @@ import { load } from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
 import { loadEnvLocal, supabaseCredentials } from "./_env";
 import { buildJobOptions, newRecordingId, specHash } from "../src/lib/lab/jobs";
-import { normalizeSpecInput } from "../src/lib/lab/spec";
+import { qbankRecordingBlock, recordingDurationSeconds } from "../src/lib/lab/qbank-recording";
 import type { LabFormat } from "../src/lib/lab/types";
 
 const ROOT = "content/qbank/questions";
@@ -41,20 +41,6 @@ for (const f of FORMATS) {
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
-/** Mirrors tools/eeg-render/eeg_render/cli.py::_spec_duration_s on the RAW spec. */
-function durationSeconds(kind: string, spec: Record<string, unknown>): number {
-  const num = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : d);
-  if (kind === "aeeg") return num(spec.duration_h, 6) * 3600;
-  if (kind === "composite") {
-    const panel = isObj(spec.qeeg_panel) ? spec.qeeg_panel : {};
-    return num(panel.duration_min, 240) * 60;
-  }
-  if (kind === "eeg_page" && spec.duration_min == null) {
-    return num(spec.at_min, 0) * 60 + num(spec.window_s, 15) + 60;
-  }
-  return num(spec.duration_min, 240) * 60;
 }
 
 interface Plan {
@@ -79,13 +65,13 @@ async function main(): Promise<void> {
       plans.push({ id, kind: "-", durationS: 0, hash: "", action: "skip-no-image" });
       continue;
     }
-    const block = normalizeSpecInput(image);
+    const block = qbankRecordingBlock(image);
     if (!block || !isObj(block) || !isObj(block.spec)) {
       plans.push({ id, kind: String(image.kind ?? "?"), durationS: 0, hash: "", action: "skip-no-image" });
       continue;
     }
-    const kind = String(image.kind);
-    const durationS = durationSeconds(kind, block.spec as Record<string, unknown>);
+    const kind = String(block.kind);
+    const durationS = recordingDurationSeconds(block);
     const hash = specHash(block);
     const { data: existing, error } = await supabase
       .from("eeg_lab_jobs")

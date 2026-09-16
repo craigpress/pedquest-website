@@ -445,11 +445,10 @@ export default function AdminEegLabPage() {
                 onChange={(v) => setGuided((g) => ({
                   ...g,
                   ageBand: v as GuidedScenario["ageBand"],
-                  // The neonatal array and montage travel together; picking
-                  // neonate and leaving a 19-channel 10-20 set is a mistake the
-                  // renderer would accept and a reader would not.
+                  // Acquire the full electrode set for term/unspecified
+                  // neonates. The neonatal montage is a display choice.
                   ...(v === "neonate"
-                    ? { channels: "neonatal_9" as const, montage: "neonatal_reduced" as const }
+                    ? { channels: "standard_19" as const, montage: "neonatal_reduced" as const }
                     : {}),
                 }))}
               />

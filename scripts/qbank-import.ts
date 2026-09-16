@@ -6,6 +6,7 @@
  *   npm run qbank:import                  # apply
  *   npm run qbank:import -- --only PQ-A-007
  *   npm run qbank:import -- --dir content/qbank/examples
+ *   npm run qbank:import -- --overwrite-revisions  # intentional destructive reset
  *
  * Re-runnable. Rules:
  *   * new item                     -> inserted as `pending_review`
@@ -35,6 +36,7 @@ const ROOT = "content/qbank";
 const IMAGE_DIR = "public/images/qbank";
 
 const DRY = process.argv.includes("--dry-run");
+const OVERWRITE_REVISIONS = process.argv.includes("--overwrite-revisions");
 function arg(name: string): string | null {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? (process.argv[i + 1] ?? "") : null;
@@ -149,6 +151,21 @@ async function main() {
     });
   }
 
+  // A successful editor-requested revision is live editorial work. YAML is the
+  // seed source, not authority to silently erase that work on a later import.
+  const revisedCaseIds = new Set<string>();
+  const caseIds = [...existing.values()].map((row) => row.id);
+  if (caseIds.length && !OVERWRITE_REVISIONS) {
+    const { data: revisionRows, error: revisionErr } = await supabase
+      .from("eeg_case_generation_jobs")
+      .select("case_id")
+      .in("case_id", caseIds)
+      .eq("mode", "revision")
+      .eq("status", "drafted");
+    if (revisionErr) throw new Error(`could not protect live revisions: ${revisionErr.message}`);
+    for (const row of revisionRows ?? []) revisedCaseIds.add(row.case_id as string);
+  }
+
   const plans: Plan[] = [];
   // failures = something is wrong with the content or the write.
   // waiting  = the item is fine but not renderable yet; not an error.
@@ -159,6 +176,16 @@ async function main() {
     const sidecar = readSidecar(q.id);
     const rows = questionToRows(q, sidecar);
     const prev = existing.get(q.id);
+
+    if (prev && revisedCaseIds.has(prev.id)) {
+      plans.push({
+        id: q.id, action: "skip",
+        reason: "live editor revision protected (use --overwrite-revisions to replace it)",
+        status: prev.status, options: rows.options.length,
+        references: rows.references.length, hasSidecar: !!sidecar, specHash: rows.case.spec_hash,
+      });
+      continue;
+    }
 
     const unverified = (q.references ?? []).filter((r) => !r.verified).length;
     if (unverified > 0) {
