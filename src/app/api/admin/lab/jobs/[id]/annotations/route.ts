@@ -88,7 +88,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     .insert({
       job_id: id, user_id: auth.userId, user_email: auth.email,
       onset_s: v.onsetS, duration_s: v.durationS, kind: v.kind, label: v.label, note: v.note,
-      pane: v.pane, trend_row: v.trendRow, channels: v.channels, region: v.region,
+      pane: v.pane, trend_row: v.trendRow, channels: v.channels, region: v.region, view_span_s: v.viewSpanS,
     })
     .select(ANNOTATION_COLUMNS)
     .single();

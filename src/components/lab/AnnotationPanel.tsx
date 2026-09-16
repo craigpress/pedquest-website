@@ -91,6 +91,7 @@ export default function AnnotationPanel({
             onSave({
               onsetS: draft.onsetS, durationS: draft.durationS, kind: draft.kind, label: draft.label, note: draft.note,
               pane: draft.pane, trendRow: draft.pane === "trend" ? draft.trendRow : null,
+              viewSpanS: draft.pane === "trend" ? draft.viewSpanS : null,
               channels: draft.channels, region: draft.region,
             }, draft.id);
           }}
@@ -216,7 +217,7 @@ export default function AnnotationPanel({
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 <button type="button" style={mini} onClick={() => onDraftChange({
                   id: a.id, onsetS: a.onsetS, durationS: a.durationS, kind: a.kind, label: a.label, note: a.note,
-                  pane: a.pane, trendRow: a.trendRow, channels: a.channels, region: a.region,
+                  pane: a.pane, trendRow: a.trendRow, channels: a.channels, region: a.region, viewSpanS: a.viewSpanS,
                 })}>edit</button>
                 <button type="button" style={{ ...mini, color: "var(--accent-secondary)" }} onClick={() => onDelete(a.id)}>delete</button>
               </div>

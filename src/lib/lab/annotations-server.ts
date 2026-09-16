@@ -3,7 +3,7 @@
 import { DEFAULT_TARGET, isAnnotationRegion, type ViewerAnnotation, type ViewerAnnotationKind } from "@/lib/eeg/annotations";
 
 export const ANNOTATION_COLUMNS =
-  "id,job_id,user_id,user_email,onset_s,duration_s,kind,label,note,pane,trend_row,channels,region,created_at,updated_at";
+  "id,job_id,user_id,user_email,onset_s,duration_s,kind,label,note,pane,trend_row,channels,region,view_span_s,created_at,updated_at";
 
 /** `names` maps user_id → display name (from user_roles); pass it when listing everyone's marks so a teacher sees names, not emails. */
 export function rowToAnnotation(input: unknown, callerUserId: string, names?: Map<string, string>): ViewerAnnotation {
@@ -19,6 +19,7 @@ export function rowToAnnotation(input: unknown, callerUserId: string, names?: Ma
     trendRow: typeof r.trend_row === "string" && r.trend_row ? r.trend_row : DEFAULT_TARGET.trendRow,
     channels: Array.isArray(r.channels) ? r.channels.filter((c): c is string => typeof c === "string") : DEFAULT_TARGET.channels,
     region: isAnnotationRegion(r.region) ? r.region : DEFAULT_TARGET.region,
+    viewSpanS: typeof r.view_span_s === "number" && r.view_span_s > 0 ? r.view_span_s : DEFAULT_TARGET.viewSpanS,
     label: typeof r.label === "string" ? r.label : "",
     note: typeof r.note === "string" ? r.note : "",
     authorEmail: typeof r.user_email === "string" ? r.user_email : null,

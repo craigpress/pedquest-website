@@ -836,8 +836,8 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
                 rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme}
                 height={view === "trends" ? Math.max(naturalTrendH, mainH - 2) : trendPaneH - 2}
                 onScroll={scrollWindow} onPage={page}
-                onSelect={(a, b) => { seek(a); startDraft(a, b - a, { pane: "trend", trendRow: null }); }}
-                onPick={(t, row) => { lastPick.current = { pane: "trend", trendRow: row }; seek(t); }}
+                onSelect={(a, b) => { seek(a); startDraft(a, b - a, { pane: "trend", trendRow: null, viewSpanS: windowS ?? durationS }); }}
+                onPick={(t, row) => { lastPick.current = { pane: "trend", trendRow: row, viewSpanS: windowS ?? durationS }; seek(t); }}
                 key={trendVersion === 0 ? "empty" : "live"}
               />
             </div>

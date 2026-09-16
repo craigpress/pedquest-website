@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useUser } from "@/lib/auth";
+import { switchToUser } from "@/lib/impersonation";
 import { getSupabase } from "@/lib/supabase";
 import {
   adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, inp, meta, mini,
@@ -317,6 +318,17 @@ function TeacherView({ course, courseId, authHeaders, reload }: {
     if (r) await reload();
   }
 
+  // Editors and admins can open the site as a TEST student to demo the learner's view of this
+  // course; the API refuses anything but an is_test account. Returning lands back on this page.
+  async function viewAs(email: string) {
+    setErr(null);
+    try {
+      await switchToUser(email, authHeaders, { landOn: `/courses/${courseId}`, returnTo: `/courses/${courseId}` });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not switch to that account.");
+    }
+  }
+
   async function addStudents(role: "student" | "instructor") {
     const typed = rawEmails.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
     const emails = Array.from(new Set([...picked, ...typed]));
@@ -614,7 +626,15 @@ function TeacherView({ course, courseId, authHeaders, reload }: {
                   <tr key={st.email}>
                     <td>
                       <div style={{ color: "var(--text)" }}>{st.displayName ?? st.email}</div>
-                      <div style={meta}>{st.email}{st.isTest ? " · test" : ""}</div>
+                      <div style={meta}>
+                        {st.email}{st.isTest ? " · test" : ""}
+                        {st.isTest && (
+                          <button type="button" style={{ ...mini, marginLeft: 8 }} disabled={busy} onClick={() => void viewAs(st.email)}
+                            title="Open this course as this test student (editors and admins; test accounts only)">
+                            View as
+                          </button>
+                        )}
+                      </div>
                     </td>
                     {course.assignments.map((a) => {
                       const s = course.matrix[a.id]?.[st.email];

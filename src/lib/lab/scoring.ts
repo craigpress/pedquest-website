@@ -11,10 +11,13 @@
 // them share one matching core: one-to-one assignment of marks to key events
 // by best temporal overlap, then per-match timing and localization.
 //
-// Grading is deliberately lenient in time (a mark that starts within the
-// tolerance of a key event counts as a detection) and honest about what the
-// learner did not say: a mark with no channel or region is "not stated", not
-// "wrong".
+// Grading is lenient in time only as far as the view the learner marked on
+// allows: a mark on the raw EEG must start within the task tolerance (10 s for
+// seizures) of a key event; a mark on the trend strip gets a tolerance scaled
+// to the seconds per pixel of the strip it was placed on (see `toleranceFor`).
+// Localization is part of the task: a mark with no channel or region is "not
+// stated" and scores 0 on localization, the same as a wrong side (Craig,
+// 2026-09-16). Only a key event that itself has no region is left ungraded.
 
 import {
   type AnnotationPane, type AnnotationRegion, type ViewerAnnotationKind,
@@ -62,6 +65,8 @@ export interface LearnerMark {
   trendRow: string | null;
   channels: string[];
   region: AnnotationRegion | null;
+  /** seconds visible across the trend strip when a trend mark was placed; null on raw marks and on rows before 2026-09-16 */
+  viewSpanS: number | null;
 }
 
 // ── tasks ──────────────────────────────────────────────────────────────────
@@ -84,7 +89,7 @@ export interface MarkTask {
   learnerKinds: string[];
   /** key kinds this task is graded against */
   keyKinds: string[];
-  /** a mark starting within this many seconds of a key event (before or after) still counts as detecting it */
+  /** a RAW-pane mark starting within this many seconds of a key event (before or after) still counts as detecting it; trend marks widen this by view resolution (`toleranceFor`) */
   toleranceS: number;
   /** trend_point: the row the learner was told to use; null = any trend row */
   trendRow?: string | null;
@@ -96,7 +101,7 @@ export const SEIZURE_TASK: MarkTask = {
   type: "span",
   learnerKinds: ["seizure", "seizure_onset"],
   keyKinds: ["seizure", "seizure_cluster", "spasm", "spasm_cluster", "tonic_seizure"],
-  toleranceS: 30,
+  toleranceS: 10,
 };
 
 export const DISCHARGE_TASK: MarkTask = {
@@ -107,6 +112,27 @@ export const DISCHARGE_TASK: MarkTask = {
   keyKinds: ["discharge", "spike", "sharp_wave"],
   toleranceS: 2,
 };
+
+// ── time tolerance by view ─────────────────────────────────────────────────
+
+/** How many strip pixels a careful click can be off by. */
+export const TREND_CLICK_PX = 5;
+/** Nominal plot width of the trend strip in CSS px (the strip is `container − gutter`; ~1200 on a laptop, more on an ultrawide, so this is a floor on precision). */
+export const TREND_PLOT_PX = 1200;
+/** A trend mark whose view span was not recorded (rows before 2026-09-16) is graded as if placed on this many seconds unless the recording length is known. */
+export const TREND_FALLBACK_SPAN_S = 4 * 3600;
+
+/**
+ * Seconds a mark may be off and still detect a key event.
+ *   raw pane   → the task tolerance (10 s for seizures, 2 s for discharges)
+ *   trend pane → max(task tolerance, TREND_CLICK_PX × seconds-per-pixel of the view the mark was placed on)
+ * With the default 1200 px strip: 10 min view 2.5 s (→ floor 10 s), 1 h 15 s, 2 h 30 s, 4 h 60 s, 8 h 120 s, a 24 h whole record 360 s.
+ */
+export function toleranceFor(task: MarkTask, mark: Pick<LearnerMark, "pane" | "viewSpanS">, durationS?: number | null): number {
+  if (mark.pane !== "trend") return task.toleranceS;
+  const span = mark.viewSpanS && mark.viewSpanS > 0 ? mark.viewSpanS : (durationS && durationS > 0 ? durationS : TREND_FALLBACK_SPAN_S);
+  return Math.max(task.toleranceS, (span * TREND_CLICK_PX) / TREND_PLOT_PX);
+}
 
 // ── localization ───────────────────────────────────────────────────────────
 
@@ -165,7 +191,7 @@ export function regionOfTrendRow(row: string | null): AnnotationRegion | null {
   return null;
 }
 
-export type Localization = "match" | "partial" | "miss" | "not_stated";
+export type Localization = "match" | "partial" | "miss" | "not_stated" | "ungraded";
 
 /**
  * What the learner said about WHERE, against the key's onset region.
@@ -173,9 +199,11 @@ export type Localization = "match" | "partial" | "miss" | "not_stated";
  *   partial     same hemisphere but a different lobe, or hemisphere-level vs a lobe, or a
  *               lateralized answer to a generalized key
  *   miss        wrong hemisphere, or lateralized vs midline
- *   not_stated  the learner gave no region, channel or sided trend row
+ *   not_stated  the learner gave no region, channel or sided trend row — scored like a miss
+ *   ungraded    the key event itself has no region, so nothing can be graded
  */
 export function gradeLocalization(mark: LearnerMark, key: KeyEvent): Localization {
+  if (!key.region) return "ungraded";
   const stated: AnnotationRegion[] = [];
   if (mark.region) stated.push(mark.region);
   else {
@@ -184,7 +212,6 @@ export function gradeLocalization(mark: LearnerMark, key: KeyEvent): Localizatio
     if (!stated.length && fromTrend) stated.push(fromTrend);
   }
   if (!stated.length) return "not_stated";
-  if (!key.region) return "not_stated";
   if (stated.includes(key.region)) return "match";
   const keySide = sideOf(key.region);
   if (keySide === "generalized") return stated.includes("generalized") ? "match" : "partial";
@@ -207,6 +234,8 @@ export interface MatchDetail {
   overlap: number;
   localization: Localization;
   pane: AnnotationPane;
+  /** the time tolerance this mark was graded with (`toleranceFor`) */
+  toleranceS: number;
 }
 
 function overlapIoU(a0: number, a1: number, b0: number, b1: number): number {
@@ -216,14 +245,14 @@ function overlapIoU(a0: number, a1: number, b0: number, b1: number): number {
 }
 
 /** How well a mark fits a key event on [0,1]; 0 = does not count as detecting it. */
-function fit(mark: LearnerMark, key: KeyEvent, task: MarkTask): number {
+function fit(mark: LearnerMark, key: KeyEvent, task: MarkTask, tolS: number): number {
   const m0 = mark.onsetS, m1 = mark.onsetS + mark.durationS;
-  const k0 = key.onsetS - task.toleranceS, k1 = key.offsetS + task.toleranceS;
+  const k0 = key.onsetS - tolS, k1 = key.offsetS + tolS;
   if (m1 < k0 || m0 > k1) return 0;
   if (mark.durationS > 0 && key.offsetS > key.onsetS) return Math.max(0.05, overlapIoU(m0, m1, key.onsetS, key.offsetS));
   // point mark (or point key): score by distance to the key onset, 1 at the onset → 0.05 at the tolerance edge
   const d = Math.abs(m0 - key.onsetS);
-  const span = Math.max(task.toleranceS, key.offsetS - key.onsetS + task.toleranceS);
+  const span = Math.max(tolS, key.offsetS - key.onsetS + tolS);
   return Math.max(0.05, 1 - d / span);
 }
 
@@ -257,14 +286,18 @@ const median = (xs: number[]): number | null => {
 };
 
 /** Grade one learner's marks against the key for one task. */
-export function scoreLearner(task: MarkTask, keyAll: KeyEvent[], marksAll: LearnerMark[]): LearnerScore {
+export function scoreLearner(
+  task: MarkTask, keyAll: KeyEvent[], marksAll: LearnerMark[],
+  opts: { /** recording length; the fallback view span for legacy trend marks */ durationS?: number | null } = {},
+): LearnerScore {
   const key = keyAll.filter((k) => task.keyKinds.includes(k.kind));
   let marks = marksAll.filter((m) => task.learnerKinds.includes(m.kind));
   if (task.type === "trend_point") marks = marks.filter((m) => m.pane === "trend" && (!task.trendRow || m.trendRow === task.trendRow));
+  const tolOf = (m: LearnerMark) => toleranceFor(task, m, opts.durationS);
 
   // greedy one-to-one: best fits first
   const candidates: { mi: number; ki: number; f: number }[] = [];
-  marks.forEach((m, mi) => key.forEach((k, ki) => { const f = fit(m, k, task); if (f > 0) candidates.push({ mi, ki, f }); }));
+  marks.forEach((m, mi) => key.forEach((k, ki) => { const f = fit(m, k, task, tolOf(m)); if (f > 0) candidates.push({ mi, ki, f }); }));
   candidates.sort((a, b) => b.f - a.f);
   const usedM = new Set<number>(), usedK = new Set<number>();
   const matches: MatchDetail[] = [];
@@ -281,6 +314,7 @@ export function scoreLearner(task: MarkTask, keyAll: KeyEvent[], marksAll: Learn
       overlap: m.durationS > 0 && keyDur > 0 ? overlapIoU(m.onsetS, m.onsetS + m.durationS, k.onsetS, k.offsetS) : c.f,
       localization: gradeLocalization(m, k),
       pane: m.pane,
+      toleranceS: tolOf(m),
     });
   }
   matches.sort((a, b) => a.keyIndex - b.keyIndex);
@@ -293,21 +327,23 @@ export function scoreLearner(task: MarkTask, keyAll: KeyEvent[], marksAll: Learn
     ? (2 * sensitivity * precision) / (sensitivity + precision)
     : (key.length === 0 && marks.length === 0 ? null : 0);
 
-  const localization: Record<Localization, number> = { match: 0, partial: 0, miss: 0, not_stated: 0 };
+  const localization: Record<Localization, number> = { match: 0, partial: 0, miss: 0, not_stated: 0, ungraded: 0 };
   const byPane: Record<AnnotationPane, number> = { raw: 0, trend: 0 };
   for (const m of matches) localization[m.localization]++;
   for (const m of marks) byPane[m.pane]++;
 
   const latencies = matches.map((m) => m.onsetLatencyS);
+  // each match is judged against the tolerance of the view it was marked on
   const timing = matches.length
-    ? matches.reduce((s, m) => s + Math.max(0, 1 - Math.abs(m.onsetLatencyS) / task.toleranceS), 0) / matches.length
+    ? matches.reduce((s, m) => s + Math.max(0, 1 - Math.abs(m.onsetLatencyS) / m.toleranceS), 0) / matches.length
     : null;
-  const locGraded = localization.match + localization.partial + localization.miss;
+  // "not stated" is graded, and scores 0, like a wrong side; only key events without a region are left out
+  const locGraded = localization.match + localization.partial + localization.miss + localization.not_stated;
   const locScore = locGraded ? (localization.match + 0.5 * localization.partial) / locGraded : null;
 
   let composite: number | null = null;
   if (f1 !== null) {
-    // localization counts only when the learner localized at least once; the 20 % otherwise folds into detection
+    // localization counts whenever a detected key event had a region to name; the 20 % otherwise folds into detection
     const parts: [number, number][] = [[f1, locScore === null ? 0.7 : 0.5], [timing ?? 0, 0.3]];
     if (locScore !== null) parts.push([locScore, 0.2]);
     composite = Math.round(100 * parts.reduce((s, [v, w]) => s + v * w, 0));

@@ -387,7 +387,7 @@ function Timeline({ durationS, keyEvents, task, learners, instructors, onPick }:
 const EMPTY_SCORE: LearnerScore = {
   taskId: "", keyCount: 0, markCount: 0, detected: 0, sensitivity: null, falseAlarms: 0, precision: null, f1: null,
   medianOnsetLatencyS: null, medianAbsLatencyS: null, medianDurationErrorS: null, meanOverlap: null,
-  localization: { match: 0, partial: 0, miss: 0, not_stated: 0 }, byPane: { raw: 0, trend: 0 }, composite: null,
+  localization: { match: 0, partial: 0, miss: 0, not_stated: 0, ungraded: 0 }, byPane: { raw: 0, trend: 0 }, composite: null,
   matches: [], unmatchedMarkIds: [], missedKeyIndexes: [],
 };
 

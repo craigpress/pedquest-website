@@ -25,6 +25,7 @@ import {
 type AnnotationRow = {
   id: string; user_id: string; user_email: string; onset_s: number; duration_s: number; kind: string;
   label: string; note: string; pane: string | null; trend_row: string | null; channels: string[] | null; region: string | null;
+  view_span_s: number | null;
   created_at: string;
 };
 
@@ -120,7 +121,7 @@ export async function computeJobResults(
 
   let q = supabase
     .from("eeg_lab_annotations")
-    .select("id,user_id,user_email,onset_s,duration_s,kind,label,note,pane,trend_row,channels,region,created_at")
+    .select("id,user_id,user_email,onset_s,duration_s,kind,label,note,pane,trend_row,channels,region,view_span_s,created_at")
     .eq("job_id", jobId)
     .order("onset_s");
   if (opts.onlyUserIds) {
@@ -151,12 +152,13 @@ export async function computeJobResults(
       trendRow: r.trend_row ?? DEFAULT_TARGET.trendRow,
       channels: Array.isArray(r.channels) ? r.channels : [],
       region: isAnnotationRegion(r.region) ? r.region : null,
+      viewSpanS: typeof r.view_span_s === "number" && r.view_span_s > 0 ? r.view_span_s : null,
       label: r.label ?? "",
       note: r.note ?? "",
       createdAt: r.created_at,
     }));
     const scores: Record<string, LearnerScore> = {};
-    for (const t of tasks) scores[t.id] = scoreLearner(t, key, marks);
+    for (const t of tasks) scores[t.id] = scoreLearner(t, key, marks, { durationS: job.durationS });
     return {
       userId,
       email: list[0].user_email,

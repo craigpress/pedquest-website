@@ -48,7 +48,7 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
     .from("eeg_lab_annotations")
     .update({
       onset_s: v.onsetS, duration_s: v.durationS, kind: v.kind, label: v.label, note: v.note,
-      pane: v.pane, trend_row: v.trendRow, channels: v.channels, region: v.region,
+      pane: v.pane, trend_row: v.trendRow, channels: v.channels, region: v.region, view_span_s: v.viewSpanS,
     })
     .eq("id", r.annotationId)
     .select(ANNOTATION_COLUMNS)

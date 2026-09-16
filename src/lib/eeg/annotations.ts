@@ -60,9 +60,16 @@ export interface AnnotationTarget {
   channels: string[];
   /** the head region the learner names; null = not stated */
   region: AnnotationRegion | null;
+  /**
+   * seconds visible across the trend strip when a trend mark was placed (the
+   * zoom window, or the whole record); null on the raw EEG. Scoring turns it
+   * into a time tolerance, since a click on a 24 h strip cannot be as precise
+   * as one on a 10 s page.
+   */
+  viewSpanS: number | null;
 }
 
-export const DEFAULT_TARGET: AnnotationTarget = { pane: "raw", trendRow: null, channels: [], region: null };
+export const DEFAULT_TARGET: AnnotationTarget = { pane: "raw", trendRow: null, channels: [], region: null, viewSpanS: null };
 
 export interface ViewerAnnotation extends AnnotationTarget {
   id: string;
@@ -122,7 +129,9 @@ export function validateAnnotationTarget(o: Record<string, unknown>): { value?: 
   }
   const region = o.region == null || o.region === "" ? null : o.region;
   if (region !== null && !isAnnotationRegion(region)) return { error: "region is not a known head region." };
-  return { value: { pane, trendRow, channels, region } };
+  const span = Number(o.viewSpanS);
+  const viewSpanS = pane === "trend" && Number.isFinite(span) && span > 0 ? Math.round(span) : null;
+  return { value: { pane, trendRow, channels, region, viewSpanS } };
 }
 
 export function validateAnnotationInput(raw: unknown, durationS: number): { value?: ViewerAnnotationInput; error?: string } {

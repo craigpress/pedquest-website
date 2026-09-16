@@ -20,6 +20,8 @@ interface Stash {
   refreshToken: string;
   email: string | null;
   startedAt: string;
+  /** where "return to my account" lands; the page that started the switch (editors have no /admin/users) */
+  returnTo?: string;
 }
 
 function readStash(): Stash | null {
@@ -43,9 +45,16 @@ export function readImpersonation(): { adminEmail: string | null } | null {
   return stash ? { adminEmail: stash.email } : null;
 }
 
+/**
+ * Switch into a test account. `landOn` is where the new session opens (default
+ * the lab library); `returnTo` is where "return to my account" goes afterwards
+ * (default the admin users console). A course page passes itself for both, so
+ * an editor sees the student's view of that course and comes straight back.
+ */
 export async function switchToUser(
   email: string,
   authHeaders: () => Promise<Record<string, string>>,
+  opts: { landOn?: string; returnTo?: string } = {},
 ): Promise<void> {
   const sb = getSupabase();
   if (!sb) throw new Error("Supabase is not configured.");
@@ -70,6 +79,7 @@ export async function switchToUser(
         refreshToken: session?.refresh_token ?? "",
         email: session?.user?.email ?? null,
         startedAt: new Date().toISOString(),
+        returnTo: opts.returnTo,
       } satisfies Stash),
     );
   } catch {
@@ -82,7 +92,7 @@ export async function switchToUser(
     throw new Error(error.message);
   }
 
-  window.location.assign("/admin/eeg-lab/library");
+  window.location.assign(opts.landOn ?? "/admin/eeg-lab/library");
 }
 
 export async function returnToAdmin(): Promise<void> {
@@ -104,5 +114,5 @@ export async function returnToAdmin(): Promise<void> {
     window.location.assign("/login");
     return;
   }
-  window.location.assign("/admin/users");
+  window.location.assign(stash.returnTo && stash.returnTo.startsWith("/") ? stash.returnTo : "/admin/users");
 }

@@ -4,19 +4,21 @@ import { requireRole } from "@/lib/admin-auth";
 import { isRole, type Role } from "@/lib/roles";
 import { isValidEmail } from "@/lib/validation";
 
-// Admin -> test account session handoff.
+// Admin / editor -> test account session handoff.
 //
 // Returns a one-shot magic-link token hash for a SYNTHETIC account so an admin
-// can see the site as a learner or teacher. The same mechanism the Authentik
-// bridge uses (generateLink -> hashed_token -> client verifyOtp), so no
-// password or long-lived credential ever exists for these accounts.
+// or an editor can see the site as a learner or teacher (editors demo the
+// Demo class and need a student's view; opened to `editor` 2026-09-16 at
+// Craig's decision). The same mechanism the Authentik bridge uses
+// (generateLink -> hashed_token -> client verifyOtp), so no password or
+// long-lived credential ever exists for these accounts.
 //
 // The `is_test` gate is the whole security model: a token minted here grants a
 // full session as the target, so anything but a flagged test row must be
-// refused before generateLink is ever called.
+// refused before generateLink is ever called — for editors and admins alike.
 
 export async function POST(request: NextRequest) {
-  const auth = await requireRole(request, "admin");
+  const auth = await requireRole(request, "editor");
   if (!auth.ok) return auth.response;
   const supabase = createServerClient()!;
 
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Could not mint a session for that account." }, { status: 500 });
   }
 
-  console.info(`[SwitchUser] ${auth.email} -> ${email}`);
+  console.info(`[SwitchUser] ${auth.email} (${auth.role}) -> ${email}`);
 
   return NextResponse.json(
     {
