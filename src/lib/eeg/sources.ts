@@ -27,7 +27,8 @@ export interface RangeSourceOptions {
 
 /**
  * `getUrl` is called for every request that has no fresh URL and again after
- * a 401/403/400, so a short-lived signed URL can be re-minted mid-session.
+ * an authentication or expiry response, so a short-lived signed URL can be
+ * re-minted mid-session.
  */
 export class RangeByteSource implements ByteSource {
   readonly size: number;
@@ -83,7 +84,7 @@ export class RangeByteSource implements ByteSource {
         return buf;
       }
       // Expired signed URL: re-mint once and retry.
-      if (res.status === 400 || res.status === 401 || res.status === 403) {
+      if (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 410) {
         this.url = null;
         continue;
       }
