@@ -20,7 +20,7 @@ function EventCard({ ev, featured }: { ev: PublicEvent; featured?: boolean }) {
   const multiDay = Boolean(endDate && endDate !== startDate);
 
   return (
-    <article className={`ev-card ${featured ? "featured" : ""} ${past ? "past" : ""}`}>
+    <article id={ev.slug} className={`ev-card ${featured ? "featured" : ""} ${past ? "past" : ""}`}>
       <div className="ev-card-head">
         <div className="ev-card-keys">
           {ev.series && <span className="ev-series">{ev.series}</span>}
@@ -29,12 +29,22 @@ function EventCard({ ev, featured }: { ev: PublicEvent; featured?: boolean }) {
             {past ? "Past" : "Upcoming"}
           </span>
         </div>
+        {/* /events/{slug} redirects to this card's anchor, so the copied
+            address stays short and survives a re-sort of the page. */}
+        <Link href={`/events/${ev.slug}`} className="ev-permalink" title="Link to this event">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2L7.6 4.2M9.5 6.5a3 3 0 0 0-4.2 0L3 8.8a3 3 0 0 0 4.2 4.2l1.2-1.2" />
+          </svg>
+          Link
+        </Link>
       </div>
 
       {/* Title and host mark share a row: title left and free to wrap, mark
           right-aligned and vertically centred against it. */}
       <div className="ev-card-title-row">
-        <h2 className={featured ? "ev-title-lg" : "ev-title"}>{ev.title}</h2>
+        <h2 className={featured ? "ev-title-lg" : "ev-title"}>
+          <Link href={`/events/${ev.slug}`} className="ev-title-link">{ev.title}</Link>
+        </h2>
         {ev.hostLogo && (
           <Image
             className="ev-host-logo"
@@ -318,7 +328,16 @@ export default function EventsView({ events }: { events: PublicEvent[] }) {
         .ev-card {
           background: var(--surface); border: 1px solid var(--line);
           border-radius: 18px; padding: clamp(1.35rem, 3vw, 2rem);
+          scroll-margin-top: 7rem; /* clears the fixed 93px site header */
         }
+        .ev-card:target { box-shadow: 0 0 0 3px var(--accent-soft); }
+        .ev-permalink {
+          display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
+          font-family: var(--mono-font); font-size: 0.7rem; color: var(--muted);
+        }
+        .ev-permalink:hover { color: var(--accent); }
+        .ev-title-link { color: inherit; }
+        .ev-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
         .ev-card.featured { border-color: var(--accent); }
         .ev-card.past { opacity: 0.86; }
         .ev-card-head {

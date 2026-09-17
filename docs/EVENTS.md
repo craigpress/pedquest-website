@@ -30,6 +30,7 @@ put the link in `src/data` or in any client component.
 | Types, series copy, date/TZ helpers | `src/lib/events.ts` |
 | Server reads (service role) | `src/lib/events-server.ts` |
 | Public page / view | `src/app/events/page.tsx`, `src/components/EventsView.tsx` |
+| Event permalink (`/events/{slug}` → `/events#{slug}`) | `src/app/events/[slug]/page.tsx` |
 | Register form | `src/components/EventRegisterForm.tsx` |
 | Register API | `src/app/api/events/register/route.ts` |
 | Admin console + API | `src/app/admin/events/page.tsx`, `src/app/api/admin/events/route.ts` |
@@ -53,8 +54,10 @@ put the link in `src/data` or in any client component.
 
 - Times are entered as wall-clock in the event's own zone (ET/CT/MT/PT) and
   stored as absolute timestamps, so a Seattle meeting displays in PT.
-- The **slug** identifies the event in `event_registrations`. Leave it blank to
-  derive it from the title; don't change it after people have registered.
+- The **slug** identifies the event in `event_registrations` and is its public
+  permalink: `https://pedquest.org/events/{slug}` (each card's **Link** button
+  and title point there). Leave it blank to derive it from the title; don't
+  change it after people have registered or the link has been shared.
 - Save as **Draft** to stage an event; only `published` rows reach `/events`.
 - An email-gated event can't be published without a join link.
 - Each talk has an optional **PedQuEST member id** (the `members.id` slug, e.g.
