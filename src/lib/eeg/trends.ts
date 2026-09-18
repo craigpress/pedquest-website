@@ -10,7 +10,7 @@ import { hemisphereChannels } from "./montage";
 import { applyChain, designChain } from "./filters";
 
 /** Bump when anything below changes what a stored ViewerTrends means; invalidates the browser cache (trend-cache.ts). */
-export const TREND_ENGINE_VERSION = 2;
+export const TREND_ENGINE_VERSION = 3;
 export const TREND_FMAX_HZ = 20;
 export const TREND_WIN_S = 4;
 export const SR_EPOCH_S = 0.5;

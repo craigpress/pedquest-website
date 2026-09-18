@@ -289,14 +289,14 @@ export function averageMembers(labels: string[]): number[] {
   return labels.map((l, i) => ({ l, i })).filter(({ l }) => !AUX_RE.test(norm(l))).map(({ i }) => i);
 }
 
-/** Left/right hemisphere scalp channels, for the trend engine. */
+/** Left/right hemisphere scalp channels, for the trend engine.
+ * Numbered auxiliary inputs (EMG1, DC2, etc.) are not scalp electrodes. */
 export function hemisphereChannels(labels: string[]): { left: number[]; right: number[] } {
   const left: number[] = []; const right: number[] = [];
   labels.forEach((l, i) => {
     const n = norm(l);
-    if (AUX_RE.test(n)) return;
-    const m = /(\d+)$/.exec(n);
-    if (!m) return; // midline (Fz, Cz, Pz) excluded
+    const m = /^(?:Fp|AF|F|FT|FC|T|C|TP|CP|P|PO|O|I)([1-9]|10)$/i.exec(n);
+    if (!m) return; // midline and non-scalp channels excluded
     (parseInt(m[1], 10) % 2 === 1 ? left : right).push(i);
   });
   return { left, right };
