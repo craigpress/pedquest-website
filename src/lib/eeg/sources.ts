@@ -17,11 +17,11 @@ export class FileByteSource implements ByteSource {
 }
 
 export interface RangeSourceOptions {
-  /** bytes per cached chunk; 1 MiB is ~4 s of 22 ch @ 256 Hz */
+  /** bytes per cached chunk; 1 MiB is ~93 s of 22 ch @ 256 Hz, int16 */
   chunkBytes?: number;
   /** cache ceiling in chunks (LRU) */
   maxChunks?: number;
-  /** when a sequential read is detected, fetch this many chunks ahead */
+  /** fetch this many chunks in the scrolling direction in the background */
   readAheadChunks?: number;
 }
 
@@ -36,9 +36,12 @@ export class RangeByteSource implements ByteSource {
   private readonly maxChunks: number;
   private readonly readAhead: number;
   private cache = new Map<number, ArrayBuffer>();
-  private inflight = new Map<number, Promise<void>>();
+  private inflight = new Map<number, Promise<ArrayBuffer>>();
   private url: string | null = null;
-  private lastChunk = -2;
+  private lastOffset = -1;
+  private direction: 1 | -1 = 1;
+  private readVersion = 0;
+  private prefetch: Promise<unknown> | null = null;
   bytesTransferred = 0;
 
   private constructor(
@@ -102,42 +105,55 @@ export class RangeByteSource implements ByteSource {
     }
   }
 
-  private loadChunks(first: number, count: number): Promise<void> {
+  private loadChunks(first: number, count: number): void {
     const start = first * this.chunkBytes;
     const end = Math.min(this.size, (first + count) * this.chunkBytes) - 1;
-    const p = this.fetchRange(start, end).then((buf) => {
+    const batch = this.fetchRange(start, end).then((buf) => {
+      if (buf.byteLength !== end - start + 1) throw new Error("The recording stream returned an incomplete range.");
+      const chunks: ArrayBuffer[] = [];
       for (let i = 0; i < count; i++) {
         const a = i * this.chunkBytes;
-        if (a >= buf.byteLength) break;
-        this.touch(first + i, buf.slice(a, Math.min(buf.byteLength, a + this.chunkBytes)));
+        const chunk = buf.slice(a, Math.min(buf.byteLength, a + this.chunkBytes));
+        chunks.push(chunk);
+        this.touch(first + i, chunk);
       }
-    }).finally(() => {
-      for (let i = 0; i < count; i++) this.inflight.delete(first + i);
+      return chunks;
     });
-    for (let i = 0; i < count; i++) this.inflight.set(first + i, p);
-    return p;
+    for (let i = 0; i < count; i++) {
+      const p = batch.then((chunks) => chunks[i]).finally(() => this.inflight.delete(first + i));
+      this.inflight.set(first + i, p);
+    }
   }
 
-  private async ensure(first: number, last: number): Promise<void> {
-    const lastIdx = Math.ceil(this.size / this.chunkBytes) - 1;
-    // Sequential access → extend the request forward.
-    const sequential = first === this.lastChunk + 1 || first === this.lastChunk;
-    let want = last;
-    if (sequential) want = Math.min(lastIdx, last + this.readAhead);
-    this.lastChunk = last;
-
-    const waits: Promise<void>[] = [];
+  private ensure(first: number, last: number): Promise<ArrayBuffer[]> {
     let run: number | null = null;
-    for (let i = first; i <= want + 1; i++) {
-      const missing = i <= want && !this.cache.has(i) && !this.inflight.has(i);
+    for (let i = first; i <= last + 1; i++) {
+      const missing = i <= last && !this.cache.has(i) && !this.inflight.has(i);
       if (missing && run === null) run = i;
       if (!missing && run !== null) {
-        waits.push(this.loadChunks(run, i - run));
+        this.loadChunks(run, i - run);
         run = null;
       }
-      if (i <= want && this.inflight.has(i)) waits.push(this.inflight.get(i)!);
     }
-    await Promise.all(waits);
+    const waits: (ArrayBuffer | Promise<ArrayBuffer>)[] = [];
+    for (let i = first; i <= last; i++) {
+      const cached = this.cache.get(i);
+      if (cached) { this.touch(i, cached); waits.push(cached); }
+      else waits.push(this.inflight.get(i)!);
+    }
+    // Retain the requested chunks even if another read evicts them from the LRU.
+    return Promise.all(waits);
+  }
+
+  private readAheadFrom(first: number, last: number) {
+    if (this.prefetch || this.readAhead <= 0) return;
+    const count = Math.min(this.readAhead, Math.max(0, this.maxChunks - (last - first + 1)));
+    const lastIdx = Math.ceil(this.size / this.chunkBytes) - 1;
+    const from = this.direction === 1 ? last + 1 : Math.max(0, first - count);
+    const to = this.direction === 1 ? Math.min(lastIdx, last + count) : first - 1;
+    if (to < from) return;
+    // Speculation must not delay a cached page or surface as a page-read failure.
+    this.prefetch = this.ensure(from, to).catch(() => {}).finally(() => { this.prefetch = null; });
   }
 
   async read(offset: number, length: number): Promise<ArrayBuffer> {
@@ -145,16 +161,19 @@ export class RangeByteSource implements ByteSource {
     if (end <= offset) return new ArrayBuffer(0);
     const first = Math.floor(offset / this.chunkBytes);
     const last = Math.floor((end - 1) / this.chunkBytes);
-    await this.ensure(first, last);
+    const version = ++this.readVersion;
+    if (this.lastOffset >= 0 && offset !== this.lastOffset) this.direction = offset > this.lastOffset ? 1 : -1;
+    this.lastOffset = offset;
+    const chunks = await this.ensure(first, last);
     const out = new Uint8Array(end - offset);
     for (let i = first; i <= last; i++) {
-      const chunk = this.cache.get(i);
-      if (!chunk) throw new Error("Chunk evicted before it could be read; raise maxChunks.");
+      const chunk = chunks[i - first];
       const chunkStart = i * this.chunkBytes;
       const from = Math.max(offset, chunkStart) - chunkStart;
       const to = Math.min(end, chunkStart + chunk.byteLength) - chunkStart;
       out.set(new Uint8Array(chunk, from, to - from), Math.max(offset, chunkStart) - offset);
     }
+    if (version === this.readVersion) this.readAheadFrom(first, last);
     return out.buffer;
   }
 }

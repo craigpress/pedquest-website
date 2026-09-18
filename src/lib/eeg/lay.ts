@@ -4,7 +4,7 @@
 // of its own (HeaderLength bytes to skip, usually 0). Written to match
 // tools/eeg-render/eeg_render/export/persyst.py and Persyst's own sample
 // (SK000.LAY): inline or index-ordered [ChannelMap], DataType 0 = int16 counts
-// scaled by Calibration (µV per count), DataType 7 = float32 µV.
+// scaled by Calibration (µV per count), DataType 7 = int32 counts with the same scale.
 //
 // [Comments] rows are `time,duration,state,type,text`, time in seconds from
 // the start of the recording. That block is also how Persyst carries a
@@ -158,7 +158,7 @@ export class LayReader implements Recording {
     if (!(lay.sampleRate > 0)) throw new Error("The .lay declares no SamplingRate.");
     if (!lay.channelMap.length) throw new Error("The .lay has no [ChannelMap].");
     if (lay.dataType !== 0 && lay.dataType !== 7) {
-      throw new Error(`Unsupported Persyst DataType=${lay.dataType} (only 0 = int16 and 7 = float32).`);
+      throw new Error(`Unsupported Persyst DataType=${lay.dataType} (only 0 = int16 and 7 = int32).`);
     }
     this.sampleRate = lay.sampleRate;
     this.labels = lay.channelMap.slice();
@@ -192,7 +192,7 @@ export class LayReader implements Recording {
     const data = this.labels.map(() => new Float32Array(n));
     const cal = this.lay.calibration;
     if (this.lay.dataType === 7) {
-      for (let i = 0; i < got; i++) for (let c = 0; c < nCh; c++) data[c][i] = view.getFloat32((i * nCh + c) * 4, true);
+      for (let i = 0; i < got; i++) for (let c = 0; c < nCh; c++) data[c][i] = view.getInt32((i * nCh + c) * 4, true) * cal;
     } else {
       for (let i = 0; i < got; i++) for (let c = 0; c < nCh; c++) data[c][i] = view.getInt16((i * nCh + c) * 2, true) * cal;
     }

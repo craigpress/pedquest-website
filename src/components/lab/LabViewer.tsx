@@ -222,7 +222,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
           const identity = `${lay.name}:${dat.size}:${dat.lastModified}`;
           return {
             reader, lay: reader, answers, canFetchAnswers: false, title: lay.name,
-            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}`, sidecar,
+            store: new LocalAnnotationStore(identity), cacheKey: `file:${identity}:lay-int-v2`, sidecar,
           };
         }
         if (lay || dat) throw new Error("A Persyst recording needs both the .lay and the .dat file — select them together.");
@@ -258,7 +258,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
       if (job.artifacts?.lay && job.artifacts?.dat) {
         const layText = await (await fetch(await getUrl("lay"))).text();
         const reader = await LayReader.open(layText, await RangeByteSource.open(() => getUrl("dat")));
-        return { reader, store, lay: reader, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:lay`, sidecar };
+        return { reader, store, lay: reader, answers: null, canFetchAnswers, title, cacheKey: `${cacheKey}:lay-int-v2`, sidecar };
       }
       throw new Error("This job has no viewable recording (needs EDF+ or .lay/.dat).");
     }
