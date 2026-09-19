@@ -93,6 +93,18 @@ class PageGeometry:
         return [r for r in self.rows if want & set(r["electrodes"])]
 
 
+def page_polarity(spec: Dict) -> float:
+    """Sign applied to a derivation before it is drawn: -1 under spec_version 2, +1 for version 1.
+
+    Clinical convention is negative-UP: a positive derivation (input 1 more positive
+    than input 2) is drawn downward, so a blink (cornea-positive at Fp) dips and a
+    negative spike points up.  The 0.3.x pages drew positive-up, the opposite of the
+    site's Lab viewer and of every atlas (Craig, P5 second pass 2026-09-19: "blinks
+    should be sharper down").  Version 1 keeps the pinned bank's pixels.
+    """
+    return -1.0 if int(spec.get("spec_version") or 1) >= 2 else 1.0
+
+
 def build_filters(fs: int, filters: Dict) -> List[np.ndarray]:
     """SOS chain for the display filters (LF high-pass, HF low-pass, notch)."""
     nyq = fs / 2.0
@@ -200,8 +212,9 @@ def render_eeg_page(
             ax.axvline(t0 + k, color=PAGE_GRID_MINOR, linewidth=0.35, zorder=0)
 
         # --- traces ----------------------------------------------------------
+        polarity = page_polarity(spec)
         for i, (row, lbl) in enumerate(zip(sig, labels)):
-            ax.plot(t, row + offsets[i], color=PAGE_INK, linewidth=0.52,
+            ax.plot(t, polarity * row + offsets[i], color=PAGE_INK, linewidth=0.52,
                     solid_joinstyle="round", zorder=3)
             ax.text(t0 - win * 0.006, offsets[i], lbl, ha="right", va="center",
                     fontsize=9.6, color=PAGE_INK, family="DejaVu Sans")

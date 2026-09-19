@@ -318,3 +318,67 @@ def test_version_2_graphoelement_fields_reach_the_neighbours_on_a_reduced_array(
     f19 = syn19._ge_field("frontal_sharp", 0.0)
     for e, v in syn19._GE_FIELD["frontal_sharp"].items():
         assert f19[syn19._idx[e]] == v
+
+
+# ------------------------------------------------ second pass, 2026-09-19 --
+def test_version_2_blinks_are_steep_fielded_short_and_shared_with_the_artifact():
+    """Craig: "blinks don't look right".  Fp carries the blink; F3/F7 a third; nothing a row further down."""
+    syn = Synthesizer(normalize(_img(_child()))["spec"], 300.0)
+    f = syn._blink_field()
+    idx = syn._idx
+    assert f[idx["Fp1"]] == 1.0 and 0.25 <= f[idx["F3"]] <= 0.35 and 0.25 <= f[idx["F7"]] <= 0.35
+    assert f[idx["C3"]] <= 0.06 and f[idx["T3"]] <= 0.07 and f[idx["O1"]] <= 0.02
+    # Fp1-F3 carries about 0.7 of the blink and F3-C3 about 0.25: no "second blink" one row down
+    assert (f[idx["Fp1"]] - f[idx["F3"]]) > 2.5 * (f[idx["F3"]] - f[idx["C3"]])
+    tt = float(syn._blink_t[(syn._blink_t > 20) & (syn._blink_t < 280)][0])
+    t = np.arange(tt - 0.2, tt + 0.8, 1.0 / FS)
+    prof = syn._blink_profile(t, np.array([tt]))
+    assert prof.max() > 0.99                                    # cornea-positive at Fp
+    above = t[prof > 0.5 * prof.max()]
+    assert 0.12 < (above.max() - above.min()) < 0.30            # a 0.2-0.4 s blink at half height
+    # the eye_blink artifact event uses the same blink
+    syn1 = Synthesizer(normalize(_img(dict(_child(), spec_version=1)))["spec"], 300.0)
+    f1 = syn1._blink_field()
+    assert f1[idx["F3"]] == 0.5, "version 1 keeps the 0.3.x field"
+
+
+def test_version_2_unreactive_records_have_no_muscle_floor():
+    """Craig, C08: a sedated / post-anoxic burst-suppression record 'shouldn't have fast muscle', bursts included."""
+    from scipy import signal as sps
+    hp = sps.butter(4, 25.0, btype="highpass", fs=FS, output="sos")
+
+    def fast_power(reactivity, version=None):
+        s = _neo(version, type="burst_suppression", pma_weeks=40.0, amplitude_uv=60.0, reactivity=reactivity,
+                 blink_rate_per_min=0,
+                 graphoelements={"frontal_sharp": {"enabled": False}, "anterior_slow": {"enabled": False},
+                                 "midline_theta": {"enabled": False}})
+        syn = Synthesizer(normalize(_img(s))["spec"], 600.0)
+        a, b = float(syn._burst_start[5]), float(syn._burst_end[5])
+        _, x = syn.segment(a + 0.3, b - 0.3 if b - a > 1.6 else a + 1.0)
+        return float(np.sqrt(np.mean(sps.sosfiltfilt(hp, x[syn._idx["T3"]]) ** 2)))
+
+    assert fast_power("absent") < 0.25 * fast_power("present")
+    assert fast_power("absent", version=1) > 0.5 * fast_power("present", version=1), "version 1 unchanged"
+
+
+def test_page_polarity_is_negative_up_for_version_2_only():
+    from eeg_render.render_page import page_polarity
+    assert page_polarity({"spec_version": 2}) == -1.0
+    assert page_polarity({"spec_version": 1}) == 1.0
+    assert page_polarity({}) == 1.0
+
+
+def test_version_2_term_graphoelement_rates_follow_castro_conde_2017():
+    """S22: 30 encoches frontales per hour and 17 rolandic bursts per hour on day 3 at term; 5 % of bursts brushed."""
+    from eeg_render.spec import graphoelement_defaults, DELTA_BRUSH_PMA
+    v2 = graphoelement_defaults(40.0, 2)
+    v1 = graphoelement_defaults(40.0, 1)
+    assert abs(v2["frontal_sharp"]["rate_per_min"] - 0.5) < 1e-9          # 30 / h
+    assert abs(v1["frontal_sharp"]["rate_per_min"] - 1.8) < 1e-9          # the 0.3.x table, pinned bank
+    assert 0.2 <= v2["midline_theta"]["rate_per_min"] <= 0.35             # 17 / h
+    n = normalize(_img(_neo(type="continuous", pma_weeks=40.0, amplitude_uv=45.0)))["spec"]
+    assert abs(n["background"]["graphoelements"]["frontal_sharp"]["rate_per_min"] - 0.5) < 1e-9
+    n1 = normalize(_img(_neo(1, type="continuous", pma_weeks=40.0, amplitude_uv=45.0)))["spec"]
+    assert abs(n1["background"]["graphoelements"]["frontal_sharp"]["rate_per_min"] - 1.8) < 1e-9
+    rate_40 = float(np.interp(40.0, [p[0] for p in DELTA_BRUSH_PMA], [p[1] for p in DELTA_BRUSH_PMA]))
+    assert 0.1 <= rate_40 <= 0.2

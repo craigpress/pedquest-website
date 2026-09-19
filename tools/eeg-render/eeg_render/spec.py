@@ -150,11 +150,25 @@ SYNCHRONY_PMA: List[Tuple[float, float]] = [
 ]
 
 
-def graphoelement_defaults(pma: float) -> Dict[str, Dict[str, float]]:
+#: 0.4.1, spec_version 2 only: term rates anchored on Castro Conde 2017 (S22; healthy term
+#: neonates, day 3 of life, n = 22): encoches frontales 30 +- 23 per hour (0.5/min; the 0.3.x
+#: table gave 1.8/min = 108/h), rolandic alpha/theta bursts 17 +- 19 per hour (0.28/min; the
+#: table's 0.25 stands).  The 35-36 w peak keeps its Hrachovy/Mizrahi shape, scaled to meet
+#: the term anchor.  The first six hours of life run 12/h encoches and 0.9/h rolandic bursts
+#: with 20 % of bursts carrying brushes - an hours-of-life control, not yet a spec key.
+GRAPHOELEMENT_PMA_V2: Dict[str, List[Tuple[float, float, float]]] = {
+    "frontal_sharp": [(33.0, 0.0, 0.0), (34.0, 0.3, 70.0), (35.5, 1.2, 110.0), (40.0, 0.5, 100.0), (44.0, 0.25, 60.0), (48.0, 0.0, 0.0)],
+}
+
+
+def graphoelement_defaults(pma: float, version: int = 1) -> Dict[str, Dict[str, float]]:
     """Rate and amplitude of every graphoelement at ``pma`` weeks (zero outside its span)."""
     import numpy as _np
     out: Dict[str, Dict[str, float]] = {}
-    for name, pts in GRAPHOELEMENT_PMA.items():
+    table = dict(GRAPHOELEMENT_PMA)
+    if version >= 2:
+        table.update(GRAPHOELEMENT_PMA_V2)
+    for name, pts in table.items():
         xs = [p[0] for p in pts]
         if pma < xs[0] or pma > xs[-1]:
             out[name] = {"rate_per_min": 0.0, "amplitude_uv": 0.0}
@@ -186,7 +200,9 @@ def synchrony_default(pma: float) -> float:
 #: fraction follow PMA in synth.graphoelement_rows.
 DELTA_BRUSH_PMA: List[Tuple[float, float, float]] = [
     (24.0, 0.3, 100.0), (26.0, 1.0, 170.0), (30.0, 3.0, 255.0), (33.0, 3.5, 270.0),
-    (35.0, 2.2, 240.0), (37.0, 0.9, 190.0), (38.0, 0.3, 150.0), (39.0, 0.0, 0.0),
+    # term tail per Castro Conde 2017 (S22): 5 % of quiet-sleep bursts still carry a brush on day 3
+    # of life at term (20 % in the first six hours), so the rate does not reach zero until 41 w
+    (35.0, 2.2, 240.0), (37.0, 0.9, 190.0), (38.0, 0.3, 150.0), (40.0, 0.15, 130.0), (41.0, 0.0, 0.0),
 ]
 #: rate / amplitude when ``"riding"`` is requested without a PMA
 DELTA_BRUSH_NO_PMA = {"rate_per_min": 2.0, "amplitude_uv": 200.0}
@@ -520,7 +536,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     # Neonatal graphoelements: defaults from the PMA table (all zero without a
     # PMA), each element's rate and amplitude overridable by the author.
     ge_in = dict(bg.get("graphoelements", {}) or {})
-    ge = graphoelement_defaults(float(pma)) if (pma is not None and age == "neonate") else {
+    ge = graphoelement_defaults(float(pma), version) if (pma is not None and age == "neonate") else {
         name: {"rate_per_min": 0.0, "amplitude_uv": 0.0} for name in GRAPHOELEMENT_PMA}
     if bg.get("delta_brush_events") and age == "neonate":
         ge["delta_brush"] = delta_brush_defaults(None if pma is None else float(pma))

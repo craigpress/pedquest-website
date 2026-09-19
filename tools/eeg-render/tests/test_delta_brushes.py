@@ -66,12 +66,17 @@ def test_riding_validates_and_normalizes_to_events():
     assert bg["graphoelements"]["delta_brush"]["amplitude_uv"] > 100
 
 
-def test_riding_rate_follows_pma_and_is_zero_at_term():
+def test_riding_rate_follows_pma_and_fades_out_after_term():
+    # 0.4.1: 5 % of quiet-sleep bursts still carry a brush on day 3 at term (Castro Conde 2017, S22),
+    # so the tail reaches zero at 41 w instead of 39 w
     assert delta_brush_defaults(32.0)["rate_per_min"] > delta_brush_defaults(37.0)["rate_per_min"] > 0
-    assert delta_brush_defaults(40.0)["rate_per_min"] == 0.0
+    assert 0.1 <= delta_brush_defaults(40.0)["rate_per_min"] <= 0.2
+    assert delta_brush_defaults(41.0)["rate_per_min"] == 0.0
     bg40 = normalize(_neo({"delta_brushes": "riding", "pma_weeks": 40.0}))["spec"]["background"]
-    assert bg40["graphoelements"]["delta_brush"]["rate_per_min"] == 0.0
-    assert any("schedules no brushes" in x for x in spec_warnings(normalize(_neo({"delta_brushes": "riding", "pma_weeks": 40.0}))))
+    assert 0.1 <= bg40["graphoelements"]["delta_brush"]["rate_per_min"] <= 0.2
+    bg41 = normalize(_neo({"delta_brushes": "riding", "pma_weeks": 41.0}))["spec"]["background"]
+    assert bg41["graphoelements"]["delta_brush"]["rate_per_min"] == 0.0
+    assert any("schedules no brushes" in x for x in spec_warnings(normalize(_neo({"delta_brushes": "riding", "pma_weeks": 41.0}))))
     # without a PMA the request still means something
     nopma = _neo({"delta_brushes": "riding"}); del nopma["spec"]["background"]["pma_weeks"]
     bg_nopma = normalize(nopma)["spec"]["background"]

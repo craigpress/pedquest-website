@@ -161,7 +161,9 @@ def cases():
         ("background neonate continuous 45", lambda: measure_background(neo), 45.0),
         ("background adult low_voltage 15", lambda: measure_background(adult_lv), 15.0),
         ("bursts neonate burst_suppression 30 (ibi 10-30 s)", lambda: measure_bursts(neo_bs), 30.0),
-        ("interburst neonate burst_suppression floor 3", lambda: measure_interburst(neo_bs), 3.0),
+        # the floor is authored as a fraction of the raw burst amplitude and read through the bipolar
+        # derivation, so it is a sanity band (+-35 %), not a calibrated quantity
+        ("interburst neonate burst_suppression floor 3", lambda: measure_interburst(neo_bs), 3.0, 0.35),
         ("bursts neonate discontinuous 40 (ibi 10-25 s)", lambda: measure_bursts(neo_disc), 40.0),
         ("bursts adult burst_suppression 50 (preset ibi)", lambda: measure_bursts(adult_bs), 50.0),
         ("seizure amplitude_end 150 (left temporal, u 0.70-0.82)", lambda: measure_event_end(sz, 300.0, 60.0, left_temporal), 150.0),
@@ -171,7 +173,8 @@ def cases():
 
 
 def main() -> int:
-    for name, fn, req in cases():
+    for case in cases():
+        name, fn, req = case[:3]
         got = fn()
         print(f"{name:58s} requested {req:6.1f}  delivered {got:6.1f}  ratio {got / req:5.2f}")
     return 0

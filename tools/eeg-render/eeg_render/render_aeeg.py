@@ -12,7 +12,7 @@ from matplotlib.ticker import FixedLocator  # noqa: E402
 
 from . import montage as mt  # noqa: E402
 from . import style as S  # noqa: E402
-from .render_page import apply_filters, build_filters  # noqa: E402
+from .render_page import apply_filters, build_filters, page_polarity  # noqa: E402
 from .synth import Synthesizer  # noqa: E402
 from .trends import aeeg_margins, pick_aeeg_derivation  # noqa: E402
 
@@ -229,7 +229,8 @@ def _raw_strip(ax, spec: Dict, synth: Synthesizer, pair: Tuple[str, str],
     sig = apply_filters(sig, build_filters(synth.fs, {"lf_hz": 0.5, "hf_hz": 70.0,
                                                       "notch_hz": 60.0}))[0]
     keep = (t >= t0) & (t < t0 + window_s)
-    ax.plot(t[keep] - t0, sig[keep], color=theme.text, linewidth=0.55)
+    # negative-up under spec_version 2, as the EEG page draws it
+    ax.plot(t[keep] - t0, page_polarity(spec) * sig[keep], color=theme.text, linewidth=0.55)
     ax.set_xlim(0, window_s)
     lim = max(60.0, float(np.percentile(np.abs(sig[keep]), 99.7)) * 1.35)
     ax.set_ylim(-lim, lim)

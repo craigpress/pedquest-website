@@ -1018,22 +1018,45 @@ class Synthesizer:
         sel = self._blink_t[(self._blink_t > t[0] - 0.6) & (self._blink_t < t[-1] + 0.6)]
         if sel.size == 0:
             return rows
+        prof = self._blink_profile(t, sel) * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * wake
+        field = self._blink_field()
+        for i, e in enumerate(self.electrodes):
+            rows[i] = prof * field[i]
+        return rows
+
+    #: 0.4.1 blink field (Craig, P5 second pass: "blinks don't look right", eegpedia).  A blink
+    #: is a cornea-positive potential at Fp that falls off steeply: F3/F4 and F7/F8 carry about
+    #: a third, the central and temporal chain almost nothing, so Fp1-F7 / Fp1-F3 dip hard and
+    #: F7-T3 / F3-C3 show a third of it.  0.4.0's table gave F3 half of Fp1, which made Fp1-F3
+    #: and F3-C3 equal - the "second blink" one row down that Craig flagged.
+    _BLINK_FIELD_V2 = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.32, "F8": 0.32, "F3": 0.30, "F4": 0.30,
+                       "Fz": 0.22, "T3": 0.06, "T4": 0.06, "C3": 0.05, "C4": 0.05, "Cz": 0.04}
+
+    def _blink_field(self) -> np.ndarray:
+        table = self._BLINK_FIELD_V2 if self.spec_version >= 2 else _BLINK_FIELD
+        default = 0.02 if self.spec_version >= 2 else 0.04
+        return np.array([table.get(e, default) for e in self.electrodes])
+
+    def _blink_profile(self, t: np.ndarray, times: np.ndarray) -> np.ndarray:
+        """Unit-peak blink deflections at ``times`` (positive = cornea-positive at Fp).
+
+        Version 2: eyelid closure in ~100 ms (rise sigma 45 ms) and a return with a
+        120 ms time constant: ~0.14 s at half height, ~0.4 s in all, the 0.2-0.4 s of
+        a real blink.  Version 1 keeps the 0.3.x symmetric 75 ms Gaussian.
+        """
         prof = np.zeros(t.size)
-        sharp = self.spec_version >= 2      # 0.4.0 (Craig, P5 C20): fast rise, slower decay
-        for tt in sel:
+        sharp = self.spec_version >= 2
+        for tt in times:
             d = t - tt
             if sharp:
-                m = (d > -0.06) & (d < 0.65)
+                m = (d > -0.06) & (d < 0.55)
                 dd = d[m]
-                prof[m] += np.where(dd < 0.10, np.exp(-0.5 * ((dd - 0.10) / 0.035) ** 2),
-                                    np.exp(-(dd - 0.10) / 0.13))
+                prof[m] += np.where(dd < 0.10, np.exp(-0.5 * ((dd - 0.10) / 0.045) ** 2),
+                                    np.exp(-(dd - 0.10) / 0.12))
             else:
                 m = (d > -0.05) & (d < 0.45)
                 prof[m] += np.exp(-0.5 * ((d[m] - 0.14) / 0.075) ** 2)
-        prof = prof * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * wake
-        for i, e in enumerate(self.electrodes):
-            rows[i] = prof * _BLINK_FIELD.get(e, 0.04)
-        return rows
+        return prof
 
     # ---------------- neonatal graphoelements ----------------
 
@@ -2346,6 +2369,13 @@ class Synthesizer:
             k = max(1, int(rate * (a1 - a0)))
             times = np.sort(rng.uniform(a0, a1, k))
             times = times[(times > t[0] - 0.5) & (times < t[-1] + 0.5)]
+            if self.spec_version >= 2:
+                # same blink as the spontaneous ones (shape, field, 160 uV default)
+                prof = self._blink_profile(t, np.asarray(times)) * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * gain
+                field = self._blink_field()
+                for i in range(self.n_elec):
+                    rows[i] = prof * field[i]
+                return rows
             prof = np.zeros(n)
             for tt in times:
                 d = t - tt
@@ -2472,7 +2502,10 @@ class Synthesizer:
         # An electrodecrement (spasm, tonic onset) silences the muscle floor
         # too: the child is still, and the page must actually flatten.
         dec = self.decrement_envelope(t)
-        emg_w = (EMG_FLOOR_W * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
+        # 0.4.1 (Craig, P5 C08 "shouldn't have fast muscle"): an unreactive patient - sedated,
+        # paralysed, post-anoxic - has no tonic muscle, inside bursts included.  Version 2 only.
+        unreactive = self.spec_version >= 2 and self.bg.get("reactivity") == "absent"
+        emg_w = ((0.0 if unreactive else EMG_FLOOR_W) * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
                  * (1.0 + self.ictal_gate(t))
                  * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
                  * dec

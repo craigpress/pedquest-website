@@ -29,11 +29,13 @@ from eeg_render.synth import Synthesizer  # noqa: E402
 TOL = 0.15
 
 
-@pytest.mark.parametrize("name,fn,requested", cd.cases(), ids=[c[0] for c in cd.cases()])
-def test_delivered_within_tolerance_of_requested(name, fn, requested):
+@pytest.mark.parametrize("case", cd.cases(), ids=[c[0] for c in cd.cases()])
+def test_delivered_within_tolerance_of_requested(case):
+    name, fn, requested = case[:3]
+    tol = case[3] if len(case) > 3 else TOL
     delivered = fn()
     ratio = delivered / requested
-    assert abs(ratio - 1.0) <= TOL, f"{name}: requested {requested}, delivered {delivered:.1f} (x{ratio:.2f})"
+    assert abs(ratio - 1.0) <= tol, f"{name}: requested {requested}, delivered {delivered:.1f} (x{ratio:.2f})"
 
 
 def test_background_calibration_is_a_fixed_scalar_and_self_consistent():
