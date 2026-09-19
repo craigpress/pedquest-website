@@ -1,1425 +1,1458 @@
 {
-  "schema_version": "1.0",
-  "register_version": "2026-09-15.p1",
-  "phase": "P1",
-  "asset_root": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources",
-  "raw_eeg_downloads": 0,
-  "clinical_feature_extraction_performed": false,
-  "sources": [
+ "schema_version": "1.0",
+ "register_version": "2026-09-19.p6",
+ "phase": "P1",
+ "asset_root": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources",
+ "raw_eeg_downloads": 0,
+ "clinical_feature_extraction_performed": false,
+ "sources": [
+  {
+   "id": "S01",
+   "title": "ACNS critical-care EEG terminology",
+   "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf",
+   "format": "pdf",
+   "version": "2021",
+   "population": "non-neonatal",
+   "role": "definition authority",
+   "doi": "10.1097/WNP.0000000000000806",
+   "user_supplied": true,
+   "terminology_track": "ACNS_2021",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "definition authority",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "No blanket republication/model-training permission recorded; source is a private research reference.",
+    "No blanket republication/model-training permission recorded; source is a private research reference."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:12.177729+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S01.pdf",
+   "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84",
+   "page_count": 29,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf",
+   "content_type": "application/pdf",
+   "first_page_title_check": "Downloadedfromhttps://journals.lww.com/clinicalneurophysbyBhDMf5ePHKav1zEoum1tQfN4a+kJLhEZgbsIHo4XMi0hCywCX1AWnYQp/IlQrHD3i3D0OdRyi7TvSFl4Cf3VC4/OAVpDDa8KKGKV0Ymy+78=on01/27/2021\nDownloadedfromhttps://journals.lww.com/cl",
+   "status": "retrieved",
+   "bytes": 4241515,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf"
+   },
+   "authority": "ACNS consensus/standard",
+   "clinical_review": "pending P2; file parsing is not definition adjudication"
+  },
+  {
+   "id": "S02",
+   "title": "ACNS guideline index",
+   "url": "https://www.acns.org/practice/guidelines",
+   "format": "html",
+   "version": "snapshot",
+   "population": "all ages",
+   "role": "version discovery",
+   "doi": null,
+   "user_supplied": true,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "version discovery",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:12.178722+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S02.html",
+   "sha256": "29c89ca66dd33d8e80973558a10237553638989dd9c4c8ad3e81b92551b36092",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://www.acns.org/practice/guidelines",
+   "content_type": "text/html; charset=UTF-8",
+   "html_title": "Guidelines and Consensus Statements | ACNS - American Clinical Neurophysiology Society",
+   "status": "retrieved",
+   "bytes": 41433,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://www.acns.org/practice/guidelines"
+   },
+   "authority": "official society index",
+   "usable_text_characters": 8635
+  },
+  {
+   "id": "S03",
+   "title": "ACNS supplemental EEG examples",
+   "url": "https://cdn-links.lww.com/permalink/jcnp/a/jcnp_2020_11_20_fong_1_sdc1.pdf",
+   "format": "pdf",
+   "version": "2021 supplement",
+   "population": "non-neonatal",
+   "role": "visual reference",
+   "doi": null,
+   "user_supplied": true,
+   "terminology_track": "ACNS_2021",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "visual reference",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "No blanket republication/model-training permission recorded; source is a private research reference.",
+    "No blanket republication/model-training permission recorded; source is a private research reference."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:12.178722+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S03.pdf",
+   "sha256": "aa2739b61788d107f8d698f8c9579d4eeab0675bf6eb2f7001985efe43a7e1ed",
+   "page_count": 36,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://cdn-links.lww.com/permalink/jcnp/a/jcnp_2020_11_20_fong_1_sdc1.pdf",
+   "content_type": "application/pdf",
+   "first_page_title_check": "ACNS Standardized Critical \nCare EEG Terminology 2021\nEEG and Legends",
+   "status": "retrieved",
+   "bytes": 10278839,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://cdn-links.lww.com/permalink/jcnp/a/jcnp_2020_11_20_fong_1_sdc1.pdf"
+   },
+   "authority": "visual reference"
+  },
+  {
+   "id": "S04",
+   "title": "ACNS combined training module",
+   "url": "https://www.acns.org/UserFiles/file/ACNS_Training_Module_2022-01-01_Combined_FINAL.pptx",
+   "format": "pptx",
+   "version": "2022-01-01 filename",
+   "population": "non-neonatal",
+   "role": "training reference",
+   "doi": null,
+   "user_supplied": true,
+   "terminology_track": "ACNS_2021",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "training reference",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "No blanket republication/model-training permission recorded; source is a private research reference.",
+    "No blanket republication/model-training permission recorded; source is a private research reference."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:12.179722+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S04.pptx",
+   "sha256": "38c0463893d817ae4450985541f1a16ff5aaa0fb35bb530b0c56a1f517f15698",
+   "page_count": null,
+   "slide_count": 153,
+   "http_status": 200,
+   "final_url": "https://www.acns.org/UserFiles/file/ACNS_Training_Module_2022-01-01_Combined_FINAL.pptx",
+   "content_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+   "embedded_media_count": 106,
+   "notes_slide_count": 117,
+   "slide_title_index": [
     {
-      "id": "S01",
-      "title": "ACNS critical-care EEG terminology",
-      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf",
-      "format": "pdf",
-      "version": "2021",
-      "population": "non-neonatal",
-      "role": "definition authority",
-      "doi": "10.1097/WNP.0000000000000806",
-      "user_supplied": true,
-      "terminology_track": "ACNS_2021",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "definition authority",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [
-        "No blanket republication/model-training permission recorded; source is a private research reference.",
-        "No blanket republication/model-training permission recorded; source is a private research reference."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:12.177729+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S01.pdf",
-      "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84",
-      "page_count": 29,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf",
-      "content_type": "application/pdf",
-      "first_page_title_check": "Downloadedfromhttps://journals.lww.com/clinicalneurophysbyBhDMf5ePHKav1zEoum1tQfN4a+kJLhEZgbsIHo4XMi0hCywCX1AWnYQp/IlQrHD3i3D0OdRyi7TvSFl4Cf3VC4/OAVpDDa8KKGKV0Ymy+78=on01/27/2021\nDownloadedfromhttps://journals.lww.com/cl",
-      "status": "retrieved",
-      "bytes": 4241515,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf"
-      },
-      "authority": "ACNS consensus/standard",
-      "clinical_review": "pending P2; file parsing is not definition adjudication"
+     "slide": 1,
+     "first_text": "ACNS Critical Care EEG Terminology "
     },
     {
-      "id": "S02",
-      "title": "ACNS guideline index",
-      "url": "https://www.acns.org/practice/guidelines",
-      "format": "html",
-      "version": "snapshot",
-      "population": "all ages",
-      "role": "version discovery",
-      "doi": null,
-      "user_supplied": true,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "version discovery",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:12.178722+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S02.html",
-      "sha256": "29c89ca66dd33d8e80973558a10237553638989dd9c4c8ad3e81b92551b36092",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://www.acns.org/practice/guidelines",
-      "content_type": "text/html; charset=UTF-8",
-      "html_title": "Guidelines and Consensus Statements | ACNS - American Clinical Neurophysiology Society",
-      "status": "retrieved",
-      "bytes": 41433,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://www.acns.org/practice/guidelines"
-      },
-      "authority": "official society index",
-      "usable_text_characters": 8635
+     "slide": 2,
+     "first_text": "Mode of presentation"
     },
     {
-      "id": "S03",
-      "title": "ACNS supplemental EEG examples",
-      "url": "https://cdn-links.lww.com/permalink/jcnp/a/jcnp_2020_11_20_fong_1_sdc1.pdf",
-      "format": "pdf",
-      "version": "2021 supplement",
-      "population": "non-neonatal",
-      "role": "visual reference",
-      "doi": null,
-      "user_supplied": true,
-      "terminology_track": "ACNS_2021",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "visual reference",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [
-        "No blanket republication/model-training permission recorded; source is a private research reference.",
-        "No blanket republication/model-training permission recorded; source is a private research reference."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:12.178722+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S03.pdf",
-      "sha256": "aa2739b61788d107f8d698f8c9579d4eeab0675bf6eb2f7001985efe43a7e1ed",
-      "page_count": 36,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://cdn-links.lww.com/permalink/jcnp/a/jcnp_2020_11_20_fong_1_sdc1.pdf",
-      "content_type": "application/pdf",
-      "first_page_title_check": "ACNS Standardized Critical \nCare EEG Terminology 2021\nEEG and Legends",
-      "status": "retrieved",
-      "bytes": 10278839,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://cdn-links.lww.com/permalink/jcnp/a/jcnp_2020_11_20_fong_1_sdc1.pdf"
-      },
-      "authority": "visual reference"
+     "slide": 3,
+     "first_text": "Contents"
     },
     {
-      "id": "S04",
-      "title": "ACNS combined training module",
-      "url": "https://www.acns.org/UserFiles/file/ACNS_Training_Module_2022-01-01_Combined_FINAL.pptx",
-      "format": "pptx",
-      "version": "2022-01-01 filename",
-      "population": "non-neonatal",
-      "role": "training reference",
-      "doi": null,
-      "user_supplied": true,
-      "terminology_track": "ACNS_2021",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "training reference",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [
-        "No blanket republication/model-training permission recorded; source is a private research reference.",
-        "No blanket republication/model-training permission recorded; source is a private research reference."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:12.179722+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S04.pptx",
-      "sha256": "38c0463893d817ae4450985541f1a16ff5aaa0fb35bb530b0c56a1f517f15698",
-      "page_count": null,
-      "slide_count": 153,
-      "http_status": 200,
-      "final_url": "https://www.acns.org/UserFiles/file/ACNS_Training_Module_2022-01-01_Combined_FINAL.pptx",
-      "content_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "embedded_media_count": 106,
-      "notes_slide_count": 117,
-      "slide_title_index": [
-        {
-          "slide": 1,
-          "first_text": "ACNS Critical Care EEG Terminology "
-        },
-        {
-          "slide": 2,
-          "first_text": "Mode of presentation"
-        },
-        {
-          "slide": 3,
-          "first_text": "Contents"
-        },
-        {
-          "slide": 4,
-          "first_text": "A. EEG Background"
-        },
-        {
-          "slide": 5,
-          "first_text": "EEG BACKGROUND"
-        },
-        {
-          "slide": 6,
-          "first_text": "EEG BACKGROUND"
-        },
-        {
-          "slide": 7,
-          "first_text": "EEG BACKGROUND"
-        },
-        {
-          "slide": 8,
-          "first_text": "EEG BACKGROUND"
-        },
-        {
-          "slide": 9,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 10,
-          "first_text": "Continuous EEG with voltage asymmetry (marked, lower on right) and slowing on the left, polymorphic delta."
-        },
-        {
-          "slide": 11,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 12,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 13,
-          "first_text": "How would you describe this EEG?"
-        },
-        {
-          "slide": 14,
-          "first_text": "Higher voltage activity qualifies as bursts: ≥0.5s AND ≥ 4 phases"
-        },
-        {
-          "slide": 15,
-          "first_text": "Interburst EEG is attenuated not suppressed"
-        },
-        {
-          "slide": 16,
-          "first_text": "16"
-        },
-        {
-          "slide": 17,
-          "first_text": "17"
-        },
-        {
-          "slide": 18,
-          "first_text": "How would you describe this page of EEG?"
-        },
-        {
-          "slide": 19,
-          "first_text": "Lateralized burst suppression on the left."
-        },
-        {
-          "slide": 20,
-          "first_text": "HIGHLY EPILEPTIFORM BURSTS"
-        },
-        {
-          "slide": 21,
-          "first_text": "HIGHLY EPILEPTIFORM BURSTS"
-        },
-        {
-          "slide": 22,
-          "first_text": "How can the continuity and the activity be best described?"
-        },
-        {
-          "slide": 23,
-          "first_text": "HIGHLY EPILEPTIFORM BURSTS: "
-        },
-        {
-          "slide": 24,
-          "first_text": "24"
-        },
-        {
-          "slide": 25,
-          "first_text": "IDENTICAL BURSTS in a STEREOTYPED CLUSTER"
-        },
-        {
-          "slide": 26,
-          "first_text": "How would you describe this pattern?"
-        },
-        {
-          "slide": 27,
-          "first_text": "SUPPRESSION: 5s"
-        },
-        {
-          "slide": 28,
-          "first_text": "BACKGROUND: REACTIVITY"
-        },
-        {
-          "slide": 29,
-          "first_text": "BACKGROUND: REACTIVITY"
-        },
-        {
-          "slide": 30,
-          "first_text": "BACKGROUND: REACTIVITY"
-        },
-        {
-          "slide": 31,
-          "first_text": "BACKGROUND: STATE CHANGES"
-        },
-        {
-          "slide": 32,
-          "first_text": "BACKGROUND: CYCLIC ALTERNATING PATTERN of ENCEPHALOPATHY (CAPE)"
-        },
-        {
-          "slide": 33,
-          "first_text": "BACKGROUND: BREACH EFFECT"
-        },
-        {
-          "slide": 34,
-          "first_text": "In what region is breach effect present on this page of EEG?"
-        },
-        {
-          "slide": 35,
-          "first_text": "BREACH, left parasagittal "
-        },
-        {
-          "slide": 36,
-          "first_text": "B. Sporadic Epileptiform"
-        },
-        {
-          "slide": 37,
-          "first_text": "SPORADIC EPILEPTIFORM DISCHARGES"
-        },
-        {
-          "slide": 38,
-          "first_text": "NUMBER OF PHASES"
-        },
-        {
-          "slide": 39,
-          "first_text": "DISCHARGE VERSUS BURST"
-        },
-        {
-          "slide": 40,
-          "first_text": "Sporadic: "
-        },
-        {
-          "slide": 41,
-          "first_text": "C. Rhythmic and "
-        },
-        {
-          "slide": 42,
-          "first_text": "All rhythmic and periodic patterns (RPPs) should be described by main terms 1 and 2, as well as appropriate major and minor modifiers. Not all modifiers will ap"
-        },
-        {
-          "slide": 43,
-          "first_text": "RHYTHMIC AND PERIODIC PATTERNS (RPPs): MAIN TERM 2"
-        },
-        {
-          "slide": 44,
-          "first_text": "MAIN TERM 2: PDs"
-        },
-        {
-          "slide": 45,
-          "first_text": "MAIN TERM 2: RDA"
-        },
-        {
-          "slide": 46,
-          "first_text": "MAIN TERM 2: SW"
-        },
-        {
-          "slide": 47,
-          "first_text": "MAIN TERM 1: GENERALIZED"
-        },
-        {
-          "slide": 48,
-          "first_text": "MAIN TERM 1: LATERALIZED"
-        },
-        {
-          "slide": 49,
-          "first_text": "MAIN TERM 1: BILATERAL INDEPENDANT"
-        },
-        {
-          "slide": 50,
-          "first_text": "50"
-        },
-        {
-          "slide": 51,
-          "first_text": "MAIN TERM 1: MULTIFOCAL"
-        },
-        {
-          "slide": 52,
-          "first_text": "In addition to main terms 1 and 2, the following major modifiers can be applied to refine the description of the pattern: "
-        },
-        {
-          "slide": 53,
-          "first_text": "Note that there are 4 distinct time-related scales:"
-        },
-        {
-          "slide": 54,
-          "first_text": "What pattern is this?"
-        },
-        {
-          "slide": 55,
-          "first_text": "Frontal predominance"
-        },
-        {
-          "slide": 56,
-          "first_text": "Frontal predominance"
-        },
-        {
-          "slide": 57,
-          "first_text": "PERIODIC DISCHARGES: SHARPNESS"
-        },
-        {
-          "slide": 58,
-          "first_text": "Please characterize the pattern"
-        },
-        {
-          "slide": 59,
-          "first_text": "LATERALIZED PERIODIC DISCHARGES"
-        },
-        {
-          "slide": 60,
-          "first_text": "Lateralized Periodic Discharges (LPDs)"
-        },
-        {
-          "slide": 61,
-          "first_text": "Lateralized Periodic Discharges (LPDs)"
-        },
-        {
-          "slide": 62,
-          "first_text": "Please characterize the pattern"
-        },
-        {
-          "slide": 63,
-          "first_text": "Lateralized Periodic Discharges, LPDs"
-        },
-        {
-          "slide": 64,
-          "first_text": "Generalized Periodic Discharges (GPDs)"
-        },
-        {
-          "slide": 65,
-          "first_text": "Generalized Periodic Discharges (GPDs)"
-        },
-        {
-          "slide": 66,
-          "first_text": "What is the correct term for this pattern?"
-        },
-        {
-          "slide": 67,
-          "first_text": "Lateralized Rhythmic Delta Activity (LRDA)"
-        },
-        {
-          "slide": 68,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 69,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 70,
-          "first_text": "Please describe the pattern"
-        },
-        {
-          "slide": 71,
-          "first_text": "Lateralized Rhythmic Delta Activity, LRDA"
-        },
-        {
-          "slide": 72,
-          "first_text": "What is the correct term for this pattern?"
-        },
-        {
-          "slide": 73,
-          "first_text": "Sharp-and-wave: "
-        },
-        {
-          "slide": 74,
-          "first_text": "What pattern(s) is this?"
-        },
-        {
-          "slide": 75,
-          "first_text": "BIPDs"
-        },
-        {
-          "slide": 76,
-          "first_text": "What is the correct term for this pattern?"
-        },
-        {
-          "slide": 77,
-          "first_text": "Unilateral Independant Rhythmic Delta Activity, UIRDA"
-        },
-        {
-          "slide": 78,
-          "first_text": "What would you call this pattern?"
-        },
-        {
-          "slide": 79,
-          "first_text": "12 EDs/10 s"
-        },
-        {
-          "slide": 80,
-          "first_text": "Courtesy of "
-        },
-        {
-          "slide": 81,
-          "first_text": "Multifocal Periodic Discharges, MfPDs: 3 independent foci, 1 left, 2 right"
-        },
-        {
-          "slide": 82,
-          "first_text": "How often and how long a pattern is present can be described by prevalence and duration:"
-        },
-        {
-          "slide": 83,
-          "first_text": "Typical duration of pattern"
-        },
-        {
-          "slide": 84,
-          "first_text": "The Plus modifier refers to additional features that render the pattern more ictal-appearing than the same pattern without the plus. The Plus modifier can be ch"
-        },
-        {
-          "slide": 85,
-          "first_text": "Longitudinal bipolar "
-        },
-        {
-          "slide": 86,
-          "first_text": "code as +F if the fast activity is part of the RDA or PD pattern and not simply part of the background activity"
-        },
-        {
-          "slide": 87,
-          "first_text": "PERIODIC DISCHARGES PLUS RDA ("
-        },
-        {
-          "slide": 88,
-          "first_text": "RHYTHMIC DELTA ACTIVITY PLUS SPIKES or SHARP WAVES (RDA+S)"
-        },
-        {
-          "slide": 89,
-          "first_text": "Spiky LPDs+F"
-        },
-        {
-          "slide": 90,
-          "first_text": "Spiky LPDs+F"
-        },
-        {
-          "slide": 91,
-          "first_text": "What is the best way to describe this pattern? "
-        },
-        {
-          "slide": 92,
-          "first_text": "Left LRDA, 1.5-2 Hz"
-        },
-        {
-          "slide": 93,
-          "first_text": "93"
-        },
-        {
-          "slide": 94,
-          "first_text": "94"
-        },
-        {
-          "slide": 95,
-          "first_text": "Please describe the pattern"
-        },
-        {
-          "slide": 96,
-          "first_text": "Lateralized Periodic Discharges + R (Ictal-Interictal Continuum, IIC)"
-        },
-        {
-          "slide": 97,
-          "first_text": "EXTREME DELTA BRUSH (EDB)"
-        },
-        {
-          "slide": 98,
-          "first_text": ""
-        },
-        {
-          "slide": 99,
-          "first_text": "EXTREME DELTA BRUSH (EDB)"
-        },
-        {
-          "slide": 100,
-          "first_text": "EXTREME DELTA BRUSH (EDB)"
-        },
-        {
-          "slide": 101,
-          "first_text": "What is the correct term for this pattern?"
-        },
-        {
-          "slide": 102,
-          "first_text": "Generalized Periodic Discharges with superimposed fast activity (GPD+F)"
-        },
-        {
-          "slide": 103,
-          "first_text": "Evolving and fluctuating refer to changes in at least one of the following:"
-        },
-        {
-          "slide": 104,
-          "first_text": "At least 2 unequivocal, sequential changes in frequency, morphology or location defined as follows: "
-        },
-        {
-          "slide": 105,
-          "first_text": "EVOLUTION OF FREQUENCY"
-        },
-        {
-          "slide": 106,
-          "first_text": "106"
-        },
-        {
-          "slide": 107,
-          "first_text": "107"
-        },
-        {
-          "slide": 108,
-          "first_text": "At least 3 changes, <1 min apart, in: "
-        },
-        {
-          "slide": 109,
-          "first_text": "FLUCTUATION in FREQUENCY"
-        },
-        {
-          "slide": 110,
-          "first_text": "Please describe the pattern"
-        },
-        {
-          "slide": 111,
-          "first_text": "111"
-        },
-        {
-          "slide": 112,
-          "first_text": "FLUCTUATION in LOCATION"
-        },
-        {
-          "slide": 113,
-          "first_text": "FLUCTUATION in LOCATION"
-        },
-        {
-          "slide": 114,
-          "first_text": "Many patterns including seizures can be reproducibly brought about or exacerbated by an alerting stimulus, with or without clinical alerting, when a patient is "
-        },
-        {
-          "slide": 115,
-          "first_text": "Describe the EEG changes following stimulation with sternal rub at the time of the red bar"
-        },
-        {
-          "slide": 116,
-          "first_text": "Stimulus Induced Generalized Periodic Discharges, SI-GPD"
-        },
-        {
-          "slide": 117,
-          "first_text": "SIRPIDs: example 2B"
-        },
-        {
-          "slide": 118,
-          "first_text": "SIRPIDs: example 2B"
-        },
-        {
-          "slide": 119,
-          "first_text": "D. Electrographic and Electroclinical Seizures"
-        },
-        {
-          "slide": 120,
-          "first_text": "ELECTROGRAPHIC AND ELECTROCLINICAL SEIZURES"
-        },
-        {
-          "slide": 121,
-          "first_text": "CLINICAL SUSPICION of nonconvulsive status epilepticus, NCSE "
-        },
-        {
-          "slide": 122,
-          "first_text": "CLINICAL SUSPICION of nonconvulsive status epilepticus, NCSE "
-        },
-        {
-          "slide": 123,
-          "first_text": "Electrographic and Electroclinical Seizures"
-        },
-        {
-          "slide": 124,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 125,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 126,
-          "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
-        },
-        {
-          "slide": 127,
-          "first_text": "Page 1"
-        },
-        {
-          "slide": 128,
-          "first_text": "Electroclinical Seizures"
-        },
-        {
-          "slide": 129,
-          "first_text": "What is the correct term for this pattern?"
-        },
-        {
-          "slide": 130,
-          "first_text": "130"
-        },
-        {
-          "slide": 131,
-          "first_text": "89 y.o. woman found confused with minor movements of extremities and later in face."
-        },
-        {
-          "slide": 132,
-          "first_text": "Muscle artifacts due to time-locked jerks"
-        },
-        {
-          "slide": 133,
-          "first_text": "E. Brief potentially Ictal Rhythmic Discharges (BIRDs)"
-        },
-        {
-          "slide": 134,
-          "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES (BIRDs)"
-        },
-        {
-          "slide": 135,
-          "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
-        },
-        {
-          "slide": 136,
-          "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
-        },
-        {
-          "slide": 137,
-          "first_text": "How would you describe the underlined patterns?"
-        },
-        {
-          "slide": 138,
-          "first_text": "138"
-        },
-        {
-          "slide": 139,
-          "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
-        },
-        {
-          "slide": 140,
-          "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
-        },
-        {
-          "slide": 141,
-          "first_text": "F. Ictal-Interictal Continuum (IIC)"
-        },
-        {
-          "slide": 142,
-          "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
-        },
-        {
-          "slide": 143,
-          "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
-        },
-        {
-          "slide": 144,
-          "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
-        },
-        {
-          "slide": 145,
-          "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
-        },
-        {
-          "slide": 146,
-          "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
-        },
-        {
-          "slide": 147,
-          "first_text": "What pattern is this?"
-        },
-        {
-          "slide": 148,
-          "first_text": "Part 1 of 3"
-        },
-        {
-          "slide": 149,
-          "first_text": "Part 2 of 3"
-        },
-        {
-          "slide": 150,
-          "first_text": "150"
-        },
-        {
-          "slide": 151,
-          "first_text": "Part 3 of 4"
-        },
-        {
-          "slide": 152,
-          "first_text": "GPDs with fluctuating frequency and rhythmic activity; fluctuating GPDs"
-        },
-        {
-          "slide": 153,
-          "first_text": "END"
-        }
-      ],
-      "status": "retrieved",
-      "bytes": 26524779,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://www.acns.org/UserFiles/file/ACNS_Training_Module_2022-01-01_Combined_FINAL.pptx"
-      },
-      "authority": "training reference"
+     "slide": 4,
+     "first_text": "A. EEG Background"
     },
     {
-      "id": "S05",
-      "title": "ACNS neonatal terminology, publisher",
-      "url": "https://www.ovid.com/jnls/clinicalneurophys/fulltext/10.1097/wnp.0b013e3182872b24~american-clinical-neurophysiology-society-standardized-eeg",
-      "format": "html",
-      "version": "2013 publication",
-      "population": "neonatal",
-      "role": "definition authority",
-      "doi": "10.1097/WNP.0b013e3182872b24",
-      "user_supplied": true,
-      "terminology_track": "ACNS_NEONATAL",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "definition authority",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [
-        "S09"
-      ],
-      "unresolved": [
-        "No blanket republication/model-training permission recorded; source is a private research reference.",
-        "No blanket republication/model-training permission recorded; source is a private research reference."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:12.602329+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S05.html",
-      "sha256": "c9ac78ef311687ddc9b67c23dc6b2bc622595d4775b1f716e5a93dfa4d16dce8",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://www.ovid.com/jnls/clinicalneurophys/fulltext/10.1097/wnp.0b013e3182872b24~american-clinical-neurophysiology-society-standardized-eeg",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "American Clinical Neurophysiology Society... : Journal of Clinical Neurophysiology",
-      "status": "retrieved",
-      "bytes": 614202,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://www.ovid.com/jnls/clinicalneurophys/fulltext/10.1097/wnp.0b013e3182872b24~american-clinical-neurophysiology-society-standardized-eeg"
-      },
-      "authority": "ACNS consensus/standard",
-      "usable_text_characters": 66002,
-      "content_status": "publisher page; use S09 for complete rule extraction"
+     "slide": 5,
+     "first_text": "EEG BACKGROUND"
     },
     {
-      "id": "S06",
-      "title": "Developmental EEG chapter",
-      "url": "https://www.ncbi.nlm.nih.gov/books/NBK390356/",
-      "format": "html",
-      "version": "2016 book",
-      "population": "developmental",
-      "role": "contextual educational reference",
-      "doi": null,
-      "user_supplied": true,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "contextual educational reference",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "conditional on NC-SA terms and item-specific exclusions",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:12.706211+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S06.html",
-      "sha256": "0180e595f1104d960c9734685a12d481b11419dc91edf410b36f0be87f742c16",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://www.ncbi.nlm.nih.gov/books/NBK390356/",
-      "content_type": "text/html; charset=UTF-8",
-      "html_title": "The Developmental EEG: Premature, Neonatal, Infant, and Children - Electroencephalography (EEG): An Introductory Text and Atlas of Normal and Abnormal Findings in Adults, Children, and Infants - NCBI Bookshelf",
-      "status": "retrieved",
-      "bytes": 93812,
-      "license_evidence": {
-        "license": "CC BY-NC-SA 4.0 except where indicated",
-        "url": "https://www.ncbi.nlm.nih.gov/books/NBK390356/",
-        "evidence": "publication copyright footer expressly covers figures/tables/images with attribution and license notice"
-      },
-      "authority": "contextual educational reference",
-      "usable_text_characters": 31158
+     "slide": 6,
+     "first_text": "EEG BACKGROUND"
     },
     {
-      "id": "S07",
-      "title": "Neonatal EEG graded for background abnormalities in HIE",
-      "url": "https://www.nature.com/articles/s41597-023-02002-8",
-      "format": "html",
-      "version": "2023",
-      "population": "term neonatal HIE",
-      "role": "dataset descriptor",
-      "doi": "10.1038/s41597-023-02002-8",
-      "user_supplied": true,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "dataset descriptor",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [
-        "S16",
-        "S10"
-      ],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:12.729864+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S07.html",
-      "sha256": "f23a7016055825b3213c1b15ef4e82c31b419f16f4bdb7e0d4ab38fd3958ce40",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://www.nature.com/articles/s41597-023-02002-8?error=cookies_not_supported&code=04fd1613-b85f-4c8d-b312-093786d2d240",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "Neonatal EEG graded for severity of background abnormalities in hypoxic-ischaemic encephalopathy | Scientific Data",
-      "status": "retrieved",
-      "bytes": 347261,
-      "license_evidence": {
-        "license": "CC BY 4.0",
-        "url": "https://www.nature.com/articles/s41597-023-02002-8",
-        "evidence": "publisher HTML identifies Creative Commons BY 4.0; inspect third-party exclusions before reuse"
-      },
-      "authority": "dataset descriptor",
-      "usable_text_characters": 37407
+     "slide": 7,
+     "first_text": "EEG BACKGROUND"
     },
     {
-      "id": "S08",
-      "title": "Quantification of Hypsarrhythmia in Infantile Spasmatic EEG",
-      "url": "https://ieeexplore.ieee.org/document/10385183",
-      "format": "html",
-      "version": "2024",
-      "population": "infantile spasms",
-      "role": "method reference",
-      "doi": "10.1109/TNSRE.2024.3351670",
-      "user_supplied": true,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "method reference",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [
-        "S17",
-        "S21",
-        "S21"
-      ],
-      "unresolved": [
-        "Empty or cookie-challenge response; saved bytes are not source content."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:12.919122+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S08.html",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 202,
-      "final_url": "https://ieeexplore.ieee.org/document/10385183",
-      "content_type": "text/html; charset=UTF-8",
-      "html_title": null,
-      "status": "unusable_response",
-      "bytes": 0,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://ieeexplore.ieee.org/document/10385183"
-      },
-      "authority": "method reference",
-      "usable_text_characters": 0
+     "slide": 8,
+     "first_text": "EEG BACKGROUND"
     },
     {
-      "id": "S09",
-      "title": "ACNS neonatal terminology, official PDF",
-      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf",
-      "format": "pdf",
-      "version": "2012 guideline / 2013 publication",
-      "population": "neonatal",
-      "role": "definition authority",
-      "doi": "10.1097/WNP.0b013e3182872b24",
-      "user_supplied": false,
-      "terminology_track": "ACNS_NEONATAL",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "definition authority",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [
-        "No blanket republication/model-training permission recorded; source is a private research reference.",
-        "No blanket republication/model-training permission recorded; source is a private research reference."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:13.004046+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S09.pdf",
-      "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc",
-      "page_count": 40,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf",
-      "content_type": "application/pdf",
-      "first_page_title_check": " \n \nACNS Standardized EEG Terminology and Categorization for the Description of \nContinuous EEG Monitoring in Neonates \n \nReport of the American Clinical Neurophysiology Society  \nCritical Care Monitoring Committee  \n \n ",
-      "status": "retrieved",
-      "bytes": 443112,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf"
-      },
-      "authority": "ACNS consensus/standard",
-      "clinical_review": "pending P2; file parsing is not definition adjudication"
+     "slide": 9,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
     },
     {
-      "id": "S10",
-      "title": "Cork dataset metadata",
-      "url": "https://zenodo.org/api/records/7477575",
-      "format": "json",
-      "version": "7477575",
-      "population": "term neonatal HIE",
-      "role": "dataset eligibility",
-      "doi": "10.5281/zenodo.7477575",
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "dataset eligibility",
-      "license_scope": "dataset license evidence; no model/code license implied",
-      "public_republication": "conditional_on_record_level_rights_and_license_obligations",
-      "cohort_id": "CORK_HIE",
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:13.074791+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S10.json",
-      "sha256": "db04d89b85b38ef04a7a90b206b4b36714f7874428e72a31f97588c706390144",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://zenodo.org/api/records/7477575",
-      "content_type": "application/json",
-      "metadata_title": "Neonatal EEG Graded for Severity of Background Abnormalities",
-      "license_evidence": {
-        "license": {
-          "id": "cc-by-4.0"
-        },
-        "access": "open",
-        "url": "https://zenodo.org/api/records/7477575"
-      },
-      "record_version_metadata": "2.0",
-      "dataset_files_listed_not_downloaded": 6,
-      "status": "retrieved",
-      "bytes": 8122,
-      "authority": "official dataset repository"
+     "slide": 10,
+     "first_text": "Continuous EEG with voltage asymmetry (marked, lower on right) and slowing on the left, polymorphic delta."
     },
     {
-      "id": "S11",
-      "title": "Helsinki dataset metadata",
-      "url": "https://zenodo.org/api/records/4940267",
-      "format": "json",
-      "version": "4940267",
-      "population": "neonatal",
-      "role": "dataset eligibility",
-      "doi": "10.5281/zenodo.4940267",
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "dataset eligibility",
-      "license_scope": "dataset license evidence; no model/code license implied",
-      "public_republication": "conditional_on_record_level_rights_and_license_obligations",
-      "cohort_id": "HELSINKI_NEONATAL",
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:13.152352+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S11.json",
-      "sha256": "8e674266aa22b44cb89d84cf08ebb6c35ef7306eab82905f1a69ad78a9d60b43",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://zenodo.org/api/records/4940267",
-      "content_type": "application/json",
-      "metadata_title": "A dataset of neonatal EEG recordings with seizures annotations",
-      "license_evidence": {
-        "license": {
-          "id": "cc-by-4.0"
-        },
-        "access": "open",
-        "url": "https://zenodo.org/api/records/4940267"
-      },
-      "record_version_metadata": null,
-      "dataset_files_listed_not_downloaded": 85,
-      "status": "retrieved",
-      "bytes": 26641,
-      "authority": "official dataset repository"
+     "slide": 11,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
     },
     {
-      "id": "S12",
-      "title": "CHB-MIT dataset page",
-      "url": "https://physionet.org/content/chbmit/1.0.0/",
-      "format": "html",
-      "version": "1.0.0",
-      "population": "primarily pediatric epilepsy",
-      "role": "dataset eligibility",
-      "doi": "10.13026/C2K01R",
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "dataset eligibility",
-      "license_scope": "dataset license evidence; no model/code license implied",
-      "public_republication": "conditional_on_record_level_rights_and_license_obligations",
-      "cohort_id": "CHBMIT",
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:13.477326+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S12.html",
-      "sha256": "dbb44bbf47a8e68b26f78e5b8f33efea8b1d3c092ed73140a1863bcd57586e4b",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://physionet.org/content/chbmit/1.0.0/",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "CHB-MIT Scalp EEG Database v1.0.0",
-      "license_evidence": {
-        "license_label": "Open Data Commons Attribution",
-        "url": "https://physionet.org/content/chbmit/1.0.0/"
-      },
-      "status": "retrieved",
-      "bytes": 44791,
-      "authority": "official dataset repository",
-      "usable_text_characters": 12589
+     "slide": 12,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
     },
     {
-      "id": "S13",
-      "title": "Siena dataset page",
-      "url": "https://physionet.org/content/siena-scalp-eeg/1.0.0/",
-      "format": "html",
-      "version": "1.0.0",
-      "population": "adult epilepsy",
-      "role": "dataset eligibility",
-      "doi": "10.13026/5d4a-j060",
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "dataset eligibility",
-      "license_scope": "dataset license evidence; no model/code license implied",
-      "public_republication": "conditional_on_record_level_rights_and_license_obligations",
-      "cohort_id": "SIENA",
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:13.557052+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S13.html",
-      "sha256": "b25a49ae9b285b3df4dc7a195358d0ed9791d383fcea185790a8b692b851e8f8",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://physionet.org/content/siena-scalp-eeg/1.0.0/",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "Siena Scalp EEG Database v1.0.0",
-      "license_evidence": {
-        "license_label": "Creative Commons Attribution 4.0",
-        "url": "https://physionet.org/content/siena-scalp-eeg/1.0.0/"
-      },
-      "status": "retrieved",
-      "bytes": 42896,
-      "authority": "official dataset repository",
-      "usable_text_characters": 12587
+     "slide": 13,
+     "first_text": "How would you describe this EEG?"
     },
     {
-      "id": "S14",
-      "title": "PhysioNet I-CARE dataset page",
-      "url": "https://physionet.org/content/i-care/2.1/",
-      "format": "html",
-      "version": "2.1",
-      "population": "adult post-arrest",
-      "role": "dataset eligibility",
-      "doi": "10.13026/m33r-bj81",
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "dataset eligibility",
-      "license_scope": "dataset license evidence; no model/code license implied",
-      "public_republication": "conditional_on_record_level_rights_and_license_obligations",
-      "cohort_id": "ICARE",
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:14.104900+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S14.html",
-      "sha256": "4f658d58a168a2601fc8e3f41b1d94c41604964c7e97d9414f9f1e5d2bb801d7",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://physionet.org/content/i-care/2.1/",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "I-CARE: International Cardiac Arrest REsearch consortium Database v2.1",
-      "license_evidence": {
-        "license_label": "Creative Commons Attribution-NonCommercial-ShareAlike",
-        "url": "https://physionet.org/content/i-care/2.1/"
-      },
-      "status": "retrieved",
-      "bytes": 59294,
-      "authority": "official dataset repository",
-      "usable_text_characters": 23309
+     "slide": 14,
+     "first_text": "Higher voltage activity qualifies as bursts: ≥0.5s AND ≥ 4 phases"
     },
     {
-      "id": "S15",
-      "title": "Normal infant OpenNeuro metadata",
-      "url": "https://raw.githubusercontent.com/OpenNeuroDatasets/ds004577/main/dataset_description.json",
-      "format": "json",
-      "version": "snapshot; verify DatasetDOI",
-      "population": "infants first year",
-      "role": "reserve dataset eligibility",
-      "doi": null,
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "reserve dataset eligibility",
-      "license_scope": "dataset license evidence; no model/code license implied",
-      "public_republication": "conditional_on_record_level_rights_and_license_obligations",
-      "cohort_id": "OPENNEURO_DS004577",
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:14.189468+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S15.json",
-      "sha256": "1770c4dde1c894bf15a86f4b5cfbaa702bbc0019b34afd413ecd542faf6d7412",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://raw.githubusercontent.com/OpenNeuroDatasets/ds004577/main/dataset_description.json",
-      "content_type": "text/plain; charset=utf-8",
-      "metadata_title": "Dataset containing resting EEG for a sample of 103 normal infants in the first year of life",
-      "license_evidence": {
-        "license": "CC0",
-        "url": "https://raw.githubusercontent.com/OpenNeuroDatasets/ds004577/main/dataset_description.json"
-      },
-      "dataset_doi_metadata": "doi:10.18112/openneuro.ds004577.v1.0.1",
-      "status": "retrieved",
-      "bytes": 2460,
-      "authority": "reserve dataset eligibility"
+     "slide": 15,
+     "first_text": "Interburst EEG is attenuated not suppressed"
     },
     {
-      "id": "S16",
-      "title": "Cork descriptor PubMed alternative",
-      "url": "https://pubmed.ncbi.nlm.nih.gov/36899033/",
-      "format": "html",
-      "version": "PMID 36899033",
-      "population": "term neonatal HIE",
-      "role": "bibliographic alternative",
-      "doi": "10.1038/s41597-023-02002-8",
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "bibliographic alternative",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [
-        "Empty or cookie-challenge response; saved bytes are not source content."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:14.360405+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S16.html",
-      "sha256": "73d60bda9f320294b9e3918a5a2e05be9927a6150a722cdb62825cf162807cd5",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 203,
-      "final_url": "https://pubmed.ncbi.nlm.nih.gov/36899033/",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "pubmed.ncbi.nlm.nih.gov",
-      "status": "unusable_response",
-      "bytes": 5565,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/36899033/"
-      },
-      "authority": "bibliographic alternative",
-      "usable_text_characters": 124
+     "slide": 16,
+     "first_text": "16"
     },
     {
-      "id": "S17",
-      "title": "Hypsarrhythmia PubMed alternative",
-      "url": "https://pubmed.ncbi.nlm.nih.gov/38194391/",
-      "format": "html",
-      "version": "PMID 38194391",
-      "population": "infantile spasms",
-      "role": "bibliographic alternative",
-      "doi": "10.1109/TNSRE.2024.3351670",
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "bibliographic alternative",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [
-        "Empty or cookie-challenge response; saved bytes are not source content."
-      ],
-      "retrieved_at_utc": "2026-09-15T17:11:14.403705+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S17.html",
-      "sha256": "23d48fa7127a4717e84ab1346c8a6804295121cb1f1676a052a655a1990e356b",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 203,
-      "final_url": "https://pubmed.ncbi.nlm.nih.gov/38194391/",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "pubmed.ncbi.nlm.nih.gov",
-      "status": "unusable_response",
-      "bytes": 5565,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/38194391/"
-      },
-      "authority": "bibliographic alternative",
-      "usable_text_characters": 124
+     "slide": 17,
+     "first_text": "17"
     },
     {
-      "id": "S18",
-      "title": "CC BY license",
-      "url": "https://creativecommons.org/licenses/by/4.0/",
-      "format": "html",
-      "version": "4.0",
-      "population": "not applicable",
-      "role": "license evidence",
-      "doi": null,
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "license evidence",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:14.430254+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S18.html",
-      "sha256": "231a5dac65bbf135ba27145969a63cd289faadc172f1512c4810a6c60ba91036",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://creativecommons.org/licenses/by/4.0/",
-      "content_type": "text/html",
-      "html_title": "Deed - Attribution 4.0 International - Creative Commons",
-      "status": "retrieved",
-      "bytes": 32178,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://creativecommons.org/licenses/by/4.0/"
-      },
-      "authority": "license evidence",
-      "usable_text_characters": 4542
+     "slide": 18,
+     "first_text": "How would you describe this page of EEG?"
     },
     {
-      "id": "S19",
-      "title": "ODC-By license",
-      "url": "https://opendatacommons.org/licenses/by/1-0/",
-      "format": "html",
-      "version": "1.0",
-      "population": "not applicable",
-      "role": "license evidence",
-      "doi": null,
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "license evidence",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:14.579155+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S19.html",
-      "sha256": "0b9bb2f9572d900af671debe4a2c193adec1c09e31bf78dc4c31204e0ad01b0f",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://opendatacommons.org/licenses/by/1-0/",
-      "content_type": "text/html; charset=utf-8",
-      "html_title": "Open Data Commons Attribution License (ODC-By) v1.0 — Open Data Commons: legal tools for open data",
-      "status": "retrieved",
-      "bytes": 46288,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://opendatacommons.org/licenses/by/1-0/"
-      },
-      "authority": "license evidence",
-      "usable_text_characters": 21153
+     "slide": 19,
+     "first_text": "Lateralized burst suppression on the left."
     },
     {
-      "id": "S20",
-      "title": "CC BY-NC-SA license",
-      "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-      "format": "html",
-      "version": "4.0",
-      "population": "not applicable",
-      "role": "license evidence",
-      "doi": null,
-      "user_supplied": false,
-      "terminology_track": "context_or_dataset",
-      "review_state": "metadata_checked_not_clinically_adjudicated",
-      "planned_use": "license evidence",
-      "license_scope": "document_only; does not license raw data, model weights or code",
-      "public_republication": "not_cleared_unless_explicit_license_verified",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [],
-      "retrieved_at_utc": "2026-09-15T17:11:14.642820+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S20.html",
-      "sha256": "1ba756f2fb4f43ff12e5ceffe5ea8ee3d6b90f89617e3a6a5a33192a3c53d84c",
-      "page_count": null,
-      "slide_count": null,
-      "http_status": 200,
-      "final_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-      "content_type": "text/html",
-      "html_title": "Deed - Attribution-NonCommercial-ShareAlike 4.0 International - Creative Commons",
-      "status": "retrieved",
-      "bytes": 37346,
-      "license_evidence": {
-        "license": "not established",
-        "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/"
-      },
-      "authority": "license evidence",
-      "usable_text_characters": 5037
+     "slide": 20,
+     "first_text": "HIGHLY EPILEPTIFORM BURSTS"
     },
     {
-      "id": "S21",
-      "title": "Quantification of Hypsarrhythmia in Infantile Spasmatic EEG: A Large Cohort Study",
-      "url": "https://api.crossref.org/works/10.1109/TNSRE.2024.3351670",
-      "doi": "10.1109/tnsre.2024.3351670",
-      "format": "json",
-      "version": "Crossref snapshot",
-      "population": "infantile spasms",
-      "role": "bibliographic alternative",
-      "authority": "publisher-deposited Crossref metadata",
-      "terminology_track": "context_or_dataset",
-      "user_supplied": false,
-      "status": "retrieved",
-      "retrieved_at_utc": "2026-09-15T17:13:59.500649+00:00",
-      "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S21.json",
-      "sha256": "25ce212db9f2925e29992f60a4763e70a1061651b7f3b596041ed09e5b046532",
-      "bytes": 10097,
-      "page_count": null,
-      "slide_count": null,
-      "planned_use": "verify S08 identity; not full-text method extraction",
-      "license_evidence": {
-        "license": "metadata does not clear full article reuse",
-        "url": "https://api.crossref.org/works/10.1109/TNSRE.2024.3351670"
-      },
-      "license_scope": "metadata only",
-      "public_republication": "article rights not established",
-      "cohort_id": null,
-      "alternatives": [],
-      "unresolved": [
-        "IEEE full article not retrieved"
-      ],
-      "review_state": "metadata_checked_not_clinically_adjudicated"
+     "slide": 21,
+     "first_text": "HIGHLY EPILEPTIFORM BURSTS"
+    },
+    {
+     "slide": 22,
+     "first_text": "How can the continuity and the activity be best described?"
+    },
+    {
+     "slide": 23,
+     "first_text": "HIGHLY EPILEPTIFORM BURSTS: "
+    },
+    {
+     "slide": 24,
+     "first_text": "24"
+    },
+    {
+     "slide": 25,
+     "first_text": "IDENTICAL BURSTS in a STEREOTYPED CLUSTER"
+    },
+    {
+     "slide": 26,
+     "first_text": "How would you describe this pattern?"
+    },
+    {
+     "slide": 27,
+     "first_text": "SUPPRESSION: 5s"
+    },
+    {
+     "slide": 28,
+     "first_text": "BACKGROUND: REACTIVITY"
+    },
+    {
+     "slide": 29,
+     "first_text": "BACKGROUND: REACTIVITY"
+    },
+    {
+     "slide": 30,
+     "first_text": "BACKGROUND: REACTIVITY"
+    },
+    {
+     "slide": 31,
+     "first_text": "BACKGROUND: STATE CHANGES"
+    },
+    {
+     "slide": 32,
+     "first_text": "BACKGROUND: CYCLIC ALTERNATING PATTERN of ENCEPHALOPATHY (CAPE)"
+    },
+    {
+     "slide": 33,
+     "first_text": "BACKGROUND: BREACH EFFECT"
+    },
+    {
+     "slide": 34,
+     "first_text": "In what region is breach effect present on this page of EEG?"
+    },
+    {
+     "slide": 35,
+     "first_text": "BREACH, left parasagittal "
+    },
+    {
+     "slide": 36,
+     "first_text": "B. Sporadic Epileptiform"
+    },
+    {
+     "slide": 37,
+     "first_text": "SPORADIC EPILEPTIFORM DISCHARGES"
+    },
+    {
+     "slide": 38,
+     "first_text": "NUMBER OF PHASES"
+    },
+    {
+     "slide": 39,
+     "first_text": "DISCHARGE VERSUS BURST"
+    },
+    {
+     "slide": 40,
+     "first_text": "Sporadic: "
+    },
+    {
+     "slide": 41,
+     "first_text": "C. Rhythmic and "
+    },
+    {
+     "slide": 42,
+     "first_text": "All rhythmic and periodic patterns (RPPs) should be described by main terms 1 and 2, as well as appropriate major and minor modifiers. Not all modifiers will ap"
+    },
+    {
+     "slide": 43,
+     "first_text": "RHYTHMIC AND PERIODIC PATTERNS (RPPs): MAIN TERM 2"
+    },
+    {
+     "slide": 44,
+     "first_text": "MAIN TERM 2: PDs"
+    },
+    {
+     "slide": 45,
+     "first_text": "MAIN TERM 2: RDA"
+    },
+    {
+     "slide": 46,
+     "first_text": "MAIN TERM 2: SW"
+    },
+    {
+     "slide": 47,
+     "first_text": "MAIN TERM 1: GENERALIZED"
+    },
+    {
+     "slide": 48,
+     "first_text": "MAIN TERM 1: LATERALIZED"
+    },
+    {
+     "slide": 49,
+     "first_text": "MAIN TERM 1: BILATERAL INDEPENDANT"
+    },
+    {
+     "slide": 50,
+     "first_text": "50"
+    },
+    {
+     "slide": 51,
+     "first_text": "MAIN TERM 1: MULTIFOCAL"
+    },
+    {
+     "slide": 52,
+     "first_text": "In addition to main terms 1 and 2, the following major modifiers can be applied to refine the description of the pattern: "
+    },
+    {
+     "slide": 53,
+     "first_text": "Note that there are 4 distinct time-related scales:"
+    },
+    {
+     "slide": 54,
+     "first_text": "What pattern is this?"
+    },
+    {
+     "slide": 55,
+     "first_text": "Frontal predominance"
+    },
+    {
+     "slide": 56,
+     "first_text": "Frontal predominance"
+    },
+    {
+     "slide": 57,
+     "first_text": "PERIODIC DISCHARGES: SHARPNESS"
+    },
+    {
+     "slide": 58,
+     "first_text": "Please characterize the pattern"
+    },
+    {
+     "slide": 59,
+     "first_text": "LATERALIZED PERIODIC DISCHARGES"
+    },
+    {
+     "slide": 60,
+     "first_text": "Lateralized Periodic Discharges (LPDs)"
+    },
+    {
+     "slide": 61,
+     "first_text": "Lateralized Periodic Discharges (LPDs)"
+    },
+    {
+     "slide": 62,
+     "first_text": "Please characterize the pattern"
+    },
+    {
+     "slide": 63,
+     "first_text": "Lateralized Periodic Discharges, LPDs"
+    },
+    {
+     "slide": 64,
+     "first_text": "Generalized Periodic Discharges (GPDs)"
+    },
+    {
+     "slide": 65,
+     "first_text": "Generalized Periodic Discharges (GPDs)"
+    },
+    {
+     "slide": 66,
+     "first_text": "What is the correct term for this pattern?"
+    },
+    {
+     "slide": 67,
+     "first_text": "Lateralized Rhythmic Delta Activity (LRDA)"
+    },
+    {
+     "slide": 68,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
+    },
+    {
+     "slide": 69,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
+    },
+    {
+     "slide": 70,
+     "first_text": "Please describe the pattern"
+    },
+    {
+     "slide": 71,
+     "first_text": "Lateralized Rhythmic Delta Activity, LRDA"
+    },
+    {
+     "slide": 72,
+     "first_text": "What is the correct term for this pattern?"
+    },
+    {
+     "slide": 73,
+     "first_text": "Sharp-and-wave: "
+    },
+    {
+     "slide": 74,
+     "first_text": "What pattern(s) is this?"
+    },
+    {
+     "slide": 75,
+     "first_text": "BIPDs"
+    },
+    {
+     "slide": 76,
+     "first_text": "What is the correct term for this pattern?"
+    },
+    {
+     "slide": 77,
+     "first_text": "Unilateral Independant Rhythmic Delta Activity, UIRDA"
+    },
+    {
+     "slide": 78,
+     "first_text": "What would you call this pattern?"
+    },
+    {
+     "slide": 79,
+     "first_text": "12 EDs/10 s"
+    },
+    {
+     "slide": 80,
+     "first_text": "Courtesy of "
+    },
+    {
+     "slide": 81,
+     "first_text": "Multifocal Periodic Discharges, MfPDs: 3 independent foci, 1 left, 2 right"
+    },
+    {
+     "slide": 82,
+     "first_text": "How often and how long a pattern is present can be described by prevalence and duration:"
+    },
+    {
+     "slide": 83,
+     "first_text": "Typical duration of pattern"
+    },
+    {
+     "slide": 84,
+     "first_text": "The Plus modifier refers to additional features that render the pattern more ictal-appearing than the same pattern without the plus. The Plus modifier can be ch"
+    },
+    {
+     "slide": 85,
+     "first_text": "Longitudinal bipolar "
+    },
+    {
+     "slide": 86,
+     "first_text": "code as +F if the fast activity is part of the RDA or PD pattern and not simply part of the background activity"
+    },
+    {
+     "slide": 87,
+     "first_text": "PERIODIC DISCHARGES PLUS RDA ("
+    },
+    {
+     "slide": 88,
+     "first_text": "RHYTHMIC DELTA ACTIVITY PLUS SPIKES or SHARP WAVES (RDA+S)"
+    },
+    {
+     "slide": 89,
+     "first_text": "Spiky LPDs+F"
+    },
+    {
+     "slide": 90,
+     "first_text": "Spiky LPDs+F"
+    },
+    {
+     "slide": 91,
+     "first_text": "What is the best way to describe this pattern? "
+    },
+    {
+     "slide": 92,
+     "first_text": "Left LRDA, 1.5-2 Hz"
+    },
+    {
+     "slide": 93,
+     "first_text": "93"
+    },
+    {
+     "slide": 94,
+     "first_text": "94"
+    },
+    {
+     "slide": 95,
+     "first_text": "Please describe the pattern"
+    },
+    {
+     "slide": 96,
+     "first_text": "Lateralized Periodic Discharges + R (Ictal-Interictal Continuum, IIC)"
+    },
+    {
+     "slide": 97,
+     "first_text": "EXTREME DELTA BRUSH (EDB)"
+    },
+    {
+     "slide": 98,
+     "first_text": ""
+    },
+    {
+     "slide": 99,
+     "first_text": "EXTREME DELTA BRUSH (EDB)"
+    },
+    {
+     "slide": 100,
+     "first_text": "EXTREME DELTA BRUSH (EDB)"
+    },
+    {
+     "slide": 101,
+     "first_text": "What is the correct term for this pattern?"
+    },
+    {
+     "slide": 102,
+     "first_text": "Generalized Periodic Discharges with superimposed fast activity (GPD+F)"
+    },
+    {
+     "slide": 103,
+     "first_text": "Evolving and fluctuating refer to changes in at least one of the following:"
+    },
+    {
+     "slide": 104,
+     "first_text": "At least 2 unequivocal, sequential changes in frequency, morphology or location defined as follows: "
+    },
+    {
+     "slide": 105,
+     "first_text": "EVOLUTION OF FREQUENCY"
+    },
+    {
+     "slide": 106,
+     "first_text": "106"
+    },
+    {
+     "slide": 107,
+     "first_text": "107"
+    },
+    {
+     "slide": 108,
+     "first_text": "At least 3 changes, <1 min apart, in: "
+    },
+    {
+     "slide": 109,
+     "first_text": "FLUCTUATION in FREQUENCY"
+    },
+    {
+     "slide": 110,
+     "first_text": "Please describe the pattern"
+    },
+    {
+     "slide": 111,
+     "first_text": "111"
+    },
+    {
+     "slide": 112,
+     "first_text": "FLUCTUATION in LOCATION"
+    },
+    {
+     "slide": 113,
+     "first_text": "FLUCTUATION in LOCATION"
+    },
+    {
+     "slide": 114,
+     "first_text": "Many patterns including seizures can be reproducibly brought about or exacerbated by an alerting stimulus, with or without clinical alerting, when a patient is "
+    },
+    {
+     "slide": 115,
+     "first_text": "Describe the EEG changes following stimulation with sternal rub at the time of the red bar"
+    },
+    {
+     "slide": 116,
+     "first_text": "Stimulus Induced Generalized Periodic Discharges, SI-GPD"
+    },
+    {
+     "slide": 117,
+     "first_text": "SIRPIDs: example 2B"
+    },
+    {
+     "slide": 118,
+     "first_text": "SIRPIDs: example 2B"
+    },
+    {
+     "slide": 119,
+     "first_text": "D. Electrographic and Electroclinical Seizures"
+    },
+    {
+     "slide": 120,
+     "first_text": "ELECTROGRAPHIC AND ELECTROCLINICAL SEIZURES"
+    },
+    {
+     "slide": 121,
+     "first_text": "CLINICAL SUSPICION of nonconvulsive status epilepticus, NCSE "
+    },
+    {
+     "slide": 122,
+     "first_text": "CLINICAL SUSPICION of nonconvulsive status epilepticus, NCSE "
+    },
+    {
+     "slide": 123,
+     "first_text": "Electrographic and Electroclinical Seizures"
+    },
+    {
+     "slide": 124,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
+    },
+    {
+     "slide": 125,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
+    },
+    {
+     "slide": 126,
+     "first_text": "Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022"
+    },
+    {
+     "slide": 127,
+     "first_text": "Page 1"
+    },
+    {
+     "slide": 128,
+     "first_text": "Electroclinical Seizures"
+    },
+    {
+     "slide": 129,
+     "first_text": "What is the correct term for this pattern?"
+    },
+    {
+     "slide": 130,
+     "first_text": "130"
+    },
+    {
+     "slide": 131,
+     "first_text": "89 y.o. woman found confused with minor movements of extremities and later in face."
+    },
+    {
+     "slide": 132,
+     "first_text": "Muscle artifacts due to time-locked jerks"
+    },
+    {
+     "slide": 133,
+     "first_text": "E. Brief potentially Ictal Rhythmic Discharges (BIRDs)"
+    },
+    {
+     "slide": 134,
+     "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES (BIRDs)"
+    },
+    {
+     "slide": 135,
+     "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
+    },
+    {
+     "slide": 136,
+     "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
+    },
+    {
+     "slide": 137,
+     "first_text": "How would you describe the underlined patterns?"
+    },
+    {
+     "slide": 138,
+     "first_text": "138"
+    },
+    {
+     "slide": 139,
+     "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
+    },
+    {
+     "slide": 140,
+     "first_text": "BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES"
+    },
+    {
+     "slide": 141,
+     "first_text": "F. Ictal-Interictal Continuum (IIC)"
+    },
+    {
+     "slide": 142,
+     "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
+    },
+    {
+     "slide": 143,
+     "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
+    },
+    {
+     "slide": 144,
+     "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
+    },
+    {
+     "slide": 145,
+     "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
+    },
+    {
+     "slide": 146,
+     "first_text": "ICTAL-INTERICTAL CONTINUUM (IIC)"
+    },
+    {
+     "slide": 147,
+     "first_text": "What pattern is this?"
+    },
+    {
+     "slide": 148,
+     "first_text": "Part 1 of 3"
+    },
+    {
+     "slide": 149,
+     "first_text": "Part 2 of 3"
+    },
+    {
+     "slide": 150,
+     "first_text": "150"
+    },
+    {
+     "slide": 151,
+     "first_text": "Part 3 of 4"
+    },
+    {
+     "slide": 152,
+     "first_text": "GPDs with fluctuating frequency and rhythmic activity; fluctuating GPDs"
+    },
+    {
+     "slide": 153,
+     "first_text": "END"
     }
-  ],
-  "validation": {
-    "all_local_hashes_match": true,
-    "eight_supplied_urls_accounted_for": true,
-    "source_ids_unique": true,
-    "raw_eeg_downloads": 0,
-    "clinical_thresholds_extracted": 0,
-    "asset_bytes": 42906196
+   ],
+   "status": "retrieved",
+   "bytes": 26524779,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://www.acns.org/UserFiles/file/ACNS_Training_Module_2022-01-01_Combined_FINAL.pptx"
+   },
+   "authority": "training reference"
+  },
+  {
+   "id": "S05",
+   "title": "ACNS neonatal terminology, publisher",
+   "url": "https://www.ovid.com/jnls/clinicalneurophys/fulltext/10.1097/wnp.0b013e3182872b24~american-clinical-neurophysiology-society-standardized-eeg",
+   "format": "html",
+   "version": "2013 publication",
+   "population": "neonatal",
+   "role": "definition authority",
+   "doi": "10.1097/WNP.0b013e3182872b24",
+   "user_supplied": true,
+   "terminology_track": "ACNS_NEONATAL",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "definition authority",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [
+    "S09"
+   ],
+   "unresolved": [
+    "No blanket republication/model-training permission recorded; source is a private research reference.",
+    "No blanket republication/model-training permission recorded; source is a private research reference."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:12.602329+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S05.html",
+   "sha256": "c9ac78ef311687ddc9b67c23dc6b2bc622595d4775b1f716e5a93dfa4d16dce8",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://www.ovid.com/jnls/clinicalneurophys/fulltext/10.1097/wnp.0b013e3182872b24~american-clinical-neurophysiology-society-standardized-eeg",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "American Clinical Neurophysiology Society... : Journal of Clinical Neurophysiology",
+   "status": "retrieved",
+   "bytes": 614202,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://www.ovid.com/jnls/clinicalneurophys/fulltext/10.1097/wnp.0b013e3182872b24~american-clinical-neurophysiology-society-standardized-eeg"
+   },
+   "authority": "ACNS consensus/standard",
+   "usable_text_characters": 66002,
+   "content_status": "publisher page; use S09 for complete rule extraction"
+  },
+  {
+   "id": "S06",
+   "title": "Developmental EEG chapter",
+   "url": "https://www.ncbi.nlm.nih.gov/books/NBK390356/",
+   "format": "html",
+   "version": "2016 book",
+   "population": "developmental",
+   "role": "contextual educational reference",
+   "doi": null,
+   "user_supplied": true,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "contextual educational reference",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "conditional on NC-SA terms and item-specific exclusions",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:12.706211+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S06.html",
+   "sha256": "0180e595f1104d960c9734685a12d481b11419dc91edf410b36f0be87f742c16",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://www.ncbi.nlm.nih.gov/books/NBK390356/",
+   "content_type": "text/html; charset=UTF-8",
+   "html_title": "The Developmental EEG: Premature, Neonatal, Infant, and Children - Electroencephalography (EEG): An Introductory Text and Atlas of Normal and Abnormal Findings in Adults, Children, and Infants - NCBI Bookshelf",
+   "status": "retrieved",
+   "bytes": 93812,
+   "license_evidence": {
+    "license": "CC BY-NC-SA 4.0 except where indicated",
+    "url": "https://www.ncbi.nlm.nih.gov/books/NBK390356/",
+    "evidence": "publication copyright footer expressly covers figures/tables/images with attribution and license notice"
+   },
+   "authority": "contextual educational reference",
+   "usable_text_characters": 31158
+  },
+  {
+   "id": "S07",
+   "title": "Neonatal EEG graded for background abnormalities in HIE",
+   "url": "https://www.nature.com/articles/s41597-023-02002-8",
+   "format": "html",
+   "version": "2023",
+   "population": "term neonatal HIE",
+   "role": "dataset descriptor",
+   "doi": "10.1038/s41597-023-02002-8",
+   "user_supplied": true,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "dataset descriptor",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [
+    "S16",
+    "S10"
+   ],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:12.729864+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S07.html",
+   "sha256": "f23a7016055825b3213c1b15ef4e82c31b419f16f4bdb7e0d4ab38fd3958ce40",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://www.nature.com/articles/s41597-023-02002-8?error=cookies_not_supported&code=04fd1613-b85f-4c8d-b312-093786d2d240",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "Neonatal EEG graded for severity of background abnormalities in hypoxic-ischaemic encephalopathy | Scientific Data",
+   "status": "retrieved",
+   "bytes": 347261,
+   "license_evidence": {
+    "license": "CC BY 4.0",
+    "url": "https://www.nature.com/articles/s41597-023-02002-8",
+    "evidence": "publisher HTML identifies Creative Commons BY 4.0; inspect third-party exclusions before reuse"
+   },
+   "authority": "dataset descriptor",
+   "usable_text_characters": 37407
+  },
+  {
+   "id": "S08",
+   "title": "Quantification of Hypsarrhythmia in Infantile Spasmatic EEG",
+   "url": "https://ieeexplore.ieee.org/document/10385183",
+   "format": "html",
+   "version": "2024",
+   "population": "infantile spasms",
+   "role": "method reference",
+   "doi": "10.1109/TNSRE.2024.3351670",
+   "user_supplied": true,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "method reference",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [
+    "S17",
+    "S21",
+    "S21"
+   ],
+   "unresolved": [
+    "Empty or cookie-challenge response; saved bytes are not source content."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:12.919122+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S08.html",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 202,
+   "final_url": "https://ieeexplore.ieee.org/document/10385183",
+   "content_type": "text/html; charset=UTF-8",
+   "html_title": null,
+   "status": "unusable_response",
+   "bytes": 0,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://ieeexplore.ieee.org/document/10385183"
+   },
+   "authority": "method reference",
+   "usable_text_characters": 0
+  },
+  {
+   "id": "S09",
+   "title": "ACNS neonatal terminology, official PDF",
+   "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf",
+   "format": "pdf",
+   "version": "2012 guideline / 2013 publication",
+   "population": "neonatal",
+   "role": "definition authority",
+   "doi": "10.1097/WNP.0b013e3182872b24",
+   "user_supplied": false,
+   "terminology_track": "ACNS_NEONATAL",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "definition authority",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "No blanket republication/model-training permission recorded; source is a private research reference.",
+    "No blanket republication/model-training permission recorded; source is a private research reference."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:13.004046+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S09.pdf",
+   "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc",
+   "page_count": 40,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf",
+   "content_type": "application/pdf",
+   "first_page_title_check": " \n \nACNS Standardized EEG Terminology and Categorization for the Description of \nContinuous EEG Monitoring in Neonates \n \nReport of the American Clinical Neurophysiology Society  \nCritical Care Monitoring Committee  \n \n ",
+   "status": "retrieved",
+   "bytes": 443112,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf"
+   },
+   "authority": "ACNS consensus/standard",
+   "clinical_review": "pending P2; file parsing is not definition adjudication"
+  },
+  {
+   "id": "S10",
+   "title": "Cork dataset metadata",
+   "url": "https://zenodo.org/api/records/7477575",
+   "format": "json",
+   "version": "7477575",
+   "population": "term neonatal HIE",
+   "role": "dataset eligibility",
+   "doi": "10.5281/zenodo.7477575",
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "dataset eligibility",
+   "license_scope": "dataset license evidence; no model/code license implied",
+   "public_republication": "conditional_on_record_level_rights_and_license_obligations",
+   "cohort_id": "CORK_HIE",
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:13.074791+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S10.json",
+   "sha256": "db04d89b85b38ef04a7a90b206b4b36714f7874428e72a31f97588c706390144",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://zenodo.org/api/records/7477575",
+   "content_type": "application/json",
+   "metadata_title": "Neonatal EEG Graded for Severity of Background Abnormalities",
+   "license_evidence": {
+    "license": {
+     "id": "cc-by-4.0"
+    },
+    "access": "open",
+    "url": "https://zenodo.org/api/records/7477575"
+   },
+   "record_version_metadata": "2.0",
+   "dataset_files_listed_not_downloaded": 6,
+   "status": "retrieved",
+   "bytes": 8122,
+   "authority": "official dataset repository"
+  },
+  {
+   "id": "S11",
+   "title": "Helsinki dataset metadata",
+   "url": "https://zenodo.org/api/records/4940267",
+   "format": "json",
+   "version": "4940267",
+   "population": "neonatal",
+   "role": "dataset eligibility",
+   "doi": "10.5281/zenodo.4940267",
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "dataset eligibility",
+   "license_scope": "dataset license evidence; no model/code license implied",
+   "public_republication": "conditional_on_record_level_rights_and_license_obligations",
+   "cohort_id": "HELSINKI_NEONATAL",
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:13.152352+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S11.json",
+   "sha256": "8e674266aa22b44cb89d84cf08ebb6c35ef7306eab82905f1a69ad78a9d60b43",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://zenodo.org/api/records/4940267",
+   "content_type": "application/json",
+   "metadata_title": "A dataset of neonatal EEG recordings with seizures annotations",
+   "license_evidence": {
+    "license": {
+     "id": "cc-by-4.0"
+    },
+    "access": "open",
+    "url": "https://zenodo.org/api/records/4940267"
+   },
+   "record_version_metadata": null,
+   "dataset_files_listed_not_downloaded": 85,
+   "status": "retrieved",
+   "bytes": 26641,
+   "authority": "official dataset repository"
+  },
+  {
+   "id": "S12",
+   "title": "CHB-MIT dataset page",
+   "url": "https://physionet.org/content/chbmit/1.0.0/",
+   "format": "html",
+   "version": "1.0.0",
+   "population": "primarily pediatric epilepsy",
+   "role": "dataset eligibility",
+   "doi": "10.13026/C2K01R",
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "dataset eligibility",
+   "license_scope": "dataset license evidence; no model/code license implied",
+   "public_republication": "conditional_on_record_level_rights_and_license_obligations",
+   "cohort_id": "CHBMIT",
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:13.477326+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S12.html",
+   "sha256": "dbb44bbf47a8e68b26f78e5b8f33efea8b1d3c092ed73140a1863bcd57586e4b",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://physionet.org/content/chbmit/1.0.0/",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "CHB-MIT Scalp EEG Database v1.0.0",
+   "license_evidence": {
+    "license_label": "Open Data Commons Attribution",
+    "url": "https://physionet.org/content/chbmit/1.0.0/"
+   },
+   "status": "retrieved",
+   "bytes": 44791,
+   "authority": "official dataset repository",
+   "usable_text_characters": 12589
+  },
+  {
+   "id": "S13",
+   "title": "Siena dataset page",
+   "url": "https://physionet.org/content/siena-scalp-eeg/1.0.0/",
+   "format": "html",
+   "version": "1.0.0",
+   "population": "adult epilepsy",
+   "role": "dataset eligibility",
+   "doi": "10.13026/5d4a-j060",
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "dataset eligibility",
+   "license_scope": "dataset license evidence; no model/code license implied",
+   "public_republication": "conditional_on_record_level_rights_and_license_obligations",
+   "cohort_id": "SIENA",
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:13.557052+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S13.html",
+   "sha256": "b25a49ae9b285b3df4dc7a195358d0ed9791d383fcea185790a8b692b851e8f8",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://physionet.org/content/siena-scalp-eeg/1.0.0/",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "Siena Scalp EEG Database v1.0.0",
+   "license_evidence": {
+    "license_label": "Creative Commons Attribution 4.0",
+    "url": "https://physionet.org/content/siena-scalp-eeg/1.0.0/"
+   },
+   "status": "retrieved",
+   "bytes": 42896,
+   "authority": "official dataset repository",
+   "usable_text_characters": 12587
+  },
+  {
+   "id": "S14",
+   "title": "PhysioNet I-CARE dataset page",
+   "url": "https://physionet.org/content/i-care/2.1/",
+   "format": "html",
+   "version": "2.1",
+   "population": "adult post-arrest",
+   "role": "dataset eligibility",
+   "doi": "10.13026/m33r-bj81",
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "dataset eligibility",
+   "license_scope": "dataset license evidence; no model/code license implied",
+   "public_republication": "conditional_on_record_level_rights_and_license_obligations",
+   "cohort_id": "ICARE",
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:14.104900+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S14.html",
+   "sha256": "4f658d58a168a2601fc8e3f41b1d94c41604964c7e97d9414f9f1e5d2bb801d7",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://physionet.org/content/i-care/2.1/",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "I-CARE: International Cardiac Arrest REsearch consortium Database v2.1",
+   "license_evidence": {
+    "license_label": "Creative Commons Attribution-NonCommercial-ShareAlike",
+    "url": "https://physionet.org/content/i-care/2.1/"
+   },
+   "status": "retrieved",
+   "bytes": 59294,
+   "authority": "official dataset repository",
+   "usable_text_characters": 23309
+  },
+  {
+   "id": "S15",
+   "title": "Normal infant OpenNeuro metadata",
+   "url": "https://raw.githubusercontent.com/OpenNeuroDatasets/ds004577/main/dataset_description.json",
+   "format": "json",
+   "version": "snapshot; verify DatasetDOI",
+   "population": "infants first year",
+   "role": "reserve dataset eligibility",
+   "doi": null,
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "reserve dataset eligibility",
+   "license_scope": "dataset license evidence; no model/code license implied",
+   "public_republication": "conditional_on_record_level_rights_and_license_obligations",
+   "cohort_id": "OPENNEURO_DS004577",
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:14.189468+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S15.json",
+   "sha256": "1770c4dde1c894bf15a86f4b5cfbaa702bbc0019b34afd413ecd542faf6d7412",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://raw.githubusercontent.com/OpenNeuroDatasets/ds004577/main/dataset_description.json",
+   "content_type": "text/plain; charset=utf-8",
+   "metadata_title": "Dataset containing resting EEG for a sample of 103 normal infants in the first year of life",
+   "license_evidence": {
+    "license": "CC0",
+    "url": "https://raw.githubusercontent.com/OpenNeuroDatasets/ds004577/main/dataset_description.json"
+   },
+   "dataset_doi_metadata": "doi:10.18112/openneuro.ds004577.v1.0.1",
+   "status": "retrieved",
+   "bytes": 2460,
+   "authority": "reserve dataset eligibility"
+  },
+  {
+   "id": "S16",
+   "title": "Cork descriptor PubMed alternative",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/36899033/",
+   "format": "html",
+   "version": "PMID 36899033",
+   "population": "term neonatal HIE",
+   "role": "bibliographic alternative",
+   "doi": "10.1038/s41597-023-02002-8",
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "bibliographic alternative",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "Empty or cookie-challenge response; saved bytes are not source content."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:14.360405+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S16.html",
+   "sha256": "73d60bda9f320294b9e3918a5a2e05be9927a6150a722cdb62825cf162807cd5",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 203,
+   "final_url": "https://pubmed.ncbi.nlm.nih.gov/36899033/",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "pubmed.ncbi.nlm.nih.gov",
+   "status": "unusable_response",
+   "bytes": 5565,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/36899033/"
+   },
+   "authority": "bibliographic alternative",
+   "usable_text_characters": 124
+  },
+  {
+   "id": "S17",
+   "title": "Hypsarrhythmia PubMed alternative",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/38194391/",
+   "format": "html",
+   "version": "PMID 38194391",
+   "population": "infantile spasms",
+   "role": "bibliographic alternative",
+   "doi": "10.1109/TNSRE.2024.3351670",
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "bibliographic alternative",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "Empty or cookie-challenge response; saved bytes are not source content."
+   ],
+   "retrieved_at_utc": "2026-09-15T17:11:14.403705+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S17.html",
+   "sha256": "23d48fa7127a4717e84ab1346c8a6804295121cb1f1676a052a655a1990e356b",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 203,
+   "final_url": "https://pubmed.ncbi.nlm.nih.gov/38194391/",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "pubmed.ncbi.nlm.nih.gov",
+   "status": "unusable_response",
+   "bytes": 5565,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/38194391/"
+   },
+   "authority": "bibliographic alternative",
+   "usable_text_characters": 124
+  },
+  {
+   "id": "S18",
+   "title": "CC BY license",
+   "url": "https://creativecommons.org/licenses/by/4.0/",
+   "format": "html",
+   "version": "4.0",
+   "population": "not applicable",
+   "role": "license evidence",
+   "doi": null,
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "license evidence",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:14.430254+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S18.html",
+   "sha256": "231a5dac65bbf135ba27145969a63cd289faadc172f1512c4810a6c60ba91036",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://creativecommons.org/licenses/by/4.0/",
+   "content_type": "text/html",
+   "html_title": "Deed - Attribution 4.0 International - Creative Commons",
+   "status": "retrieved",
+   "bytes": 32178,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+   },
+   "authority": "license evidence",
+   "usable_text_characters": 4542
+  },
+  {
+   "id": "S19",
+   "title": "ODC-By license",
+   "url": "https://opendatacommons.org/licenses/by/1-0/",
+   "format": "html",
+   "version": "1.0",
+   "population": "not applicable",
+   "role": "license evidence",
+   "doi": null,
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "license evidence",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:14.579155+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S19.html",
+   "sha256": "0b9bb2f9572d900af671debe4a2c193adec1c09e31bf78dc4c31204e0ad01b0f",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://opendatacommons.org/licenses/by/1-0/",
+   "content_type": "text/html; charset=utf-8",
+   "html_title": "Open Data Commons Attribution License (ODC-By) v1.0 — Open Data Commons: legal tools for open data",
+   "status": "retrieved",
+   "bytes": 46288,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://opendatacommons.org/licenses/by/1-0/"
+   },
+   "authority": "license evidence",
+   "usable_text_characters": 21153
+  },
+  {
+   "id": "S20",
+   "title": "CC BY-NC-SA license",
+   "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "format": "html",
+   "version": "4.0",
+   "population": "not applicable",
+   "role": "license evidence",
+   "doi": null,
+   "user_supplied": false,
+   "terminology_track": "context_or_dataset",
+   "review_state": "metadata_checked_not_clinically_adjudicated",
+   "planned_use": "license evidence",
+   "license_scope": "document_only; does not license raw data, model weights or code",
+   "public_republication": "not_cleared_unless_explicit_license_verified",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [],
+   "retrieved_at_utc": "2026-09-15T17:11:14.642820+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S20.html",
+   "sha256": "1ba756f2fb4f43ff12e5ceffe5ea8ee3d6b90f89617e3a6a5a33192a3c53d84c",
+   "page_count": null,
+   "slide_count": null,
+   "http_status": 200,
+   "final_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "content_type": "text/html",
+   "html_title": "Deed - Attribution-NonCommercial-ShareAlike 4.0 International - Creative Commons",
+   "status": "retrieved",
+   "bytes": 37346,
+   "license_evidence": {
+    "license": "not established",
+    "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+   },
+   "authority": "license evidence",
+   "usable_text_characters": 5037
+  },
+  {
+   "id": "S21",
+   "title": "Quantification of Hypsarrhythmia in Infantile Spasmatic EEG: A Large Cohort Study",
+   "url": "https://api.crossref.org/works/10.1109/TNSRE.2024.3351670",
+   "doi": "10.1109/tnsre.2024.3351670",
+   "format": "json",
+   "version": "Crossref snapshot",
+   "population": "infantile spasms",
+   "role": "bibliographic alternative",
+   "authority": "publisher-deposited Crossref metadata",
+   "terminology_track": "context_or_dataset",
+   "user_supplied": false,
+   "status": "retrieved",
+   "retrieved_at_utc": "2026-09-15T17:13:59.500649+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S21.json",
+   "sha256": "25ce212db9f2925e29992f60a4763e70a1061651b7f3b596041ed09e5b046532",
+   "bytes": 10097,
+   "page_count": null,
+   "slide_count": null,
+   "planned_use": "verify S08 identity; not full-text method extraction",
+   "license_evidence": {
+    "license": "metadata does not clear full article reuse",
+    "url": "https://api.crossref.org/works/10.1109/TNSRE.2024.3351670"
+   },
+   "license_scope": "metadata only",
+   "public_republication": "article rights not established",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "IEEE full article not retrieved"
+   ],
+   "review_state": "metadata_checked_not_clinically_adjudicated"
+  },
+  {
+   "id": "S22",
+   "title": "Visual and Quantitative Electroencephalographic Analysis in Healthy Term Neonates Within the First Six Hours and the Third Day of Life",
+   "url": "https://www.sciencedirect.com/science/article/pii/S0887899417302941",
+   "doi": "10.1016/j.pediatrneurol.2017.04.024",
+   "format": "json",
+   "version": "PubMed metadata snapshot (PMID 29054698)",
+   "population": "healthy term neonates, first 6 h and day 3 of life (n = 22)",
+   "role": "term neonatal normative reference: per-hour graphoelement rates, discontinuity, sleep-wake cycling, power spectrum",
+   "authority": "peer-reviewed cohort study, Pediatric Neurology 2017;77:54-60.e1",
+   "terminology_track": "context_or_dataset",
+   "user_supplied": true,
+   "status": "metadata_retrieved_full_text_pending",
+   "retrieved_at_utc": "2026-09-19T18:49:44.084587+00:00",
+   "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S22.json",
+   "sha256": "569d472bd2cd2f9bacd08c6cf0d42e1fba3c7f6943e2d9045934f6c9a9189042",
+   "bytes": 3036,
+   "page_count": null,
+   "slide_count": null,
+   "planned_use": "fill PMA-table rate_per_min defaults for frontal_sharp / rolandic theta at 40 w, an hours-of-life control for the term background, and a spectral (theta/delta) target; see sources/castro_conde_2017_term_first_hours_summary.md",
+   "license_evidence": {
+    "license": "publisher article; no reuse cleared, abstract only",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/29054698/"
+   },
+   "license_scope": "metadata and abstract only",
+   "public_republication": "article rights not established",
+   "cohort_id": null,
+   "alternatives": [],
+   "unresolved": [
+    "full text not retrieved (no PMC deposit; ScienceDirect blocked the fetcher and the in-app browser); per-hour rates and band powers still to extract"
+   ],
+   "review_state": "metadata_checked_not_clinically_adjudicated"
   }
+ ],
+ "validation": {
+  "all_local_hashes_match": true,
+  "eight_supplied_urls_accounted_for": true,
+  "source_ids_unique": true,
+  "raw_eeg_downloads": 0,
+  "clinical_thresholds_extracted": 0,
+  "asset_bytes": 42909232
+ }
 }

@@ -18,6 +18,7 @@ Machine-readable handoff: [source register](EEG_ATLAS_SOURCE_REGISTER.json). Pri
 | S08 | IEEE hypsarrhythmia article | Empty direct response; unusable | S21 Crossref metadata verifies identity; full-text method extraction deferred |
 
 All eight original URLs remain in the register. S05/S09 are the same neonatal authority, not independent evidence. The index dates the neonatal guideline to 2012; its journal publication is 2013. Preserve both rather than silently changing the citation year.
+| S22 | Castro Conde 2017, healthy term neonates < 6 h vs day 3 (Craig, 2026-09-19) | PubMed metadata + abstract; full text not retrievable from here | Term normative reference for graphoelement rates, discontinuity, sleep-wake cycling and band powers; numbers pending the PDF (`research/eeg-atlas/sources/castro_conde_2017_term_first_hours_summary.md`) |
 
 ## Dataset and license evidence
 
