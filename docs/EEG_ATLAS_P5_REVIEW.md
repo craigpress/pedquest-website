@@ -119,6 +119,13 @@ anterior slow waves had no field beyond Fp1/Fp2 (the tables name F3/F4/Fz/F7/F8,
 now spills tabled fields onto the acquired neighbours (frontal sharp: C3/C4 0.32, Cz 0.33, T3/T4 0.18), brushes
 included; the neonatal pages (C01-C08, C33) were re-rendered, hashes unchanged, rows still pending.
 
+Craig's second pass (same day): 24 accept, 3 revise, 3 reject, 3 not scored. It surfaced a display bug older than
+P5: the PNG page drew positive-up, the opposite of the clinical negative-up convention and of the site's Lab viewer,
+which is why blinks rose and encoches pointed the wrong way. Version 2 pages now draw negative-up (the pinned bank
+stays as rendered until migrated). Blinks got a steep field and a 0.14 s half-height; unreactive records lost their
+muscle floor (C08); C22, C23, C26 and C32 got their one revision; the Castro Conde 2017 term anchors (S22) went
+into the version-2 graphoelement and brush tables. Details: [EEG_ATLAS_P6_PLAN.md](EEG_ATLAS_P6_PLAN.md).
+
 Gallery: `research/eeg-atlas/p5/review/index.html` (run `python research/eeg-atlas/p3_review_server.py` with
 `PEDQUEST_SITE_DIR` pointing at the checkout whose `docs/` holds the CSV). Next: merge `eeg-teaching-lab` into main,
 deploy 0.4.1 to both worker fleets, then Craig's second pass.

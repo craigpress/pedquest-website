@@ -1419,31 +1419,29 @@
    "url": "https://www.sciencedirect.com/science/article/pii/S0887899417302941",
    "doi": "10.1016/j.pediatrneurol.2017.04.024",
    "format": "json",
-   "version": "PubMed metadata snapshot (PMID 29054698)",
+   "version": "PubMed metadata snapshot (PMID 29054698) + Craig-supplied PDF text (S22.txt)",
    "population": "healthy term neonates, first 6 h and day 3 of life (n = 22)",
    "role": "term neonatal normative reference: per-hour graphoelement rates, discontinuity, sleep-wake cycling, power spectrum",
    "authority": "peer-reviewed cohort study, Pediatric Neurology 2017;77:54-60.e1",
    "terminology_track": "context_or_dataset",
    "user_supplied": true,
-   "status": "metadata_retrieved_full_text_pending",
+   "status": "retrieved",
    "retrieved_at_utc": "2026-09-19T18:49:44.084587+00:00",
    "local_path": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources\\S22.json",
-   "sha256": "569d472bd2cd2f9bacd08c6cf0d42e1fba3c7f6943e2d9045934f6c9a9189042",
-   "bytes": 3036,
-   "page_count": null,
+   "sha256": "16c220df18958d4037a33926c02bc58dcd3bf2afe57aa7d535d51735adf073b7",
+   "bytes": 3143,
+   "page_count": 8,
    "slide_count": null,
-   "planned_use": "fill PMA-table rate_per_min defaults for frontal_sharp / rolandic theta at 40 w, an hours-of-life control for the term background, and a spectral (theta/delta) target; see sources/castro_conde_2017_term_first_hours_summary.md",
+   "planned_use": "term anchors encoded 2026-09-19 (GRAPHOELEMENT_PMA_V2 frontal_sharp 0.5/min at 40 w, DELTA_BRUSH_PMA tail to 41 w); first-six-hours state and term transient sharp waves not yet modelled; see sources/castro_conde_2017_term_first_hours_summary.md",
    "license_evidence": {
     "license": "publisher article; no reuse cleared, abstract only",
     "url": "https://pubmed.ncbi.nlm.nih.gov/29054698/"
    },
-   "license_scope": "metadata and abstract only",
+   "license_scope": "personal research copy; text captured locally, not served",
    "public_republication": "article rights not established",
    "cohort_id": null,
    "alternatives": [],
-   "unresolved": [
-    "full text not retrieved (no PMC deposit; ScienceDirect blocked the fetcher and the in-app browser); per-hour rates and band powers still to extract"
-   ],
+   "unresolved": [],
    "review_state": "metadata_checked_not_clinically_adjudicated"
   }
  ],
@@ -1453,6 +1451,6 @@
   "source_ids_unique": true,
   "raw_eeg_downloads": 0,
   "clinical_thresholds_extracted": 0,
-  "asset_bytes": 42909232
+  "asset_bytes": 42909339
  }
 }

@@ -86,8 +86,37 @@ discontinu, riding brushes at their PMA peak). The other revise cards (C02, C11,
 version-2 defaults. All 33 specs hash differently under version 2, so every CSV row is `pending` again; the 09-16
 verdicts are kept in `research/eeg-atlas/p5/review/decisions/` (per-card JSON and the dated CSV backup).
 
+**Craig's second pass (same day, live gallery): 24 accept, 3 revise (C08, C17, C26), 3 reject (C22, C23, C32),
+3 not scored (C03, C18, C24).** Acted on, all spec_version 2 only:
+
+- **Page polarity.** `render_page` drew `row + offset` with matplotlib's y-up, i.e. positive-UP, the opposite of the
+  clinical negative-up convention, of every atlas, and of the site's own Lab viewer (`src/lib/eeg/montage.ts` paints
+  negative-up). That is why blinks rose ("should be sharper down") and why the encoches' large positive phase pointed
+  up. `page_polarity(spec)` now returns −1 for version 2 (EEG page and the aEEG raw strip); version 1 keeps the
+  pinned bank's pixels. **The 52 pinned bank pages are therefore drawn positive-up and stay so until each is migrated
+  to version 2 deliberately** (Craig's call; the P6 migration path already exists).
+- **Blinks** (C17, C20): field steepened (F3/F7 0.30/0.32 of Fp, C3/T3 ≤ 0.06 — 0.4.0's F3 = 0.5 made Fp1-F3 and F3-C3
+  equal, the "second blink" a row down), 45 ms rise / 120 ms decay (0.14 s at half height, ~0.4 s in all), and the
+  `eye_blink` artifact event shares the same blink. Combined with negative-up they now dip at Fp.
+- **Muscle** (C08 "shouldn't have fast muscle"): `reactivity: absent` silences the tonic EMG floor, bursts included.
+- **Candidates, one revision each** (P0 stop rule): C22 → 4 µV featureless, no PDR, 3 µV/mm; C23 → 15 µV, no PDR
+  stream, 5 Hz mix; C26 → GPD 110 µV on a 15 µV featureless slow background; C32 → 30 % attenuation with 4 Hz of
+  slowing.
+- **S22 (Castro Conde 2017, Craig-supplied PDF)** encoded: `GRAPHOELEMENT_PMA_V2` frontal_sharp 0.5/min at 40 w
+  (30/h on day 3; the table had 1.8/min), `DELTA_BRUSH_PMA` tail 0.15/min at 40 w → 0 at 41 w (5 % of bursts
+  brushed on day 3). Not modelled yet: the first-six-hours state, term transient sharp waves (7.6/h, mostly temporal).
+
+Every version-2 page changed under the polarity flip, so the accepted rows describe pages that now look different
+(inverted, with new blinks). The neonatal specs also re-hashed (the version-2 graphoelement defaults enter the
+normalized spec), which made `p5_run.py` reset Craig's same-day neonatal verdicts; they were restored from the per-card
+JSON (`decisions/<id>.json`, `saved_at` 2026-09-19) onto the new hashes, and only the four re-authored candidates
+(C22, C23, C26, C32) plus the three never scored (C03 was scored in the second pass; C18, C24 were not) stay pending.
+Backup: `decisions/EEG_ATLAS_P5_CANDIDATE_REVIEW.backup-20260919-secondpass.csv`. Craig should glance at the accepted
+pages once more rather than re-score them.
+
 Remaining: merge `eeg-teaching-lab` → main, deploy 0.4.1 to both worker fleets (until then new Lab renders are stamped
-0.4.0 and `verify_sidecars` would reject them), Craig's second pass over the 33-page gallery.
+0.4.0 and `verify_sidecars` would reject them), Craig's look at the re-rendered gallery, decision on migrating the
+bank pages to negative-up.
 
 ## Deliverables
 
