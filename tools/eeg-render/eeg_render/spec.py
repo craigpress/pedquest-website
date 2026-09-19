@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -131,8 +132,10 @@ PMA_TABLE: List[Tuple[float, float, float, float, float, float]] = [
 #: element through ``background.graphoelements``.
 GRAPHOELEMENT_PMA: Dict[str, List[Tuple[float, float, float]]] = {
     "occipital_delta": [(23.0, 0.8, 100.0), (28.0, 2.5, 150.0), (32.0, 3.0, 170.0), (34.0, 1.5, 130.0), (35.5, 0.0, 0.0)],
-    "temporal_theta":  [(25.5, 0.0, 0.0), (26.0, 1.0, 60.0), (29.0, 3.0, 90.0), (32.0, 2.5, 80.0), (32.8, 0.0, 0.0)],
-    "temporal_alpha":  [(32.6, 0.0, 0.0), (33.0, 2.5, 60.0), (33.9, 2.0, 60.0), (34.2, 0.0, 0.0)],
+    # 4-6 Hz, rarely > 2 s, 20-200 uV, appears ~26 w, maximal 30-32 w, replaced by
+    # temporal alpha bursts AT 33 w and gone at 34 w (Hrachovy & Mizrahi; obgynkey ch. 4)
+    "temporal_theta":  [(25.5, 0.0, 0.0), (26.0, 1.0, 70.0), (29.0, 3.0, 110.0), (32.0, 2.5, 100.0), (32.8, 0.0, 0.0)],
+    "temporal_alpha":  [(32.6, 0.0, 0.0), (33.0, 2.5, 80.0), (33.9, 2.0, 80.0), (34.2, 0.0, 0.0)],
     "stop":            [(22.0, 2.0, 35.0), (25.0, 1.8, 35.0), (28.0, 0.5, 30.0), (31.0, 0.0, 0.0)],
     "frontal_sharp":   [(33.0, 0.0, 0.0), (34.0, 0.6, 70.0), (35.5, 2.5, 110.0), (40.0, 1.8, 100.0), (44.0, 0.6, 60.0), (48.0, 0.0, 0.0)],
     "anterior_slow":   [(33.0, 0.0, 0.0), (35.0, 0.8, 70.0), (38.0, 1.2, 80.0), (42.0, 0.6, 60.0), (46.0, 0.0, 0.0)],
@@ -174,12 +177,19 @@ def synchrony_default(pma: float) -> float:
 #: (pma, rate per minute, slow-wave peak-to-peak uV); rates are set so a 30 s
 #: page at the peak age shows one or two.  Kept apart from GRAPHOELEMENT_PMA so
 #: a legacy spec with a PMA does not acquire brush events silently.
+#: Amplitudes raised x1.7 on 2026-09-16 after Craig's read of the first 0.3.12 pages: the
+#: slow wave of a brush is a HIGH-voltage negative delta wave (100-250 uV at the peak age).
+#: Windows per Hrachovy/Mizrahi/Kellaway (Daly & Pedley 1991, table supplied by Craig
+#: 2026-09-16): beta-delta complexes central at 27-30 w, occipito-temporal at 31-33 w,
+#: "extremely high voltage beta" inside them at 34-35 w, central complexes gone by
+#: 36-37 w, occipital ones decreasing and gone by 39 w.  The field and the burst
+#: fraction follow PMA in synth.graphoelement_rows.
 DELTA_BRUSH_PMA: List[Tuple[float, float, float]] = [
-    (24.0, 0.3, 60.0), (26.0, 1.0, 100.0), (30.0, 3.0, 150.0), (33.0, 3.5, 160.0),
-    (35.0, 2.0, 140.0), (37.0, 0.8, 110.0), (38.5, 0.2, 90.0), (40.0, 0.0, 0.0),
+    (24.0, 0.3, 100.0), (26.0, 1.0, 170.0), (30.0, 3.0, 255.0), (33.0, 3.5, 270.0),
+    (35.0, 2.2, 240.0), (37.0, 0.9, 190.0), (38.0, 0.3, 150.0), (39.0, 0.0, 0.0),
 ]
 #: rate / amplitude when ``"riding"`` is requested without a PMA
-DELTA_BRUSH_NO_PMA = {"rate_per_min": 2.0, "amplitude_uv": 120.0}
+DELTA_BRUSH_NO_PMA = {"rate_per_min": 2.0, "amplitude_uv": 200.0}
 
 
 def delta_brush_defaults(pma: Optional[float]) -> Dict[str, float]:
@@ -361,6 +371,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         seed = int(spec["seed"])
         out: Dict[str, Any] = {
             "seed": seed,
+            "spec_version": int(spec.get("spec_version") or 2),
             "layout": spec.get("layout", "panel_over_page"),
             "style": _normalize_style(kind, spec.get("style", {})),
         }
@@ -383,6 +394,14 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
 
     s = dict(spec)
     s["seed"] = int(s["seed"])
+    # 0.4.0: ``spec_version`` selects the DEFAULTS a spec gets for keys it omits.
+    # Version 1 is the 0.3.x behaviour (the 48 committed questions are pinned to
+    # it in their YAML); a spec that says nothing is version 2 and receives the
+    # EEG Atlas P5/P6 defaults (riding brushes, gain cap, blinks off when
+    # unreactive, PDR gain, display-referenced amplitudes, recruiting seizure
+    # evolution, spread-dependent muscle, artifact model 2, 160 uV blinks).
+    version = int(s.get("spec_version") or 2)
+    s["spec_version"] = version
     age = _default_age(kind, s)
     s["age_group"] = age
     s["sample_rate"] = int(s.get("sample_rate", 256))
@@ -436,8 +455,21 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     bg.setdefault("dominant_hz", ad["dominant_hz"])
     bg.setdefault("amplitude_uv", ad["amplitude_uv"])
     bg.setdefault("slow_fraction", ad["slow_fraction"])
+    # 0.4.0: a preterm below 34 w does not react to stimulation (Hrachovy/Mizrahi table:
+    # NR through 31-33 w, R from 34-35 w); older records default to reactive as before
+    if version >= 2 and age == "neonate" and bg.get("pma_weeks") is not None and float(bg["pma_weeks"]) < 34.0:
+        bg.setdefault("reactivity", "absent")
     bg.setdefault("reactivity", "present")
-    bg.setdefault("delta_brushes", bool(ad["delta_brushes"]))
+    bg.setdefault("delta_brushes", "riding" if (version >= 2 and age == "neonate") else bool(ad["delta_brushes"]))
+    if version >= 2:
+        bg.setdefault("channel_gain_max", 2.0)
+        unreactive = bg.get("reactivity") != "present" or bg["type"] in ("suppressed", "low_voltage", "burst_suppression")
+        bg.setdefault("blink_rate_per_min", 0.0 if unreactive else 15.0)
+        if age != "neonate":
+            bg.setdefault("pdr_gain", 2.5)
+        bg.setdefault("blink_amplitude_uv", 160.0)
+        bg.setdefault("amplitude_reference", "display")
+        bg.setdefault("pdr_field", "focal")
     # 0.3.12 opt-in: "riding" turns the 0.3.10 delta-gated fast stream off and
     # schedules brush EVENTS (delta wave + riding fast burst) by PMA instead.
     # Only the string form adds ``delta_brush_events`` to the normalized spec,
@@ -470,6 +502,20 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bs.setdefault("burst_s", cyc * (1.0 - preset["suppression_fraction"]))
         bs.setdefault("ibi_s", cyc * preset["suppression_fraction"])
     bs.setdefault("ibi_floor", preset["ibi_floor"])
+    # 0.4.0 (Craig, P5 C05): author the interburst interval as a RANGE in seconds
+    # and the interburst voltage in absolute microvolts, independent of the PMA
+    # table.  ``ibi_range_s: [lo, hi]`` is read as the central 99 % of a
+    # log-normal draw; ``ibi_floor_uv`` is converted to the fraction the engine uses.
+    rng_s = bg.get("ibi_range_s")
+    if rng_s:
+        lo, hi = sorted(float(v) for v in rng_s)
+        lo = max(lo, 0.5); hi = max(hi, lo * 1.01)
+        bs["ibi_s"] = math.sqrt(lo * hi)
+        bs["ibi_sigma"] = math.log(hi / lo) / 5.15   # +-2.58 sigma spans lo..hi
+        bg["ibi_range_s"] = [lo, hi]
+    if bg.get("ibi_floor_uv") is not None:
+        bs["ibi_floor"] = min(1.0, max(0.005, float(bg["ibi_floor_uv"]) / float(bg["amplitude_uv"])))
+        bg["ibi_floor_uv"] = float(bg["ibi_floor_uv"])
     bg["burst_suppression"] = {k: float(v) for k, v in bs.items()}
     # Neonatal graphoelements: defaults from the PMA table (all zero without a
     # PMA), each element's rate and amplitude overridable by the author.
@@ -495,13 +541,16 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         asym = dict(bg["asymmetry"])
         asym.setdefault("attenuation_pct", 40.0)
         asym.setdefault("slowing_hz", 0.0)
+        # gradient: attenuation scales with distance from the midline (0.3.x);
+        # hemispheric: every electrode of that side gets the full attenuation (0.4.0)
+        asym.setdefault("profile", "hemispheric" if version >= 2 else "gradient")
         bg["asymmetry"] = asym
     else:
         bg["asymmetry"] = None
     s["background"] = bg
 
     # ---- events ------------------------------------------------------
-    s["events"] = [_normalize_event(e) for e in (s.get("events") or [])]
+    s["events"] = [_normalize_event(e, version) for e in (s.get("events") or [])]
     s["annotations"] = [
         {"at_min": float(a["at_min"]), "label": str(a["label"])}
         for a in (s.get("annotations") or [])
@@ -707,22 +756,31 @@ def _iter_styles(spec: Dict[str, Any], kind: str):
 #: keys inherited by a composite's ``eeg_page`` from its ``qeeg_panel`` so the
 #: page shows the *same* synthesized recording the trends were computed from.
 COMPOSITE_INHERIT = (
-    "age_group", "sample_rate", "channels", "background", "events",
+    "spec_version", "age_group", "sample_rate", "channels", "background", "events",
     "annotations", "montage", "source",
 )
 
 
-def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
+def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
     e = dict(ev)
     kind = e["type"]
     if kind in ("seizure", "seizure_cluster", "status_epilepticus"):
-        e.setdefault("muscle", "modest")
+        if version >= 2 and kind == "seizure":
+            # 0.4.0 (Craig, P5 C15/C19): a focal run that never spreads recruits
+            # no scalp muscle; muscle comes with clinical spread
+            e.setdefault("muscle", "none" if (e.get("spread") or DEFAULT_SEIZURE["spread"]) in (None, "none") else "modest")
+        else:
+            e.setdefault("muscle", "modest")
     if kind == "seizure":
         e.setdefault("onset_min", 0.0)
         for k, v in DEFAULT_SEIZURE.items():
             if k == "evolution":
                 evo = dict(v)
                 evo.update(e.get("evolution", {}) or {})
+                # sweep: one log-frequency glide start->end (0.3.x); recruit (0.4.0,
+                # Craig P5 C17-C19): low-voltage fast onset, stepwise slowing with
+                # amplitude build-up, late clonic bursting
+                evo.setdefault("profile", "recruit" if version >= 2 else "sweep")
                 e["evolution"] = evo
             else:
                 e.setdefault(k, v)
@@ -763,7 +821,8 @@ def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
         e.setdefault("spread", "none")
         e.setdefault("postictal_attenuation_s", 0.0)
         e.setdefault("muscle", "none")
-        e.setdefault("morphology", "rda")
+        # 0.4.0 (Craig, P5 C11): a BRD is sharply contoured and irregular, not a metronome
+        e.setdefault("morphology", "ictal" if version >= 2 else "rda")
         evo = {"start_hz": 2.0, "end_hz": 2.0, "amplitude_start_uv": 50.0, "amplitude_end_uv": 50.0}
         given = e.get("evolution")
         if isinstance(given, dict):
@@ -834,6 +893,9 @@ def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
         e.setdefault("at_min", 0.0)
         e.setdefault("duration_s", 60.0)
         e.setdefault("intensity", "medium")
+        # model 2 (0.4.0, Craig P5 C12/C16): patting in bouts at real voltage, chewing as
+        # irregular EMG bursts with a glossokinetic slow wave
+        e.setdefault("model", 2 if version >= 2 else 1)
         if "channels" not in e and "side" not in e:
             e["side"] = "all"
     elif kind == "state_change":
@@ -855,6 +917,11 @@ def _normalize_event(ev: Dict[str, Any]) -> Dict[str, Any]:
         e.setdefault("plus_modifier", None)
         if e.get("evolution") in ("none", None):
             e["evolution"] = "none"
+        # 0.4.0 (Craig, P5 C26): periodic patterns fluctuate in amplitude and their
+        # repetition rate wanders a little from run to run - still no evolution
+        fluctuating = "fluctuat" in str(e.get("modifier") or "").lower()
+        e.setdefault("fluctuation", 0.45 if fluctuating else (0.30 if version >= 2 else 0.15))
+        e.setdefault("rate_jitter", 0.10 if version >= 2 else 0.0)
         pat = str(e["pattern"]).upper()
         e.setdefault("periodic", pat.startswith(("LPD", "GPD", "BIPD")) or "PD" in pat)
         if "onset_region" not in e:

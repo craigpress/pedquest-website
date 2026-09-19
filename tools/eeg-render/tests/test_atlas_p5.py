@@ -24,7 +24,8 @@ FS = 256
 
 
 def _image(spec):
-    base = {"seed": 4242, "age_group": "child", "sample_rate": FS, "channels": "standard_19",
+    # spec_version 1: these tests pin the 0.3.x defaults (0.4.0 gives an unversioned spec new ones)
+    base = {"seed": 4242, "spec_version": 1, "age_group": "child", "sample_rate": FS, "channels": "standard_19",
             "duration_min": 30, "background": {"type": "continuous", "dominant_hz": 9.0,
                                                 "amplitude_uv": 40, "slow_fraction": 0.4}, "events": []}
     base.update(spec)

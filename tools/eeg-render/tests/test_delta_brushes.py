@@ -26,8 +26,9 @@ FS = 256
 def _neo(bg_extra=None, seed=515101):
     bg = {"type": "discontinuous", "pma_weeks": 32.0, "amplitude_uv": 60.0, "dominant_hz": 1.5, "slow_fraction": 0.8}
     bg.update(bg_extra or {})
+    # spec_version 1: the 0.3.12 mechanics under the 0.3.x defaults (0.4.0 makes riding the neonatal default)
     return {"kind": "eeg_page", "license": "synthetic-original",
-            "spec": {"seed": seed, "age_group": "neonate", "sample_rate": FS, "channels": "standard_19",
+            "spec": {"seed": seed, "spec_version": 1, "age_group": "neonate", "sample_rate": FS, "channels": "standard_19",
                      "duration_min": 20, "background": bg, "events": []}}
 
 
@@ -82,15 +83,19 @@ def test_riding_rate_follows_pma_and_is_zero_at_term():
 
 
 def test_riding_brush_is_a_delta_wave_with_fast_activity_on_it():
-    # a continuous background so the burst-envelope gate is ~1 and the event is seen whole
-    syn_cont = Synthesizer(normalize(_neo({"delta_brushes": "riding", "type": "continuous"}))["spec"], 300.0)
+    # a continuous background so the burst-envelope gate is ~1 and the event is seen whole; the
+    # other PMA-table graphoelements (occipital delta runs at 32 w!) are silenced so O1 shows the brush alone
+    others = {n: {"enabled": False} for n in ("occipital_delta", "temporal_theta", "temporal_alpha", "stop",
+                                                "frontal_sharp", "anterior_slow", "midline_theta")}
+    syn_cont = Synthesizer(normalize(_neo({"delta_brushes": "riding", "type": "continuous", "graphoelements": others}))["spec"], 300.0)
     ev2 = syn_cont._ge_events["delta_brush"]
     assert ev2.shape[0] >= 3
     t0, dur, freq, side, amp, _ = ev2[(ev2[:, 0] > 10) & (ev2[:, 0] < 280)][0]
     assert 10.0 <= freq <= 20.0 and 0.5 <= dur <= 3.0
     t = np.arange(t0 - 2.0, t0 + dur + 2.0, 1.0 / FS)
     rows = syn_cont.graphoelement_rows(t)
-    focus = "C4" if side > 0 else "C3"
+    # the spec is 32 w: complexes are occipito-temporal at that age (0.4.0 field by PMA)
+    focus = "O2" if side > 0 else "O1"
     y = rows[syn_cont._idx[focus]]
     inside = (t > t0) & (t < t0 + dur)
     outside = ~inside
