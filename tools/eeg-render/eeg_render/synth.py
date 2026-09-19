@@ -1107,15 +1107,53 @@ class Synthesizer:
             phase = rng.uniform(0, 2 * np.pi, m)
             self._ge_events[name] = np.column_stack([times, dur, freq, side, aj, phase])
 
-    def _ge_field(self, name: str, side: float) -> np.ndarray:
-        base = self._GE_FIELD[name]
+    #: 0.4.1: spread of a tabled field onto electrodes the table does not name, in head
+    #: units (adjacent 10-20 electrodes sit ~0.5 apart, so a neighbour of a 1.0 electrode
+    #: receives ~0.55).  Same length as the background's SPATIAL_CORR_LENGTH.
+    _GE_FIELD_SPREAD = 0.65
+
+    def _table_field(self, table: Dict[str, float], side: float) -> np.ndarray:
+        """Electrode weights from a (left-listed) field table, mirrored for ``side > 0``.
+
+        The tables name 10-20 electrodes.  On a reduced array (neonatal_9 has no
+        F3/F4/Fz/F7/F8) a frontal transient therefore used to exist at Fp1/Fp2 only,
+        with nothing at C3/T3/Cz - Craig, P5 second pass (2026-09-19): "no field to
+        the other electrodes".  Version 2 gives every acquired electrode the table
+        does not name the physical spill-over of the named ones,
+        ``max_k v_k * exp(-(d/spread)^2)``; named electrodes keep their tabled value,
+        so a full 10-20 array renders as authored.  Version 1 keeps the bare lookup.
+        """
         w = np.zeros(self.n_elec)
-        for e, v in base.items():
+        placed: List[Tuple[str, float]] = []
+        for e, v in table.items():
             if side > 0 and e in self._MIRROR:
                 e = self._MIRROR[e]
+            placed.append((e, float(v)))
             if e in self._idx:
                 w[self._idx[e]] = max(w[self._idx[e]], v)
+        if self.spec_version < 2:
+            return w
+        named = {e for e, _ in placed}
+        for i, ch in enumerate(self.electrodes):
+            if ch in named or ch not in mt.POSITIONS:
+                continue
+            cx, cy = mt.POSITIONS[ch]
+            best = 0.0
+            for e, v in placed:
+                if e not in mt.POSITIONS:
+                    continue
+                ex, ey = mt.POSITIONS[e]
+                d = math.hypot(cx - ex, cy - ey)
+                best = max(best, v * math.exp(-((d / self._GE_FIELD_SPREAD) ** 2)))
+            # a unilateral element stays unilateral: the homologous electrode across the
+            # midline (O1 -> O2 is 0.62 apart) gets a fifth of the geometric spill
+            if side != 0.0 and cx * side < -1e-9:
+                best *= 0.2
+            w[i] = best
         return w
+
+    def _ge_field(self, name: str, side: float) -> np.ndarray:
+        return self._table_field(self._GE_FIELD[name], side)
 
     def graphoelement_rows(self, t: np.ndarray) -> np.ndarray:
         """(n_elec, n) microvolts of the scheduled neonatal graphoelements over ``t``."""
@@ -1149,12 +1187,7 @@ class Synthesizer:
                     sig = slow + fast
                     # field by maturity: central before 31 w, occipito-temporal after
                     fld = self._BRUSH_FIELD_CENTRAL if pma_b < 31.0 else self._BRUSH_FIELD_OCCTEMP
-                    w = np.zeros(self.n_elec)
-                    for e, v in fld.items():
-                        if lat == "unilateral" and side > 0 and e in self._MIRROR:
-                            e = self._MIRROR[e]
-                        if e in self._idx:
-                            w[self._idx[e]] = max(w[self._idx[e]], v)
+                    w = self._table_field(fld, side if lat == "unilateral" else 0.0)
                     target += np.outer(w, sig)
                     continue
                 else:

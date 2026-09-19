@@ -287,3 +287,34 @@ def test_version_2_rhythmic_pattern_emits_no_fragment_run_at_the_window_end():
     # version 1 keeps the truncated tail (the pinned bank must not move)
     s1 = dict(_child(), seed=515701, age_group="adult", events=[ev], spec_version=1)
     Synthesizer(normalize(_img(s1))["spec"], 900.0)
+
+
+def test_version_2_graphoelement_fields_reach_the_neighbours_on_a_reduced_array():
+    """Craig, P5 second pass: on neonatal_9 a frontal sharp transient lived at Fp1/Fp2 only (no F3/F4/Fz to carry it).
+
+    Version 2 spills a tabled field onto the acquired electrodes the table does not name;
+    version 1 keeps the bare lookup so the pinned neonatal bank does not move.
+    """
+    s2 = _neo(type="continuous", pma_weeks=40.0, amplitude_uv=45.0)
+    syn2 = Synthesizer(normalize(_img(s2))["spec"], 600.0)
+    assert syn2.electrodes and "F3" not in syn2.electrodes           # neonatal_9
+    f = syn2._ge_field("frontal_sharp", 0.0)
+    fp1, c3, cz, t3, o1 = (f[syn2._idx[e]] for e in ("Fp1", "C3", "Cz", "T3", "O1"))
+    assert fp1 == 1.0
+    assert 0.2 < c3 < 0.5 and 0.2 < cz < 0.5, (c3, cz)
+    assert 0.1 < t3 < c3, t3
+    assert o1 < 0.05, o1
+    # brushes at 32 w (occipito-temporal table) now reach C3 through T3/O1, unilateral mirroring intact
+    left = syn2._table_field(syn2._BRUSH_FIELD_OCCTEMP, -1.0)
+    right = syn2._table_field(syn2._BRUSH_FIELD_OCCTEMP, 1.0)
+    assert left[syn2._idx["O1"]] == 1.0 and right[syn2._idx["O2"]] == 1.0 and left[syn2._idx["O2"]] < 0.15
+    # version 1: exactly the tabled electrodes, nothing else
+    syn1 = Synthesizer(normalize(_img(dict(s2, spec_version=1)))["spec"], 600.0)
+    f1 = syn1._ge_field("frontal_sharp", 0.0)
+    assert f1[syn1._idx["Fp1"]] == 1.0 and f1[syn1._idx["C3"]] == 0.0 and f1[syn1._idx["Cz"]] == 0.0
+    # a full 10-20 array keeps every authored value
+    s19 = dict(s2, channels="standard_19")
+    syn19 = Synthesizer(normalize(_img(s19))["spec"], 600.0)
+    f19 = syn19._ge_field("frontal_sharp", 0.0)
+    for e, v in syn19._GE_FIELD["frontal_sharp"].items():
+        assert f19[syn19._idx[e]] == v

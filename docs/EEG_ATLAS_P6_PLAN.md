@@ -70,6 +70,14 @@ or the new 0.4.0 keys, so the 52 pinned bank images stay byte-identical; sidecar
   unchanged for specs without it.
 - **Fragment runs.** A rhythmic-pattern run truncated at the pattern window's end put a 1.6 s "LPD run" in C25's
   answer key. Version 2 does not start a run that cannot fit its cycles.
+- **Graphoelement fields on the reduced array** (Craig, second pass, same day: "no field to the other electrodes";
+  positive sharps / negative frontal deflections absent from adjacent channels). The field tables name 10-20
+  electrodes, and `neonatal_9` has no F3/F4/Fz/F7/F8, so a frontal sharp transient existed at Fp1/Fp2 only. Version 2
+  spills a tabled field onto every acquired electrode the table does not name (`max_k v_k·exp(-(d/0.65)²)`, a fifth of
+  that across the midline for unilateral elements): frontal sharp now Fp 1.0, C3/C4 0.32, Cz 0.33, T3/T4 0.18; brushes
+  reach C3 0.35 and the contralateral occiput 0.08. Named electrodes keep their tabled values, so a full 10-20 array
+  renders as authored, and version 1 keeps the bare lookup. Applies to graphoelements and brush events; spontaneous
+  blinks keep their own steep field.
 
 Candidates: C03 re-authored as term encephalopathic burst suppression (30 µV bursts, 3 µV interburst, 10–30 s); C05 as
 encephalopathic discontinuity (interburst 10–25 s at 8 µV, Cork grade 3); C23 as 18 µV on the display montage with a

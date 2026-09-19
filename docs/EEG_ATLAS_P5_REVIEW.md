@@ -114,6 +114,11 @@ the burst calibration (bursts: BS 30 -> 29.1, discontinuous 40 -> 41.1, adult BS
 | C31 | AT-P08 boundary | pending | version-2 defaults | 1.12 | 13 run(s), six cycles in 11 |
 | C32 | AT-P08 contrast | pending | version-2 defaults | 1.05 | - |
 
+Second-pass finding, same day, from the live gallery: on the neonatal reduced array the frontal sharp transients and
+anterior slow waves had no field beyond Fp1/Fp2 (the tables name F3/F4/Fz/F7/F8, which `neonatal_9` lacks). Version 2
+now spills tabled fields onto the acquired neighbours (frontal sharp: C3/C4 0.32, Cz 0.33, T3/T4 0.18), brushes
+included; the neonatal pages (C01-C08, C33) were re-rendered, hashes unchanged, rows still pending.
+
 Gallery: `research/eeg-atlas/p5/review/index.html` (run `python research/eeg-atlas/p3_review_server.py` with
 `PEDQUEST_SITE_DIR` pointing at the checkout whose `docs/` holds the CSV). Next: merge `eeg-teaching-lab` into main,
 deploy 0.4.1 to both worker fleets, then Craig's second pass.
