@@ -941,6 +941,24 @@ class Synthesizer:
         ends: List[float] = []
         t = -60.0
         horizon = self.duration_s + 120.0
+        # 0.4.0 ``background.ibi_range_s``: the author stated the interburst interval in
+        # seconds, so draw it (and ``burst_s``) directly.  The suppression-fraction cycle
+        # model below rescales both by 1 + 1.35 (sf - 0.3): an authored 10-30 s came out
+        # 28-40 s with 8 s bursts (P5 C03, 2026-09-19).
+        if self.bg.get("ibi_range_s") is not None:
+            burst_s = max(float(bs["burst_s"]), 0.25)
+            ibi_s = max(float(bs["ibi_s"]), 0.5)
+            sigma = float(bs.get("ibi_sigma", 0.26))
+            while t < horizon:
+                burst = max(0.25, burst_s * float(_lognorm(rng, 1, 0.22)[0]))
+                ibi = max(0.5, ibi_s * float(_lognorm(rng, 1, sigma)[0]))
+                starts.append(t)
+                ends.append(t + burst)
+                t += burst + ibi
+            self._burst_start = np.asarray(starts)
+            self._burst_end = np.asarray(ends)
+            self._ibi_floor0 = floor0
+            return
         # a deep-sedation interburst is genuinely flat; a preterm interburst is not
         while t < horizon:
             sf = float(self.suppression_fraction_at(np.array([max(t, 0.0)]))[0])
@@ -1428,6 +1446,11 @@ class Synthesizer:
                 dur = run * float(_lognorm(grng, 1, 0.18)[0])
                 if min_cycles:
                     dur = max(dur, min_cycles / (f0 * fmul))
+                # 0.4.0 (spec_version 2): no fragment run at the end of the pattern window.
+                # Truncating the last run to whatever is left put a 1.6 s "LPD run" in
+                # C25's answer key; a run that cannot fit its cycles is not started.
+                if self.spec_version >= 2 and end - t < ((min_cycles / (f0 * fmul)) if min_cycles else 2.0):
+                    break
                 dur = min(dur, end - t)
                 # drawn only when asked for, so version-1 specs keep their RNG stream
                 fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
@@ -1698,10 +1721,11 @@ class Synthesizer:
         Synthesizes background only (events, blinks, graphoelements, sensor noise
         and artifacts skipped) in four fixed 60 s windows, derives the spec's
         display montage, band-passes 0.5-30 Hz like the EEG Atlas P4 estimators
-        and takes the median 1-s peak-to-peak (80th percentile for burst-type
-        backgrounds, where the request means the bursts).  Fixed windows and a
-        single scalar keep every later request window-independent.  Checked
-        whole-record by tests/test_display_calibration.py (calibrate_display.py).
+        and takes the median 1-s peak-to-peak.  Burst-type backgrounds are
+        measured inside their scheduled bursts, because the request means the
+        bursts.  Fixed windows and a single scalar keep every later request
+        window-independent.  Checked whole-record by
+        tests/test_display_calibration.py (calibrate_display.py).
         """
         # background voltage is read away from the frontopolar derivations, where blinks live
         pairs = [p for p in mt.montage_pairs(self.spec.get("montage", "longitudinal_bipolar"), self.electrodes)
@@ -1713,19 +1737,33 @@ class Synthesizer:
         # over the record, pooled.  Short records use what they have.
         dur = float(self.duration_s)
         if dur >= 400.0:
-            starts = [30.0, 0.25 * dur, 0.50 * dur, 0.75 * dur]
-            span = 60.0
+            windows = [(t0, min(t0 + 60.0, dur)) for t0 in (30.0, 0.25 * dur, 0.50 * dur, 0.75 * dur)]
         else:
-            starts = [0.0]
-            span = max(10.0, dur - 5.0)
+            windows = [(0.0, max(10.0, dur - 5.0))]
+        bursty = self.bg["type"] in ("discontinuous", "excessively_discontinuous", "trace_alternant",
+                                     "burst_suppression", "hypsarrhythmia")
+        if bursty:
+            # The request means the bursts, so measure inside scheduled bursts.  The 80th
+            # percentile of all seconds that 0.4.0 shipped with sits in the interburst as
+            # soon as bursts occupy less than a fifth of the record (a 2 s burst every 17 s),
+            # and the scale then clipped at 4.0: P5 C03 rendered 2-3x bursts over a 10 uV
+            # "flat" interburst.  Up to twelve bursts spread over the record, the first 10 s
+            # of each, 0.3 s in from the edge ramps.
+            inside = [(float(a), float(b)) for a, b in zip(self._burst_start, self._burst_end)
+                      if a >= 0.0 and b <= dur and b - a >= 0.5]
+            if inside:
+                step = max(1, len(inside) // 12)
+                windows = []
+                for a, b in inside[::step][:12]:
+                    a2, b2 = (a + 0.3, b - 0.3) if b - a >= 1.6 else (a, a + 1.0)
+                    windows.append((a2, min(b2, a2 + 10.0)))
         hi = min(30.0, self.fs / 2.0 - 1.0)
         sos = sps.butter(4, [0.5, hi], btype="bandpass", fs=self.fs, output="sos")
         n = int(self.fs)
         chunks = []
         self._calibrating = True
         try:
-            for t0 in starts:
-                t1 = min(t0 + span, dur)
+            for t0, t1 in windows:
                 _, x = self.segment(t0, t1)
                 rows = sps.sosfiltfilt(sos, self.derive(x, pairs), axis=-1)
                 m = rows.shape[1] // n
@@ -1741,9 +1779,7 @@ class Synthesizer:
             return
         record_env = float(np.median(self.slow_am(np.arange(0.0, max(dur, 1.0), 1.0))))
         p2p = np.concatenate(chunks, axis=1) * record_env
-        bursty = self.bg["type"] in ("discontinuous", "excessively_discontinuous", "trace_alternant",
-                                     "burst_suppression", "hypsarrhythmia")
-        measured = float(np.percentile(p2p, 80) if bursty else np.median(p2p))
+        measured = float(np.median(p2p))
         if measured > 1e-6:
             self.display_scale = float(np.clip(float(self.bg["amplitude_uv"]) / measured, 0.25, 4.0))
             self.amp_rms *= self.display_scale

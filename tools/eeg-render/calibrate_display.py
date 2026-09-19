@@ -73,6 +73,47 @@ def measure_background(spec, pairs=None, duration_s=1200.0, window_s=60.0):
     return float(np.median(np.concatenate(chunks, axis=1)))
 
 
+def measure_bursts(spec, duration_s=1200.0, max_bursts=40):
+    """Median 1-s p2p inside the scheduled bursts of a burst-type background (the request means the bursts).
+
+    Reads the synthesizer's own burst schedule, 0.3 s in from the edge ramps, the
+    first 10 s of each burst, up to ``max_bursts`` spread over the record.  Blinks
+    are off in every state these backgrounds model; nothing is masked.
+    """
+    norm = normalize({"kind": "eeg_page", "license": "synthetic-original", "spec": spec})["spec"]
+    synth = Synthesizer(norm, duration_s)
+    pairs = [p for p in mt.montage_pairs(norm["montage"], synth.electrodes)
+             if p[1] and not any(str(e).upper().startswith("FP") for e in p)]
+    inside = [(float(a), float(b)) for a, b in zip(synth._burst_start, synth._burst_end)
+              if a >= 0.0 and b <= duration_s and b - a >= 0.5]
+    step = max(1, len(inside) // max_bursts)
+    chunks = []
+    for a, b in inside[::step][:max_bursts]:
+        a2, b2 = (a + 0.3, b - 0.3) if b - a >= 1.6 else (a, a + 1.0)
+        _, raw = synth.segment(a2, min(b2, a2 + 10.0))
+        p2p = p2p_1s(_bp(derive(synth, raw, pairs)))
+        if p2p.shape[1]:
+            chunks.append(p2p)
+    return float(np.median(np.concatenate(chunks, axis=1)))
+
+
+def measure_interburst(spec, duration_s=1200.0):
+    """Median 1-s p2p between bursts (1 s in from the burst edges): the 'flat' the author asked for."""
+    norm = normalize({"kind": "eeg_page", "license": "synthetic-original", "spec": spec})["spec"]
+    synth = Synthesizer(norm, duration_s)
+    pairs = [p for p in mt.montage_pairs(norm["montage"], synth.electrodes)
+             if p[1] and not any(str(e).upper().startswith("FP") for e in p)]
+    gaps = [(float(e) + 1.0, float(s) - 1.0) for e, s in zip(synth._burst_end[:-1], synth._burst_start[1:])
+            if e >= 0.0 and s <= duration_s and s - e >= 3.0]
+    chunks = []
+    for a, b in gaps[:60]:
+        _, raw = synth.segment(a, b)
+        p2p = p2p_1s(_bp(derive(synth, raw, pairs)))
+        if p2p.shape[1]:
+            chunks.append(p2p)
+    return float(np.median(np.concatenate(chunks, axis=1)))
+
+
 def measure_event_end(spec, onset_s, dur_s, pairs, u0=0.70, u1=0.82):
     norm = normalize({"kind": "eeg_page", "license": "synthetic-original", "spec": spec})["spec"]
     synth = Synthesizer(norm, onset_s + dur_s + 120.0)
@@ -102,11 +143,27 @@ def cases():
                                                                 "run_duration_s": 60.0, "min_cycles": 6, "onset_min": 5.0, "duration_min": 10.0, "side": "left"}])
     lrda = dict(child, seed=515905, age_group="adult", events=[{"type": "rhythmic_pattern", "pattern": "LRDA", "frequency_hz": 2.0, "amplitude_uv": 60.0,
                                                                  "run_duration_s": 60.0, "min_cycles": 6, "onset_min": 5.0, "duration_min": 10.0, "side": "left"}])
+    # burst-type backgrounds: the request is the burst voltage; the authored interburst floor is checked too
+    neo_bs = {"seed": 515906, "age_group": "neonate", "sample_rate": FS, "channels": "neonatal_9", "duration_min": 20,
+              "background": {"type": "burst_suppression", "pma_weeks": 40.0, "amplitude_uv": 30.0, "dominant_hz": 2.0,
+                             "slow_fraction": 0.8, "reactivity": "absent", "ibi_range_s": [10.0, 30.0], "ibi_floor_uv": 3.0,
+                             "graphoelements": {"frontal_sharp": {"enabled": False}, "anterior_slow": {"enabled": False},
+                                                "midline_theta": {"enabled": False}}}, "events": []}
+    neo_disc = {"seed": 515907, "age_group": "neonate", "sample_rate": FS, "channels": "neonatal_9", "duration_min": 20,
+                "background": {"type": "discontinuous", "pma_weeks": 39.0, "amplitude_uv": 40.0, "dominant_hz": 2.0,
+                               "slow_fraction": 0.8, "ibi_range_s": [10.0, 25.0], "ibi_floor_uv": 8.0}, "events": []}
+    adult_bs = {"seed": 515908, "age_group": "adult", "sample_rate": FS, "channels": "standard_19", "duration_min": 20,
+                "background": {"type": "burst_suppression", "dominant_hz": 3.0, "amplitude_uv": 50.0, "slow_fraction": 0.7,
+                               "reactivity": "absent"}, "events": []}
     left_temporal = [("F7", "T3"), ("T3", "T5")]
     return [
         ("background child continuous 40", lambda: measure_background(child), 40.0),
         ("background neonate continuous 45", lambda: measure_background(neo), 45.0),
         ("background adult low_voltage 15", lambda: measure_background(adult_lv), 15.0),
+        ("bursts neonate burst_suppression 30 (ibi 10-30 s)", lambda: measure_bursts(neo_bs), 30.0),
+        ("interburst neonate burst_suppression floor 3", lambda: measure_interburst(neo_bs), 3.0),
+        ("bursts neonate discontinuous 40 (ibi 10-25 s)", lambda: measure_bursts(neo_disc), 40.0),
+        ("bursts adult burst_suppression 50 (preset ibi)", lambda: measure_bursts(adult_bs), 50.0),
         ("seizure amplitude_end 150 (left temporal, u 0.70-0.82)", lambda: measure_event_end(sz, 300.0, 60.0, left_temporal), 150.0),
         ("LPD 120 (T3-T5 / F7-T3)", lambda: measure_rpp(lpd, 300.0, 60.0, left_temporal), 120.0),
         ("LRDA 60 (T3-T5 / F7-T3)", lambda: measure_rpp(lrda, 300.0, 60.0, left_temporal), 60.0),

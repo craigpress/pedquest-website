@@ -226,3 +226,64 @@ def test_version_2_blinks_are_larger_with_a_fast_rise_and_slow_decay():
     rise = peak - int(np.argmax(prof > 0.5 * prof.max()))
     decay = int(np.argmax(prof[peak:] < 0.5 * prof.max()))
     assert decay > 1.5 * rise
+
+
+def test_authored_ibi_range_is_delivered_in_seconds_not_rescaled():
+    """ibi_range_s [10, 30] must come out 10-30 s between bursts with burst_s-long bursts (P5 C03, 2026-09-19)."""
+    s = _neo(type="burst_suppression", pma_weeks=40.0, amplitude_uv=30.0, reactivity="absent",
+             ibi_range_s=[10.0, 30.0], ibi_floor_uv=3.0)
+    syn = Synthesizer(normalize(_img(s))["spec"], 1800.0)
+    a, b = syn._burst_start, syn._burst_end
+    keep = (a >= 0) & (b <= 1800.0)
+    a, b = a[keep], b[keep]
+    ibis = a[1:] - b[:-1]
+    bursts = b - a
+    assert 12.0 < np.median(ibis) < 24.0, np.median(ibis)            # geometric centre sqrt(300) = 17.3
+    assert np.percentile(ibis, 5) > 8.0 and np.percentile(ibis, 95) < 36.0
+    assert 1.4 < np.median(bursts) < 2.8, np.median(bursts)          # burst_s 2.0, not 25 % of a rescaled cycle
+    # the same spec without the range keeps the historical cycle model (byte-for-byte for pinned specs)
+    s1 = _neo(type="burst_suppression", pma_weeks=40.0, amplitude_uv=30.0, reactivity="absent")
+    syn1 = Synthesizer(normalize(_img(s1))["spec"], 1800.0)
+    assert not np.array_equal(syn1._burst_start[:20], syn._burst_start[:20])
+
+
+def test_burst_type_display_calibration_targets_the_bursts():
+    """The request is the burst voltage: bursts land near amplitude_uv, the interburst near ibi_floor_uv, no clipped scale."""
+    from scipy import signal as sps
+    s = _neo(type="burst_suppression", pma_weeks=40.0, amplitude_uv=30.0, reactivity="absent",
+             ibi_range_s=[10.0, 30.0], ibi_floor_uv=3.0,
+             graphoelements={"frontal_sharp": {"enabled": False}, "anterior_slow": {"enabled": False},
+                             "midline_theta": {"enabled": False}})
+    norm = normalize(_img(s))["spec"]
+    syn = Synthesizer(norm, 1200.0)
+    assert syn.display_scale < 3.9, "scale hit the clip: the calibration measured the interburst, not the bursts"
+    pairs = [p for p in mt.montage_pairs(norm["montage"], syn.electrodes) if p[1]]
+    sos = sps.butter(4, [0.5, 30.0], btype="bandpass", fs=FS, output="sos")
+
+    def p2p(t0, t1):
+        _, x = syn.segment(t0, t1)
+        rows = sps.sosfiltfilt(sos, syn.derive(x, pairs), axis=-1)
+        m = rows.shape[1] // FS
+        return np.ptp(rows[:, : m * FS].reshape(rows.shape[0], m, FS), axis=2)
+
+    inside = [(float(a), float(b)) for a, b in zip(syn._burst_start, syn._burst_end) if a >= 0 and b <= 1200.0 and b - a >= 1.6]
+    burst_p2p = np.concatenate([p2p(a + 0.3, min(b - 0.3, a + 10.3)) for a, b in inside[:25]], axis=1)
+    gaps = [(float(e) + 1.0, float(st) - 1.0) for e, st in zip(syn._burst_end[:-1], syn._burst_start[1:])
+            if e >= 0 and st <= 1200.0 and st - e >= 3.0]
+    ibi_p2p = np.concatenate([p2p(a, b) for a, b in gaps[:25]], axis=1)
+    assert 24.0 < np.median(burst_p2p) < 36.0, np.median(burst_p2p)
+    assert np.median(ibi_p2p) < 6.0, np.median(ibi_p2p)
+
+
+def test_version_2_rhythmic_pattern_emits_no_fragment_run_at_the_window_end():
+    from eeg_render.export.manifest import realized_events
+    ev = {"type": "rhythmic_pattern", "pattern": "LPD", "periodic": True, "frequency_hz": 1.0, "amplitude_uv": 120,
+          "run_duration_s": 60, "min_cycles": 6, "onset_min": 5.0, "duration_min": 3.0, "onset_region": "left_temporal"}
+    for seed in (515701, 515702, 515703, 515704):
+        s = dict(_child(), seed=seed, age_group="adult", events=[ev])
+        syn = Synthesizer(normalize(_img(s))["spec"], 900.0)
+        runs = [e["offset_s"] - e["onset_s"] for e in realized_events(syn, 900.0) if e["kind"] == "rhythmic_pattern"]
+        assert runs and min(runs) >= 6.0 - 1e-9, (seed, runs)
+    # version 1 keeps the truncated tail (the pinned bank must not move)
+    s1 = dict(_child(), seed=515701, age_group="adult", events=[ev], spec_version=1)
+    Synthesizer(normalize(_img(s1))["spec"], 900.0)
