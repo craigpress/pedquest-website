@@ -184,6 +184,29 @@ node trend-sidecar.mjs --backfill /mnt/eeg-lab --update-db --force  # rewrite al
 
 Roughly 10–25 s per recording on moltbot; 2–5 MB per sidecar.
 
+### Generator rollout (2026-09-18)
+
+Both worker fleets now run `eeg-render` 0.4.0 and trend engine 3. Rebuild the
+sidecar bundle with `npm run trends:sidecar:build` whenever the viewer's trend
+engine changes, then deploy `tools/trend-sidecar/dist/trend-sidecar.mjs` to
+`/opt/pedquest-eeg-render/trend-sidecar.mjs` on moltbot. The Windows pool uses
+the local bundle directly. Backfill stored sidecars after a version bump;
+updating only the generator does not repair existing recordings.
+
+The 52 bank image specs remain pinned to `spec_version: 1`; their metadata
+matches 0.4.0 and three representative re-renders were byte-identical. Refresh
+database metadata with `RENDERER_VERSION=0.4.0` and `qbank-refresh-sidecars.mts`,
+not `qbank:import`, to preserve review status. Unused example images are excluded
+from that script's version check. New term/unspecified-PMA neonatal lab exports
+retain the existing 19-electrode policy; explicitly preterm (<37 weeks PMA)
+recordings can retain reduced acquisition. Trend regeneration does not change
+raw recording channels.
+
+Rollback copies on moltbot: `/opt/pedquest-renderer-pre040-20260918.tar.gz`,
+`/opt/pedquest-eeg-render/trend-sidecar.v2-20260918.mjs`, and
+`/opt/pedquest-eeg-render/trends-v2-20260918.tar.gz`. The old trend files require
+the matching viewer engine; engine 3 intentionally rejects them.
+
 ## After a host reboot (OMV or moltbot)
 
 Seen 2026-09-13 when the Proxmox host restarted both VMs:

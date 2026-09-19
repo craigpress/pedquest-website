@@ -39,16 +39,18 @@ for (const f of readdirSync(DIR).filter((f) => f.endsWith(".json"))) {
   const s = JSON.parse(readFileSync(join(DIR, f), "utf8")) as Sidecar;
   sidecars.set(s.id, s);
 }
-const stale = [...sidecars.values()].filter((s) => s.renderer_version !== EXPECTED);
+const { data: cases, error } = await sb
+  .from("eeg_cases").select("id,qbank_id,question_type,correct_region,image_width,image_height");
+if (error) throw new Error(error.message);
+
+// Examples without database rows are not part of this refresh.
+const caseIds = new Set((cases ?? []).map((c) => c.qbank_id));
+const stale = [...sidecars.values()].filter((s) => caseIds.has(s.id) && s.renderer_version !== EXPECTED);
 if (stale.length) {
   console.error(`REFUSING: ${stale.length} sidecar(s) are not ${EXPECTED} (e.g. ${stale[0].id} = ${stale[0].renderer_version}).`);
   console.error("Re-render first, or the database would be pointed at geometry that does not match the PNGs.");
   process.exit(1);
 }
-
-const { data: cases, error } = await sb
-  .from("eeg_cases").select("id,qbank_id,question_type,correct_region,image_width,image_height");
-if (error) throw new Error(error.message);
 
 let updated = 0, regions = 0, missing = 0;
 for (const c of (cases ?? []) as Record<string, unknown>[]) {
