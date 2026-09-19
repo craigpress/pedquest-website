@@ -50,9 +50,40 @@ acceptable IBI 6 s at 37–40 w, 10 s at 34–36, 20 s at 31–33 (already the s
 Not done: P5 candidate revisions and re-render, the background calibration test, merge/deploy, docs — listed in
 HANDOFF.md.
 
+## Status 2026-09-19 (renderer 0.4.1, on `eeg-teaching-lab`, not yet merged or deployed)
+
+0.4.0 was merged and deployed on 2026-09-18 (main `5913c80`, both worker fleets). This session finished the rest and
+found three generator defects while re-rendering the candidates, fixed in **0.4.1** (all behind the version-2 defaults
+or the new 0.4.0 keys, so the 52 pinned bank images stay byte-identical; sidecars restamped, 52/52 verified):
+
+- **Background calibration estimator.** The 1.14–1.23× over-delivery reported on 09-18 was the check, not the
+  calibration: six 60 s windows sampled a ±24 % envelope and counted blink seconds on F-anchored pairs. Measured
+  whole-record and between blinks the child/neonate cases are 1.07/1.02; the synthesizer's own calibration re-measures
+  to 1.000 and scales linearly. `calibrate_display.py` now reads the whole record, blink-free; new
+  `tests/test_display_calibration.py` (10 cases, ±15 %).
+- **Burst-type calibration measured the interburst.** The 80th percentile of all seconds sits in the interburst once
+  bursts occupy under a fifth of the record (a 2 s burst every 17 s); the scale clipped at 4.0 and C03 rendered 2–3×
+  bursts over a 10 µV "flat" interburst. 0.4.1 measures inside the scheduled bursts. Delivered: BS 30 → 29.1 µV bursts,
+  3 µV floor → 3.3; discontinuous 40 → 41.1; adult BS 50 → 50.7.
+- **`ibi_range_s` was rescaled.** The suppression-fraction cycle model multiplied an authored 10–30 s into 28–40 s
+  with 8 s bursts. An authored range is now drawn directly (log-normal, `burst_s`-long bursts); the PMA/preset path is
+  unchanged for specs without it.
+- **Fragment runs.** A rhythmic-pattern run truncated at the pattern window's end put a 1.6 s "LPD run" in C25's
+  answer key. Version 2 does not start a run that cannot fit its cycles.
+
+Candidates: C03 re-authored as term encephalopathic burst suppression (30 µV bursts, 3 µV interburst, 10–30 s); C05 as
+encephalopathic discontinuity (interburst 10–25 s at 8 µV, Cork grade 3); C23 as 18 µV on the display montage with a
+diffuse 7 Hz mix and no posterior rhythm; new **C33**, the sub-term brush exemplar Craig asked for on C02 (32 w tracé
+discontinu, riding brushes at their PMA peak). The other revise cards (C02, C11, C12, C15–C20, C26) are answered by the
+version-2 defaults. All 33 specs hash differently under version 2, so every CSV row is `pending` again; the 09-16
+verdicts are kept in `research/eeg-atlas/p5/review/decisions/` (per-card JSON and the dated CSV backup).
+
+Remaining: merge `eeg-teaching-lab` → main, deploy 0.4.1 to both worker fleets (until then new Lab renders are stamped
+0.4.0 and `verify_sidecars` would reject them), Craig's second pass over the 33-page gallery.
+
 ## Deliverables
 
 - renderer 0.4.0 (`spec.py`, `synth.py`, `schema.py`, tests: `test_p6_realism.py`, `test_display_calibration.py`)
 - `tools/eeg-render/pin_spec_version.py`; 48 YAMLs pinned; sidecars restamped
-- P5 candidates revised per card (`p5_candidates.py`), re-rendered, gallery rebuilt, CSV rows for changed specs reset to pending
-- workers deployed (Moltbot + CraigsRig)
+- P5 candidates revised per card (`p5_candidates.py`), re-rendered, gallery rebuilt, CSV rows for changed specs reset to pending — done 2026-09-19 (0.4.1, 33 candidates)
+- workers deployed (Moltbot + CraigsRig) — 0.4.0 done 2026-09-18; 0.4.1 pending

@@ -49,3 +49,71 @@ Technical gate unchanged from P4 (chunk invariance, montage algebra, determinism
 2. Craig decides the `amplitude_uv` semantics for events and whether `channel_gain_max`, `blink_rate_per_min: 0` for unreactive states and `pdr_gain` should become new-spec defaults through a deliberate version upgrade (they cannot become silent defaults without changing legacy renders).
 3. Merge decision for `eeg-atlas-p5` into `eeg-teaching-lab` after Craig's read; the branch carries the renderer, the schema export, restamped sidecars and the tests. Deployment to the Moltbot workers is a separate step.
 4. P6 needs the P3 clinical adjudication and a locked calibration/test split before any held-out comparison.
+
+
+## Renderer 0.4.1 re-render (2026-09-19): Craig's verdicts into the generator
+
+Craig's 09-16 pass (10 accept, 12 revise, 2 reject, 8 pending) went into renderer 0.4.0 behind `spec_version` (see
+[EEG_ATLAS_P6_PLAN.md](EEG_ATLAS_P6_PLAN.md)). Re-rendering the candidates under the version-2 defaults exposed three
+0.4.0 defects, fixed in 0.4.1 without touching any pinned bank image (52 sidecars restamped and verified; PQ-A-003 and
+PQ-B-001, both burst suppression, re-render byte-identical): burst-type display calibration measured the interburst
+(80th percentile of all seconds) and clipped its scale; an authored `ibi_range_s` was rescaled by the suppression-fraction
+cycle model (10-30 s came out 28-40 s with 8 s bursts); a rhythmic-pattern run truncated at the pattern window's end put a
+1.6 s "LPD run" in an answer key. The background calibration estimator itself was sound: the 1.14-1.23x check of 09-18 was
+six-window envelope sampling plus blink seconds on F-anchored pairs; measured whole-record and blink-free the child/neonate
+cases deliver 1.07/1.02 (`calibrate_display.py`, `tests/test_display_calibration.py`, 10 cases within 15 %).
+
+Re-authored per card: **C03** (reject, "should be burst suppression with flatter interburst intervals at this GA") is now
+term encephalopathic burst suppression, 30 uV bursts, 3 uV interburst 10-30 s, unreactive, graphoelements off - measured
+74 % of seconds under 5 uV, bursts every 15-23 s; **C05** (revise, "IB voltage lower, interburst longer than 6 s") keeps
+its 40 uV bursts over a 10-25 s interburst at 8 uV (Cork grade 3); **C23** (revise, "adult slow, not low voltage") is
+18 uV on the display montage, diffuse 7 Hz mix, `pdr_gain` 1, no posterior rhythm; **C33** is new, the sub-term brush
+exemplar Craig asked for on C02 (32 w trace discontinu, riding brushes at their 30-33 w peak, 3.4 bursts/min). The
+remaining revise cards are answered by the version-2 defaults: recruiting seizure evolution (C17-C19, C26 jitter), no
+muscle at a spread-free focal onset (C15, C19), 160 uV sharp blinks and artifact model 2 (C12, C16, C20), hemispheric
+attenuation (C04), tighter PDR field (C13), brushes x1.7 riding a high-voltage delta wave (C02).
+
+Every spec hashes differently under version 2, so `p5_run.py` reset all 33 rows to `pending`. The 09-16 verdicts are kept
+in `research/eeg-atlas/p5/review/decisions/` (per-card JSON; `EEG_ATLAS_P5_CANDIDATE_REVIEW.backup-20260919.csv`) and in
+the table below. Burst-type rows show the median of all seconds, so their ratio is the interburst fraction talking, not
+the burst calibration (bursts: BS 30 -> 29.1, discontinuous 40 -> 41.1, adult BS 50 -> 50.7 in `calibrate_display.py`).
+
+| id | family / role | 09-16 verdict | 0.4.1 change | delivered / requested | realized |
+|---|---|---|---|---|---|
+| C01 | AT-P01 canonical | accept | version-2 defaults | 1.14 | - |
+| C02 | AT-P01 variation | revise | version-2 defaults | 0.89 | - |
+| C03 | AT-P01 boundary | reject | re-authored: term BS, 30 uV bursts, 3 uV interburst 10-30 s | 0.14 (median of all seconds; bursts calibrated separately) | - |
+| C04 | AT-P01 contrast | reject | version-2 defaults | 0.85 | - |
+| C05 | AT-P02 canonical | revise | re-authored: interburst 10-25 s at 8 uV | 0.41 (median of all seconds; bursts calibrated separately) | - |
+| C06 | AT-P02 variation | accept | version-2 defaults | 1.19 (median of all seconds; bursts calibrated separately) | - |
+| C07 | AT-P02 boundary | accept | version-2 defaults | 0.62 (median of all seconds; bursts calibrated separately) | - |
+| C08 | AT-P02 contrast | pending | version-2 defaults | 0.03 (median of all seconds; bursts calibrated separately) | - |
+| C33 | AT-P02 variation | - | new: 32 w trace discontinu, riding brushes | 1.06 (median of all seconds; bursts calibrated separately) | - |
+| C09 | AT-P03 canonical | accept | version-2 defaults | 1.10 | 1 event(s) |
+| C10 | AT-P03 variation | accept | version-2 defaults | 1.54 | 1 event(s) |
+| C11 | AT-P03 boundary | revise | version-2 defaults | 0.90 | 2 event(s) |
+| C12 | AT-P03 contrast | revise | version-2 defaults | 0.98 | 1 event(s) |
+| C13 | AT-P04 canonical | accept | version-2 defaults | 1.08 | 1 event(s) |
+| C14 | AT-P04 variation | accept | version-2 defaults | 0.86 | 1 event(s) |
+| C15 | AT-P04 boundary | revise | version-2 defaults | 1.13 | 1 event(s) |
+| C16 | AT-P04 contrast | revise | version-2 defaults | 1.03 | 1 event(s) |
+| C17 | AT-P05 canonical | revise | version-2 defaults | 1.08 | 1 event(s) |
+| C18 | AT-P05 variation | revise | version-2 defaults | 0.88 | 1 event(s) |
+| C19 | AT-P05 boundary | revise | version-2 defaults | 1.06 | 1 event(s) |
+| C20 | AT-P05 contrast | revise | version-2 defaults | 0.87 | - |
+| C21 | AT-P06 canonical | pending | version-2 defaults | 0.02 (median of all seconds; bursts calibrated separately) | - |
+| C22 | AT-P06 variation | accept | version-2 defaults | 0.94 | - |
+| C23 | AT-P06 boundary | revise | re-authored: 18 uV display, 7 Hz mix, pdr_gain 1 | 0.90 | - |
+| C24 | AT-P06 contrast | accept | version-2 defaults | 0.98 | - |
+| C25 | AT-P07 canonical | accept | version-2 defaults | 0.77 | 2 run(s), six cycles in 2 |
+| C26 | AT-P07 variation | revise | version-2 defaults | 0.98 | 2 run(s), six cycles in 2 |
+| C27 | AT-P07 boundary | pending | version-2 defaults | 0.78 | 11 run(s), six cycles in 3 |
+| C28 | AT-P07 contrast | pending | version-2 defaults | 0.80 | - |
+| C29 | AT-P08 canonical | pending | version-2 defaults | 1.11 | 6 run(s), six cycles in 5 |
+| C30 | AT-P08 variation | pending | version-2 defaults | 1.06 | 7 run(s), six cycles in 7 |
+| C31 | AT-P08 boundary | pending | version-2 defaults | 1.12 | 13 run(s), six cycles in 11 |
+| C32 | AT-P08 contrast | pending | version-2 defaults | 1.05 | - |
+
+Gallery: `research/eeg-atlas/p5/review/index.html` (run `python research/eeg-atlas/p3_review_server.py` with
+`PEDQUEST_SITE_DIR` pointing at the checkout whose `docs/` holds the CSV). Next: merge `eeg-teaching-lab` into main,
+deploy 0.4.1 to both worker fleets, then Craig's second pass.
