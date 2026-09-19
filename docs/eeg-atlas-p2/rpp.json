@@ -1,0 +1,161 @@
+{
+  "contracts": [
+    {
+      "id": "RPP-VALIDITY",
+      "name": "RPP term construction and validity boundary",
+      "source": {"source_id": "S01", "pdf_pages": [9, 12, 13, 17], "section": "C introductory text; C2; C3c,h"},
+      "definition": "An RPP name combines one localization main term with one pattern-type main term, then adds applicable modifiers.",
+      "applicability": "All RPP labels in this file.",
+      "criteria": {
+        "required_components": ["one main_term_1 localization", "one main_term_2 pattern type"],
+        "minimum_run": {"consecutive_cycles_min": 6, "examples": ["1 Hz for 6 s", "3 Hz for 2 s"]},
+        "frequency_boundary": "No RPP may have a typical frequency above 4 Hz. A pattern above 4 Hz lasting at least 0.5 s is outside this RPP contract; one shorter than 0.5 s is not an RPP.",
+        "evolution_boundary": "Within RPP terminology, evolution is limited to patterns at or below 4 Hz and shorter than 10 s. Longer evolving patterns and faster short patterns are delegated to the seizure/BIRD contracts."
+      },
+      "exclusions": ["ESz/ESE/ECSz/ECSE definitions", "BIRD definitions", "IIC derivations"],
+      "measurement_requirements": ["Identify consecutive cycles before assigning any RPP.", "Use the source-defined frequency, morphology, and localization criteria in the component contracts."],
+      "engineering_choices": "Represent boundary handoffs as validation failures or external labels; do not derive seizure, BIRD, or IIC labels here.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "RPP-LOCATION",
+      "name": "Main term 1: localization",
+      "source": {"source_id": "S01", "pdf_pages": [9, 10, 11], "section": "C1"},
+      "definition": "Main term 1 specifies the spatial organization of the RPP.",
+      "applicability": "All PD, RDA, and SW patterns.",
+      "criteria": {
+        "allowed_values": {
+          "G": {"name": "Generalized", "rule": "Bilaterally synchronous and symmetric, including a restricted field. Bilateral asymmetry or asynchrony that shifts and is not consistently lateralized to one side more than 80% of the time remains G.", "qualifiers": {"predominance": {"frontally": "anterior voltage at least 50% greater than posterior", "occipitally": "posterior voltage at least 50% greater than anterior", "midline": "midline voltage at least 50% greater than parasagittal", "not_otherwise_specified": "similar voltage in all regions and none of the preceding"}, "asynchrony": "For shifting asynchrony, record typical inter-side lag."}},
+          "L": {"name": "Lateralized", "rule": "Unilateral; or bilateral with clearly and consistently greater amplitude on one side; or bilateral with a consistent lead-in from one side. Includes focal, regional, and hemispheric patterns.", "qualifiers": {"laterality": "Specify side.", "extent": ["unilateral", "bilateral asymmetric", "bilateral asynchronous", "both asymmetric and asynchronous"], "consistency": "Bilateral asymmetric and bilateral asynchronous examples require the same side more than 80% of the time.", "lag": "For bilateral asynchronous, record typical inter-side lag.", "lobes": ["F", "P", "T", "O", "hemispheric if no finer localization"]}},
+          "BI": {"name": "Bilateral independent", "rule": "Two independent, therefore asynchronous, lateralized patterns, one in each hemisphere, occurring simultaneously (overlapping in time), not sequentially.", "qualifiers": {"symmetry": ["symmetric", "asymmetric with L > R or R > L"], "lobes": ["F", "P", "T", "O", "hemispheric"]}},
+          "UI": {"name": "Unilateral independent", "rule": "Two independent, therefore asynchronous, periodic or rhythmic patterns in the same hemisphere occurring simultaneously, not sequentially. A focal midline pattern can be ipsilateral to an independent left or right pattern.", "qualifiers": {"per_pattern": ["unilateral/bilateral extent", "asymmetry/asynchrony if bilateral", "side", "most involved lobe(s)"]}},
+          "Mf": {"name": "Multifocal", "rule": "At least three independent lateralized patterns, with at least one in each hemisphere, all occurring simultaneously.", "qualifiers": {"symmetry": ["symmetric", "asymmetric with L > R or R > L"], "lobes": ["F", "P", "T", "O", "hemispheric"]}}
+        }
+      },
+      "exclusions": ["Independent patterns occurring at different times are separate lateralized patterns, not BI or UI.", "Two lateralized sides with fixed interhemispheric latency are lateralized bilateral-asynchronous, not BI."],
+      "measurement_requirements": ["Use common-average, transverse-bipolar, ipsilateral-ear, or noncephalic referential recordings for generalized anterior/posterior predominance; common-average or noncephalic reference for midline predominance.", "Assess simultaneous temporal overlap and side consistency."],
+      "engineering_choices": "Store the main term and qualifiers independently; do not infer localization from a single channel label.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "RPP-TYPE",
+      "name": "Main term 2: PDs, RDA, and SW",
+      "source": {"source_id": "S01", "pdf_pages": [12, 13], "section": "C2"},
+      "definition": "Main term 2 specifies the repeating waveform organization.",
+      "applicability": "RPPs after main-term-1 localization is assigned.",
+      "criteria": {
+        "PDs": {"name": "Periodic discharges", "rule": "Relatively uniform waveform morphology and duration, a discernible inter-discharge interval, and recurrence at nearly regular intervals.", "regularity": "Cycle length varies by less than 50% from one cycle to the next in a majority (>50%) of cycle pairs.", "discharge": "Waveform shorter than 0.5 s irrespective of phases, or at least 0.5 s with no more than 3 phases; must stand out from background."},
+        "RDA": {"name": "Rhythmic delta activity", "rule": "Relatively uniform waveform morphology and duration with no interval between waves; irregular or polymorphic delta is not RDA.", "regularity": "Period varies by less than 50% from the subsequent cycle in a majority (>50%) of cycle pairs.", "frequency_hz": {"min": 0.5, "max": 4.0}, "note": "Sharp crests or troughs do not prevent a pattern from being rhythmic."},
+        "SW": {"name": "Spike-and-wave or sharp-and-wave", "rule": "Spike, polyspike, or sharp wave consistently followed by a slow wave in a regular alternating repeating pattern, with a consistent component relationship for at least 6 consecutive cycles and no interval between complexes."}
+      },
+      "exclusions": ["An interval between spike-wave complexes is PDs, with each discharge a spike-and-wave.", "A pattern qualifying as both PDs and RDA is PDs+R, not RDA+S."],
+      "measurement_requirements": ["Measure cycle-to-cycle period and count all consecutive cycles.", "Determine discharge phases separately from RDA."],
+      "engineering_choices": "Preserve source categories as enums; do not collapse PD, RDA, and SW into a generic rhythmicity class.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "RPP-TIME-RATE",
+      "name": "Prevalence, duration, and frequency modifiers",
+      "source": {"source_id": "S01", "pdf_pages": [13, 14], "section": "C3a-c"},
+      "definition": "These modifiers quantify how much pattern is present, its continuous run length, and its rate.",
+      "applicability": "All RPPs; duration is recorded if not continuous.",
+      "criteria": {
+        "prevalence_percent_record_or_epoch": {"continuous": ">=90", "abundant": "50-89", "frequent": "10-49", "occasional": "1-9", "rare": "<1", "denominator": "proportion of the record or epoch that includes or is within the pattern; intervals between widely spaced PDs count as pattern duration", "multiple_patterns": "Record each pattern and its own prevalence."},
+        "typical_duration": {"very_long": ">=1 h", "long": "10-59 min", "intermediate": "1-9.9 min", "brief": "10-59 s", "very_brief": "<10 s", "also_required": "longest continuous duration"},
+        "frequency_hz": {"required": ["typical", "minimum", "maximum"], "categories": ["<0.5", "0.5", "1", "1.5", "2", "2.5"], "very_brief_additional_categories": ["3", "3.5", "4"], "PD_SW_restriction": "Typical frequency >2.5 Hz is an RPP only when duration is <10 s; at >=10 s it is outside this RPP contract."}
+      },
+      "exclusions": ["Do not calculate seizure burden here.", "Do not recast frequency-boundary patterns as seizure/BIRD labels in this contract."],
+      "measurement_requirements": ["Report the specified denominator and record/epoch duration.", "Compute rate in cycles or discharges per second."],
+      "engineering_choices": "Store numeric measurements and categorical bins together so bins remain auditable.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "RPP-WAVEFORM-MODIFIERS",
+      "name": "Phases, sharpness, and voltage modifiers",
+      "source": {"source_id": "S01", "pdf_pages": [13, 14], "section": "C3d-f"},
+      "definition": "These modifiers describe discharge structure, contour, and amplitude.",
+      "applicability": "Phases: PDs and the entire SW complex, not RDA. Sharpness and polarity: PDs and spike/sharp component of SW, not RDA. Voltage: PDs, SW, and RDA; relative voltage only PDs.",
+      "criteria": {
+        "phases": {"formula": "1 + number of baseline crossings of the typical discharge", "montage": "longitudinal bipolar, channel where most apparent", "baseline_rule": "Start and end points are not crossings", "bins": ["1", "2", "3", ">3"]},
+        "sharpness": {"spiky": "component duration at EEG baseline <70 ms", "sharp": "70-200 ms", "sharply_contoured": "steep slope on one side and/or pointed/apiculate inflection, but too long to be sharp", "blunt": "smooth or sinusoidal", "required": "Describe dominant (highest-voltage) phase and sharpest phase if different."},
+        "absolute_voltage_peak_to_trough_uV": {"montage": "standard longitudinal bipolar 10-20, channel where pattern is most apparent", "PD_measurement": "highest-voltage component", "SW_measurement": "spike/sharp component", "bins": {"very_low": "<20", "low": "20-49", "medium": "50-149", "high": ">=150"}},
+        "relative_voltage_PDs_only": "Ratio of the highest-voltage component of the typical discharge to typical between-discharge background in the same channel and montage; bin as <=2 or >2."
+      },
+      "exclusions": ["Do not use background EEG voltage for the RPP voltage modifier."],
+      "measurement_requirements": ["Use peak-to-trough, not peak-to-baseline, amplitude.", "Use the same channel and montage for PD absolute and relative voltage."],
+      "engineering_choices": "Retain the acquisition montage with every amplitude, phase, and polarity-related field.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "RPP-STIMULUS-EVOLUTION",
+      "name": "Stimulus state, evolution, fluctuation, and static modifiers",
+      "source": {"source_id": "S01", "pdf_pages": [14, 17], "section": "C3g-h"},
+      "definition": "Stimulus modifiers describe reproducible response to alerting stimulation; temporal modifiers describe frequency, morphology, or location change.",
+      "applicability": "Stimulus state applies to RPPs. Evolution/fluctuation/static applies to RPPs within the RPP validity boundary.",
+      "criteria": {
+        "stimulus_state": {"SI": "Reproducibly brought about or exacerbated by alerting stimulus in a less-stimulated state, with or without clinical alerting; may also occur spontaneously.", "ST": "Reproducibly terminated or attenuated by alerting stimulus in a less-stimulated state, with or without clinical alerting; may also self-terminate.", "spontaneous": "Never clearly induced, exacerbated, improved, or terminated by stimulation.", "unknown": "Unclear or untested.", "stimulus_type_required": ["auditory", "light tactile", "patient care/other nonnoxious", "noxious"]},
+        "evolving": {"minimum": "At least 2 unequivocal sequential changes in the same category.", "frequency": "Two consecutive changes in one direction, each at least 0.5 Hz; each frequency persists at least 3 cycles.", "morphology": "Two consecutive novel morphologies; each morphology, including transition forms, persists at least 3 cycles.", "location": "Sequential spread into or out of at least 2 standard 10-20 electrode locations; involvement of each additional electrode persists at least 3 cycles.", "interstep_gap": "Reach criteria without the changing feature remaining unchanged for 5 or more continuous minutes.", "amplitude": "Voltage/amplitude change alone is neither evolution nor a new morphology."},
+        "fluctuating": {"minimum": "At least 3 changes, no more than 1 minute apart, not qualifying as evolution.", "frequency": "Each change at least 0.5 Hz; each frequency persists at least 3 cycles.", "morphology": "Each morphology persists at least 3 cycles.", "location": "Each change at least 1 standard interelectrode distance; each location persists at least 3 cycles.", "amplitude": "Voltage/amplitude change alone is not fluctuation."},
+        "static": "Neither evolving nor fluctuating.",
+        "additional_reporting": "If evolving or fluctuating in frequency, specify minimum and maximum frequency. For nongeneralized patterns specify spread as none, unilateral, or bilateral."
+      },
+      "exclusions": ["SIRPIDs is an umbrella source term; record the specific SI-RPP rather than deriving seizure/IIC/BIRD forms.", "No seizure/BIRD/IIC classification is emitted."],
+      "measurement_requirements": ["Annotate stimulus timing/type and less-stimulated baseline.", "Track time-stamped cycles, frequency, morphology, and standard 10-20 locations."],
+      "engineering_choices": "Use an event sequence rather than a single classifier score so cycle persistence, direction, and interstep gap can be audited.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "RPP-PLUS",
+      "name": "Plus modifier and extreme delta brush",
+      "source": {"source_id": "S01", "pdf_pages": [17, 18, 19, 20, 21, 22], "section": "C3i"},
+      "definition": "Plus denotes an added feature that makes PDs or RDA more ictal-appearing than the unmodified pattern. Extreme delta brush is a specific +F subtype.",
+      "applicability": "Plus applies to PDs and RDA only, never SW.",
+      "criteria": {
+        "subtypes": {"+F": "Superimposed theta-or-faster activity, rhythmic or not, on PDs or RDA. It must be part of the pattern, not merely background; for PDs it may be continuous if absent when PDs are absent, or occur regularly with each discharge.", "+R": "Superimposed rhythmic or quasi-rhythmic delta activity; PDs only.", "+S": "Associated sharp waves, spikes, or sharp contour; RDA only; present at least once per 10 s and not an SW pattern.", "combinations": ["PDs+FR", "RDA+FS"]},
+        "bilateral_rule": "If a bilateral pattern qualifies for plus on only one side, the overall main term still receives the plus modifier.",
+        "EDB": {"definite": "Abundant or continuous RDA+F with fast activity stereotypically related to the delta wave, or abundant/continuous PDs+F where each PD is a single blunt delta wave and fast activity is stereotypically related to that delta wave.", "possible": "Meets either EDB form but is only occasional/frequent, or the fast activity lacks a stereotyped delta-wave relationship.", "not_EDB": "RDA+F/PDs+F lacking both required EDB conditions; a periodic pattern can be EDB only if PDs are blunt delta brushes; fast activity between delta waves or present as background does not qualify."}
+      },
+      "exclusions": ["Other ictal-appearing attributes, including sharpness, voltage, and fluctuation, are reported through their own modifiers."],
+      "measurement_requirements": ["Assess whether fast activity persists outside the RPP.", "For EDB, measure prevalence and relationship of fast activity to each delta wave."],
+      "engineering_choices": "Encode plus subtypes as a set and EDB as a separately validated subtype; do not infer EDB from +F alone.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "RPP-MINOR",
+      "name": "Minor modifiers",
+      "source": {"source_id": "S01", "pdf_pages": [22], "section": "C4"},
+      "definition": "Minor modifiers refine onset, morphology, lag, and polarity.",
+      "applicability": "As specified per modifier.",
+      "criteria": {
+        "onset": {"sudden": "Absent to well-developed within 3 s.", "gradual": "Does not meet sudden-onset definition."},
+        "triphasic_morphology": "Three negative-positive-negative phases, each longer than the preceding and the positive phase of highest voltage; or positive-negative biphasic appearance when a low-voltage first negative phase is obscured by background. PDs and SW only.",
+        "anterior_posterior_lag": "Consistent measurable delay >100 ms from most anterior to most posterior derivation, or reverse; report typical anterior-to-posterior delay in ms (negative for posterior-to-anterior) in longitudinal bipolar and referential montage, preferably ipsilateral-ear reference. PDs or spike/sharp component of SW only.",
+        "polarity": {"values": ["positive", "negative", "dipole, tangential", "unclear"], "rule": "Describe dominant/highest-voltage phase in a referential montage; PDs or spike/sharp component of SW only."}
+      },
+      "exclusions": ["Triphasic morphology, lag, and polarity do not apply to RDA."],
+      "measurement_requirements": ["Record montage for lag and polarity.", "Assess each phase's polarity, duration, and voltage for triphasic morphology."],
+      "engineering_choices": "Keep conventional terminology and raw lag in milliseconds together; do not infer polarity from bipolar montage.",
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    }
+  ],
+  "coverage": [
+    {"source_id": "S01", "section": "C introductory text", "pdf_pages": [9], "disposition": "mapped", "contract_ids": ["RPP-VALIDITY"], "notes": "Two-main-term construction."},
+    {"source_id": "S01", "section": "C1 Main Term 1", "pdf_pages": [9, 10, 11], "disposition": "mapped", "contract_ids": ["RPP-LOCATION"], "notes": "All G/L/BI/UI/Mf terms and localizing qualifiers."},
+    {"source_id": "S01", "section": "C2 Main Term 2", "pdf_pages": [12, 13], "disposition": "mapped", "contract_ids": ["RPP-TYPE", "RPP-VALIDITY"], "notes": "PD, RDA, SW and six-cycle validity."},
+    {"source_id": "S01", "section": "C3a-c", "pdf_pages": [13, 14], "disposition": "mapped", "contract_ids": ["RPP-TIME-RATE"], "notes": "Prevalence, duration, frequency."},
+    {"source_id": "S01", "section": "C3d-f", "pdf_pages": [13, 14], "disposition": "mapped", "contract_ids": ["RPP-WAVEFORM-MODIFIERS"], "notes": "Phases, sharpness, voltage."},
+    {"source_id": "S01", "section": "C3g-h", "pdf_pages": [14, 17], "disposition": "mapped", "contract_ids": ["RPP-STIMULUS-EVOLUTION", "RPP-VALIDITY"], "notes": "Stimulus response, evolution, fluctuation, static; seizure/BIRD boundary retained only as exclusion."},
+    {"source_id": "S01", "section": "C3i", "pdf_pages": [17, 18, 19, 20, 21, 22], "disposition": "mapped", "contract_ids": ["RPP-PLUS"], "notes": "Plus subtypes and EDB."},
+    {"source_id": "S01", "section": "C4", "pdf_pages": [22], "disposition": "mapped", "contract_ids": ["RPP-MINOR"], "notes": "All listed minor modifiers."},
+    {"source_id": "S01", "section": "D-F", "pdf_pages": [22, 23, 24, 25], "disposition": "out_of_scope", "contract_ids": [], "notes": "ESz/ESE/ECSz, BIRDs, and IIC are parent-owned; only RPP boundary exclusions are retained."},
+    {"source_id": "S01", "section": "H1-3", "pdf_pages": [26, 27], "disposition": "out_of_scope", "contract_ids": [], "notes": "Daily/hourly pattern burden and pattern index are parent-owned to avoid duplication; daily seizure burden is also excluded."}
+  ]
+}

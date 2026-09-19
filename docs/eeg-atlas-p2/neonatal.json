@@ -1,0 +1,343 @@
+{
+  "contracts": [
+    {
+      "id": "NEO-REPORTING-CONTEXT",
+      "name": "Neonatal recording context and daily reporting",
+      "source": { "source_id": "S09", "pdf_pages": "3-4, 25", "section": "Details to be reported; Box 1" },
+      "definition": "Minimum context needed to interpret each 24-hour neonatal continuous video-EEG period and its clinically relevant changes.",
+      "applicability": "Every neonatal recording and each reported 24-hour period.",
+      "criteria": [
+        "Record postmenstrual age (PMA) at acquisition; PMA is gestational age from last menstrual period plus chronological age.",
+        "Source categories are preterm <37 weeks PMA, term 37 up to 44 weeks PMA, and post-term 44 to 48 weeks PMA; the literal wording overlaps at 44 weeks and does not state whether 48 weeks is inclusive.",
+        "Record neuroactive medications and ideally administration times, including sedatives, hypnotics, anxiolytics, anesthetics, and antiseizure drugs.",
+        "Record hypothermia depth, duration, and whether spontaneous or induced; record major hemodynamic, respiratory, or cardiorespiratory changes.",
+        "Record hours uninterpretable for technical reasons; characterize the first hour, one background hour in each later 24-hour period, and additional epochs after relevant change.",
+        "Record seizure onset, burden, resolution, and status epilepticus onset and resolution."
+      ],
+      "exclusions": ["A waveform-only example without PMA and recording context cannot satisfy this contract."],
+      "measurement_requirements": ["PMA in completed weeks", "medication and hypothermia timeline", "technical-quality duration in hours", "epoch timestamps"],
+      "engineering_choices": ["Pending Craig: encode term as the half-open interval [37,44) weeks and post-term as beginning at 44 weeks; the upper 48-week boundary remains unresolved."],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-BEHAVIORAL-STATE",
+      "name": "Behavioral state and sleep-wake cycling",
+      "source": { "source_id": "S09", "pdf_pages": "4-7, 26", "section": "Behavioral state; Box 2" },
+      "definition": "State assignment combines EEG and polysomnographic behavior and is interpreted relative to PMA.",
+      "applicability": "Neonatal recordings with sufficient EEG, eye, respiratory, movement, and preferably EMG observations.",
+      "criteria": [
+        "A state requires its defining features for >=60 seconds.",
+        "Allowed states are awake, active sleep, quiet sleep, transitional sleep, and indeterminate sleep; transitional sleep mixes features of the states on either side, while indeterminate sleep cannot be assigned to active or quiet sleep.",
+        "Term awake and active sleep use continuous low-to-medium voltage mixed-frequency activité moyenne; active sleep additionally has closed eyes, REM, irregular respiration, and body movement.",
+        "Term quiet sleep has closed eyes, absent REM, little movement, and near term commonly tracé alternant; mature continuous high-voltage slow activity and 10-12 Hz spindles emerge around 46 weeks PMA.",
+        "Sleep-wake cycling records orderly alteration among states: term complete sleep-wake cycles are typically 3-4 hours and sleep-only cycles 40-70 minutes; preterm sleep cycles are 30-50 minutes below 35 weeks PMA and 50-65 minutes beyond 35 weeks PMA.",
+        "Unspecified state change requires distinct EEG patterns differing in discontinuity, voltage, or frequency, with each state lasting >=60 seconds."
+      ],
+      "exclusions": ["Do not force active or quiet sleep when clinical and EEG features are insufficient or discordant.", "A short page cannot establish sleep-wake cycling."],
+      "measurement_requirements": ["PMA", "continuous duration per state", "eye-open/closed and REM annotations", "respiration, movement, and EMG when available", "longitudinal state timeline"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-CONTINUITY-NORMAL",
+      "name": "Normal continuity, tracé discontinu, and tracé alternant",
+      "source": { "source_id": "S09", "pdf_pages": "5-8, 27-33", "section": "Behavioral state; EEG background - continuity; Figures 1-2; Box 3; Table 1" },
+      "definition": "Normal neonatal continuity and discontinuity are PMA- and state-dependent rather than fixed adult categories.",
+      "applicability": "Background assessment in preterm, term, and post-term neonates.",
+      "criteria": [
+        "Continuous activity has no interruption and <2 seconds of attenuation below 25 µV peak-to-peak.",
+        "An interburst interval (IBI) is attenuation below an age-dependent level described broadly as <25-50 µV peak-to-peak for >=2 seconds; Table 1 supplies the age bins.",
+        "Normal maximum IBI/voltage by PMA: <30 weeks, 35 seconds and <25 µV; 30-33 weeks, 20 seconds and <25 µV; 34-36 weeks, 10 seconds and approximately 25 µV; 37-40 weeks, 6 seconds and >25 µV.",
+        "Tracé discontinu contains 50-300 µV bursts with low-voltage IBIs and age-appropriate graphoelements; it is developmentally expected mainly from 26-40 weeks PMA and becomes confined to quiet sleep with maturation.",
+        "Tracé alternant occurs only in quiet sleep: 50-150 µV delta bursts lasting roughly 4-10 seconds alternate with 25-50 µV mixed theta-delta periods that never fall below 25 µV; it appears around 34-36 weeks, is minimal by 42 weeks, and is absent by 46 weeks PMA."
+      ],
+      "exclusions": ["Do not label age-appropriate discontinuity excessive using a fixed IBI threshold.", "The source gives no Table 1 normal IBI row above 40 weeks PMA."],
+      "measurement_requirements": ["PMA and state", "peak-to-peak voltage", "IBI duration distribution", "burst composition and graphoelements", "sufficient duration to sample state"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-DISCONTINUITY-ABNORMAL",
+      "name": "Excessive discontinuity and neonatal burst suppression",
+      "source": { "source_id": "S09", "pdf_pages": "8-9, 27-32", "section": "EEG background - excessive background discontinuity; burst suppression; Figures 1-2; Box 3" },
+      "definition": "Separates PMA-inappropriate discontinuity that retains normal elements from invariant burst suppression lacking normal graphoelements.",
+      "applicability": "Discontinuous neonatal backgrounds assessed against PMA and state.",
+      "criteria": [
+        "Excessive discontinuity has IBIs too long or too voltage-depressed for PMA while bursts retain some age-appropriate patterns or graphoelements.",
+        "Burst suppression has invariant abnormal bursts separated by prolonged IBIs with voltage <5 µV peak-to-peak.",
+        "Permitted activity within burst-suppression IBIs is limited to sparse activity up to 15 µV in one electrode, transient activity up to 15 µV for <2 seconds, or the source-described >2:1 voltage asymmetry in multiple electrodes.",
+        "Burst suppression is unreactive and lacks spontaneous lability; bursts lack recognizable normal graphoelements and should be described as >100 µV or <100 µV, with typical burst and IBI durations and burst-component sharpness recorded."
+      ],
+      "exclusions": ["Do not call a variable or reactive record with normal graphoelements burst suppression.", "Do not infer severity from discontinuity without PMA and state."],
+      "measurement_requirements": ["PMA and state", "IBI voltage and duration", "reactivity and variability observations", "burst voltage and composition", "multichannel asymmetry"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-SYMMETRY-SYNCHRONY",
+      "name": "Background symmetry and interhemispheric synchrony",
+      "source": { "source_id": "S09", "pdf_pages": "9-10, 32", "section": "EEG background - symmetry; synchrony; Box 3" },
+      "definition": "Symmetry compares homologous content and voltage; synchrony compares burst onset timing and has a non-linear developmental course.",
+      "applicability": "Multichannel neonatal background, with synchrony assessed during discontinuous portions.",
+      "criteria": [
+        "Persistent >2:1 voltage difference between homologous regions, or persistent disparity in frequency or graphoelement distribution, is abnormal asymmetry; fleeting differences may remain normal.",
+        "A burst pair is synchronous when left and right onsets differ by <=1.5 seconds; report the percentage of synchronous bursts.",
+        "Near-complete synchrony is expected before roughly 27-29 weeks and again near term; about 70% synchrony may occur around 29-30 weeks and some asynchrony is expected from 30-37 weeks.",
+        "After 38 weeks PMA, substantial asynchrony is not expected; abnormal asynchrony means a clearly excessive PMA-adjusted proportion of bursts with onset difference >1.5 seconds."
+      ],
+      "exclusions": ["Synchrony does not describe continuous portions without identifiable bursts.", "No universal abnormal percentage cutoff is supplied; judgment remains PMA-conditioned."],
+      "measurement_requirements": ["homologous channels", "peak-to-peak voltage and feature distribution", "burst onset times", "synchronous-burst denominator", "PMA"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-VOLTAGE-ECI",
+      "name": "Term background voltage and electrocerebral inactivity",
+      "source": { "source_id": "S09", "pdf_pages": "10-11, 27, 32", "section": "EEG background - voltage; electrocerebral inactivity; Figure 1; Box 3" },
+      "definition": "Voltage categories for term neonatal background plus the separately standardized technical claim of electrocerebral inactivity (ECI).",
+      "applicability": "Voltage categories apply primarily to term infants; ECI requires a recording performed to separate ECI technical standards.",
+      "criteria": [
+        "Normal term background has most activity >=25 µV peak-to-peak in every behavioral state.",
+        "Borderline low voltage is continuous, retains normal activity and graphoelements, and is persistently >=10 and <25 µV peak-to-peak.",
+        "Low-voltage suppressed background lacks normal features, has fundamental baseline <10 µV peak-to-peak, permits >=10 µV transients only when <2 seconds, and is invariant and unreactive.",
+        "ECI means no discernible cerebral activity at or above 2 µV peak-to-peak when reviewed at sensitivity 2 µV/mm and only when ECI technical standards were met; otherwise report only that the record may be consistent with ECI."
+      ],
+      "exclusions": ["The source declines to define normal voltage limits for premature infants.", "Do not determine cerebral death from this EEG term alone.", "Do not apply ECI after a standard neonatal acquisition that lacks ECI technical requirements."],
+      "measurement_requirements": ["term/PMA status", "peak-to-peak voltage", "behavioral state", "sensitivity in µV/mm", "ECI acquisition-standard attestation", "reactivity and normal-feature assessment"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-VARIABILITY-REACTIVITY",
+      "name": "Background variability and reactivity",
+      "source": { "source_id": "S09", "pdf_pages": "11-12, 32", "section": "EEG background - variability; reactivity; Box 3" },
+      "definition": "Variability is spontaneous change from internal state; reactivity is cerebral EEG change after external stimulation.",
+      "applicability": "Neonatal background with sufficient longitudinal state sampling and documented stimulation.",
+      "criteria": [
+        "A qualifying response is a conspicuous change in frequency, continuity, or voltage.",
+        "Record each feature as yes, no, or unclear/unknown/not applicable.",
+        "Variability first appears near 25 weeks PMA, increases by 28 weeks, and is well established around 30-31 weeks.",
+        "Reactivity first appears around 30-32 weeks PMA; record stimulus type and strength.",
+        "Separate cerebral change from movement, EMG, crying, and respiratory artifacts; arousal-related voltage attenuation is not automatically discontinuity."
+      ],
+      "exclusions": ["Behavioral or muscle response alone is not cerebral EEG reactivity.", "Absence during one short state sample does not establish global absence."],
+      "measurement_requirements": ["PMA", "pre/post-stimulus EEG", "stimulus annotation", "artifact channels or observation", "state timeline"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-DYSMATURITY",
+      "name": "EEG dysmaturity",
+      "source": { "source_id": "S09", "pdf_pages": "12, 32", "section": "EEG background - dysmaturity; Box 3" },
+      "definition": "The EEG background appears developmentally appropriate for an infant at least two weeks younger than the actual PMA.",
+      "applicability": "Serial or sufficiently comprehensive neonatal recordings with an assigned EEG maturational age.",
+      "criteria": ["Difference between actual PMA and EEG-implied PMA is >=2 weeks.", "Persistent dysmaturity is abnormal; the source frames the concept longitudinally."],
+      "exclusions": ["Do not infer dysmaturity from one isolated feature without an overall maturational assessment."],
+      "measurement_requirements": ["actual PMA", "EEG-implied PMA based on state, continuity, synchrony, and graphoelements", "serial context when persistence is claimed"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-GRAPHOELEMENTS",
+      "name": "Normal neonatal graphoelements",
+      "source": { "source_id": "S09", "pdf_pages": "12-13, 34, 36", "section": "Normal graphoelements; Box 4; Figure 3a" },
+      "definition": "Named developmental background hallmarks whose morphology, state, distribution, and expected PMA window jointly determine normality.",
+      "applicability": "Neonatal background interpreted with PMA and state.",
+      "criteria": [
+        "Monorhythmic delta: 24-34 weeks PMA, up to 200 µV peak-to-peak, stereotyped delta usually occipital, temporal, or central and rarely frontal; typically symmetric, synchronous, and often surface positive.",
+        "Delta brushes: most prominent 24-36 weeks, 0.3-1.5 Hz slow waves at 50-250 µV with superimposed 8-12 or 18-22 Hz activity; peak expression 32-34 weeks, with state distribution changing by PMA and occasional quiet-sleep occurrence through 40 weeks.",
+        "Rhythmic temporal theta: 24-34 weeks, 25-120 µV theta in approximately 2-second temporal bursts, typically symmetric and maximal at 29-32 weeks; similar activity may occur at vertex or occipital sites.",
+        "Anterior dysrhythmia: 32-44 weeks, 50-100 µV frontal delta waves singly or in brief runs, typically symmetric and synchronous.",
+        "Encoches frontales: 34-44 weeks, 50-100 µV broad diphasic frontal transients lasting 0.5-0.75 seconds with small initial negative and larger positive phase; typically symmetric/synchronous and enriched during transition from active to quiet sleep."
+      ],
+      "exclusions": ["A named morphology outside its PMA/state/distribution context is not automatically a normal graphoelement.", "The source states that its list is not exhaustive."],
+      "measurement_requirements": ["PMA and state", "peak-to-peak voltage", "frequency and duration", "topography, polarity, symmetry, and synchrony"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-SHARP-TRANSIENTS",
+      "name": "Neonatal sharp-wave transients",
+      "source": { "source_id": "S09", "pdf_pages": "13-14, 35-38", "section": "EEG transient patterns - sharp wave transients; Box 5; Figures 3b-3c" },
+      "definition": "Distinct positive or negative transients are classified using baseline duration, abundance, spatial distribution, repetition, PMA, and background context.",
+      "applicability": "Transient assessment in the most continuous portions of neonatal EEG, preferably wakefulness or active sleep.",
+      "criteria": [
+        "A spike lasts <100 ms at baseline; a sharp wave lasts 100-200 ms; the transient must stand apart from background rather than be only sharply contoured background.",
+        "Physiologic negative sharp waves are usually 100-200 ms, solitary, symmetric, and mid-temporal/central/centro-temporal against a PMA-normal background; frontal, vertex, and occipital locations are uncommon.",
+        "Abnormal negative transients are supported by abnormal background, concentration in one region or hemisphere, atypical location, high abundance, or repetitive runs; source-cited outcome data call rates >11/hour preterm and >13/hour term abnormal.",
+        "Positive Rolandic/vertex sharp waves are centered at C3/C4 or vertex with adjacent field; excessive positive mid-temporal waves can indicate focal pathology, while cited upper normal observations are 3/hour preterm and 1.5/hour term."
+      ],
+      "exclusions": ["Do not count fleeting sharp contour embedded in discontinuous bursts as a distinct transient.", "Abundance boundaries remain debated and the cited rates are not presented as a complete standalone diagnostic rule."],
+      "measurement_requirements": ["15 mm/s display context or equivalent calibrated time", "duration at baseline", "events per hour by location", "polarity and field", "PMA/state/background", "run versus solitary occurrence"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-BRD",
+      "name": "Brief rhythmic discharge",
+      "source": { "source_id": "S09", "pdf_pages": "14-15, 35", "section": "EEG transient patterns - brief rhythmic discharges; Box 5" },
+      "definition": "An evolving rhythmic neonatal discharge resembling seizure activity but lasting less than ten seconds.",
+      "applicability": "Neonatal evolving rhythmic events below seizure duration.",
+      "criteria": ["Rhythmic electrical activity shows evolution and duration <10 seconds.", "Record accompanying background abnormality and confirmed seizures; these are common contexts but not stated as mandatory criteria."],
+      "exclusions": ["An event lasting >=10 seconds may meet neonatal seizure criteria instead.", "A very brief rhythmic pattern without evolution belongs with non-seizure rhythmic/periodic patterns, not BRD."],
+      "measurement_requirements": ["event duration", "evolution in frequency, voltage, morphology, or location", "background and seizure context"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-SEIZURE",
+      "name": "Neonatal seizure type, electrographic definition, and spread",
+      "source": { "source_id": "S09", "pdf_pages": "15-16, 39", "section": "Seizures and status epilepticus - neonatal seizures; Box 6" },
+      "definition": "A neonatal electrographic seizure is a sudden abnormal repetitive evolving EEG event meeting voltage and duration thresholds; clinical coupling is classified separately.",
+      "applicability": "Neonatal EEG events with calibrated voltage, continuous duration, evolution, and clinical/video correlation when a clinical class is assigned.",
+      "criteria": [
+        "Electrographic seizure is repetitive and unequivocally evolves in frequency, voltage, morphology, or location, reaches >=2 µV peak-to-peak, and lasts >=10 seconds; there is no minimum electrical frequency.",
+        "The 2 µV threshold marks seizure beginning and end; two events are separate only when the inter-event interval is >=10 seconds.",
+        "Electroclinical seizure has definite simultaneous clinical seizure signs; electrographic-only seizure has no specific visible clinical sign; clinical-only events have no simultaneous EEG seizure.",
+        "Spread classes are diffuse asynchronous involvement of all electrodes, bilateral independent, migrating between hemispheres, lateralized within one hemisphere, unifocal onset, or multifocal onset from >=3 independent foci with >=1 in each hemisphere.",
+        "Restricted locations may be frontal, central, temporal, occipital, vertex, anterior quadrant, posterior quadrant, or hemispheric left/right."
+      ],
+      "exclusions": ["Do not call evolving activity <10 seconds a seizure; use BRD.", "Do not call repetitive activity without evolution a seizure even when >10 seconds.", "Do not confuse arousal or drowsiness background transitions with seizures.", "Do not use generalized synchronous terminology where the neonatal source specifies diffuse asynchronous spread."],
+      "measurement_requirements": ["peak-to-peak voltage", "continuous event duration", "evolution domain", "inter-event interval", "onset focus and maximal spread", "time-locked video/clinical observations"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-SEIZURE-BURDEN-STATUS",
+      "name": "Neonatal seizure burden and status epilepticus",
+      "source": { "source_id": "S09", "pdf_pages": "16-17, 39", "section": "Seizure burden; status epilepticus; Box 6" },
+      "definition": "Seizure burden is quantified over an explicit denominator; neonatal status is defined by seizure occupancy of a one-hour epoch.",
+      "applicability": "Continuous neonatal EEG with complete seizure start/stop annotations and a defined analysis epoch.",
+      "criteria": [
+        "Clinical burden may be reported as seizure count per hour or total seizure duration divided by the duration of the epoch of interest.",
+        "Research temporal-spatial burden sums seizure duration per hour in five non-overlapping neonatal montage regions so each electrode is counted once; the source lists Fp3-T3, C3-O1, Fp4-T4, C4-O2, Fz-Pz or an alternate pairing.",
+        "Status epilepticus is present when summed seizure duration is >=50% of any defined 60-minute epoch."
+      ],
+      "exclusions": ["Do not report a percentage without the epoch denominator.", "The source explicitly describes the 50% status cutoff as somewhat arbitrary rather than outcome-validated."],
+      "measurement_requirements": ["seizure start/stop times", "60-minute rolling or explicitly anchored epoch", "count and summed duration", "non-overlapping region mapping for spatial burden"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-RPP-PATTERN-LOCATION",
+      "name": "Neonatal rhythmic and periodic patterns of uncertain significance",
+      "source": { "source_id": "S09", "pdf_pages": "17-18, 38, 40", "section": "Rhythmic and periodic patterns - patterns, duration, location; Figure 3c; Box 7" },
+      "definition": "Non-seizure periodic discharges and rhythmic delta activity are described by waveform organization, minimum cycles, onset, spread, and neonatal location terms.",
+      "applicability": "Neonatal rhythmic or periodic patterns that do not have seizure-defining evolution.",
+      "criteria": [
+        "Periodic discharges have relatively uniform morphology/duration, a measurable interdischarge interval, and near-regular recurrence: cycle length varies <50% between adjacent cycles in >50% of cycle pairs.",
+        "A discharge has <=3 phases or lasts <=0.5 seconds regardless of phases; a burst lasts >0.5 seconds and has >=4 phases.",
+        "RDA repeats relatively uniform waveforms without an inter-wave interval and has cycle-length variation <50% in >50% of adjacent cycle pairs.",
+        "PD or RDA must persist for >=6 cycles.",
+        "Location is lateralized, diffuse with asynchronous all-electrode involvement, bilateral independent, or multifocal; report onset focus, maximal spread, and F/C/T/O/Z or hemispheric predominance as applicable.",
+        "For diffuse patterns, frontal, occipital, or midline predominance requires amplitude >=50% greater than the comparison region in an appropriate referential montage."
+      ],
+      "exclusions": ["Evolution is not an RPP modifier in neonates because evolution defines BRD or seizure according to duration.", "Neonatal RDA is not necessarily abnormal; normal rhythmic occipital delta and anterior dysrhythmia can meet rhythmic form."],
+      "measurement_requirements": ["cycle and waveform duration", "phase count and baseline crossings", "interdischarge interval", "adjacent-cycle variability denominator", "at least six cycles", "montage-qualified spatial amplitude and spread"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "NEO-RPP-MODIFIERS",
+      "name": "Neonatal rhythmic/periodic duration, polarity, and sharpness modifiers",
+      "source": { "source_id": "S09", "pdf_pages": "18-19, 40", "section": "Rhythmic and periodic patterns - modifiers; Box 7" },
+      "definition": "Neonatal RPPs use a limited modifier set with neonatal duration boundaries and bipolar polarity measurement.",
+      "applicability": "Non-continuous neonatal PD/RDA patterns; polarity and sharpness apply only to PDs and the spike/sharp component of spike-wave patterns, not RDA.",
+      "criteria": [
+        "Record typical duration and preferably longest continuous duration: very long >=1 hour; long 5-59 minutes; intermediate 1-4.9 minutes; brief 10-59 seconds; very brief <10 seconds without evolution.",
+        "Determine predominant-phase polarity in a traditional bipolar montage as positive, negative, or unclear.",
+        "Measure sharpness at baseline for predominant and sharpest phase: spiky <100 ms; sharp 100-200 ms; sharply contoured theta/delta is >200 ms with steep or pointed morphology; blunt is smooth or sinusoidal."
+      ],
+      "exclusions": ["Do not apply polarity or sharpness to RDA.", "Do not use the newer non-neonatal 10-59 minute long-duration boundary; S09 specifies 5-59 minutes.", "Very brief evolving events are BRDs, not static RPP duration examples."],
+      "measurement_requirements": ["typical and longest duration", "traditional bipolar montage", "predominant and sharpest phase", "baseline duration in milliseconds"],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    }
+  ],
+  "unresolved_source_ambiguities": [
+    {
+      "id": "NEO-AMB-PMA-RANGES",
+      "pdf_pages": "3",
+      "issue": "The source says term is 37 up to 44 weeks PMA and post-term is 44 to 48 weeks PMA, creating a literal boundary overlap at 44; inclusivity at 48 is unstated.",
+      "current_handling": "Literal source wording remains in criteria; a half-open representation is recorded only as an engineering choice pending Craig."
+    },
+    {
+      "id": "NEO-AMB-IBI-VOLTAGE",
+      "pdf_pages": "8, 33",
+      "issue": "The prose defines an IBI using attenuation below a broad 25-50 µV peak-to-peak range, while Table 1 gives PMA-specific values of <25, approximately 25, and >25 µV.",
+      "current_handling": "Both the prose range and the literal Table 1 values are retained without collapsing them to one cutoff."
+    },
+    {
+      "id": "NEO-AMB-IBI-AFTER-40",
+      "pdf_pages": "33",
+      "issue": "Table 1 stops at 37-40 weeks PMA and supplies no normal maximum IBI row above 40 weeks.",
+      "current_handling": "No value above 40 weeks is inferred."
+    },
+    {
+      "id": "NEO-AMB-BURST-SUPPRESSION-EXCEPTION",
+      "pdf_pages": "8",
+      "issue": "The burst-suppression paragraph lists >2:1 voltage asymmetry in multiple electrodes alongside permitted sparse/transient IBI activity without clearly stating the logical relationship of that asymmetry clause.",
+      "current_handling": "The clause is identified as source-described and is not converted into a stricter logical rule."
+    },
+    {
+      "id": "NEO-AMB-PRETERM-VOLTAGE",
+      "pdf_pages": "10",
+      "issue": "The source explicitly declines to define normal voltage boundaries for premature infants.",
+      "current_handling": "Term voltage thresholds are not generalized to preterm infants."
+    },
+    {
+      "id": "NEO-AMB-SHARP-ABUNDANCE",
+      "pdf_pages": "13-14",
+      "issue": "The source states that physiologic/pathologic sharp-transient boundaries remain debated; its >11/hour preterm, >13/hour term, 3/hour preterm, and 1.5/hour term values are literature observations rather than a complete standalone classification rule.",
+      "current_handling": "Rates are retained as contextual supportive thresholds with the uncertainty stated."
+    },
+    {
+      "id": "NEO-AMB-STATUS-CUTOFF",
+      "pdf_pages": "16-17",
+      "issue": "The source defines neonatal status as seizure occupancy >=50% of a one-hour epoch but explicitly calls the cutoff somewhat arbitrary and not specifically justified over another percentage.",
+      "current_handling": "The operational cutoff and its evidentiary limitation are both retained."
+    },
+    {
+      "id": "NEO-AMB-SOURCE-COMMENTS",
+      "pdf_pages": "10, 16",
+      "issue": "The official source PDF visibly contains unresolved author comment balloons questioning the low-voltage-suppressed threshold and requesting a reliability reference for temporal-spatial seizure burden.",
+      "current_handling": "Contracts follow the body text; comment-balloon suggestions are not adopted as definitions."
+    }
+  ],
+  "coverage": [
+    { "source_id": "S09", "section": "Title, authors, committee", "pdf_pages": "1-2", "disposition": "context", "contract_ids": [], "notes": "Bibliographic provenance; no terminology rule." },
+    { "source_id": "S09", "section": "Background and scope", "pdf_pages": "3", "disposition": "context", "contract_ids": ["NEO-REPORTING-CONTEXT"], "notes": "Establishes a neonatal-specific terminology and cautions that routine-length norms may vary in longer recordings." },
+    { "source_id": "S09", "section": "Details to be reported", "pdf_pages": "3-4", "disposition": "mapped", "contract_ids": ["NEO-REPORTING-CONTEXT"], "notes": "PMA, exposures, quality, background epochs, seizure and status reporting." },
+    { "source_id": "S09", "section": "Behavioral state", "pdf_pages": "4-7", "disposition": "mapped", "contract_ids": ["NEO-BEHAVIORAL-STATE", "NEO-CONTINUITY-NORMAL"], "notes": "Awake and sleep states, developmental transitions, cycling, unspecified state changes." },
+    { "source_id": "S09", "section": "EEG background - continuity and discontinuity", "pdf_pages": "7-9", "disposition": "mapped", "contract_ids": ["NEO-CONTINUITY-NORMAL", "NEO-DISCONTINUITY-ABNORMAL"], "notes": "Includes normal continuity, tracé discontinu, tracé alternant, excessive discontinuity, and burst suppression." },
+    { "source_id": "S09", "section": "EEG background - symmetry, synchrony, voltage, ECI", "pdf_pages": "9-11", "disposition": "mapped", "contract_ids": ["NEO-SYMMETRY-SYNCHRONY", "NEO-VOLTAGE-ECI"], "notes": "ECI use remains conditional on separate technical standards." },
+    { "source_id": "S09", "section": "EEG background - variability, reactivity, dysmaturity", "pdf_pages": "11-12", "disposition": "mapped", "contract_ids": ["NEO-VARIABILITY-REACTIVITY", "NEO-DYSMATURITY"], "notes": "All judgments require PMA and adequate temporal/stimulus context." },
+    { "source_id": "S09", "section": "Normal graphoelements", "pdf_pages": "12-13", "disposition": "mapped", "contract_ids": ["NEO-GRAPHOELEMENTS"], "notes": "All five named developmental hallmarks are included; source says the list is not exhaustive." },
+    { "source_id": "S09", "section": "EEG transient patterns", "pdf_pages": "13-15", "disposition": "mapped", "contract_ids": ["NEO-SHARP-TRANSIENTS", "NEO-BRD"], "notes": "Sharp transient normal/pathologic distinctions and BRD." },
+    { "source_id": "S09", "section": "Seizures and status epilepticus", "pdf_pages": "15-17", "disposition": "mapped", "contract_ids": ["NEO-SEIZURE", "NEO-SEIZURE-BURDEN-STATUS"], "notes": "Clinical coupling, electrographic rule, spatial classes, burden, and neonatal status." },
+    { "source_id": "S09", "section": "Rhythmic and periodic patterns of uncertain significance", "pdf_pages": "17-19", "disposition": "mapped", "contract_ids": ["NEO-RPP-PATTERN-LOCATION", "NEO-RPP-MODIFIERS"], "notes": "PD/RDA form, duration, location, and limited neonatal modifiers." },
+    { "source_id": "S09", "section": "Conclusion", "pdf_pages": "19", "disposition": "context", "contract_ids": [], "notes": "Terminology is a revisable consensus framework; clinical significance remains an area for research." },
+    { "source_id": "S09", "section": "References", "pdf_pages": "20-22", "disposition": "out_of_scope", "contract_ids": [], "notes": "Bibliography supports the guideline but does not add standalone S09 operational terms." },
+    { "source_id": "S09", "section": "Figure legends and box index", "pdf_pages": "23-24", "disposition": "mapped", "contract_ids": ["NEO-DISCONTINUITY-ABNORMAL", "NEO-GRAPHOELEMENTS", "NEO-SHARP-TRANSIENTS", "NEO-SEIZURE", "NEO-RPP-PATTERN-LOCATION"], "notes": "Legends reinforce visual distinctions and provenance for the clinical examples." },
+    { "source_id": "S09", "section": "Box 1 and Box 2", "pdf_pages": "25-26", "disposition": "mapped", "contract_ids": ["NEO-REPORTING-CONTEXT", "NEO-BEHAVIORAL-STATE"], "notes": "Summary checklists for daily reporting and state categories." },
+    { "source_id": "S09", "section": "Figures 1-2, Box 3, and Table 1", "pdf_pages": "27-33", "disposition": "mapped", "contract_ids": ["NEO-CONTINUITY-NORMAL", "NEO-DISCONTINUITY-ABNORMAL", "NEO-VOLTAGE-ECI", "NEO-SYMMETRY-SYNCHRONY", "NEO-VARIABILITY-REACTIVITY", "NEO-DYSMATURITY"], "notes": "Voltage schematic, four discontinuity examples, background checklist, and PMA-indexed IBI table." },
+    { "source_id": "S09", "section": "Box 4, Box 5, and Figure 3", "pdf_pages": "34-38", "disposition": "mapped", "contract_ids": ["NEO-GRAPHOELEMENTS", "NEO-SHARP-TRANSIENTS", "NEO-BRD", "NEO-RPP-PATTERN-LOCATION"], "notes": "Graphoelement/transient summaries and visual contrast among encoche, physiologic sharp wave, and pathologic periodic sharp waves." },
+    { "source_id": "S09", "section": "Box 6", "pdf_pages": "39", "disposition": "mapped", "contract_ids": ["NEO-SEIZURE", "NEO-SEIZURE-BURDEN-STATUS"], "notes": "Seizure, location, burden, and status summary." },
+    { "source_id": "S09", "section": "Box 7", "pdf_pages": "40", "disposition": "mapped", "contract_ids": ["NEO-RPP-PATTERN-LOCATION", "NEO-RPP-MODIFIERS"], "notes": "RPP pattern, location, and modifier summary." }
+  ]
+}

@@ -1,0 +1,2405 @@
+{
+  "schema_version": "0.1",
+  "contract_set_version": "2026-09-15.p2-draft1",
+  "phase_status": "authored_ai_checked_pending_clinical_review",
+  "scope": "Core ACNS 2021 non-neonatal and 2013 neonatal terminology. S06 developmental extensions are inventoried but deferred.",
+  "interpretation": "Structured prose contracts, not executable validators. Nested criteria retain source qualifiers. Grouped contracts contain multiple concepts; contract count is not feature count.",
+  "source_register_version": "2026-09-15.p1",
+  "global_measurement_requirements": [
+    "Preserve original signal units and calibration; distinguish peak-to-peak from peak amplitude.",
+    "Record age/PMA, state, montage/reference, sampling rate, filters, observed duration and missing intervals.",
+    "Missing clinical, stimulus, medication-response or age context means not assessable, not a negative finding.",
+    "Screen images alone cannot establish raw-signal quantitative equivalence.",
+    "Do not transfer neonatal thresholds into non-neonatal classifications or vice versa."
+  ],
+  "boundary_policy": "P4 executable tests must cover immediately below/equal/above every threshold, unit conversions, interval closure, missing context and mutually exclusive labels. No executable clinical classifier is delivered in P2.",
+  "source_conflict_policy": "Retain conflicting statements and pin the source version; Craig adjudication is required before releasing affected boundary cases.",
+  "unresolved_source_ambiguities": [
+    {
+      "id": "NEO-AMB-PMA-RANGES",
+      "pdf_pages": [
+        3
+      ],
+      "issue": "The source says term is 37 up to 44 weeks PMA and post-term is 44 to 48 weeks PMA, creating a literal boundary overlap at 44; inclusivity at 48 is unstated.",
+      "current_handling": "Literal source wording remains in criteria; a half-open representation is recorded only as an engineering choice pending Craig.",
+      "source_id": "S09"
+    },
+    {
+      "id": "NEO-AMB-IBI-VOLTAGE",
+      "pdf_pages": [
+        8,
+        33
+      ],
+      "issue": "The prose defines an IBI using attenuation below a broad 25-50 µV peak-to-peak range, while Table 1 gives PMA-specific values of <25, approximately 25, and >25 µV.",
+      "current_handling": "Both the prose range and the literal Table 1 values are retained without collapsing them to one cutoff.",
+      "source_id": "S09"
+    },
+    {
+      "id": "NEO-AMB-IBI-AFTER-40",
+      "pdf_pages": [
+        33
+      ],
+      "issue": "Table 1 stops at 37-40 weeks PMA and supplies no normal maximum IBI row above 40 weeks.",
+      "current_handling": "No value above 40 weeks is inferred.",
+      "source_id": "S09"
+    },
+    {
+      "id": "NEO-AMB-BURST-SUPPRESSION-EXCEPTION",
+      "pdf_pages": [
+        8
+      ],
+      "issue": "The burst-suppression paragraph lists >2:1 voltage asymmetry in multiple electrodes alongside permitted sparse/transient IBI activity without clearly stating the logical relationship of that asymmetry clause.",
+      "current_handling": "The clause is identified as source-described and is not converted into a stricter logical rule.",
+      "source_id": "S09"
+    },
+    {
+      "id": "NEO-AMB-PRETERM-VOLTAGE",
+      "pdf_pages": [
+        10
+      ],
+      "issue": "The source explicitly declines to define normal voltage boundaries for premature infants.",
+      "current_handling": "Term voltage thresholds are not generalized to preterm infants.",
+      "source_id": "S09"
+    },
+    {
+      "id": "NEO-AMB-SHARP-ABUNDANCE",
+      "pdf_pages": [
+        13,
+        14
+      ],
+      "issue": "The source states that physiologic/pathologic sharp-transient boundaries remain debated; its >11/hour preterm, >13/hour term, 3/hour preterm, and 1.5/hour term values are literature observations rather than a complete standalone classification rule.",
+      "current_handling": "Rates are retained as contextual supportive thresholds with the uncertainty stated.",
+      "source_id": "S09"
+    },
+    {
+      "id": "NEO-AMB-STATUS-CUTOFF",
+      "pdf_pages": [
+        16,
+        17
+      ],
+      "issue": "The source defines neonatal status as seizure occupancy >=50% of a one-hour epoch but explicitly calls the cutoff somewhat arbitrary and not specifically justified over another percentage.",
+      "current_handling": "The operational cutoff and its evidentiary limitation are both retained.",
+      "source_id": "S09"
+    },
+    {
+      "id": "NEO-AMB-SOURCE-COMMENTS",
+      "pdf_pages": [
+        10,
+        16
+      ],
+      "issue": "The official source PDF visibly contains unresolved author comment balloons questioning the low-voltage-suppressed threshold and requesting a reliability reference for temporal-spatial seizure burden.",
+      "current_handling": "Contracts follow the body text; comment-balloon suggestions are not adopted as definitions.",
+      "source_id": "S09"
+    }
+  ],
+  "generator_source_sha256": {
+    "tools/eeg-render/eeg_render/schema.py": "41749bdbdd5b833ca09c3aa81271e9a7de3fc6e99f70b35aaa7551bee857730b",
+    "tools/eeg-render/eeg_render/spec.py": "e49c0b759cf26d4410c5d3dd8f5b8ba3b5d78d9f58290bb6bb53b6a26aaac3aa",
+    "tools/eeg-render/eeg_render/synth.py": "054f40c94b9d208602405045fd5b807ec03335729dcfc6af143abf1b2230d1fd"
+  },
+  "pilot_contracts": {
+    "AT-P01": [
+      "NEO-CONTINUITY-NORMAL",
+      "NEO-BEHAVIORAL-STATE",
+      "NEO-VOLTAGE-ECI"
+    ],
+    "AT-P02": [
+      "NEO-CONTINUITY-NORMAL",
+      "NEO-DISCONTINUITY-ABNORMAL",
+      "NEO-VOLTAGE-ECI"
+    ],
+    "AT-P03": [
+      "NEO-SEIZURE",
+      "NEO-BRD",
+      "NEO-SEIZURE-BURDEN-STATUS"
+    ],
+    "AT-P04": [
+      "SZ-ESZ",
+      "SZ-ECSZ",
+      "RPP-STIMULUS-EVOLUTION"
+    ],
+    "AT-P05": [
+      "SZ-ESZ",
+      "SZ-ECSZ",
+      "RPP-STIMULUS-EVOLUTION"
+    ],
+    "AT-P06": [
+      "BG-SYMMETRY",
+      "BG-PREDOMINANT-FREQUENCY",
+      "BG-PDR",
+      "BG-CONTINUITY",
+      "BG-BURST-MODIFIERS",
+      "BG-REACTIVITY",
+      "BG-STATE-CHANGES",
+      "BG-CAPE",
+      "BG-VOLTAGE",
+      "BG-AP-GRADIENT",
+      "BG-BREACH"
+    ],
+    "AT-P07": [
+      "RPP-LOCATION",
+      "RPP-TYPE",
+      "RPP-TIME-RATE",
+      "SZ-IIC"
+    ],
+    "AT-P08": [
+      "RPP-LOCATION",
+      "RPP-TYPE",
+      "RPP-STIMULUS-EVOLUTION",
+      "SZ-IIC"
+    ]
+  },
+  "contracts": [
+    {
+      "id": "BG-SYMMETRY",
+      "name": "Background symmetry",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          4
+        ],
+        "section": "A.1 Symmetry",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Symmetric, mildly asymmetric, or markedly asymmetric background.",
+      "applicability": "Non-neonatal EEG; report A.2–A.10 separately by hemisphere when asymmetric.",
+      "criteria": [
+        "Mild: consistent voltage difference <50% on an appropriate referential recording or frequency difference 0.5–1 Hz.",
+        "Marked: voltage difference >=50% or frequency difference >1 Hz.",
+        "Consistent means >80% of relevant instances or record."
+      ],
+      "exclusions": [
+        "Do not measure voltage symmetry from longitudinal bipolar amplitude when referential comparison is unavailable."
+      ],
+      "measurement_requirements": [
+        "Referential montage",
+        "Homologous bilateral regions",
+        "Record-level prevalence"
+      ],
+      "engineering_choices": [
+        "Choose the amplitude statistic and epoch aggregation for percent difference."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-PREDOMINANT-FREQUENCY",
+      "name": "Predominant background frequency",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          4
+        ],
+        "section": "A.2 Predominant Background Frequency When Most Awake or After Stimulation",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Band or tied bands most prominent when maximally awake or after stimulation.",
+      "applicability": "Non-neonatal EEG; some terms may be imperfect for infants.",
+      "criteria": [
+        "Categories: beta >13 Hz, alpha, theta, delta.",
+        "Report all 2 or 3 bands when equally prominent."
+      ],
+      "exclusions": [
+        "Do not substitute a less-alert state when a more-awake/stimulated state is available."
+      ],
+      "measurement_requirements": [
+        "Known state",
+        "Representative background band powers"
+      ],
+      "engineering_choices": [
+        "S01 gives no alpha/theta/delta boundaries or tie tolerance; version and review these separately."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-PDR",
+      "name": "Posterior dominant rhythm",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          4
+        ],
+        "section": "A.3 Posterior Dominant (Alpha) Rhythm",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Posterior dominant rhythm present with frequency, absent, or unclear.",
+      "applicability": "Non-neonatal EEG with interpretable eye-opening/closure testing.",
+      "criteria": [
+        "Present requires attenuation with eye opening.",
+        "Wait >1 s after eye closure before measuring frequency; report to nearest 0.5 Hz."
+      ],
+      "exclusions": [
+        "A posterior rhythm without demonstrated eye-opening attenuation is not present by this definition."
+      ],
+      "measurement_requirements": [
+        "Timed eye opening/closure",
+        "Posterior channels"
+      ],
+      "engineering_choices": [
+        "Define attenuation threshold and minimum observation duration; S01 does not."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-CONTINUITY",
+      "name": "Continuity and low-voltage percent",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          5,
+          6
+        ],
+        "section": "A.4 Continuity",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Continuity category from percent of a record/epoch occupied by attenuation or suppression.",
+      "applicability": "Non-neonatal EEG; these voltage cutoffs differ from neonatal terminology.",
+      "criteria": [
+        "Attenuation: lower activity >=10 µV and <50% of higher-voltage background; suppression: lower activity <10 µV.",
+        "Continuous: low-voltage percent <1%.",
+        "Nearly continuous: 1–9%, with qualifying periods >=1 s; report typical duration.",
+        "Discontinuous: alternating higher activity with 10–49% attenuation/suppression.",
+        "Burst attenuation/suppression: alternating higher activity with 50–99% attenuation/suppression.",
+        "Suppression/attenuation: >99%; suppressed when all activity <10 µV, attenuated when all activity <20 µV but not suppressed.",
+        "For noncontinuous records report attenuation or suppression percent using record/epoch as denominator.",
+        "Stimulus-induced periods are SI-attenuation or SI-suppression."
+      ],
+      "exclusions": [
+        ">99% is not discontinuous or burst attenuation/suppression."
+      ],
+      "measurement_requirements": [
+        "Peak-to-trough voltage in standard 10–20 longitudinal bipolar",
+        "Declared record/epoch denominator",
+        "Low-voltage interval duration/occupancy"
+      ],
+      "engineering_choices": [
+        "Fix analysis epoch, boundaries, and handling of mixed attenuation plus suppression."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-BURST-MODIFIERS",
+      "name": "Burst attenuation/suppression modifiers",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          3,
+          5,
+          6,
+          7
+        ],
+        "section": "Table 1; A.4.d Burst attenuation/Burst suppression",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Timing, localization, morphology, highly epileptiform, and identical-burst descriptors.",
+      "applicability": "Only burst attenuation or burst suppression.",
+      "criteria": [
+        "Burst averages >=0.5 s and has >=4 phases (>=3 baseline crossings); maximum duration 30 s.",
+        "Report location as generalized, lateralized, bilateral independent, unilateral independent, or multifocal; report typical burst/interburst durations and sharpest component.",
+        "Highly epileptiform: >=2 spikes/sharp waves in most (>50%) bursts at mean >=1 Hz within a burst, where frequency = 1 / typical interpeak latency; alternatively a rhythmic potentially ictal-appearing pattern occurs in most (>50%) bursts. Table 1 states >=1 Hz for this alternative, while A.4.d does not repeat that cutoff. Record frequency and location.",
+        "Identical: first >=0.5 s of each burst, or each stereotyped cluster of >=2 bursts, is visually similar in all channels in most (>90%) bursts."
+      ],
+      "exclusions": [
+        "Shorter or <4-phase events are discharges.",
+        "RPP, BIRD, and seizure classification is outside this contract."
+      ],
+      "measurement_requirements": [
+        "Phases",
+        "Burst/interburst segmentation",
+        "All-channel similarity",
+        "Interpeak latency"
+      ],
+      "engineering_choices": [
+        "Resolve the Table 1/A.4.d frequency-cutoff discrepancy; operationalize visual similarity and potentially ictal appearance."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-REACTIVITY",
+      "name": "Background reactivity",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          6,
+          7
+        ],
+        "section": "A.5 Reactivity",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Cerebral response to stimulation: reactive, unreactive, SIRPIDs-only, unclear, or unknown.",
+      "applicability": "Non-neonatal EEG with documented stimulation.",
+      "criteria": [
+        "Qualifying change may be in cerebral voltage or frequency, including attenuation.",
+        "SIRPIDs-only: sole response is a stimulus-induced rhythmic, periodic, or ictal-appearing discharge.",
+        "Unclear: inadequate test, excessive artifact, or equivocal cerebral change. Unknown: not tested or maximally alert throughout."
+      ],
+      "exclusions": [
+        "Muscle activity and eye blinks do not establish reactivity."
+      ],
+      "measurement_requirements": [
+        "Stimulus nature/strength",
+        "Prefer escalating stimuli",
+        "Repeat standardized noxious stimulation after an initially unreactive test",
+        "Sedative/paralytic caveat"
+      ],
+      "engineering_choices": [
+        "Define stimulation protocol and cerebral-change threshold; S01 does not fully specify them."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-STATE-CHANGES",
+      "name": "State changes and N2 transients",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          7,
+          8
+        ],
+        "section": "A.6 State Changes",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Sustained alertness/stimulation-related backgrounds with separate N2-transient characterization.",
+      "applicability": "Non-neonatal EEG; spontaneous or stimulated transitions.",
+      "criteria": [
+        "Present requires >=2 background types, each sustained >=60 s.",
+        "Stimulation should transition less-alert to more-alert/stimulated; spontaneous transitions qualify; the more-alert state is primary.",
+        "State changes virtually always imply reactivity; reactivity need not imply a state change when it lasts <60 s.",
+        "Categories: present with normal N2 transients; present with abnormal N2 transients; present without N2 transients; absent.",
+        "Describe K-complexes and spindles separately: present-normal, present-abnormal with abnormality, or absent."
+      ],
+      "exclusions": [
+        "Reactivity lasting <60 s does not alone establish a state change."
+      ],
+      "measurement_requirements": [
+        "State durations",
+        "Alertness/stimulation linkage",
+        "Separate K-complex/spindle review"
+      ],
+      "engineering_choices": [
+        "Define persistence across brief artifact and structured N2 abnormalities."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-CAPE",
+      "name": "Cyclic alternating pattern of encephalopathy",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          7,
+          8
+        ],
+        "section": "A.7 Cyclic Alternating Pattern of Encephalopathy (CAPE)",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Regular spontaneous alternation of two backgrounds: present, absent, or unknown/unclear.",
+      "applicability": "Non-neonatal encephalopathic EEG; components may include separately classified RPPs.",
+      "criteria": [
+        "Each pattern lasts >=10 s and the pair alternates spontaneously/regularly for >=6 complete cycles; a cycle includes each state once.",
+        "Describe each pattern and typical duration; note awake/stimulated versus less-awake state when known.",
+        "If each pattern lasts >60 s, state-change criteria are also met."
+      ],
+      "exclusions": [
+        "Stimulus-driven alternation alone is not the stated definition."
+      ],
+      "measurement_requirements": [
+        ">=6 cycles",
+        "Component durations",
+        "Optional coupling to respiration, heart rate, blood pressure, movement, muscle artifact, or pupils"
+      ],
+      "engineering_choices": [
+        "Define tolerance for 'regular'; S01 does not."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-VOLTAGE",
+      "name": "Background voltage",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          7,
+          8
+        ],
+        "section": "A.8 Voltage",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "High, normal, low, or suppressed peak-to-trough background voltage.",
+      "applicability": "Non-neonatal standard 10–20 longitudinal bipolar EEG.",
+      "criteria": [
+        "High: most/all activity >=150 µV.",
+        "Low: most/all activity <20 µV but not suppressed.",
+        "Suppressed: all activity <10 µV.",
+        "For nearly continuous/discontinuous records, use the higher-voltage portion."
+      ],
+      "exclusions": [
+        "Do not apply to neonatal EEG."
+      ],
+      "measurement_requirements": [
+        "Peak-to-trough amplitude",
+        "Standard montage",
+        "Higher-voltage portion when applicable"
+      ],
+      "engineering_choices": [
+        "Define 'most/all' and numeric normal bounds; S01 does not."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-AP-GRADIENT",
+      "name": "Anterior-posterior gradient",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          8
+        ],
+        "section": "A.9 Anterior-Posterior (AP) Gradient",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Expected AP gradient present, absent, or reversed.",
+      "applicability": "Non-neonatal EEG with anterior and posterior derivations.",
+      "criteria": [
+        "Present: clear persistent segment >=1 continuous min with lower-voltage/faster anterior and higher-voltage/slower posterior activity.",
+        "Reversed: same duration and paired criteria in the opposite direction."
+      ],
+      "exclusions": [
+        "Voltage-only or frequency-only gradient is insufficient."
+      ],
+      "measurement_requirements": [
+        "Anterior/posterior derivations",
+        ">=60 s uninterrupted segment",
+        "Concurrent voltage/frequency comparison"
+      ],
+      "engineering_choices": [
+        "Define quantitative 'clear' threshold."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "BG-BREACH",
+      "name": "Breach effect",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          8
+        ],
+        "section": "A.10 Breach Effect",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Breach effect present with location, absent, or unclear.",
+      "applicability": "EEG over or near a skull defect.",
+      "criteria": [
+        "Present: higher amplitude and increased sharpness, mainly faster frequencies, versus the rest of brain and especially the contralateral homologous region."
+      ],
+      "exclusions": [
+        "Sharp activity without the skull-defect spatial relationship is insufficient."
+      ],
+      "measurement_requirements": [
+        "Defect location",
+        "Contralateral homolog",
+        "Amplitude/sharpness/frequency context"
+      ],
+      "engineering_choices": [
+        "Define comparison thresholds and whether defect metadata is mandatory."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SED-MORPHOLOGY",
+      "name": "Sporadic epileptiform discharge morphology",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          8
+        ],
+        "section": "B. Sporadic Epileptiform Discharges",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Nonrhythmic, nonperiodic spikes, sharp waves, and polyspikes.",
+      "applicability": "Non-neonatal EEG; localization may be added.",
+      "criteria": [
+        "Spike: pointed transient distinct from background, duration >=20 ms and <70 ms at EEG baseline.",
+        "Sharp wave: same definition, duration >=70 ms and <=200 ms (source states 70–200 ms).",
+        "Polyspike: >=2 consecutive spikes with no interdischarge interval, total duration <0.5 s.",
+        "Typical, not required: diphasic/triphasic, apiculate, asymmetric slope, followed by slow wave or other background disruption."
+      ],
+      "exclusions": [
+        "Rhythmic/periodic discharges are not sporadic.",
+        ">=0.5-s spike trains may enter BIRD or highly epileptiform burst classification, outside scope."
+      ],
+      "measurement_requirements": [
+        "Duration at baseline",
+        "Conventional time scale",
+        "Background distinction",
+        "Interdischarge interval"
+      ],
+      "engineering_choices": [
+        "S01 does not quantify pointedness/background disruption or explicitly discuss the 200-ms endpoint; adjudicate boundary cases."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SED-PREVALENCE",
+      "name": "Sporadic epileptiform discharge prevalence",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          8
+        ],
+        "section": "B. Sporadic Epileptiform Discharges — prevalence",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Combined prevalence of spikes, polyspikes, and sharp waves.",
+      "applicability": "Nonrhythmic, nonperiodic sporadic discharges in non-neonatal EEG.",
+      "criteria": [
+        "Abundant: >=1/10 s, but not periodic.",
+        "Frequent: >=1/min and <1/10 s.",
+        "Occasional: >=1/h and <1/min.",
+        "Rare: <1/h.",
+        "When abundant, mean and maximum count per 10-s epoch may be recorded."
+      ],
+      "exclusions": [
+        "Periodic discharges cannot be abundant sporadic discharges."
+      ],
+      "measurement_requirements": [
+        "Combined discharge count",
+        "Analyzed duration",
+        "Periodicity check"
+      ],
+      "engineering_choices": [
+        "S01 provides no explicit absent category; represent zero events separately pending review."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-VALIDITY",
+      "name": "RPP term construction and validity boundary",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          9,
+          12,
+          13,
+          17
+        ],
+        "section": "C introductory text; C2; C3c,h",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "An RPP name combines one localization main term with one pattern-type main term, then adds applicable modifiers.",
+      "applicability": "All RPP labels in this file.",
+      "criteria": {
+        "required_components": [
+          "one main_term_1 localization",
+          "one main_term_2 pattern type"
+        ],
+        "minimum_run": {
+          "consecutive_cycles_min": 6,
+          "examples": [
+            "1 Hz for 6 s",
+            "3 Hz for 2 s"
+          ]
+        },
+        "frequency_boundary": "No RPP may have a typical frequency above 4 Hz. A pattern above 4 Hz lasting at least 0.5 s is outside this RPP contract; one shorter than 0.5 s is not an RPP.",
+        "evolution_boundary": "Within RPP terminology, evolution is limited to patterns at or below 4 Hz and shorter than 10 s. Longer evolving patterns and faster short patterns are delegated to the seizure/BIRD contracts."
+      },
+      "exclusions": [
+        "ESz/ESE/ECSz/ECSE definitions",
+        "BIRD definitions",
+        "IIC derivations"
+      ],
+      "measurement_requirements": [
+        "Identify consecutive cycles before assigning any RPP.",
+        "Use the source-defined frequency, morphology, and localization criteria in the component contracts."
+      ],
+      "engineering_choices": [
+        "Represent boundary handoffs as validation failures or external labels; do not derive seizure, BIRD, or IIC labels here."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-LOCATION",
+      "name": "Main term 1: localization",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          9,
+          10,
+          11
+        ],
+        "section": "C1",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Main term 1 specifies the spatial organization of the RPP.",
+      "applicability": "All PD, RDA, and SW patterns.",
+      "criteria": {
+        "allowed_values": {
+          "G": {
+            "name": "Generalized",
+            "rule": "Bilaterally synchronous and symmetric, including a restricted field. Bilateral asymmetry or asynchrony that shifts and is not consistently lateralized to one side more than 80% of the time remains G.",
+            "qualifiers": {
+              "predominance": {
+                "frontally": "anterior voltage at least 50% greater than posterior",
+                "occipitally": "posterior voltage at least 50% greater than anterior",
+                "midline": "midline voltage at least 50% greater than parasagittal",
+                "not_otherwise_specified": "similar voltage in all regions and none of the preceding"
+              },
+              "asynchrony": "For shifting asynchrony, record typical inter-side lag."
+            }
+          },
+          "L": {
+            "name": "Lateralized",
+            "rule": "Unilateral; or bilateral with clearly and consistently greater amplitude on one side; or bilateral with a consistent lead-in from one side. Includes focal, regional, and hemispheric patterns.",
+            "qualifiers": {
+              "laterality": "Specify side.",
+              "extent": [
+                "unilateral",
+                "bilateral asymmetric",
+                "bilateral asynchronous",
+                "both asymmetric and asynchronous"
+              ],
+              "consistency": "Bilateral asymmetric and bilateral asynchronous examples require the same side more than 80% of the time.",
+              "lag": "For bilateral asynchronous, record typical inter-side lag.",
+              "lobes": [
+                "F",
+                "P",
+                "T",
+                "O",
+                "hemispheric if no finer localization"
+              ]
+            }
+          },
+          "BI": {
+            "name": "Bilateral independent",
+            "rule": "Two independent, therefore asynchronous, lateralized patterns, one in each hemisphere, occurring simultaneously (overlapping in time), not sequentially.",
+            "qualifiers": {
+              "symmetry": [
+                "symmetric",
+                "asymmetric with L > R or R > L"
+              ],
+              "lobes": [
+                "F",
+                "P",
+                "T",
+                "O",
+                "hemispheric"
+              ]
+            }
+          },
+          "UI": {
+            "name": "Unilateral independent",
+            "rule": "Two independent, therefore asynchronous, periodic or rhythmic patterns in the same hemisphere occurring simultaneously, not sequentially. A focal midline pattern can be ipsilateral to an independent left or right pattern.",
+            "qualifiers": {
+              "per_pattern": [
+                "unilateral/bilateral extent",
+                "asymmetry/asynchrony if bilateral",
+                "side",
+                "most involved lobe(s)"
+              ]
+            }
+          },
+          "Mf": {
+            "name": "Multifocal",
+            "rule": "At least three independent lateralized patterns, with at least one in each hemisphere, all occurring simultaneously.",
+            "qualifiers": {
+              "symmetry": [
+                "symmetric",
+                "asymmetric with L > R or R > L"
+              ],
+              "lobes": [
+                "F",
+                "P",
+                "T",
+                "O",
+                "hemispheric"
+              ]
+            }
+          }
+        }
+      },
+      "exclusions": [
+        "Independent patterns occurring at different times are separate lateralized patterns, not BI or UI.",
+        "Two lateralized sides with fixed interhemispheric latency are lateralized bilateral-asynchronous, not BI."
+      ],
+      "measurement_requirements": [
+        "Use common-average, transverse-bipolar, ipsilateral-ear, or noncephalic referential recordings for generalized anterior/posterior predominance; common-average or noncephalic reference for midline predominance.",
+        "Assess simultaneous temporal overlap and side consistency."
+      ],
+      "engineering_choices": [
+        "Store the main term and qualifiers independently; do not infer localization from a single channel label."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-TYPE",
+      "name": "Main term 2: PDs, RDA, and SW",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          12,
+          13
+        ],
+        "section": "C2",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Main term 2 specifies the repeating waveform organization.",
+      "applicability": "RPPs after main-term-1 localization is assigned.",
+      "criteria": {
+        "PDs": {
+          "name": "Periodic discharges",
+          "rule": "Relatively uniform waveform morphology and duration, a discernible inter-discharge interval, and recurrence at nearly regular intervals.",
+          "regularity": "Cycle length varies by less than 50% from one cycle to the next in a majority (>50%) of cycle pairs.",
+          "discharge": "Waveform shorter than 0.5 s irrespective of phases, or at least 0.5 s with no more than 3 phases; must stand out from background."
+        },
+        "RDA": {
+          "name": "Rhythmic delta activity",
+          "rule": "Relatively uniform waveform morphology and duration with no interval between waves; irregular or polymorphic delta is not RDA.",
+          "regularity": "Period varies by less than 50% from the subsequent cycle in a majority (>50%) of cycle pairs.",
+          "frequency_hz": {
+            "min": 0.5,
+            "max": 4.0
+          },
+          "note": "Sharp crests or troughs do not prevent a pattern from being rhythmic."
+        },
+        "SW": {
+          "name": "Spike-and-wave or sharp-and-wave",
+          "rule": "Spike, polyspike, or sharp wave consistently followed by a slow wave in a regular alternating repeating pattern, with a consistent component relationship for at least 6 consecutive cycles and no interval between complexes."
+        }
+      },
+      "exclusions": [
+        "An interval between spike-wave complexes is PDs, with each discharge a spike-and-wave.",
+        "A pattern qualifying as both PDs and RDA is PDs+R, not RDA+S."
+      ],
+      "measurement_requirements": [
+        "Measure cycle-to-cycle period and count all consecutive cycles.",
+        "Determine discharge phases separately from RDA."
+      ],
+      "engineering_choices": [
+        "Preserve source categories as enums; do not collapse PD, RDA, and SW into a generic rhythmicity class."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-TIME-RATE",
+      "name": "Prevalence, duration, and frequency modifiers",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          13,
+          14
+        ],
+        "section": "C3a-c",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "These modifiers quantify how much pattern is present, its continuous run length, and its rate.",
+      "applicability": "All RPPs; duration is recorded if not continuous.",
+      "criteria": {
+        "prevalence_percent_record_or_epoch": {
+          "continuous": ">=90",
+          "abundant": "50-89",
+          "frequent": "10-49",
+          "occasional": "1-9",
+          "rare": "<1",
+          "denominator": "proportion of the record or epoch that includes or is within the pattern; intervals between widely spaced PDs count as pattern duration",
+          "multiple_patterns": "Record each pattern and its own prevalence."
+        },
+        "typical_duration": {
+          "very_long": ">=1 h",
+          "long": "10-59 min",
+          "intermediate": "1-9.9 min",
+          "brief": "10-59 s",
+          "very_brief": "<10 s",
+          "also_required": "longest continuous duration"
+        },
+        "frequency_hz": {
+          "required": [
+            "typical",
+            "minimum",
+            "maximum"
+          ],
+          "categories": [
+            "<0.5",
+            "0.5",
+            "1",
+            "1.5",
+            "2",
+            "2.5"
+          ],
+          "very_brief_additional_categories": [
+            "3",
+            "3.5",
+            "4"
+          ],
+          "PD_SW_restriction": "Typical frequency >2.5 Hz is an RPP only when duration is <10 s; at >=10 s it is outside this RPP contract."
+        }
+      },
+      "exclusions": [
+        "Do not calculate seizure burden here.",
+        "Do not recast frequency-boundary patterns as seizure/BIRD labels in this contract."
+      ],
+      "measurement_requirements": [
+        "Report the specified denominator and record/epoch duration.",
+        "Compute rate in cycles or discharges per second."
+      ],
+      "engineering_choices": [
+        "Store numeric measurements and categorical bins together so bins remain auditable."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-WAVEFORM-MODIFIERS",
+      "name": "Phases, sharpness, and voltage modifiers",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          13,
+          14
+        ],
+        "section": "C3d-f",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "These modifiers describe discharge structure, contour, and amplitude.",
+      "applicability": "Phases: PDs and the entire SW complex, not RDA. Sharpness and polarity: PDs and spike/sharp component of SW, not RDA. Voltage: PDs, SW, and RDA; relative voltage only PDs.",
+      "criteria": {
+        "phases": {
+          "formula": "1 + number of baseline crossings of the typical discharge",
+          "montage": "longitudinal bipolar, channel where most apparent",
+          "baseline_rule": "Start and end points are not crossings",
+          "bins": [
+            "1",
+            "2",
+            "3",
+            ">3"
+          ]
+        },
+        "sharpness": {
+          "spiky": "component duration at EEG baseline <70 ms",
+          "sharp": "70-200 ms",
+          "sharply_contoured": "steep slope on one side and/or pointed/apiculate inflection, but too long to be sharp",
+          "blunt": "smooth or sinusoidal",
+          "required": "Describe dominant (highest-voltage) phase and sharpest phase if different."
+        },
+        "absolute_voltage_peak_to_trough_uV": {
+          "montage": "standard longitudinal bipolar 10-20, channel where pattern is most apparent",
+          "PD_measurement": "highest-voltage component",
+          "SW_measurement": "spike/sharp component",
+          "bins": {
+            "very_low": "<20",
+            "low": "20-49",
+            "medium": "50-149",
+            "high": ">=150"
+          }
+        },
+        "relative_voltage_PDs_only": "Ratio of the highest-voltage component of the typical discharge to typical between-discharge background in the same channel and montage; bin as <=2 or >2."
+      },
+      "exclusions": [
+        "Do not use background EEG voltage for the RPP voltage modifier."
+      ],
+      "measurement_requirements": [
+        "Use peak-to-trough, not peak-to-baseline, amplitude.",
+        "Use the same channel and montage for PD absolute and relative voltage."
+      ],
+      "engineering_choices": [
+        "Retain the acquisition montage with every amplitude, phase, and polarity-related field."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-STIMULUS-EVOLUTION",
+      "name": "Stimulus state, evolution, fluctuation, and static modifiers",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          14,
+          15,
+          16,
+          17
+        ],
+        "section": "C3g-h",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Stimulus modifiers describe reproducible response to alerting stimulation; temporal modifiers describe frequency, morphology, or location change.",
+      "applicability": "Stimulus state applies to RPPs. Evolution/fluctuation/static applies to RPPs within the RPP validity boundary.",
+      "criteria": {
+        "stimulus_state": {
+          "SI": "Reproducibly brought about or exacerbated by alerting stimulus in a less-stimulated state, with or without clinical alerting; may also occur spontaneously.",
+          "ST": "Reproducibly terminated or attenuated by alerting stimulus in a less-stimulated state, with or without clinical alerting; may also self-terminate.",
+          "spontaneous": "Never clearly induced, exacerbated, improved, or terminated by stimulation.",
+          "unknown": "Unclear or untested.",
+          "stimulus_type_required": [
+            "auditory",
+            "light tactile",
+            "patient care/other nonnoxious",
+            "noxious"
+          ]
+        },
+        "evolving": {
+          "minimum": "At least 2 unequivocal sequential changes in the same category.",
+          "frequency": "Two consecutive changes in one direction, each at least 0.5 Hz; each frequency persists at least 3 cycles.",
+          "morphology": "Two consecutive novel morphologies; each morphology, including transition forms, persists at least 3 cycles.",
+          "location": "Sequential spread into or out of at least 2 standard 10-20 electrode locations; involvement of each additional electrode persists at least 3 cycles.",
+          "interstep_gap": "Reach criteria without the changing feature remaining unchanged for 5 or more continuous minutes.",
+          "amplitude": "Voltage/amplitude change alone is neither evolution nor a new morphology."
+        },
+        "fluctuating": {
+          "minimum": "At least 3 changes, no more than 1 minute apart, not qualifying as evolution.",
+          "frequency": "Each change at least 0.5 Hz; each frequency persists at least 3 cycles.",
+          "morphology": "Each morphology persists at least 3 cycles.",
+          "location": "Each change at least 1 standard interelectrode distance; each location persists at least 3 cycles.",
+          "amplitude": "Voltage/amplitude change alone is not fluctuation."
+        },
+        "static": "Neither evolving nor fluctuating.",
+        "additional_reporting": "If evolving or fluctuating in frequency, specify minimum and maximum frequency. For nongeneralized patterns specify spread as none, unilateral, or bilateral."
+      },
+      "exclusions": [
+        "SIRPIDs is an umbrella source term; record the specific SI-RPP rather than deriving seizure/IIC/BIRD forms.",
+        "No seizure/BIRD/IIC classification is emitted."
+      ],
+      "measurement_requirements": [
+        "Annotate stimulus timing/type and less-stimulated baseline.",
+        "Track time-stamped cycles, frequency, morphology, and standard 10-20 locations."
+      ],
+      "engineering_choices": [
+        "Use an event sequence rather than a single classifier score so cycle persistence, direction, and interstep gap can be audited."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-PLUS",
+      "name": "Plus modifier and extreme delta brush",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ],
+        "section": "C3i",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Plus denotes an added feature that makes PDs or RDA more ictal-appearing than the unmodified pattern. Extreme delta brush is a specific +F subtype.",
+      "applicability": "Plus applies to PDs and RDA only, never SW.",
+      "criteria": {
+        "subtypes": {
+          "+F": "Superimposed theta-or-faster activity, rhythmic or not, on PDs or RDA. It must be part of the pattern, not merely background; for PDs it may be continuous if absent when PDs are absent, or occur regularly with each discharge.",
+          "+R": "Superimposed rhythmic or quasi-rhythmic delta activity; PDs only.",
+          "+S": "Associated sharp waves, spikes, or sharp contour; RDA only; present at least once per 10 s and not an SW pattern.",
+          "combinations": [
+            "PDs+FR",
+            "RDA+FS"
+          ]
+        },
+        "bilateral_rule": "If a bilateral pattern qualifies for plus on only one side, the overall main term still receives the plus modifier.",
+        "EDB": {
+          "definite": "Abundant or continuous RDA+F with fast activity stereotypically related to the delta wave, or abundant/continuous PDs+F where each PD is a single blunt delta wave and fast activity is stereotypically related to that delta wave.",
+          "possible": "Meets either EDB form but is only occasional/frequent, or the fast activity lacks a stereotyped delta-wave relationship.",
+          "not_EDB": "RDA+F/PDs+F lacking both required EDB conditions; a periodic pattern can be EDB only if PDs are blunt delta brushes; fast activity between delta waves or present as background does not qualify."
+        }
+      },
+      "exclusions": [
+        "Other ictal-appearing attributes, including sharpness, voltage, and fluctuation, are reported through their own modifiers."
+      ],
+      "measurement_requirements": [
+        "Assess whether fast activity persists outside the RPP.",
+        "For EDB, measure prevalence and relationship of fast activity to each delta wave."
+      ],
+      "engineering_choices": [
+        "Encode plus subtypes as a set and EDB as a separately validated subtype; do not infer EDB from +F alone."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "RPP-MINOR",
+      "name": "Minor modifiers",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          22
+        ],
+        "section": "C4",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Minor modifiers refine onset, morphology, lag, and polarity.",
+      "applicability": "As specified per modifier.",
+      "criteria": {
+        "onset": {
+          "sudden": "Absent to well-developed within 3 s.",
+          "gradual": "Does not meet sudden-onset definition."
+        },
+        "triphasic_morphology": "Three negative-positive-negative phases, each longer than the preceding and the positive phase of highest voltage; or positive-negative biphasic appearance when a low-voltage first negative phase is obscured by background. PDs and SW only.",
+        "anterior_posterior_lag": "Consistent measurable delay >100 ms from most anterior to most posterior derivation, or reverse; report typical anterior-to-posterior delay in ms (negative for posterior-to-anterior) in longitudinal bipolar and referential montage, preferably ipsilateral-ear reference. PDs or spike/sharp component of SW only.",
+        "polarity": {
+          "values": [
+            "positive",
+            "negative",
+            "dipole, tangential",
+            "unclear"
+          ],
+          "rule": "Describe dominant/highest-voltage phase in a referential montage; PDs or spike/sharp component of SW only."
+        }
+      },
+      "exclusions": [
+        "Triphasic morphology, lag, and polarity do not apply to RDA."
+      ],
+      "measurement_requirements": [
+        "Record montage for lag and polarity.",
+        "Assess each phase's polarity, duration, and voltage for triphasic morphology."
+      ],
+      "engineering_choices": [
+        "Keep conventional terminology and raw lag in milliseconds together; do not infer polarity from bipolar montage."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-ESZ",
+      "name": "Electrographic seizure",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          22,
+          23
+        ],
+        "section": "D.1",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Electrographic seizure classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": []
+      },
+      "criteria": [
+        "Either discharges averaging >2.5 Hz for >=10 s (>25 discharges/10 s), OR a pattern with definite evolution lasting >=10 s.",
+        "Sharply contoured discharges >200 ms may qualify through the high-rate pathway even when not technically epileptiform.",
+        "Evolution must satisfy the source RPP evolution criteria; amplitude change alone is insufficient."
+      ],
+      "exclusions": [
+        "Do not infer neonatal seizure criteria from this contract"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-ESE",
+      "name": "Electrographic status epilepticus",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          23,
+          24
+        ],
+        "section": "D.2",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Electrographic status epilepticus classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Enough recording for the continuous-duration branch or a 60-minute burden window"
+        ]
+      },
+      "criteria": [
+        "Qualifying ESz continues for >=10 minutes, OR total ESz duration is >=20% of any 60-minute interval.",
+        "Hourly burden uses the specified 60-minute denominator, not a cropped display's duration."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-ECSZ",
+      "name": "Electroclinical seizure",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D.3",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Electroclinical seizure classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical event/video evidence or documented EEG and clinical medication response"
+        ]
+      },
+      "criteria": [
+        "An EEG pattern with a definite time-locked clinical correlate, OR EEG AND clinical improvement after parenteral antiseizure medication.",
+        "A definite correlate must accompany the pattern and be absent when that pattern is absent; subtle signs can qualify.",
+        "Duration <10 s qualifies only with a definite clinical correlate. An ECSz need not meet ESz; report both when both qualify."
+      ],
+      "exclusions": [
+        "Muscle artifact synthesized beside an event is not proof of a clinical correlate"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-ECSE",
+      "name": "Electroclinical status epilepticus",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D.4",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Electroclinical status epilepticus classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical state, baseline in known epileptic encephalopathy, treatment/response timing where used"
+        ]
+      },
+      "criteria": [
+        "ECSz persists >=10 continuous minutes OR occupies >=20% of any 60-minute interval.",
+        "Exception: ongoing bilateral tonic-clonic motor seizure qualifies at >=5 continuous minutes.",
+        "Known epileptic encephalopathy additionally requires increased prominence/frequency of discharges from baseline with clinical deterioration, OR EEG and clinical improvement following parenteral antiseizure medication."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-POSSIBLE-ECSE",
+      "name": "Possible electroclinical status epilepticus",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D.4b",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Possible electroclinical status epilepticus classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Medication route/time and separate EEG versus clinical response"
+        ]
+      },
+      "criteria": [
+        "An IIC RPP persists >=10 continuous minutes OR >=20% of any 60-minute interval.",
+        "Parenteral antiseizure medication improves the EEG without clinical improvement.",
+        "All duration, IIC and response requirements are conjunctive."
+      ],
+      "exclusions": [
+        "Already qualifying ESz/ESE excluded"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-NONCONVULSIVE",
+      "name": "Nonconvulsive seizure/status qualifier",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D notes: motor manifestations",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Nonconvulsive seizure/status qualifier classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical motor observations; cannot be inferred from EEG alone"
+        ]
+      },
+      "criteria": [
+        "No prominent motor activity; applies to electrographic or electroclinical seizure/status.",
+        "Prefer nonconvulsive to subclinical: absence of prominent movement does not establish absence of clinical contribution."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-SI",
+      "name": "Stimulus-induced seizure/IIC/BIRDs qualifier",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24,
+          26
+        ],
+        "section": "D/F notes: SI prefix",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Stimulus-induced seizure/IIC/BIRDs qualifier classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Stimulus timestamps and responses; distinguish artifact"
+        ]
+      },
+      "criteria": [
+        "Alerting stimulus reproducibly induces or exacerbates the qualifying phenomenon; prepend SI to the qualifying term."
+      ],
+      "exclusions": [
+        "Temporal proximity alone without reproducibility is insufficient"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-BIRDS",
+      "name": "Brief potentially ictal rhythmic discharges",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24,
+          25
+        ],
+        "section": "E",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Brief potentially ictal rhythmic discharges classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Same-patient comparative EEG if similarity branch is used"
+        ]
+      },
+      "criteria": [
+        "Focal (L/BI/UI/Mf) or generalized rhythmic activity >4 Hz, at least six waves at a regular rate, duration >=0.5 s and <10 s.",
+        "Exclude known normal/benign patterns, activity forming part of burst-suppression/attenuation, and definite clinical correlates.",
+        "Definite: evolution OR morphology AND location resembling interictal discharges or seizures in the same patient.",
+        "Possible: sharply contoured without either definite criterion.",
+        "Paroxysmal fast activity of the stated duration can qualify, focal or generalized, subject to the defining exclusions."
+      ],
+      "exclusions": [
+        "Do not equate neonatal BRDs with this definition"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "SZ-IIC",
+      "name": "Ictal-interictal continuum",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          25,
+          26
+        ],
+        "section": "F",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Ictal-interictal continuum classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Full clinical context for interpretation; only waveform category is derived here"
+        ]
+      },
+      "criteria": [
+        "Always exclude ESz/ESE.",
+        "Pathway A: PD/SW averages >1 and <=2.5 Hz over 10 s.",
+        "Pathway B: PD/SW averages >=0.5 and <=1 Hz over 10 s AND (has a plus modifier OR fluctuation).",
+        "Pathway C: lateralized RDA averages >1 Hz for >=10 s AND (has a plus modifier OR fluctuation); includes LRDA, BIRDA, UIRDA and MfRDA.",
+        "IIC describes an electrographic category, not a diagnosis or an automatic treatment order."
+      ],
+      "exclusions": [
+        "GRDA does not qualify through pathway C"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "unresolved_source_ambiguities": [
+        {
+          "issue": "Source states >1 Hz but parenthetical says at least 10 waves in 10 s for RDA.",
+          "location": "S01 p25 F(c), repeated figure p26",
+          "provisional_handling": "Preserve strict >1 Hz primary statement; exact-boundary examples require Craig adjudication before executable rule release.",
+          "visual_check": "S01 PDF page 25 rendered and inspected"
+        }
+      ],
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "REP-MINIMUM",
+      "name": "Minimum clinical reporting context",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          26
+        ],
+        "section": "G",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Minimum clinical reporting context classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical-care reporting recommendation; not a synthetic waveform criterion"
+        ]
+      },
+      "criteria": [
+        "Review/report first 30–60 minutes promptly.",
+        "Written report at least once per 24 hours; significant intervening changes get separate epochs/reports.",
+        "Communication updates at least twice daily recommended except unusually stable circumstances."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "REP-BURDEN",
+      "name": "Pattern/seizure burden and index",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          26,
+          27
+        ],
+        "section": "H",
+        "sha256": "ddd0dba5968d9aad86207e400c4619b6184821ba669779ad8f06b06ab0425d84"
+      },
+      "definition": "Pattern/seizure burden and index classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Observation interval and interpretable duration must be retained; do not treat missing EEG as absence"
+        ]
+      },
+      "criteria": [
+        "Daily burden: total pattern or seizure duration per 24 hours; hourly and maximal hourly burdens also reportable.",
+        "Daily pattern index: daily burden multiplied by mean frequency; retain units (Hz-hours or Hz-minutes)."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [
+        "Union overlapping intervals for occupied time; declare missing-data denominator policy in P3 rather than invent it as ACNS rule."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "critical_care_2021_non_neonatal",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-REPORTING-CONTEXT",
+      "name": "Neonatal recording context and daily reporting",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          3,
+          4,
+          25
+        ],
+        "section": "Details to be reported; Box 1",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Minimum context needed to interpret each 24-hour neonatal continuous video-EEG period and its clinically relevant changes.",
+      "applicability": "Every neonatal recording and each reported 24-hour period.",
+      "criteria": [
+        "Record postmenstrual age (PMA) at acquisition; PMA is gestational age from last menstrual period plus chronological age.",
+        "Source categories are preterm <37 weeks PMA, term 37 up to 44 weeks PMA, and post-term 44 to 48 weeks PMA; the literal wording overlaps at 44 weeks and does not state whether 48 weeks is inclusive.",
+        "Record neuroactive medications and ideally administration times, including sedatives, hypnotics, anxiolytics, anesthetics, and antiseizure drugs.",
+        "Record hypothermia depth, duration, and whether spontaneous or induced; record major hemodynamic, respiratory, or cardiorespiratory changes.",
+        "Record hours uninterpretable for technical reasons; characterize the first hour, one background hour in each later 24-hour period, and additional epochs after relevant change.",
+        "Record seizure onset, burden, resolution, and status epilepticus onset and resolution."
+      ],
+      "exclusions": [
+        "A waveform-only example without PMA and recording context cannot satisfy this contract."
+      ],
+      "measurement_requirements": [
+        "PMA in completed weeks",
+        "medication and hypothermia timeline",
+        "technical-quality duration in hours",
+        "epoch timestamps"
+      ],
+      "engineering_choices": [
+        "Pending Craig: encode term as the half-open interval [37,44) weeks and post-term as beginning at 44 weeks; the upper 48-week boundary remains unresolved."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-BEHAVIORAL-STATE",
+      "name": "Behavioral state and sleep-wake cycling",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          4,
+          5,
+          6,
+          7,
+          26
+        ],
+        "section": "Behavioral state; Box 2",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "State assignment combines EEG and polysomnographic behavior and is interpreted relative to PMA.",
+      "applicability": "Neonatal recordings with sufficient EEG, eye, respiratory, movement, and preferably EMG observations.",
+      "criteria": [
+        "A state requires its defining features for >=60 seconds.",
+        "Allowed states are awake, active sleep, quiet sleep, transitional sleep, and indeterminate sleep; transitional sleep mixes features of the states on either side, while indeterminate sleep cannot be assigned to active or quiet sleep.",
+        "Term awake and active sleep use continuous low-to-medium voltage mixed-frequency activité moyenne; active sleep additionally has closed eyes, REM, irregular respiration, and body movement.",
+        "Term quiet sleep has closed eyes, absent REM, little movement, and near term commonly tracé alternant; mature continuous high-voltage slow activity and 10-12 Hz spindles emerge around 46 weeks PMA.",
+        "Sleep-wake cycling records orderly alteration among states: term complete sleep-wake cycles are typically 3-4 hours and sleep-only cycles 40-70 minutes; preterm sleep cycles are 30-50 minutes below 35 weeks PMA and 50-65 minutes beyond 35 weeks PMA.",
+        "Unspecified state change requires distinct EEG patterns differing in discontinuity, voltage, or frequency, with each state lasting >=60 seconds."
+      ],
+      "exclusions": [
+        "Do not force active or quiet sleep when clinical and EEG features are insufficient or discordant.",
+        "A short page cannot establish sleep-wake cycling."
+      ],
+      "measurement_requirements": [
+        "PMA",
+        "continuous duration per state",
+        "eye-open/closed and REM annotations",
+        "respiration, movement, and EMG when available",
+        "longitudinal state timeline"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-CONTINUITY-NORMAL",
+      "name": "Normal continuity, tracé discontinu, and tracé alternant",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          5,
+          6,
+          7,
+          8,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33
+        ],
+        "section": "Behavioral state; EEG background - continuity; Figures 1-2; Box 3; Table 1",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Normal neonatal continuity and discontinuity are PMA- and state-dependent rather than fixed adult categories.",
+      "applicability": "Background assessment in preterm, term, and post-term neonates.",
+      "criteria": [
+        "Continuous activity has no interruption and <2 seconds of attenuation below 25 µV peak-to-peak.",
+        "An interburst interval (IBI) is attenuation below an age-dependent level described broadly as <25-50 µV peak-to-peak for >=2 seconds; Table 1 supplies the age bins.",
+        "Normal maximum IBI/voltage by PMA: <30 weeks, 35 seconds and <25 µV; 30-33 weeks, 20 seconds and <25 µV; 34-36 weeks, 10 seconds and approximately 25 µV; 37-40 weeks, 6 seconds and >25 µV.",
+        "Tracé discontinu contains 50-300 µV bursts with low-voltage IBIs and age-appropriate graphoelements; it is developmentally expected mainly from 26-40 weeks PMA and becomes confined to quiet sleep with maturation.",
+        "Tracé alternant occurs only in quiet sleep: 50-150 µV delta bursts lasting roughly 4-10 seconds alternate with 25-50 µV mixed theta-delta periods that never fall below 25 µV; it appears around 34-36 weeks, is minimal by 42 weeks, and is absent by 46 weeks PMA."
+      ],
+      "exclusions": [
+        "Do not label age-appropriate discontinuity excessive using a fixed IBI threshold.",
+        "The source gives no Table 1 normal IBI row above 40 weeks PMA."
+      ],
+      "measurement_requirements": [
+        "PMA and state",
+        "peak-to-peak voltage",
+        "IBI duration distribution",
+        "burst composition and graphoelements",
+        "sufficient duration to sample state"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-DISCONTINUITY-ABNORMAL",
+      "name": "Excessive discontinuity and neonatal burst suppression",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          8,
+          9,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ],
+        "section": "EEG background - excessive background discontinuity; burst suppression; Figures 1-2; Box 3",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Separates PMA-inappropriate discontinuity that retains normal elements from invariant burst suppression lacking normal graphoelements.",
+      "applicability": "Discontinuous neonatal backgrounds assessed against PMA and state.",
+      "criteria": [
+        "Excessive discontinuity has IBIs too long or too voltage-depressed for PMA while bursts retain some age-appropriate patterns or graphoelements.",
+        "Burst suppression has invariant abnormal bursts separated by prolonged IBIs with voltage <5 µV peak-to-peak.",
+        "Permitted activity within burst-suppression IBIs is limited to sparse activity up to 15 µV in one electrode, transient activity up to 15 µV for <2 seconds, or the source-described >2:1 voltage asymmetry in multiple electrodes.",
+        "Burst suppression is unreactive and lacks spontaneous lability; bursts lack recognizable normal graphoelements and should be described as >100 µV or <100 µV, with typical burst and IBI durations and burst-component sharpness recorded."
+      ],
+      "exclusions": [
+        "Do not call a variable or reactive record with normal graphoelements burst suppression.",
+        "Do not infer severity from discontinuity without PMA and state."
+      ],
+      "measurement_requirements": [
+        "PMA and state",
+        "IBI voltage and duration",
+        "reactivity and variability observations",
+        "burst voltage and composition",
+        "multichannel asymmetry"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-SYMMETRY-SYNCHRONY",
+      "name": "Background symmetry and interhemispheric synchrony",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          9,
+          10,
+          32
+        ],
+        "section": "EEG background - symmetry; synchrony; Box 3",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Symmetry compares homologous content and voltage; synchrony compares burst onset timing and has a non-linear developmental course.",
+      "applicability": "Multichannel neonatal background, with synchrony assessed during discontinuous portions.",
+      "criteria": [
+        "Persistent >2:1 voltage difference between homologous regions, or persistent disparity in frequency or graphoelement distribution, is abnormal asymmetry; fleeting differences may remain normal.",
+        "A burst pair is synchronous when left and right onsets differ by <=1.5 seconds; report the percentage of synchronous bursts.",
+        "Near-complete synchrony is expected before roughly 27-29 weeks and again near term; about 70% synchrony may occur around 29-30 weeks and some asynchrony is expected from 30-37 weeks.",
+        "After 38 weeks PMA, substantial asynchrony is not expected; abnormal asynchrony means a clearly excessive PMA-adjusted proportion of bursts with onset difference >1.5 seconds."
+      ],
+      "exclusions": [
+        "Synchrony does not describe continuous portions without identifiable bursts.",
+        "No universal abnormal percentage cutoff is supplied; judgment remains PMA-conditioned."
+      ],
+      "measurement_requirements": [
+        "homologous channels",
+        "peak-to-peak voltage and feature distribution",
+        "burst onset times",
+        "synchronous-burst denominator",
+        "PMA"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-VOLTAGE-ECI",
+      "name": "Term background voltage and electrocerebral inactivity",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          10,
+          11,
+          27,
+          32
+        ],
+        "section": "EEG background - voltage; electrocerebral inactivity; Figure 1; Box 3",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Voltage categories for term neonatal background plus the separately standardized technical claim of electrocerebral inactivity (ECI).",
+      "applicability": "Voltage categories apply primarily to term infants; ECI requires a recording performed to separate ECI technical standards.",
+      "criteria": [
+        "Normal term background has most activity >=25 µV peak-to-peak in every behavioral state.",
+        "Borderline low voltage is continuous, retains normal activity and graphoelements, and is persistently >=10 and <25 µV peak-to-peak.",
+        "Low-voltage suppressed background lacks normal features, has fundamental baseline <10 µV peak-to-peak, permits >=10 µV transients only when <2 seconds, and is invariant and unreactive.",
+        "ECI means no discernible cerebral activity at or above 2 µV peak-to-peak when reviewed at sensitivity 2 µV/mm and only when ECI technical standards were met; otherwise report only that the record may be consistent with ECI."
+      ],
+      "exclusions": [
+        "The source declines to define normal voltage limits for premature infants.",
+        "Do not determine cerebral death from this EEG term alone.",
+        "Do not apply ECI after a standard neonatal acquisition that lacks ECI technical requirements."
+      ],
+      "measurement_requirements": [
+        "term/PMA status",
+        "peak-to-peak voltage",
+        "behavioral state",
+        "sensitivity in µV/mm",
+        "ECI acquisition-standard attestation",
+        "reactivity and normal-feature assessment"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-VARIABILITY-REACTIVITY",
+      "name": "Background variability and reactivity",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          11,
+          12,
+          32
+        ],
+        "section": "EEG background - variability; reactivity; Box 3",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Variability is spontaneous change from internal state; reactivity is cerebral EEG change after external stimulation.",
+      "applicability": "Neonatal background with sufficient longitudinal state sampling and documented stimulation.",
+      "criteria": [
+        "A qualifying response is a conspicuous change in frequency, continuity, or voltage.",
+        "Record each feature as yes, no, or unclear/unknown/not applicable.",
+        "Variability first appears near 25 weeks PMA, increases by 28 weeks, and is well established around 30-31 weeks.",
+        "Reactivity first appears around 30-32 weeks PMA; record stimulus type and strength.",
+        "Separate cerebral change from movement, EMG, crying, and respiratory artifacts; arousal-related voltage attenuation is not automatically discontinuity."
+      ],
+      "exclusions": [
+        "Behavioral or muscle response alone is not cerebral EEG reactivity.",
+        "Absence during one short state sample does not establish global absence."
+      ],
+      "measurement_requirements": [
+        "PMA",
+        "pre/post-stimulus EEG",
+        "stimulus annotation",
+        "artifact channels or observation",
+        "state timeline"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-DYSMATURITY",
+      "name": "EEG dysmaturity",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          12,
+          32
+        ],
+        "section": "EEG background - dysmaturity; Box 3",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "The EEG background appears developmentally appropriate for an infant at least two weeks younger than the actual PMA.",
+      "applicability": "Serial or sufficiently comprehensive neonatal recordings with an assigned EEG maturational age.",
+      "criteria": [
+        "Difference between actual PMA and EEG-implied PMA is >=2 weeks.",
+        "Persistent dysmaturity is abnormal; the source frames the concept longitudinally."
+      ],
+      "exclusions": [
+        "Do not infer dysmaturity from one isolated feature without an overall maturational assessment."
+      ],
+      "measurement_requirements": [
+        "actual PMA",
+        "EEG-implied PMA based on state, continuity, synchrony, and graphoelements",
+        "serial context when persistence is claimed"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-GRAPHOELEMENTS",
+      "name": "Normal neonatal graphoelements",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          12,
+          13,
+          34,
+          36
+        ],
+        "section": "Normal graphoelements; Box 4; Figure 3a",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Named developmental background hallmarks whose morphology, state, distribution, and expected PMA window jointly determine normality.",
+      "applicability": "Neonatal background interpreted with PMA and state.",
+      "criteria": [
+        "Monorhythmic delta: 24-34 weeks PMA, up to 200 µV peak-to-peak, stereotyped delta usually occipital, temporal, or central and rarely frontal; typically symmetric, synchronous, and often surface positive.",
+        "Delta brushes: most prominent 24-36 weeks, 0.3-1.5 Hz slow waves at 50-250 µV with superimposed 8-12 or 18-22 Hz activity; peak expression 32-34 weeks, with state distribution changing by PMA and occasional quiet-sleep occurrence through 40 weeks.",
+        "Rhythmic temporal theta: 24-34 weeks, 25-120 µV theta in approximately 2-second temporal bursts, typically symmetric and maximal at 29-32 weeks; similar activity may occur at vertex or occipital sites.",
+        "Anterior dysrhythmia: 32-44 weeks, 50-100 µV frontal delta waves singly or in brief runs, typically symmetric and synchronous.",
+        "Encoches frontales: 34-44 weeks, 50-100 µV broad diphasic frontal transients lasting 0.5-0.75 seconds with small initial negative and larger positive phase; typically symmetric/synchronous and enriched during transition from active to quiet sleep."
+      ],
+      "exclusions": [
+        "A named morphology outside its PMA/state/distribution context is not automatically a normal graphoelement.",
+        "The source states that its list is not exhaustive."
+      ],
+      "measurement_requirements": [
+        "PMA and state",
+        "peak-to-peak voltage",
+        "frequency and duration",
+        "topography, polarity, symmetry, and synchrony"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-SHARP-TRANSIENTS",
+      "name": "Neonatal sharp-wave transients",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          13,
+          14,
+          35,
+          36,
+          37,
+          38
+        ],
+        "section": "EEG transient patterns - sharp wave transients; Box 5; Figures 3b-3c",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Distinct positive or negative transients are classified using baseline duration, abundance, spatial distribution, repetition, PMA, and background context.",
+      "applicability": "Transient assessment in the most continuous portions of neonatal EEG, preferably wakefulness or active sleep.",
+      "criteria": [
+        "A spike lasts <100 ms at baseline; a sharp wave lasts 100-200 ms; the transient must stand apart from background rather than be only sharply contoured background.",
+        "Physiologic negative sharp waves are usually 100-200 ms, solitary, symmetric, and mid-temporal/central/centro-temporal against a PMA-normal background; frontal, vertex, and occipital locations are uncommon.",
+        "Abnormal negative transients are supported by abnormal background, concentration in one region or hemisphere, atypical location, high abundance, or repetitive runs; source-cited outcome data call rates >11/hour preterm and >13/hour term abnormal.",
+        "Positive Rolandic/vertex sharp waves are centered at C3/C4 or vertex with adjacent field; excessive positive mid-temporal waves can indicate focal pathology, while cited upper normal observations are 3/hour preterm and 1.5/hour term."
+      ],
+      "exclusions": [
+        "Do not count fleeting sharp contour embedded in discontinuous bursts as a distinct transient.",
+        "Abundance boundaries remain debated and the cited rates are not presented as a complete standalone diagnostic rule."
+      ],
+      "measurement_requirements": [
+        "15 mm/s display context or equivalent calibrated time",
+        "duration at baseline",
+        "events per hour by location",
+        "polarity and field",
+        "PMA/state/background",
+        "run versus solitary occurrence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-BRD",
+      "name": "Brief rhythmic discharge",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          14,
+          15,
+          35
+        ],
+        "section": "EEG transient patterns - brief rhythmic discharges; Box 5",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "An evolving rhythmic neonatal discharge resembling seizure activity but lasting less than ten seconds.",
+      "applicability": "Neonatal evolving rhythmic events below seizure duration.",
+      "criteria": [
+        "Rhythmic electrical activity shows evolution and duration <10 seconds.",
+        "Record accompanying background abnormality and confirmed seizures; these are common contexts but not stated as mandatory criteria."
+      ],
+      "exclusions": [
+        "An event lasting >=10 seconds may meet neonatal seizure criteria instead.",
+        "A very brief rhythmic pattern without evolution belongs with non-seizure rhythmic/periodic patterns, not BRD."
+      ],
+      "measurement_requirements": [
+        "event duration",
+        "evolution in frequency, voltage, morphology, or location",
+        "background and seizure context"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-SEIZURE",
+      "name": "Neonatal seizure type, electrographic definition, and spread",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          15,
+          16,
+          39
+        ],
+        "section": "Seizures and status epilepticus - neonatal seizures; Box 6",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "A neonatal electrographic seizure is a sudden abnormal repetitive evolving EEG event meeting voltage and duration thresholds; clinical coupling is classified separately.",
+      "applicability": "Neonatal EEG events with calibrated voltage, continuous duration, evolution, and clinical/video correlation when a clinical class is assigned.",
+      "criteria": [
+        "Electrographic seizure is repetitive and unequivocally evolves in frequency, voltage, morphology, or location, reaches >=2 µV peak-to-peak, and lasts >=10 seconds; there is no minimum electrical frequency.",
+        "The 2 µV threshold marks seizure beginning and end; two events are separate only when the inter-event interval is >=10 seconds.",
+        "Electroclinical seizure has definite simultaneous clinical seizure signs; electrographic-only seizure has no specific visible clinical sign; clinical-only events have no simultaneous EEG seizure.",
+        "Spread classes are diffuse asynchronous involvement of all electrodes, bilateral independent, migrating between hemispheres, lateralized within one hemisphere, unifocal onset, or multifocal onset from >=3 independent foci with >=1 in each hemisphere.",
+        "Restricted locations may be frontal, central, temporal, occipital, vertex, anterior quadrant, posterior quadrant, or hemispheric left/right."
+      ],
+      "exclusions": [
+        "Do not call evolving activity <10 seconds a seizure; use BRD.",
+        "Do not call repetitive activity without evolution a seizure even when >10 seconds.",
+        "Do not confuse arousal or drowsiness background transitions with seizures.",
+        "Do not use generalized synchronous terminology where the neonatal source specifies diffuse asynchronous spread."
+      ],
+      "measurement_requirements": [
+        "peak-to-peak voltage",
+        "continuous event duration",
+        "evolution domain",
+        "inter-event interval",
+        "onset focus and maximal spread",
+        "time-locked video/clinical observations"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-SEIZURE-BURDEN-STATUS",
+      "name": "Neonatal seizure burden and status epilepticus",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          16,
+          17,
+          39
+        ],
+        "section": "Seizure burden; status epilepticus; Box 6",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Seizure burden is quantified over an explicit denominator; neonatal status is defined by seizure occupancy of a one-hour epoch.",
+      "applicability": "Continuous neonatal EEG with complete seizure start/stop annotations and a defined analysis epoch.",
+      "criteria": [
+        "Clinical burden may be reported as seizure count per hour or total seizure duration divided by the duration of the epoch of interest.",
+        "Research temporal-spatial burden sums seizure duration per hour in five non-overlapping neonatal montage regions so each electrode is counted once; the source lists Fp3-T3, C3-O1, Fp4-T4, C4-O2, Fz-Pz or an alternate pairing.",
+        "Status epilepticus is present when summed seizure duration is >=50% of any defined 60-minute epoch."
+      ],
+      "exclusions": [
+        "Do not report a percentage without the epoch denominator.",
+        "The source explicitly describes the 50% status cutoff as somewhat arbitrary rather than outcome-validated."
+      ],
+      "measurement_requirements": [
+        "seizure start/stop times",
+        "60-minute rolling or explicitly anchored epoch",
+        "count and summed duration",
+        "non-overlapping region mapping for spatial burden"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-RPP-PATTERN-LOCATION",
+      "name": "Neonatal rhythmic and periodic patterns of uncertain significance",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          17,
+          18,
+          38,
+          40
+        ],
+        "section": "Rhythmic and periodic patterns - patterns, duration, location; Figure 3c; Box 7",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Non-seizure periodic discharges and rhythmic delta activity are described by waveform organization, minimum cycles, onset, spread, and neonatal location terms.",
+      "applicability": "Neonatal rhythmic or periodic patterns that do not have seizure-defining evolution.",
+      "criteria": [
+        "Periodic discharges have relatively uniform morphology/duration, a measurable interdischarge interval, and near-regular recurrence: cycle length varies <50% between adjacent cycles in >50% of cycle pairs.",
+        "A discharge has <=3 phases or lasts <=0.5 seconds regardless of phases; a burst lasts >0.5 seconds and has >=4 phases.",
+        "RDA repeats relatively uniform waveforms without an inter-wave interval and has cycle-length variation <50% in >50% of adjacent cycle pairs.",
+        "PD or RDA must persist for >=6 cycles.",
+        "Location is lateralized, diffuse with asynchronous all-electrode involvement, bilateral independent, or multifocal; report onset focus, maximal spread, and F/C/T/O/Z or hemispheric predominance as applicable.",
+        "For diffuse patterns, frontal, occipital, or midline predominance requires amplitude >=50% greater than the comparison region in an appropriate referential montage."
+      ],
+      "exclusions": [
+        "Evolution is not an RPP modifier in neonates because evolution defines BRD or seizure according to duration.",
+        "Neonatal RDA is not necessarily abnormal; normal rhythmic occipital delta and anterior dysrhythmia can meet rhythmic form."
+      ],
+      "measurement_requirements": [
+        "cycle and waveform duration",
+        "phase count and baseline crossings",
+        "interdischarge interval",
+        "adjacent-cycle variability denominator",
+        "at least six cycles",
+        "montage-qualified spatial amplitude and spread"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    },
+    {
+      "id": "NEO-RPP-MODIFIERS",
+      "name": "Neonatal rhythmic/periodic duration, polarity, and sharpness modifiers",
+      "source": {
+        "source_id": "S09",
+        "pdf_pages": [
+          18,
+          19,
+          40
+        ],
+        "section": "Rhythmic and periodic patterns - modifiers; Box 7",
+        "sha256": "c343aff229274587c957a1b76c17998626a5bf421d4d22ac8d8d9f63bf115fcc"
+      },
+      "definition": "Neonatal RPPs use a limited modifier set with neonatal duration boundaries and bipolar polarity measurement.",
+      "applicability": "Non-continuous neonatal PD/RDA patterns; polarity and sharpness apply only to PDs and the spike/sharp component of spike-wave patterns, not RDA.",
+      "criteria": [
+        "Record typical duration and preferably longest continuous duration: very long >=1 hour; long 5-59 minutes; intermediate 1-4.9 minutes; brief 10-59 seconds; very brief <10 seconds without evolution.",
+        "Determine predominant-phase polarity in a traditional bipolar montage as positive, negative, or unclear.",
+        "Measure sharpness at baseline for predominant and sharpest phase: spiky <100 ms; sharp 100-200 ms; sharply contoured theta/delta is >200 ms with steep or pointed morphology; blunt is smooth or sinusoidal."
+      ],
+      "exclusions": [
+        "Do not apply polarity or sharpness to RDA.",
+        "Do not use the newer non-neonatal 10-59 minute long-duration boundary; S09 specifies 5-59 minutes.",
+        "Very brief evolving events are BRDs, not static RPP duration examples."
+      ],
+      "measurement_requirements": [
+        "typical and longest duration",
+        "traditional bipolar montage",
+        "predominant and sharpest phase",
+        "baseline duration in milliseconds"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": {
+        "status": "unverified",
+        "schema_assessment": "partial_controls_or_context_only",
+        "evidence": "EEG_ATLAS_SCHEMA_GAPS.md",
+        "emitted_waveform_tested": false
+      },
+      "version": "0.1.0-draft",
+      "terminology_track": "neonatal_2013",
+      "release_status": "draft_not_for_teaching_or_assessment"
+    }
+  ]
+}

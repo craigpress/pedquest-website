@@ -1,0 +1,546 @@
+{
+  "contracts": [
+    {
+      "id": "SZ-ESZ",
+      "name": "Electrographic seizure",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          22,
+          23
+        ],
+        "section": "D.1"
+      },
+      "definition": "Electrographic seizure classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": []
+      },
+      "criteria": [
+        "Either discharges averaging >2.5 Hz for >=10 s (>25 discharges/10 s), OR a pattern with definite evolution lasting >=10 s.",
+        "Sharply contoured discharges >200 ms may qualify through the high-rate pathway even when not technically epileptiform.",
+        "Evolution must satisfy the source RPP evolution criteria; amplitude change alone is insufficient."
+      ],
+      "exclusions": [
+        "Do not infer neonatal seizure criteria from this contract"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-ESE",
+      "name": "Electrographic status epilepticus",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          23,
+          24
+        ],
+        "section": "D.2"
+      },
+      "definition": "Electrographic status epilepticus classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Enough recording for the continuous-duration branch or a 60-minute burden window"
+        ]
+      },
+      "criteria": [
+        "Qualifying ESz continues for >=10 minutes, OR total ESz duration is >=20% of any 60-minute interval.",
+        "Hourly burden uses the specified 60-minute denominator, not a cropped display's duration."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-ECSZ",
+      "name": "Electroclinical seizure",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D.3"
+      },
+      "definition": "Electroclinical seizure classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical event/video evidence or documented EEG and clinical medication response"
+        ]
+      },
+      "criteria": [
+        "An EEG pattern with a definite time-locked clinical correlate, OR EEG AND clinical improvement after parenteral antiseizure medication.",
+        "A definite correlate must accompany the pattern and be absent when that pattern is absent; subtle signs can qualify.",
+        "Duration <10 s qualifies only with a definite clinical correlate. An ECSz need not meet ESz; report both when both qualify."
+      ],
+      "exclusions": [
+        "Muscle artifact synthesized beside an event is not proof of a clinical correlate"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-ECSE",
+      "name": "Electroclinical status epilepticus",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D.4"
+      },
+      "definition": "Electroclinical status epilepticus classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical state, baseline in known epileptic encephalopathy, treatment/response timing where used"
+        ]
+      },
+      "criteria": [
+        "ECSz persists >=10 continuous minutes OR occupies >=20% of any 60-minute interval.",
+        "Exception: ongoing bilateral tonic-clonic motor seizure qualifies at >=5 continuous minutes.",
+        "Known epileptic encephalopathy additionally requires increased prominence/frequency of discharges from baseline with clinical deterioration, OR EEG and clinical improvement following parenteral antiseizure medication."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-POSSIBLE-ECSE",
+      "name": "Possible electroclinical status epilepticus",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D.4b"
+      },
+      "definition": "Possible electroclinical status epilepticus classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Medication route/time and separate EEG versus clinical response"
+        ]
+      },
+      "criteria": [
+        "An IIC RPP persists >=10 continuous minutes OR >=20% of any 60-minute interval.",
+        "Parenteral antiseizure medication improves the EEG without clinical improvement.",
+        "All duration, IIC and response requirements are conjunctive."
+      ],
+      "exclusions": [
+        "Already qualifying ESz/ESE excluded"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-NONCONVULSIVE",
+      "name": "Nonconvulsive seizure/status qualifier",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24
+        ],
+        "section": "D notes: motor manifestations"
+      },
+      "definition": "Nonconvulsive seizure/status qualifier classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical motor observations; cannot be inferred from EEG alone"
+        ]
+      },
+      "criteria": [
+        "No prominent motor activity; applies to electrographic or electroclinical seizure/status.",
+        "Prefer nonconvulsive to subclinical: absence of prominent movement does not establish absence of clinical contribution."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-SI",
+      "name": "Stimulus-induced seizure/IIC/BIRDs qualifier",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24,
+          26
+        ],
+        "section": "D/F notes: SI prefix"
+      },
+      "definition": "Stimulus-induced seizure/IIC/BIRDs qualifier classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Stimulus timestamps and responses; distinguish artifact"
+        ]
+      },
+      "criteria": [
+        "Alerting stimulus reproducibly induces or exacerbates the qualifying phenomenon; prepend SI to the qualifying term."
+      ],
+      "exclusions": [
+        "Temporal proximity alone without reproducibility is insufficient"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-BIRDS",
+      "name": "Brief potentially ictal rhythmic discharges",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          24,
+          25
+        ],
+        "section": "E"
+      },
+      "definition": "Brief potentially ictal rhythmic discharges classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Same-patient comparative EEG if similarity branch is used"
+        ]
+      },
+      "criteria": [
+        "Focal (L/BI/UI/Mf) or generalized rhythmic activity >4 Hz, at least six waves at a regular rate, duration >=0.5 s and <10 s.",
+        "Exclude known normal/benign patterns, activity forming part of burst-suppression/attenuation, and definite clinical correlates.",
+        "Definite: evolution OR morphology AND location resembling interictal discharges or seizures in the same patient.",
+        "Possible: sharply contoured without either definite criterion.",
+        "Paroxysmal fast activity of the stated duration can qualify, focal or generalized, subject to the defining exclusions."
+      ],
+      "exclusions": [
+        "Do not equate neonatal BRDs with this definition"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "SZ-IIC",
+      "name": "Ictal-interictal continuum",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          25,
+          26
+        ],
+        "section": "F"
+      },
+      "definition": "Ictal-interictal continuum classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Full clinical context for interpretation; only waveform category is derived here"
+        ]
+      },
+      "criteria": [
+        "Always exclude ESz/ESE.",
+        "Pathway A: PD/SW averages >1 and <=2.5 Hz over 10 s.",
+        "Pathway B: PD/SW averages >=0.5 and <=1 Hz over 10 s AND has a plus modifier OR fluctuation (the plus/fluctuation disjunction applies within this pathway).",
+        "Pathway C: lateralized RDA averages >1 Hz for >=10 s AND has a plus modifier OR fluctuation (within this pathway); includes LRDA, BIRDA, UIRDA and MfRDA.",
+        "IIC describes an electrographic category, not a diagnosis or an automatic treatment order."
+      ],
+      "exclusions": [
+        "GRDA does not qualify through pathway C"
+      ],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed",
+      "unresolved_source_ambiguities": [
+        {
+          "issue": "Source states >1 Hz but parenthetical says at least 10 waves in 10 s for RDA.",
+          "location": "S01 p25 F(c), repeated figure p26",
+          "provisional_handling": "Preserve strict >1 Hz primary statement; exact-boundary examples require Craig adjudication before executable rule release.",
+          "visual_check": "S01 PDF page 25 rendered and inspected"
+        }
+      ]
+    },
+    {
+      "id": "REP-MINIMUM",
+      "name": "Minimum clinical reporting context",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          26
+        ],
+        "section": "G"
+      },
+      "definition": "Minimum clinical reporting context classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Clinical-care reporting recommendation; not a synthetic waveform criterion"
+        ]
+      },
+      "criteria": [
+        "Review/report first 30–60 minutes promptly.",
+        "Written report at least once per 24 hours; significant intervening changes get separate epochs/reports.",
+        "Communication updates at least twice daily recommended except unusually stable circumstances."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    },
+    {
+      "id": "REP-BURDEN",
+      "name": "Pattern/seizure burden and index",
+      "source": {
+        "source_id": "S01",
+        "pdf_pages": [
+          26,
+          27
+        ],
+        "section": "H"
+      },
+      "definition": "Pattern/seizure burden and index classification requirements.",
+      "applicability": {
+        "population": "non-neonatal",
+        "setting": "critical care; other settings with contextual review",
+        "required_context": [
+          "Observation interval and interpretable duration must be retained; do not treat missing EEG as absence"
+        ]
+      },
+      "criteria": [
+        "Daily burden: total pattern or seizure duration per 24 hours; hourly and maximal hourly burdens also reportable.",
+        "Daily pattern index: daily burden multiplied by mean frequency; retain units (Hz-hours or Hz-minutes)."
+      ],
+      "exclusions": [],
+      "measurement_requirements": [
+        "Independent waveform/timeline measurements; source-defined evolution adjudication where required",
+        "Retain observation duration, timestamps, uncertainty and concurrent clinical evidence"
+      ],
+      "engineering_choices": [
+        "Union overlapping intervals for occupied time; declare missing-data denominator policy in P3 rather than invent it as ACNS rule."
+      ],
+      "review_status": "ai_checked_pending_craig",
+      "generator_support": "not_assessed"
+    }
+  ],
+  "coverage": [
+    {
+      "source_id": "S01",
+      "section": "D.1",
+      "pdf_pages": [
+        22,
+        23
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-ESZ"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "D.2",
+      "pdf_pages": [
+        23,
+        24
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-ESE"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "D.3",
+      "pdf_pages": [
+        24
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-ECSZ"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "D.4",
+      "pdf_pages": [
+        24
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-ECSE"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "D.4b",
+      "pdf_pages": [
+        24
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-POSSIBLE-ECSE"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "D notes: motor manifestations",
+      "pdf_pages": [
+        24
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-NONCONVULSIVE"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "D/F notes: SI prefix",
+      "pdf_pages": [
+        24,
+        26
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-SI"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "E",
+      "pdf_pages": [
+        24,
+        25
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-BIRDS"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "F",
+      "pdf_pages": [
+        25,
+        26
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "SZ-IIC"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "G",
+      "pdf_pages": [
+        26
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "REP-MINIMUM"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "H",
+      "pdf_pages": [
+        26,
+        27
+      ],
+      "disposition": "mapped",
+      "contract_ids": [
+        "REP-BURDEN"
+      ],
+      "notes": "Definition extraction; human review pending."
+    },
+    {
+      "source_id": "S01",
+      "section": "Front matter, introduction, changes and general applicability",
+      "pdf_pages": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "disposition": "context",
+      "contract_ids": [],
+      "notes": "Source version/history and non-neonatal applicability; Table 1 changes audited against body contracts."
+    },
+    {
+      "source_id": "S01",
+      "section": "Abbreviations, figure index, supplemental index and bibliography",
+      "pdf_pages": [
+        27,
+        28,
+        29
+      ],
+      "disposition": "context",
+      "contract_ids": [],
+      "notes": "Navigational/citation material; not additional waveform criteria."
+    }
+  ]
+}

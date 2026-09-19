@@ -1,0 +1,40 @@
+{
+  "status": "P3_complete_clinical_acceptance_recorded",
+  "reference_rows": 27,
+  "full_interval_numeric_checks": 24,
+  "clinical_accepted": 24,
+  "deferred_rows": 3,
+  "patient_groups": 23,
+  "reserve_groups": 5,
+  "waveform_records": 15,
+  "raw_storage_cap_bytes": 10000000000,
+  "scratch_cap_bytes": 5000000000,
+  "retained_bytes": 830053409,
+  "flagged_intervals": [
+    "AT-R002",
+    "AT-R006",
+    "AT-R015",
+    "AT-R023"
+  ],
+  "verified": [
+    "unique IDs",
+    "partition consistency",
+    "source interval equals actual decoded bounds",
+    "calibrated EEG channels",
+    "full-interval finite samples",
+    "export rounding below half ADC quantum",
+    "clinical decisions incorporated into manifest craig_label/craig_review_status/clinical_acceptance"
+  ],
+  "artifacts": {
+    "EEG_ATLAS_REFERENCE_MANIFEST.csv": "afebb6988a1e0f3d8c3fa54be831e4ad2344f4419657efeea173a133b83e57f3",
+    "EEG_ATLAS_PARTITIONS.csv": "17cf701c38ef13bf63dac4b3d016e55591936df931d28a349ef0b957f51f6801",
+    "EEG_ATLAS_PILOT_PROTOCOL.md": "41f54ac7fc2cdbbdb701ea90387f0e5448892f68d0680269fe4313f05d2b0682",
+    "EEG_ATLAS_FEATURE_CONTRACTS.json": "bcef315851b0d0dbbcae518d7447fd69d21255acd2ea08764a557c02046b17ca",
+    "EEG_ATLAS_CLINICAL_REVIEW.csv": "a57d24abebb9dd5c394c5ec1ba8768b53fa58c0fd6013204941081d9ccf68175",
+    "EEG_ATLAS_P3_CLINICAL_ACCEPTANCE.md": "ef743a7e1e382adbf6d4273f3afb118ce42a8d5b34b7d7c1a59cd8ae31872f5f"
+  },
+  "clinical_decisions": {
+    "accept": 24
+  },
+  "clinical_review_date": "2026-09-16"
+}

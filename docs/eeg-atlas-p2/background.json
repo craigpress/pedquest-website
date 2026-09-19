@@ -1,0 +1,156 @@
+{
+  "contracts": [
+    {
+      "id": "BG-SYMMETRY", "name": "Background symmetry",
+      "source": {"source_id": "S01", "pdf_pages": [4], "section": "A.1 Symmetry"},
+      "definition": "Symmetric, mildly asymmetric, or markedly asymmetric background.",
+      "applicability": "Non-neonatal EEG; report A.2–A.10 separately by hemisphere when asymmetric.",
+      "criteria": ["Mild: consistent voltage difference <50% on an appropriate referential recording or frequency difference 0.5–1 Hz.", "Marked: voltage difference >=50% or frequency difference >1 Hz.", "Consistent means >80% of relevant instances or record."],
+      "exclusions": ["Do not measure voltage symmetry from longitudinal bipolar amplitude when referential comparison is unavailable."],
+      "measurement_requirements": ["Referential montage", "Homologous bilateral regions", "Record-level prevalence"],
+      "engineering_choices": ["Choose the amplitude statistic and epoch aggregation for percent difference."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-PREDOMINANT-FREQUENCY", "name": "Predominant background frequency",
+      "source": {"source_id": "S01", "pdf_pages": [4], "section": "A.2 Predominant Background Frequency When Most Awake or After Stimulation"},
+      "definition": "Band or tied bands most prominent when maximally awake or after stimulation.",
+      "applicability": "Non-neonatal EEG; some terms may be imperfect for infants.",
+      "criteria": ["Categories: beta >13 Hz, alpha, theta, delta.", "Report all 2 or 3 bands when equally prominent."],
+      "exclusions": ["Do not substitute a less-alert state when a more-awake/stimulated state is available."],
+      "measurement_requirements": ["Known state", "Representative background band powers"],
+      "engineering_choices": ["S01 gives no alpha/theta/delta boundaries or tie tolerance; version and review these separately."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-PDR", "name": "Posterior dominant rhythm",
+      "source": {"source_id": "S01", "pdf_pages": [4], "section": "A.3 Posterior Dominant (Alpha) Rhythm"},
+      "definition": "Posterior dominant rhythm present with frequency, absent, or unclear.",
+      "applicability": "Non-neonatal EEG with interpretable eye-opening/closure testing.",
+      "criteria": ["Present requires attenuation with eye opening.", "Wait >1 s after eye closure before measuring frequency; report to nearest 0.5 Hz."],
+      "exclusions": ["A posterior rhythm without demonstrated eye-opening attenuation is not present by this definition."],
+      "measurement_requirements": ["Timed eye opening/closure", "Posterior channels"],
+      "engineering_choices": ["Define attenuation threshold and minimum observation duration; S01 does not."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-CONTINUITY", "name": "Continuity and low-voltage percent",
+      "source": {"source_id": "S01", "pdf_pages": [5, 6], "section": "A.4 Continuity"},
+      "definition": "Continuity category from percent of a record/epoch occupied by attenuation or suppression.",
+      "applicability": "Non-neonatal EEG; these voltage cutoffs differ from neonatal terminology.",
+      "criteria": ["Attenuation: lower activity >=10 µV and <50% of higher-voltage background; suppression: lower activity <10 µV.", "Continuous: low-voltage percent <1%.", "Nearly continuous: 1–9%, with qualifying periods >=1 s; report typical duration.", "Discontinuous: alternating higher activity with 10–49% attenuation/suppression.", "Burst attenuation/suppression: alternating higher activity with 50–99% attenuation/suppression.", "Suppression/attenuation: >99%; suppressed when all activity <10 µV, attenuated when all activity <20 µV but not suppressed.", "For noncontinuous records report attenuation or suppression percent using record/epoch as denominator.", "Stimulus-induced periods are SI-attenuation or SI-suppression."],
+      "exclusions": [">99% is not discontinuous or burst attenuation/suppression."],
+      "measurement_requirements": ["Peak-to-trough voltage in standard 10–20 longitudinal bipolar", "Declared record/epoch denominator", "Low-voltage interval duration/occupancy"],
+      "engineering_choices": ["Fix analysis epoch, boundaries, and handling of mixed attenuation plus suppression."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-BURST-MODIFIERS", "name": "Burst attenuation/suppression modifiers",
+      "source": {"source_id": "S01", "pdf_pages": [3, 5, 6, 7], "section": "Table 1; A.4.d Burst attenuation/Burst suppression"},
+      "definition": "Timing, localization, morphology, highly epileptiform, and identical-burst descriptors.",
+      "applicability": "Only burst attenuation or burst suppression.",
+      "criteria": ["Burst averages >=0.5 s and has >=4 phases (>=3 baseline crossings); maximum duration 30 s.", "Report location as generalized, lateralized, bilateral independent, unilateral independent, or multifocal; report typical burst/interburst durations and sharpest component.", "Highly epileptiform: >=2 spikes/sharp waves in most (>50%) bursts at mean >=1 Hz within a burst, where frequency = 1 / typical interpeak latency; alternatively a rhythmic potentially ictal-appearing pattern occurs in most (>50%) bursts. Table 1 states >=1 Hz for this alternative, while A.4.d does not repeat that cutoff. Record frequency and location.", "Identical: first >=0.5 s of each burst, or each stereotyped cluster of >=2 bursts, is visually similar in all channels in most (>90%) bursts."],
+      "exclusions": ["Shorter or <4-phase events are discharges.", "RPP, BIRD, and seizure classification is outside this contract."],
+      "measurement_requirements": ["Phases", "Burst/interburst segmentation", "All-channel similarity", "Interpeak latency"],
+      "engineering_choices": ["Resolve the Table 1/A.4.d frequency-cutoff discrepancy; operationalize visual similarity and potentially ictal appearance."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-REACTIVITY", "name": "Background reactivity",
+      "source": {"source_id": "S01", "pdf_pages": [6, 7], "section": "A.5 Reactivity"},
+      "definition": "Cerebral response to stimulation: reactive, unreactive, SIRPIDs-only, unclear, or unknown.",
+      "applicability": "Non-neonatal EEG with documented stimulation.",
+      "criteria": ["Qualifying change may be in cerebral voltage or frequency, including attenuation.", "SIRPIDs-only: sole response is a stimulus-induced rhythmic, periodic, or ictal-appearing discharge.", "Unclear: inadequate test, excessive artifact, or equivocal cerebral change. Unknown: not tested or maximally alert throughout."],
+      "exclusions": ["Muscle activity and eye blinks do not establish reactivity."],
+      "measurement_requirements": ["Stimulus nature/strength", "Prefer escalating stimuli", "Repeat standardized noxious stimulation after an initially unreactive test", "Sedative/paralytic caveat"],
+      "engineering_choices": ["Define stimulation protocol and cerebral-change threshold; S01 does not fully specify them."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-STATE-CHANGES", "name": "State changes and N2 transients",
+      "source": {"source_id": "S01", "pdf_pages": [7, 8], "section": "A.6 State Changes"},
+      "definition": "Sustained alertness/stimulation-related backgrounds with separate N2-transient characterization.",
+      "applicability": "Non-neonatal EEG; spontaneous or stimulated transitions.",
+      "criteria": ["Present requires >=2 background types, each sustained >=60 s.", "Stimulation should transition less-alert to more-alert/stimulated; spontaneous transitions qualify; the more-alert state is primary.", "State changes virtually always imply reactivity; reactivity need not imply a state change when it lasts <60 s.", "Categories: present with normal N2 transients; present with abnormal N2 transients; present without N2 transients; absent.", "Describe K-complexes and spindles separately: present-normal, present-abnormal with abnormality, or absent."],
+      "exclusions": ["Reactivity lasting <60 s does not alone establish a state change."],
+      "measurement_requirements": ["State durations", "Alertness/stimulation linkage", "Separate K-complex/spindle review"],
+      "engineering_choices": ["Define persistence across brief artifact and structured N2 abnormalities."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-CAPE", "name": "Cyclic alternating pattern of encephalopathy",
+      "source": {"source_id": "S01", "pdf_pages": [7, 8], "section": "A.7 Cyclic Alternating Pattern of Encephalopathy (CAPE)"},
+      "definition": "Regular spontaneous alternation of two backgrounds: present, absent, or unknown/unclear.",
+      "applicability": "Non-neonatal encephalopathic EEG; components may include separately classified RPPs.",
+      "criteria": ["Each pattern lasts >=10 s and the pair alternates spontaneously/regularly for >=6 complete cycles; a cycle includes each state once.", "Describe each pattern and typical duration; note awake/stimulated versus less-awake state when known.", "If each pattern lasts >60 s, state-change criteria are also met."],
+      "exclusions": ["Stimulus-driven alternation alone is not the stated definition."],
+      "measurement_requirements": [">=6 cycles", "Component durations", "Optional coupling to respiration, heart rate, blood pressure, movement, muscle artifact, or pupils"],
+      "engineering_choices": ["Define tolerance for 'regular'; S01 does not."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-VOLTAGE", "name": "Background voltage",
+      "source": {"source_id": "S01", "pdf_pages": [7, 8], "section": "A.8 Voltage"},
+      "definition": "High, normal, low, or suppressed peak-to-trough background voltage.",
+      "applicability": "Non-neonatal standard 10–20 longitudinal bipolar EEG.",
+      "criteria": ["High: most/all activity >=150 µV.", "Low: most/all activity <20 µV but not suppressed.", "Suppressed: all activity <10 µV.", "For nearly continuous/discontinuous records, use the higher-voltage portion."],
+      "exclusions": ["Do not apply to neonatal EEG."],
+      "measurement_requirements": ["Peak-to-trough amplitude", "Standard montage", "Higher-voltage portion when applicable"],
+      "engineering_choices": ["Define 'most/all' and numeric normal bounds; S01 does not."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-AP-GRADIENT", "name": "Anterior-posterior gradient",
+      "source": {"source_id": "S01", "pdf_pages": [8], "section": "A.9 Anterior-Posterior (AP) Gradient"},
+      "definition": "Expected AP gradient present, absent, or reversed.",
+      "applicability": "Non-neonatal EEG with anterior and posterior derivations.",
+      "criteria": ["Present: clear persistent segment >=1 continuous min with lower-voltage/faster anterior and higher-voltage/slower posterior activity.", "Reversed: same duration and paired criteria in the opposite direction."],
+      "exclusions": ["Voltage-only or frequency-only gradient is insufficient."],
+      "measurement_requirements": ["Anterior/posterior derivations", ">=60 s uninterrupted segment", "Concurrent voltage/frequency comparison"],
+      "engineering_choices": ["Define quantitative 'clear' threshold."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "BG-BREACH", "name": "Breach effect",
+      "source": {"source_id": "S01", "pdf_pages": [8], "section": "A.10 Breach Effect"},
+      "definition": "Breach effect present with location, absent, or unclear.",
+      "applicability": "EEG over or near a skull defect.",
+      "criteria": ["Present: higher amplitude and increased sharpness, mainly faster frequencies, versus the rest of brain and especially the contralateral homologous region."],
+      "exclusions": ["Sharp activity without the skull-defect spatial relationship is insufficient."],
+      "measurement_requirements": ["Defect location", "Contralateral homolog", "Amplitude/sharpness/frequency context"],
+      "engineering_choices": ["Define comparison thresholds and whether defect metadata is mandatory."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "SED-MORPHOLOGY", "name": "Sporadic epileptiform discharge morphology",
+      "source": {"source_id": "S01", "pdf_pages": [8], "section": "B. Sporadic Epileptiform Discharges"},
+      "definition": "Nonrhythmic, nonperiodic spikes, sharp waves, and polyspikes.",
+      "applicability": "Non-neonatal EEG; localization may be added.",
+      "criteria": ["Spike: pointed transient distinct from background, duration >=20 ms and <70 ms at EEG baseline.", "Sharp wave: same definition, duration >=70 ms and <=200 ms (source states 70–200 ms).", "Polyspike: >=2 consecutive spikes with no interdischarge interval, total duration <0.5 s.", "Typical, not required: diphasic/triphasic, apiculate, asymmetric slope, followed by slow wave or other background disruption."],
+      "exclusions": ["Rhythmic/periodic discharges are not sporadic.", ">=0.5-s spike trains may enter BIRD or highly epileptiform burst classification, outside scope."],
+      "measurement_requirements": ["Duration at baseline", "Conventional time scale", "Background distinction", "Interdischarge interval"],
+      "engineering_choices": ["S01 does not quantify pointedness/background disruption or explicitly discuss the 200-ms endpoint; adjudicate boundary cases."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    },
+    {
+      "id": "SED-PREVALENCE", "name": "Sporadic epileptiform discharge prevalence",
+      "source": {"source_id": "S01", "pdf_pages": [8], "section": "B. Sporadic Epileptiform Discharges — prevalence"},
+      "definition": "Combined prevalence of spikes, polyspikes, and sharp waves.",
+      "applicability": "Nonrhythmic, nonperiodic sporadic discharges in non-neonatal EEG.",
+      "criteria": ["Abundant: >=1/10 s, but not periodic.", "Frequent: >=1/min and <1/10 s.", "Occasional: >=1/h and <1/min.", "Rare: <1/h.", "When abundant, mean and maximum count per 10-s epoch may be recorded."],
+      "exclusions": ["Periodic discharges cannot be abundant sporadic discharges."],
+      "measurement_requirements": ["Combined discharge count", "Analyzed duration", "Periodicity check"],
+      "engineering_choices": ["S01 provides no explicit absent category; represent zero events separately pending review."],
+      "review_status": "ai_checked_pending_craig", "generator_support": "not_assessed"
+    }
+  ],
+  "coverage": [
+    {"source_id": "S01", "section": "General Notes", "pdf_pages": [2, 3, 4], "disposition": "context", "contract_ids": [], "notes": "All ages excluding neonates; critical care primary. Some infant terms imperfect. Voltage is peak-to-trough in standard 10–20 longitudinal bipolar; symmetry prefers referential. Consistent means >80%."},
+    {"source_id": "S01", "section": "A.1–A.3 Symmetry, frequency, PDR", "pdf_pages": [4], "disposition": "mapped", "contract_ids": ["BG-SYMMETRY", "BG-PREDOMINANT-FREQUENCY", "BG-PDR"], "notes": "Complete."},
+    {"source_id": "S01", "section": "A.4 Continuity", "pdf_pages": [5, 6, 7], "disposition": "mapped", "contract_ids": ["BG-CONTINUITY", "BG-BURST-MODIFIERS"], "notes": "Categories, denominator, burst qualification and modifiers mapped."},
+    {"source_id": "S01", "section": "A.5–A.7 Reactivity, states, CAPE", "pdf_pages": [6, 7, 8], "disposition": "mapped", "contract_ids": ["BG-REACTIVITY", "BG-STATE-CHANGES", "BG-CAPE"], "notes": "Complete; referenced RPP/BIRD/seizure definitions excluded."},
+    {"source_id": "S01", "section": "A.8–A.10 Voltage, AP gradient, breach", "pdf_pages": [7, 8], "disposition": "mapped", "contract_ids": ["BG-VOLTAGE", "BG-AP-GRADIENT", "BG-BREACH"], "notes": "Complete."},
+    {"source_id": "S01", "section": "B. Sporadic Epileptiform Discharges", "pdf_pages": [8], "disposition": "mapped", "contract_ids": ["SED-MORPHOLOGY", "SED-PREVALENCE"], "notes": "Morphology and prevalence mapped."},
+    {"source_id": "S01", "section": "C–H RPPs, seizures, BIRDs, IIC, reporting, other terms", "pdf_pages": [9, 29], "disposition": "out_of_scope", "contract_ids": [], "notes": "Other workstreams."}
+  ]
+}

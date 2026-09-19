@@ -1,0 +1,333 @@
+source_id,section,locator_kind,locator,disposition,contract_ids,notes
+S01,General Notes,pdf_page,2;3;4,context,,All ages excluding neonates; critical care primary. Some infant terms imperfect. Voltage is peak-to-trough in standard 10–20 longitudinal bipolar; symmetry prefers referential. Consistent means >80%.
+S01,"A.1–A.3 Symmetry, frequency, PDR",pdf_page,4,mapped,BG-SYMMETRY;BG-PREDOMINANT-FREQUENCY;BG-PDR,Complete.
+S01,A.4 Continuity,pdf_page,5;6;7,mapped,BG-CONTINUITY;BG-BURST-MODIFIERS,"Categories, denominator, burst qualification and modifiers mapped."
+S01,"A.5–A.7 Reactivity, states, CAPE",pdf_page,6;7;8,mapped,BG-REACTIVITY;BG-STATE-CHANGES;BG-CAPE,Complete; referenced RPP/BIRD/seizure definitions excluded.
+S01,"A.8–A.10 Voltage, AP gradient, breach",pdf_page,7;8,mapped,BG-VOLTAGE;BG-AP-GRADIENT;BG-BREACH,Complete.
+S01,B. Sporadic Epileptiform Discharges,pdf_page,8,mapped,SED-MORPHOLOGY;SED-PREVALENCE,Morphology and prevalence mapped.
+S01,C introductory text,pdf_page,9,mapped,RPP-VALIDITY,Two-main-term construction.
+S01,C1 Main Term 1,pdf_page,9;10;11,mapped,RPP-LOCATION,All G/L/BI/UI/Mf terms and localizing qualifiers.
+S01,C2 Main Term 2,pdf_page,12;13,mapped,RPP-TYPE;RPP-VALIDITY,"PD, RDA, SW and six-cycle validity."
+S01,C3a-c,pdf_page,13;14,mapped,RPP-TIME-RATE,"Prevalence, duration, frequency."
+S01,C3d-f,pdf_page,13;14,mapped,RPP-WAVEFORM-MODIFIERS,"Phases, sharpness, voltage."
+S01,C3g-h,pdf_page,14;15;16;17,mapped,RPP-STIMULUS-EVOLUTION;RPP-VALIDITY,"Stimulus response, evolution, fluctuation, static; seizure/BIRD boundary retained only as exclusion. Figures 24-29 on pages 15-16 reinforce evolution/fluctuation predicates."
+S01,C3i,pdf_page,17;18;19;20;21;22,mapped,RPP-PLUS,Plus subtypes and EDB.
+S01,C4,pdf_page,22,mapped,RPP-MINOR,All listed minor modifiers.
+S01,D.1,pdf_page,22;23,mapped,SZ-ESZ,Definition extraction; human review pending.
+S01,D.2,pdf_page,23;24,mapped,SZ-ESE,Definition extraction; human review pending.
+S01,D.3,pdf_page,24,mapped,SZ-ECSZ,Definition extraction; human review pending.
+S01,D.4,pdf_page,24,mapped,SZ-ECSE,Definition extraction; human review pending.
+S01,D.4b,pdf_page,24,mapped,SZ-POSSIBLE-ECSE,Definition extraction; human review pending.
+S01,D notes: motor manifestations,pdf_page,24,mapped,SZ-NONCONVULSIVE,Definition extraction; human review pending.
+S01,D/F notes: SI prefix,pdf_page,24;26,mapped,SZ-SI,Definition extraction; human review pending.
+S01,E,pdf_page,24;25,mapped,SZ-BIRDS,Definition extraction; human review pending.
+S01,F,pdf_page,25;26,mapped,SZ-IIC,Definition extraction; human review pending.
+S01,G,pdf_page,26,mapped,REP-MINIMUM,Definition extraction; human review pending.
+S01,H,pdf_page,26;27,mapped,REP-BURDEN,Definition extraction; human review pending.
+S01,"Front matter, introduction, changes and general applicability",pdf_page,1;2;3;4,context,,Source version/history and non-neonatal applicability; Table 1 changes audited against body contracts.
+S01,"Abbreviations, figure index, supplemental index and bibliography",pdf_page,27;28;29,context,,Navigational/citation material; not additional waveform criteria.
+S09,"Title, authors, committee",pdf_page,1;2,context,,Bibliographic provenance; no terminology rule.
+S09,Background and scope,pdf_page,3,context,NEO-REPORTING-CONTEXT,Establishes a neonatal-specific terminology and cautions that routine-length norms may vary in longer recordings.
+S09,Details to be reported,pdf_page,3;4,mapped,NEO-REPORTING-CONTEXT,"PMA, exposures, quality, background epochs, seizure and status reporting."
+S09,Behavioral state,pdf_page,4;5;6;7,mapped,NEO-BEHAVIORAL-STATE;NEO-CONTINUITY-NORMAL,"Awake and sleep states, developmental transitions, cycling, unspecified state changes."
+S09,EEG background - continuity and discontinuity,pdf_page,7;8;9,mapped,NEO-CONTINUITY-NORMAL;NEO-DISCONTINUITY-ABNORMAL,"Includes normal continuity, tracé discontinu, tracé alternant, excessive discontinuity, and burst suppression."
+S09,"EEG background - symmetry, synchrony, voltage, ECI",pdf_page,9;10;11,mapped,NEO-SYMMETRY-SYNCHRONY;NEO-VOLTAGE-ECI,ECI use remains conditional on separate technical standards.
+S09,"EEG background - variability, reactivity, dysmaturity",pdf_page,11;12,mapped,NEO-VARIABILITY-REACTIVITY;NEO-DYSMATURITY,All judgments require PMA and adequate temporal/stimulus context.
+S09,Normal graphoelements,pdf_page,12;13,mapped,NEO-GRAPHOELEMENTS,All five named developmental hallmarks are included; source says the list is not exhaustive.
+S09,EEG transient patterns,pdf_page,13;14;15,mapped,NEO-SHARP-TRANSIENTS;NEO-BRD,Sharp transient normal/pathologic distinctions and BRD.
+S09,Seizures and status epilepticus,pdf_page,15;16;17,mapped,NEO-SEIZURE;NEO-SEIZURE-BURDEN-STATUS,"Clinical coupling, electrographic rule, spatial classes, burden, and neonatal status."
+S09,Rhythmic and periodic patterns of uncertain significance,pdf_page,17;18;19,mapped,NEO-RPP-PATTERN-LOCATION;NEO-RPP-MODIFIERS,"PD/RDA form, duration, location, and limited neonatal modifiers."
+S09,Conclusion,pdf_page,19,context,,Terminology is a revisable consensus framework; clinical significance remains an area for research.
+S09,References,pdf_page,20;21;22,out_of_scope,,Bibliography supports the guideline but does not add standalone S09 operational terms.
+S09,Figure legends and box index,pdf_page,23;24,mapped,NEO-DISCONTINUITY-ABNORMAL;NEO-GRAPHOELEMENTS;NEO-SHARP-TRANSIENTS;NEO-SEIZURE;NEO-RPP-PATTERN-LOCATION,Legends reinforce visual distinctions and provenance for the clinical examples.
+S09,Box 1 and Box 2,pdf_page,25;26,mapped,NEO-REPORTING-CONTEXT;NEO-BEHAVIORAL-STATE,Summary checklists for daily reporting and state categories.
+S09,"Figures 1-2, Box 3, and Table 1",pdf_page,27;28;29;30;31;32;33,mapped,NEO-CONTINUITY-NORMAL;NEO-DISCONTINUITY-ABNORMAL;NEO-VOLTAGE-ECI;NEO-SYMMETRY-SYNCHRONY;NEO-VARIABILITY-REACTIVITY;NEO-DYSMATURITY,"Voltage schematic, four discontinuity examples, background checklist, and PMA-indexed IBI table."
+S09,"Box 4, Box 5, and Figure 3",pdf_page,34;35;36;37;38,mapped,NEO-GRAPHOELEMENTS;NEO-SHARP-TRANSIENTS;NEO-BRD;NEO-RPP-PATTERN-LOCATION,"Graphoelement/transient summaries and visual contrast among encoche, physiologic sharp wave, and pathologic periodic sharp waves."
+S09,Box 6,pdf_page,39,mapped,NEO-SEIZURE;NEO-SEIZURE-BURDEN-STATUS,"Seizure, location, burden, and status summary."
+S09,Box 7,pdf_page,40,mapped,NEO-RPP-PATTERN-LOCATION;NEO-RPP-MODIFIERS,"RPP pattern, location, and modifier summary."
+S03,Title,pdf_page,1,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 1: burst attenuation,pdf_page,2,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 2: burst suppression,pdf_page,3,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 3: identical highly epileptiform bursts,pdf_page,4,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 4: identical bursts,pdf_page,5,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 5: GPD,pdf_page,6,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 6: GRDA,pdf_page,7,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 7: GPD,pdf_page,8,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 7 (duplicate source label): LPD,pdf_page,9,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 9: BIPD,pdf_page,10,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 10: UIPD,pdf_page,11,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 11: UIRDA,pdf_page,12,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 12: MfPD,pdf_page,13,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 13: bilateral asymmetric LPD,pdf_page,14,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 14: SW,pdf_page,15,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 15: SI-GRDA,pdf_page,16,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 16: short evolving LRDA,pdf_page,17,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 17: fluctuating LPD,pdf_page,18,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 18: GPD+F,pdf_page,19,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 19: LPD+F,pdf_page,20,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 20: LRDA+S,pdf_page,21,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 21: BIPD+F,pdf_page,22,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 22: EDB,pdf_page,23,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 23: triphasic GPD with AP lag,pdf_page,24,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 24a: ESz,pdf_page,25,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 24b: ESz,pdf_page,26,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 24c: ESz,pdf_page,27,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 25: ECSz,pdf_page,28,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 26a: ECSz,pdf_page,29,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 26b: ECSz,pdf_page,30,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 27: BIRDs,pdf_page,31,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 28: IIC,pdf_page,32,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 29a: continuum,pdf_page,33,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 29b: continuum,pdf_page,34,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 29c: continuum,pdf_page,35,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S03,EEG 30: IIC and qEEG,pdf_page,36,context,,"Caption-level inventory; visual reference only, no raw-signal quantitative evidence. Continued panels are not independent patients; images not republished."
+S04,ACNS Critical Care EEG Terminology  Training Module 2021,slide,1,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Mode of presentation General remarks:,slide,2,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Contents Sequence of topics ,slide,3,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,A. EEG Background,slide,4,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,EEG BACKGROUND No consistent voltage differences between sides.,slide,5,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,EEG BACKGROUND No consistent frequency differences between sides.,slide,6,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,EEG BACKGROUND 4. ,slide,7,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,EEG BACKGROUND Attenuation percent or Suppression percent: ,slide,8,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 How is the background of this EEG best described?",slide,9,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Continuous EEG with voltage asymmetry (marked, lower on right) and slowing on the left, polymorphic delta. CONTINUOUS POLYMORPHIC DELTA ACTIVITY OVER LEFT MID-TEMPORAL (",slide,10,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 How is the background of this EEG best described?",slide,11,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 Continuous EEG with frequency asymmetry, marked (beta on",slide,12,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,How would you describe this EEG?,slide,13,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Higher voltage activity qualifies as bursts: ≥0.5s AND ≥ 4 phases about 10 phases,slide,14,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Interburst EEG is attenuated not suppressed ATTENUATION: < 50% of higher voltage portion/ bursts, but ≥ 10 µV (activity <10 µV would qualify as suppressed). Therefore this is burst",slide,15,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,16 How would you describe this EEG?,slide,16,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,17 SUPPRESSION: 2 s,slide,17,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,How would you describe this page of EEG? 5,slide,18,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Lateralized burst suppression on the left. Only 1 burst is shown here with a suppression percent of 75% (7.5 out of 10 sec). It is lateralized because the pattern is only present i,slide,19,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"HIGHLY EPILEPTIFORM BURSTS Two or more epileptiform discharges (spikes or sharp waves),",slide,20,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,HIGHLY EPILEPTIFORM BURSTS,slide,21,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,How can the continuity and the activity be best described?,slide,22,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,HIGHLY EPILEPTIFORM BURSTS:  2 or more epileptiform discharges (spikes or sharp waves) occur ,slide,23,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,24 IDENTICAL BURSTS,slide,24,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,IDENTICAL BURSTS in a STEREOTYPED CLUSTER If the first 0.5 s or longer of each of ,slide,25,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,How would you describe this pattern?,slide,26,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,SUPPRESSION: 5s BURST,slide,27,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BACKGROUND: REACTIVITY Definition: ,slide,28,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BACKGROUND: REACTIVITY Test of responsiveness to verbal stimuli,slide,29,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BACKGROUND: REACTIVITY Test of responsiveness to verbal stimuli,slide,30,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BACKGROUND: STATE CHANGES Requirements to qualify as having state changes:,slide,31,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"BACKGROUND: CYCLIC ALTERNATING PATTERN of ENCEPHALOPATHY (CAPE) To qualify as CAPE, there must be the following:",slide,32,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BACKGROUND: BREACH EFFECT Breach effect:,slide,33,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,In what region is breach effect present on this page of EEG?,slide,34,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"BREACH, left parasagittal  (maximal at C3)",slide,35,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,B. Sporadic Epileptiform Discharges,slide,36,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,SPORADIC EPILEPTIFORM DISCHARGES,slide,37,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,NUMBER OF PHASES,slide,38,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,DISCHARGE VERSUS BURST,slide,39,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Sporadic:  non-rhythmic,slide,40,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,C. Rhythmic and  Periodic Patterns (RPPs),slide,41,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"All rhythmic and periodic patterns (RPPs) should be described by main terms 1 and 2, as well as appropriate major and minor modifiers. Not all modifiers will apply to every pattern",slide,42,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,RHYTHMIC AND PERIODIC PATTERNS (RPPs): MAIN TERM 2 Main term 2 (pattern description) includes:,slide,43,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,MAIN TERM 2: PDs NOTE: ,slide,44,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"MAIN TERM 2: RDA polymorphic, also known as ",slide,45,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,MAIN TERM 2: SW Spike-and-wave,slide,46,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,MAIN TERM 1: GENERALIZED LEFT,slide,47,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,MAIN TERM 1: LATERALIZED,slide,48,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,MAIN TERM 1: BILATERAL INDEPENDANT LEFT,slide,49,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,50 MAIN TERM 1: UNILATERAL INDEPENDANT,slide,50,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,MAIN TERM 1: MULTIFOCAL,slide,51,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"In addition to main terms 1 and 2, the following major modifiers can be applied to refine the description of the pattern:  Prevalence",slide,52,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Note that there are 4 distinct time-related scales: 1. ,slide,53,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What pattern is this?,slide,54,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Frontal predominance 110 ms,slide,55,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Frontal predominance 10 discharges in ,slide,56,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,PERIODIC DISCHARGES: SHARPNESS Applies to PDs and the S phase of SW,slide,57,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Please characterize the pattern,slide,58,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"LATERALIZED PERIODIC DISCHARGES Lateralized Periodic Discharges, LPDs ",slide,59,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Lateralized Periodic Discharges (LPDs) Please describe this pattern,slide,60,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Lateralized Periodic Discharges (LPDs) 7 EDs/10.5 s= 0.67 ,slide,61,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Please characterize the pattern,slide,62,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Lateralized Periodic Discharges, LPDs (bilateral asymmetric, 0.5-1 Hz) ",slide,63,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Generalized Periodic Discharges (GPDs) What would you call this pattern?,slide,64,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Generalized Periodic Discharges (GPDs) 65,slide,65,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"What is the correct term for this pattern? Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022",slide,66,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Lateralized Rhythmic Delta Activity (LRDA) (Left anterior-mid temporal maximum, 1.5 Hz)",slide,67,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 Please describe the pattern:",slide,68,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 Polymorphic delta activity (a.k.a. irregular, arrhythmic",slide,69,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Please describe the pattern Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022",slide,70,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Lateralized Rhythmic Delta Activity, LRDA (Right frontocentral maximum, 1.0 Hz)",slide,71,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What is the correct term for this pattern?,slide,72,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Sharp-and-wave:  NO,slide,73,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What pattern(s) is this?,slide,74,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BIPDs Lateralized Periodic Discharges (LPDs),slide,75,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What is the correct term for this pattern?,slide,76,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Unilateral Independant Rhythmic Delta Activity, UIRDA (Right frontopolar maximum [solid lined box]: 1.5 Hz; Right anterior temporal maximum [dashed box]: 1.0 Hz)",slide,77,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What would you call this pattern?,slide,78,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,12 EDs/10 s  ,slide,79,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Courtesy of  Dr. Luis Octavio Caboclo,slide,80,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Multifocal Periodic Discharges, MfPDs: 3 independent foci, 1 left, 2 right Courtesy of ",slide,81,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,How often and how long a pattern is present can be described by prevalence and duration: Prevalence,slide,82,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Typical duration of pattern : The typical duration of a pattern, using the following divisions: (i.e., how long a pattern typically lasts)",slide,83,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,The Plus modifier refers to additional features that render the pattern more ictal-appearing than the same pattern without the plus. The Plus modifier can be characterized as: +F,slide,84,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Longitudinal bipolar  fast activity associated with each discharge,slide,85,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,code as +F if the fast activity is part of the RDA or PD pattern and not simply part of the background activity Longitudinal bipolar ,slide,86,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,PERIODIC DISCHARGES PLUS RDA ( PDs+R,slide,87,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,RHYTHMIC DELTA ACTIVITY PLUS SPIKES or SHARP WAVES (RDA+S) Rhythmic delta activity (in this case over the left hemisphere) with associated spikes.,slide,88,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Spiky LPDs+F 89,slide,89,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Spiky LPDs+F 90,slide,90,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What is the best way to describe this pattern? ,slide,91,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Left LRDA, 1.5-2 Hz Lateralized Rhythmic Delta Activity, LRDA+S ",slide,92,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,93 What is the correct term of this pattern?,slide,93,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,94 Lateralized Periodic Discharges with superimposed Rhythmic Delta Activity: LPD+R,slide,94,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Please describe the pattern,slide,95,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Lateralized Periodic Discharges + R (Ictal-Interictal Continuum, IIC) 1.5-2 Hz LPD+R, therefore ",slide,96,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,EXTREME DELTA BRUSH (EDB) “Extreme Delta Brush (EDB)”:,slide,97,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,[No text; inspect visual media],slide,98,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,EXTREME DELTA BRUSH (EDB),slide,99,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,EXTREME DELTA BRUSH (EDB) This is not +F since the fast activity is present even when the RDA is not.,slide,100,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What is the correct term for this pattern?,slide,101,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Generalized Periodic Discharges with superimposed fast activity (GPD+F)  (Bifrontal maximum, 0.5 Hz):  ",slide,102,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Evolving and fluctuating refer to changes in at least one of the following: Frequency,slide,103,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"At least 2 unequivocal, sequential changes in frequency, morphology or location defined as follows:  Frequency: ",slide,104,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"EVOLUTION OF FREQUENCY At least 2 unequivocal, sequential changes in frequency defined as follows: Evolution in ",slide,105,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,106 At least 2 consecutive changes to a novel morphology. ,slide,106,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,107 At least 2 consecutive changes to a novel morphology. ,slide,107,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"At least 3 changes, <1 min apart, in:  Frequency ",slide,108,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,FLUCTUATION in FREQUENCY >,slide,109,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Please describe the pattern,slide,110,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"111 Lateralized Periodic Discharges, fluctuating. ",slide,111,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,FLUCTUATION in LOCATION >,slide,112,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,FLUCTUATION in LOCATION,slide,113,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Many patterns including seizures can be reproducibly brought about or exacerbated by an alerting stimulus, with or without clinical alerting, when a patient is in their less-stimul",slide,114,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Describe the EEG changes following stimulation with sternal rub at the time of the red bar,slide,115,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Stimulus Induced Generalized Periodic Discharges, SI-GPD (0.5 Hz) ",slide,116,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,SIRPIDs: example 2B Reproduced with permission from ,slide,117,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"SIRPIDs: example 2B Stimulus-Induced Seizure (electroclinical sz.), SI-Seizure: ",slide,118,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,D. Electrographic and Electroclinical Seizures,slide,119,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,ELECTROGRAPHIC AND ELECTROCLINICAL SEIZURES,slide,120,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"CLINICAL SUSPICION of nonconvulsive status epilepticus, NCSE  (without preexisting epileptic encephalopathy)",slide,121,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"CLINICAL SUSPICION of nonconvulsive status epilepticus, NCSE  (without preexisting epileptic encephalopathy)",slide,122,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Electrographic and Electroclinical Seizures,slide,123,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 How would you best describe the 3 pages of EEG (compress",slide,124,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 How would you best describe the 3 pages of EEG (compress",slide,125,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022 How would you best describe the 3 pages of EEG (compress",slide,126,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Page 1 Page 2,slide,127,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Electroclinical Seizures,slide,128,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"What is the correct term for this pattern? Reproduced with permission from Hirsch LJ, Fong MWK, Brenner RP. Atlas of EEG in Critical Care, second edition, Wiley: 2022",slide,129,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"130 Lateralized Periodic Discharges time locked with contralateral motor semiology (see bottom channel); thus, this is an ",slide,130,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,89 y.o. woman found confused with minor movements of extremities and later in face. Please describe the pattern,slide,131,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Muscle artifacts due to time-locked jerks Lateralized Periodic Discharges time locked with contralateral motor semiology; thus, this is an ",slide,132,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,E. Brief potentially Ictal Rhythmic Discharges (BIRDs),slide,133,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES (BIRDs),slide,134,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES Brief Potentially Ictal Rhythmic Discharges (BIRDs):,slide,135,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES Brief Potentially Ictal Rhythmic Discharges (BIRDs):,slide,136,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,How would you describe the underlined patterns?,slide,137,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"138 Brief Potentially Ictal Rhythmic Discharges, similar to sporadic epileptiform discharges =  DEFINITE BIRDs ",slide,138,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES OR… ,slide,139,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,BRIEF POTENTIALLY ICTAL RHYTHMIC DISCHARGES,slide,140,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,F. Ictal-Interictal Continuum (IIC),slide,141,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,ICTAL-INTERICTAL CONTINUUM (IIC) A. Any PD or SW pattern that averages >1.0 Hz and ,slide,142,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,ICTAL-INTERICTAL CONTINUUM (IIC) PLUS-MODIFIERs,slide,143,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"ICTAL-INTERICTAL CONTINUUM (IIC) B. Any PD or SW pattern that averages ≥0.5 Hz and ≤1.0 Hz over 10 seconds (≥5 and ≤10 discharges in 10 s), AND has a plus modifier or ",slide,144,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,ICTAL-INTERICTAL CONTINUUM (IIC) PLUS-MODIFIER,slide,145,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,ICTAL-INTERICTAL CONTINUUM (IIC) Fluctuation,slide,146,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,What pattern is this? Part 1 of 3,slide,147,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,"Part 1 of 3 Generalized Periodic Discharges (GPDs), 1.0 Hz, no plus; not on IIC.  ",slide,148,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Part 2 of 3 How has the EEG changed compared to the prior page?,slide,149,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,150 Part 2 of 3,slide,150,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,Part 3 of 4 Part 3 of 3,slide,151,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,GPDs with fluctuating frequency and rhythmic activity; fluctuating GPDs +R,slide,152,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S04,END Thank you for completing the ACNS Critical Care EEG Terminology Training Module,slide,153,context,,Structural slide-text inventory only. Supplemental examples/notes/media require visual adjudication before exemplar use; S01/S09 control definitions.
+S06,Account,html_heading,heading-1,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Bookshelf,html_heading,heading-2,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,"Electroencephalography (EEG): An Introductory Text and Atlas of Normal and Abnormal Findings in Adults, Children, and Infants [Internet].",html_heading,heading-3,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,"The Developmental EEG: Premature, Neonatal, Infant, and Children",html_heading,heading-4,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Neonatal EEG,html_heading,heading-5,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 19.,html_heading,heading-6,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 20.,html_heading,heading-7,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 21.,html_heading,heading-8,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 22.,html_heading,heading-9,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 23.,html_heading,heading-10,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 24.,html_heading,heading-11,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 25.,html_heading,heading-12,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Table 2.,html_heading,heading-13,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 26.,html_heading,heading-14,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 27.,html_heading,heading-15,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 28.,html_heading,heading-16,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 29.,html_heading,heading-17,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 30.,html_heading,heading-18,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 31.,html_heading,heading-19,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Table 3.,html_heading,heading-20,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 32.,html_heading,heading-21,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 33.,html_heading,heading-22,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 34.,html_heading,heading-23,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 35.,html_heading,heading-24,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 36.,html_heading,heading-25,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Infant and Pediatric Developmental Changes in the EEG,html_heading,heading-26,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 37.,html_heading,heading-27,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 40.,html_heading,heading-28,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 41.,html_heading,heading-29,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 42.,html_heading,heading-30,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 38.,html_heading,heading-31,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 39.,html_heading,heading-32,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 43.,html_heading,heading-33,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 44.,html_heading,heading-34,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 45.,html_heading,heading-35,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 46.,html_heading,heading-36,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Figure 47.,html_heading,heading-37,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Views,html_heading,heading-38,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,In this Page,html_heading,heading-39,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S06,Recent Activity,html_heading,heading-40,context,,Contextual developmental reference; extended normal-development contracts deferred beyond core ACNS scope.
+S07,Neonatal EEG graded for severity of background abnormalities in hypoxic-ischaemic encephalopathy,html_heading,heading-1,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Abstract,html_heading,heading-2,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Similar content being viewed by others,html_heading,heading-3,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Quantitative EEG and prediction of outcome in neonatal encephalopathy: a review,html_heading,heading-4,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Quantitative EEG features during the first day correlate to clinical outcome in perinatal asphyxia,html_heading,heading-5,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Early outcome-prediction with an automated EEG background trend in hypothermia-treated newborns with encephalopathy,html_heading,heading-6,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Explore related subjects,html_heading,heading-7,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Background & Summary,html_heading,heading-8,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Methods,html_heading,heading-9,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Patients,html_heading,heading-10,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,EEG,html_heading,heading-11,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Data Records,html_heading,heading-12,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Technical Validation,html_heading,heading-13,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Usage Notes,html_heading,heading-14,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Code availability,html_heading,heading-15,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,References,html_heading,heading-16,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Acknowledgements,html_heading,heading-17,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Author information,html_heading,heading-18,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Authors and Affiliations,html_heading,heading-19,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Contributions,html_heading,heading-20,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Corresponding author,html_heading,heading-21,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Ethics declarations,html_heading,heading-22,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Competing interests,html_heading,heading-23,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Additional information,html_heading,heading-24,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Rights and permissions,html_heading,heading-25,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,About this article,html_heading,heading-26,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Cite this article,html_heading,heading-27,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Share this article,html_heading,heading-28,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Explore content,html_heading,heading-29,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,About the journal,html_heading,heading-30,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Publish with us,html_heading,heading-31,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Search,html_heading,heading-32,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Quick links,html_heading,heading-33,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,nature.com footer links,html_heading,heading-34,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,About Nature Portfolio,html_heading,heading-35,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Discover content,html_heading,heading-36,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Publishing policies,html_heading,heading-37,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Author & Researcher services,html_heading,heading-38,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Libraries & institutions,html_heading,heading-39,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Advertising & partnerships,html_heading,heading-40,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Professional development,html_heading,heading-41,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S07,Regional websites,html_heading,heading-42,context,,Dataset descriptor/protocol context for P3; not a standalone ACNS rule.
+S02,Whole source disposition,section,,context,,Guideline directory; discovery context. Unrelated technical guidelines are outside the selected P2 terminology authorities.
+S05,Whole source disposition,section,,context,,Neonatal journal mirror; S09 is the pinned operational authority. Do not count as an independent consensus.
+S08,Whole source disposition,section,,out_of_scope,,Full text unavailable. Hypsarrhythmia methods are deferred; no thresholds extracted from metadata.
+S10,Whole source disposition,section,,context,,Cork term-HIE metadata; reference eligibility and waveform mapping belong to P3.
+S11,Whole source disposition,section,,context,,Helsinki neonatal metadata; same cohort across linked versions; waveform mapping belongs to P3.
+S12,Whole source disposition,section,,context,,CHB-MIT metadata and license; P3 pediatric reference eligibility.
+S13,Whole source disposition,section,,context,,Siena metadata and license; P3 adult reference eligibility.
+S14,Whole source disposition,section,,context,,Public I-CARE metadata/license; NC/SA eligibility conditional; LPD/LRDA availability unconfirmed.
+S15,Whole source disposition,section,,context,,"OpenNeuro infant metadata; developmental extension candidate, not a primary ACNS definition."
+S16,Whole source disposition,section,,out_of_scope,,Direct retrieval unusable; bibliographic context only; no operational definitions inferred.
+S17,Whole source disposition,section,,out_of_scope,,Direct retrieval unusable; bibliographic context only; no operational definitions inferred.
+S18,Whole source disposition,section,,context,,"CC BY legal terms; rights context, not clinical terminology."
+S19,Whole source disposition,section,,context,,"ODC-By legal terms; rights context, not clinical terminology."
+S20,Whole source disposition,section,,context,,"CC BY-NC-SA legal terms; rights context, not clinical terminology."
+S21,Whole source disposition,section,,out_of_scope,,Crossref identity verification for S08 only; no full-text methods.
