@@ -1695,12 +1695,13 @@ class Synthesizer:
     def _calibrate_display(self) -> None:
         """Scale ``amp_rms`` so the background's 1-s peak-to-peak on the display montage equals ``amplitude_uv``.
 
-        Synthesizes 40 s of background only (events, blinks, graphoelements and
-        artifacts skipped) at a fixed offset, derives the spec's display montage,
-        band-passes 0.5-30 Hz like the EEG Atlas P4 estimators and takes the
-        median 1-s peak-to-peak (80th percentile for burst-type backgrounds,
-        where the request means the bursts).  A fixed window and a single
-        scalar keep every later request window-independent.
+        Synthesizes background only (events, blinks, graphoelements, sensor noise
+        and artifacts skipped) in four fixed 60 s windows, derives the spec's
+        display montage, band-passes 0.5-30 Hz like the EEG Atlas P4 estimators
+        and takes the median 1-s peak-to-peak (80th percentile for burst-type
+        backgrounds, where the request means the bursts).  Fixed windows and a
+        single scalar keep every later request window-independent.  Checked
+        whole-record by tests/test_display_calibration.py (calibrate_display.py).
         """
         # background voltage is read away from the frontopolar derivations, where blinks live
         pairs = [p for p in mt.montage_pairs(self.spec.get("montage", "longitudinal_bipolar"), self.electrodes)

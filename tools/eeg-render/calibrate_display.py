@@ -40,18 +40,36 @@ def derive(synth, raw, pairs):
     return synth.derive(raw, [(a, b) for a, b in pairs])
 
 
-def measure_background(spec, pairs=None, duration_s=1200.0):
-    """Median 1-s p2p over six 60-s windows spread across the record (the background waxes and wanes by +-20 %)."""
+def measure_background(spec, pairs=None, duration_s=1200.0, window_s=60.0):
+    """Median 1-s p2p of the background over the whole record, read the way a reader reads it.
+
+    The background waxes and wanes by +-24 % (log-normal slow AM on a ~30 s time
+    constant), so a handful of windows is a noisy sample of it: six windows read
+    1.10-1.14x on records whose whole-record median was 1.01-1.06x.  Every
+    ``window_s`` block of the record is measured instead (about 4 s for 20 min).
+    Seconds that carry a spontaneous blink are dropped and the frontopolar
+    derivations are left out: a reader measures background voltage between
+    blinks and away from the eyes, and the synthesizer's own calibration
+    (``Synthesizer._calibrate_display``) is background-only for the same reason.
+    """
     norm = normalize({"kind": "eeg_page", "license": "synthetic-original", "spec": spec})["spec"]
     synth = Synthesizer(norm, duration_s)
-    # away from the frontopolar derivations, where blinks live (how a reader reads background voltage)
     pairs = pairs or [p for p in mt.montage_pairs(norm["montage"], synth.electrodes)
                       if p[1] and not any(str(e).upper().startswith("FP") for e in p)]
+    blinks = np.asarray(getattr(synth, "_blink_t", np.empty(0)), dtype=float)
     chunks = []
-    for frac in (0.08, 0.2, 0.35, 0.5, 0.65, 0.85):
-        t0 = frac * duration_s
-        _, raw = synth.segment(t0, t0 + 60.0)
-        chunks.append(p2p_1s(_bp(derive(synth, raw, pairs))))
+    t0 = 0.0
+    while t0 + window_s <= duration_s + 1e-9:
+        _, raw = synth.segment(t0, t0 + window_s)
+        p2p = p2p_1s(_bp(derive(synth, raw, pairs)))
+        if blinks.size:
+            starts = t0 + np.arange(p2p.shape[1])
+            # a 160 uV blink lasts ~0.4 s and the band-pass rings a little either side
+            hit = np.array([bool(np.any((blinks > s - 0.6) & (blinks < s + 1.6))) for s in starts])
+            p2p = p2p[:, ~hit]
+        if p2p.shape[1]:
+            chunks.append(p2p)
+        t0 += window_s
     return float(np.median(np.concatenate(chunks, axis=1)))
 
 
