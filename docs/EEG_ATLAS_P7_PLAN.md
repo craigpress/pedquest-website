@@ -90,3 +90,48 @@ must add probes (and estimator rules) as well as candidates, or the matrix canno
 **Verdict on readiness:** the technical gate is clean, the amplitude semantics gates now pass, and the remaining
 unsupported rows are exactly the scopes of batches 1–4. Proceed to batch 1 (neonatal module) next session; Craig to
 confirm the batch-1 scope above or reorder (batch 2 is independent and can go first).
+
+## Batch 1 — neonatal module (renderer 0.4.2, 2026-09-20)
+
+Generator (spec_version 2, opt-in keys, bank hashes unchanged): `background.state_cycle: term` — an emitted term
+sleep-wake cycle (awake / active sleep / quiet sleep / indeterminate rows in the answer key) in which quiet sleep is
+tracé alternant (8 s cycle, sf 0.44, interburst 0.42 of the burst voltage; S22 day 3: max IBI 3.7 s) and the other
+states are continuous; `background.hours_of_life` — under 12 h the first-day state of S22 (indeterminate sleep dominant,
+max IBI 5.75 s, lower interburst, 12/h encoches, ~1/h rolandic bursts, 37/h transient sharps, a fifth of bursts brushed);
+`graphoelements.sharp_transient` — term transient sharp waves 7.6/h at day 3 (temporal 43 %, rolandic 32 %, occipital
+20 %, frontal 5 %), 100-400 ms, > 50 µV, one side, present only inside the state-cycle module so no existing spec
+changes; `background.dysmature_pma_weeks` — maturational defaults drawn from a younger PMA than the stated one. Neonatal
+blink default inside the module 4/min (was the 15/min of older children). Also fixed: background calibration no longer
+sees epileptiform discharges (PQ-A-022 re-rendered), hour-long records for the batch so every state is present.
+
+Candidates B1-01 … B1-10 (`research/eeg-atlas/p7/batch1_candidates.py`; gallery `p7/batch1/review/index.html`, review
+server package `p7b1`, CSV `EEG_ATLAS_P7_B1_REVIEW.csv`): day-3 term in quiet / active / indeterminate sleep, first
+hours of life ×2, dysmature 40 w with 34 w patterns, excess temporal sharps (23/h, abnormal), encephalopathic no-cycle
+contrast, post-term 43 w, 37 w discontinuous with cycle. Pages are placed in the requested state by the runner.
+
+Contract rows (`EEG_ATLAS_P7_B1_GAP_ROWS.csv`): NEO-BEHAVIORAL-STATE **pass** (6 state rows keyed; quiet-sleep
+burst:interburst 2.3 vs 1.6 in active sleep), NEO-CONTINUITY-NORMAL measured (active sleep 0 % under 25 µV),
+NEO-SHARP-TRANSIENTS **pass** (9.0/h; B1-07 23/h), NEO-VARIABILITY-REACTIVITY measured, NEO-DYSMATURITY measured.
+Tests: `tests/test_p7_batch1.py` (5). Craig's review pending.
+
+## Batch 2 — pediatric / adult background module (renderer 0.4.2, 2026-09-20)
+
+Generator (opt-in keys): stimulation rows now carry `response` (the background's reactivity) in the key; a
+`state_change` record emits awake / sleep rows; `background.cape` — cyclic alternating pattern of encephalopathy,
+the second half of every cycle attenuated by `depth` with 2 s edges, each cycle keyed (`cape_cycle` rows);
+`background.breach` — display-referenced regional gain around a focus electrode with a separate fast-activity gain;
+`background.ap_gradient: absent` — the posterior-dominant and anterior-fast fields become uniform.
+
+Candidates B2-01 … B2-07 (`batch2_candidates.py`; package `p7b2`, CSV `EEG_ATLAS_P7_B2_REVIEW.csv`): reactive vs
+unreactive ICU record with a keyed stimulation, CAPE (12 cycles of 40 s, depth 0.6), left central breach in a child,
+AP gradient absent vs preserved, awake→sleep state change with spindles.
+
+Contract rows (`EEG_ATLAS_P7_B2_GAP_ROWS.csv`): BG-REACTIVITY **pass** (post/pre p2p 1.25 reactive vs 1.13 unreactive
+— the unreactive record's 13 % is background variance; the key, not the page, carries the answer), BG-CAPE **pass**
+(12 cycles keyed, phase B/A 0.45), BG-BREACH **pass** (C3/C4 p2p 1.75, beta 2.96 after the display-referenced gain),
+BG-AP-GRADIENT **pass** (alpha O/F 5.39 present vs 1.73 absent), BG-STATE-CHANGES **pass** (sigma RMS sleep/awake 5.5).
+Tests: `tests/test_p7_batch2.py` (5). Renderer suite 145 passed / 1 skipped. Craig's review pending.
+
+Adult ICU families still have no calibrated microvolt reference (P3): these rows are generator-side measurements and
+Craig's read, not validation against patients.
+

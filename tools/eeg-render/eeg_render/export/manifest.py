@@ -220,8 +220,31 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             at = float(ev["at_min"]) * 60.0
             if at < 0.0 or at > duration_s:
                 continue
+            extra = {}
+            if kind == "stimulation":
+                # P7 batch 2: the response is part of the key, not something the reader infers
+                extra["response"] = str(synth.bg.get("reactivity", "present"))
             rows.append(_row(kind, at, at, fs, duration_s,
-                             to=ev.get("to"), spec_event_index=i))
+                             to=ev.get("to"), spec_event_index=i, **extra))
+
+    # P7 batch 2: CAPE cycles and the awake/sleep timeline of a state_change record are keyed too
+    for a, b, depth in synth.cape_cycles():
+        if b < 0.0 or a > duration_s:
+            continue
+        rows.append(_row("cape_cycle", a, b, fs, duration_s, depth=round(float(depth), 3)))
+    if not getattr(synth, "_state_intervals", None) and any(e.get("type") == "state_change" for e in synth.spec.get("events", [])):
+        bp = list(zip(synth._state_t, synth._state_v))
+        for k, (t0, v) in enumerate(bp):
+            t1 = bp[k + 1][0] if k + 1 < len(bp) else duration_s
+            if t1 <= t0 or t1 < 0.0 or t0 > duration_s:
+                continue
+            rows.append(_row("state", t0, t1, fs, duration_s, label="sleep" if v >= 0.5 else "awake"))
+
+    # P7 batch 1: the behavioral-state timeline is part of the key when a state cycle is scheduled
+    for t0, t1, label in getattr(synth, "_state_intervals", []) or []:
+        if t1 < 0.0 or t0 > duration_s:
+            continue
+        rows.append(_row("state", t0, t1, fs, duration_s, label=label))
 
     for ann in synth.spec.get("annotations") or []:
         at = float(ann["at_min"]) * 60.0

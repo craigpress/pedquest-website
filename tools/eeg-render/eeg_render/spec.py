@@ -140,6 +140,8 @@ GRAPHOELEMENT_PMA: Dict[str, List[Tuple[float, float, float]]] = {
     "frontal_sharp":   [(33.0, 0.0, 0.0), (34.0, 0.6, 70.0), (35.5, 2.5, 110.0), (40.0, 1.8, 100.0), (44.0, 0.6, 60.0), (48.0, 0.0, 0.0)],
     "anterior_slow":   [(33.0, 0.0, 0.0), (35.0, 0.8, 70.0), (38.0, 1.2, 80.0), (42.0, 0.6, 60.0), (46.0, 0.0, 0.0)],
     "midline_theta":   [(28.0, 0.25, 70.0), (40.0, 0.25, 70.0), (44.0, 0.0, 0.0)],
+    # term transient sharp waves (P7 batch 1): zero under version 1; the version-2 curve is below
+    "sharp_transient": [(23.0, 0.0, 0.0), (48.0, 0.0, 0.0)],
 }
 
 #: Fraction of quiet-sleep bursts that are interhemispherically synchronous
@@ -158,6 +160,9 @@ SYNCHRONY_PMA: List[Tuple[float, float]] = [
 #: with 20 % of bursts carrying brushes - an hours-of-life control, not yet a spec key.
 GRAPHOELEMENT_PMA_V2: Dict[str, List[Tuple[float, float, float]]] = {
     "frontal_sharp": [(33.0, 0.0, 0.0), (34.0, 0.3, 70.0), (35.5, 1.2, 110.0), (40.0, 0.5, 100.0), (44.0, 0.25, 60.0), (48.0, 0.0, 0.0)],
+    # transient sharp waves of the healthy term neonate (S22, day 3): 7.6/h in all, temporal 3.3, rolandic 2.4,
+    # occipital 1.5, frontal 0.4 (> 10/h temporal is abnormal); 0.13/min at 40 w, > 50 uV, 100-400 ms, one side each
+    "sharp_transient": [(35.0, 0.0, 0.0), (37.0, 0.10, 80.0), (40.0, 0.13, 80.0), (44.0, 0.06, 70.0), (48.0, 0.0, 0.0)],
 }
 
 
@@ -480,7 +485,9 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     if version >= 2:
         bg.setdefault("channel_gain_max", 2.0)
         unreactive = bg.get("reactivity") != "present" or bg["type"] in ("suppressed", "low_voltage", "burst_suppression")
-        bg.setdefault("blink_rate_per_min", 0.0 if unreactive else 15.0)
+        # a neonate blinks far less than the awake 15/min of older children; within the state-cycle
+        # module (P7 batch 1) the awake default is 4/min, gated further by state in the synthesizer
+        bg.setdefault("blink_rate_per_min", 0.0 if unreactive else (4.0 if (age == "neonate" and bg.get("state_cycle")) else 15.0))
         if age != "neonate":
             bg.setdefault("pdr_gain", 2.5)
         bg.setdefault("blink_amplitude_uv", 160.0)
@@ -499,9 +506,16 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     preset = BACKGROUND_PRESETS[bg["type"]]
     bs = dict(bg.get("burst_suppression", {}) or {})
     pma = bg.get("pma_weeks")
+    # P7 batch 1: dysmaturity = the record carries the patterns of a younger PMA than the stated one;
+    # every maturational default below reads ``pma_eff``, the label keeps ``pma_weeks``
+    pma_eff = bg.get("dysmature_pma_weeks", pma) if age == "neonate" else pma
+    if pma_eff is not None:
+        pma_eff = float(pma_eff)
+    if bg.get("dysmature_pma_weeks") is not None:
+        bg["dysmature_pma_weeks"] = float(bg["dysmature_pma_weeks"])
     if pma is not None and age == "neonate" and bg["type"] in (
             "discontinuous", "excessively_discontinuous", "trace_alternant"):
-        row = pma_defaults(float(pma))
+        row = pma_defaults(pma_eff)
         bs.setdefault("burst_s", row["burst_s"])
         bs.setdefault("ibi_s", row["ibi_s"])
         bs.setdefault("ibi_sigma", row["ibi_sigma"])
@@ -510,6 +524,17 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         # that default (not an explicit author value) with the maturational one.
         if "amplitude_uv" not in (s.get("background") or {}):
             bg["amplitude_uv"] = row["amplitude_uv"]
+    # P7 batch 1: ``state_cycle: term`` makes quiet sleep trace alternant on a continuous record.
+    # Day-3 term (S22): max IBI 3.7 s, bursts 50-100 uV every 4-5 s, interburst < 50 uV -> cycle 8 s,
+    # sf 0.44, floor 0.42.  In the first hours of life (S22, < 6 h): max IBI 5.75 s, lower interburst.
+    if bg.get("state_cycle") == "term" and age == "neonate":
+        early = bg.get("hours_of_life") is not None and float(bg["hours_of_life"]) < 12.0
+        bs.setdefault("burst_s", 4.0 if early else 4.5)
+        bs.setdefault("ibi_s", 5.0 if early else 3.5)
+        bs.setdefault("ibi_sigma", 0.25)
+        bs.setdefault("ibi_floor", 0.30 if early else 0.42)
+    if bg.get("hours_of_life") is not None:
+        bg["hours_of_life"] = float(bg["hours_of_life"])
     if bg["type"] == "burst_suppression":
         bs.setdefault("burst_s", 2.0)
         bs.setdefault("ibi_s", 8.0)
@@ -536,10 +561,23 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     # Neonatal graphoelements: defaults from the PMA table (all zero without a
     # PMA), each element's rate and amplitude overridable by the author.
     ge_in = dict(bg.get("graphoelements", {}) or {})
-    ge = graphoelement_defaults(float(pma), version) if (pma is not None and age == "neonate") else {
+    ge = graphoelement_defaults(pma_eff, version) if (pma is not None and age == "neonate") else {
         name: {"rate_per_min": 0.0, "amplitude_uv": 0.0} for name in GRAPHOELEMENT_PMA}
     if bg.get("delta_brush_events") and age == "neonate":
-        ge["delta_brush"] = delta_brush_defaults(None if pma is None else float(pma))
+        ge["delta_brush"] = delta_brush_defaults(pma_eff)
+    # P7 batch 1, first hours of life (Castro Conde 2017, < 6 h vs day 3): encoches 12/h (not 30), rolandic
+    # bursts 0.9/h (not 17), transient sharps 37/h (not 7.6), a fifth of bursts brushed (not 5 %)
+    if age == "neonate" and version >= 2 and bg.get("hours_of_life") is not None and bg["hours_of_life"] < 12.0:
+        for name, k in (("frontal_sharp", 0.4), ("midline_theta", 0.05), ("sharp_transient", 4.9)):
+            if name in ge:
+                ge[name]["rate_per_min"] = ge[name]["rate_per_min"] * k
+        if "delta_brush" in ge and ge["delta_brush"]["rate_per_min"] < 0.6:
+            ge["delta_brush"] = {"rate_per_min": 0.6, "amplitude_uv": max(ge["delta_brush"]["amplitude_uv"], 130.0)}
+    # Transient sharp waves are part of the state-cycle neonatal module (P7 batch 1): without
+    # ``state_cycle`` or an explicit author entry the element is dropped from the normalized spec,
+    # so every existing version-2 spec (the bank) keeps its hash and its samples.
+    if "sharp_transient" in ge and "sharp_transient" not in ge_in and not bg.get("state_cycle"):
+        del ge["sharp_transient"]
     for name, row in ge_in.items():
         row = dict(row or {})
         if row.get("enabled") is False:

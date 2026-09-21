@@ -682,6 +682,11 @@ class Synthesizer:
 
         post = _profile(ch, _POSTERIOR, 0.2)
         ant = _profile(ch, _ANTERIOR, 0.3)
+        if self.bg.get("ap_gradient") == "absent":
+            # P7 batch 2: loss of the anteroposterior gradient (diffuse encephalopathy) - the
+            # posterior-dominant and anterior-fast streams lose their fields and become uniform
+            post = np.full_like(post, float(np.mean(post)))
+            ant = np.full_like(ant, float(np.mean(ant)))
         cen = _profile(ch, _CENTRAL, 0.3)
         temp = _profile(ch, _TEMPORAL, 0.3)
         for arr in (post, ant, cen, temp):
@@ -739,6 +744,18 @@ class Synthesizer:
                 lateral = float(smoothstep(sign * x / 0.25)) if hemispheric else float(np.clip(sign * x, 0.0, 1.0))
                 self.gain_asym[i] = 1.0 - att * lateral
                 self.slow_side[i] = lateral * min(1.0, slw / 3.0)
+
+        # P7 batch 2: breach effect - over a skull defect the background is larger and carries
+        # more sharply contoured fast activity (Niedermeyer: 2-3x amplitude, beta accentuated)
+        self._breach_fast = np.ones(self.n_elec)
+        br = self.bg.get("breach")
+        if br:
+            w = self._gen_weights(str(br["focus"]))      # monopole field around the defect (neighbours ~0.24)
+            # ``gain`` is what the reader measures on the bipolar display montage: a derivation of two
+            # partially correlated electrodes (spatial kernel 0.65) dilutes a referential gain, so the
+            # focus electrode is raised by 1.6x the requested excess (P7 batch 2: requested 2.2 read 1.36)
+            self.gain_asym = self.gain_asym * (1.0 + 1.6 * (float(br.get("gain", 2.0)) - 1.0) * w)
+            self._breach_fast = 1.0 + (float(br.get("fast_gain", 2.5)) - 1.0) * w
 
     # ---------------- slow amplitude modulation ----------------
 
@@ -854,6 +871,31 @@ class Synthesizer:
         self._swc_period_s = period_h * 3600.0
         self._swc_phase = 0.15
 
+        # P7 batch 1 (0.4.2): an EMITTED term sleep-wake cycle.  Intervals of awake / active sleep /
+        # quiet sleep with indeterminate sleep at the transitions, drawn once from the record seed
+        # (Castro Conde 2017: well-differentiated cycles in 20/22 healthy term neonates by day 3, but
+        # 63 % indeterminate sleep and cycles in only 2/22 in the first six hours).  Quiet sleep is
+        # trace alternant (suppression_fraction_at / _ibi_floor_at), active sleep and wake are
+        # continuous; the timeline goes into the answer key (export.manifest).
+        self._state_intervals: List[Tuple[float, float, str]] = []
+        bgc = spec["background"]
+        if bgc.get("state_cycle") == "term" and self.age == "neonate":
+            rng = substream(self.seed, "state_cycle")
+            early = bgc.get("hours_of_life") is not None and float(bgc["hours_of_life"]) < 12.0
+            # mean minutes per state: day 3 vs first hours (indeterminate dominates early)
+            means = {"awake": (10.0, 5.0), "active_sleep": (25.0, 9.0), "quiet_sleep": (20.0, 6.0),
+                     "indeterminate": (3.0, 14.0)}
+            order = ["awake", "active_sleep", "indeterminate", "quiet_sleep", "indeterminate"]
+            t = -60.0 - float(rng.uniform(0.0, 20.0)) * 60.0
+            k = int(rng.integers(0, len(order)))
+            while t < dur + 120.0:
+                label = order[k % len(order)]
+                mean_min = means[label][1 if early else 0]
+                length = 60.0 * mean_min * float(_lognorm(rng, 1, 0.25)[0])
+                self._state_intervals.append((t, t + length, label))
+                t += length
+                k += 1
+
         # temperature --------------------------------------------------
         tt: List[float] = [0.0]
         tv: List[float] = [36.5]
@@ -906,7 +948,34 @@ class Synthesizer:
     def temperature_at(self, t: np.ndarray) -> np.ndarray:
         return _piecewise(self._temp_t, self._temp_v, t) if len(self._temp_t) > 1 else np.full_like(t, 36.5)
 
+    #: per-state sleep weight (drives delta content, muscle, blinks) and quiet-sleep discontinuity
+    _STATE_SLEEP = {"awake": 0.0, "active_sleep": 0.35, "indeterminate": 0.5, "quiet_sleep": 1.0}
+    _STATE_SF = {"awake": 0.0, "active_sleep": 0.0, "indeterminate": 0.18, "quiet_sleep": 0.44}
+    _STATE_SF_EARLY = {"awake": 0.0, "active_sleep": 0.05, "indeterminate": 0.30, "quiet_sleep": 0.55}
+
+    def state_at(self, t: np.ndarray) -> np.ndarray:
+        """Behavioral-state label per sample ('' when no state cycle is scheduled)."""
+        out = np.full(t.shape, "", dtype=object)
+        for a, b, label in self._state_intervals:
+            out[(t >= a) & (t < b)] = label
+        return out
+
+    def _state_lookup(self, t: np.ndarray, table: Dict[str, float], default: np.ndarray) -> np.ndarray:
+        if not self._state_intervals:
+            return default
+        out = np.array(default, dtype=float, copy=True)
+        for a, b, label in self._state_intervals:
+            m = (t >= a) & (t < b)
+            if m.any():
+                out[m] = table[label]
+        return out
+
     def _sleep_at(self, t: np.ndarray) -> np.ndarray:
+        if self._state_intervals:
+            v = self._state_lookup(t, self._STATE_SLEEP, np.zeros_like(t, dtype=float))
+            for at, width in self._arousals:
+                v = v * (1.0 - 0.9 * np.exp(-0.5 * ((t - at) / width) ** 2))
+            return np.clip(v, 0.0, 1.0)
         v = _piecewise(self._state_t, self._state_v, t)
         v = v + self._swc_depth * 0.5 * (
             1.0 - np.cos(2 * np.pi * (t / self._swc_period_s + self._swc_phase)))
@@ -929,6 +998,10 @@ class Synthesizer:
             # periods of voltage attenuation (the "modified" variant); awake
             # it is continuous.
             sleep = 0.35 * self._sleep_at(t)
+        if self._state_intervals and self.bg["type"] == "continuous":
+            early = self.bg.get("hours_of_life") is not None and float(self.bg["hours_of_life"]) < 12.0
+            base = self._state_lookup(t, self._STATE_SF_EARLY if early else self._STATE_SF, np.zeros_like(t, dtype=float))
+            sleep = np.zeros_like(t)     # the state table already carries sleep
         out = (sed if len(self._sed_t) > 1 else base) + cold + sleep
         return np.clip(out, 0.0, 0.96)
 
@@ -1076,7 +1149,17 @@ class Synthesizer:
         # 0.3.12: a delta brush is one slow wave (~0.7-1.6 s) with a 10-20 Hz
         # burst riding on it; one side per event, inside bursts when discontinuous
         "delta_brush": (1.1, 0.30, (10.0, 20.0), "unilateral", True),
+        # P7 batch 1: transient sharp waves of the term neonate, 100-400 ms, > 50 uV, one side; the
+        # region is drawn per event (temporal 43 %, rolandic 32 %, occipital 20 %, frontal 5 %: S22)
+        "sharp_transient": (0.25, 0.25, (0.0, 0.0), "unilateral", False),
     }
+    _SHARP_REGION_P = (0.43, 0.32, 0.20, 0.05)
+    _SHARP_REGION_FIELDS = (
+        {"T3": 1.0, "C3": 0.30, "T5": 0.40, "F7": 0.35},          # temporal
+        {"C3": 1.0, "Cz": 0.30, "T3": 0.25, "P3": 0.30},          # rolandic
+        {"O1": 1.0, "T5": 0.40, "P3": 0.35},                      # occipital
+        {"F3": 1.0, "Fp1": 0.60, "F7": 0.50},                     # frontal
+    )
     #: Spatial fields (electrode weight; the unilateral ones list the LEFT
     #: field and are mirrored for the right).
     _GE_FIELD: Dict[str, Dict[str, float]] = {
@@ -1090,6 +1173,7 @@ class Synthesizer:
         # rolandic / temporal / occipital, the regions brushes favour (the PMA-dependent
         # central vs occipito-temporal weighting is applied in graphoelement_rows)
         "delta_brush": {"C3": 1.0, "Cz": 0.5, "T3": 0.6, "O1": 0.7, "P3": 0.55, "T5": 0.4, "F3": 0.3},
+        "sharp_transient": {"T3": 1.0, "C3": 0.30, "T5": 0.40},   # placeholder; the per-event region field is used
     }
     #: beta-delta complexes are CENTRAL at 27-30 w and OCCIPITO-TEMPORAL at 31-33 w
     #: (Hrachovy/Mizrahi/Kellaway); central ones are gone by 36-37 w, occipital by 39 w
@@ -1125,6 +1209,8 @@ class Synthesizer:
                 mean_s = 3.0 if pma < 28.0 else (14.0 if pma <= 31.0 else 6.0)
             dur = np.clip(mean_s * _lognorm(rng, m, dur_sd), 0.3, 60.0) if dur_sd > 0 else np.full(m, mean_s)
             freq = rng.uniform(f0, f1, m) if f1 > 0 else np.zeros(m)
+            if name == "sharp_transient":      # the freq column carries the region index for this element
+                freq = rng.choice(len(self._SHARP_REGION_P), size=m, p=self._SHARP_REGION_P).astype(float)
             side = (rng.integers(0, 2, m) * 2 - 1).astype(float) if lat == "unilateral" else np.zeros(m)
             aj = amp * _lognorm(rng, m, 0.30)
             phase = rng.uniform(0, 2 * np.pi, m)
@@ -1195,6 +1281,16 @@ class Synthesizer:
                     wave = (np.exp(-0.5 * ((d - 0.10) / 0.055) ** 2)
                             - 0.75 * np.exp(-0.5 * ((d - 0.27) / 0.085) ** 2))
                     sig = -amp * 0.5 * wave
+                elif name == "sharp_transient":
+                    # a surface-negative sharp wave (~80 ms to peak) with a smaller positive
+                    # after-wave, 200-300 ms in all; ``amp`` is the peak-to-peak request
+                    d = t - t0
+                    wave = (np.exp(-0.5 * ((d - 0.08) / 0.030) ** 2)
+                            - 0.55 * np.exp(-0.5 * ((d - 0.19) / 0.060) ** 2))
+                    sig = -amp * 0.65 * wave
+                    fld = self._SHARP_REGION_FIELDS[int(freq) % len(self._SHARP_REGION_FIELDS)]
+                    target += np.outer(self._table_field(fld, side), sig)
+                    continue
                 elif name == "delta_brush":
                     # a delta wave (one surface-negative half-cycle, ``amp`` peak-to-peak)
                     # with a fast burst riding on it: the burst envelope follows the slow
@@ -1226,11 +1322,43 @@ class Synthesizer:
             bound *= self.burst_envelope(t)[None, :]
         return bound + free
 
+    def cape_cycles(self) -> List[Tuple[float, float, float]]:
+        """(onset_s, offset_s, depth) of each CAPE cycle; empty without ``background.cape``."""
+        c = self.bg.get("cape")
+        if not c:
+            return []
+        period = float(c["period_s"]); depth = float(c.get("depth", 0.6))
+        at = float(c.get("at_min", 0.0)) * 60.0
+        n = int(c.get("cycles") or max(6, int((self.duration_s - at) // period)))
+        return [(at + k * period, at + (k + 1) * period, depth) for k in range(n)]
+
+    def cape_envelope(self, t: np.ndarray) -> np.ndarray:
+        """Cyclic alternating pattern of encephalopathy: the second half of every cycle is attenuated
+        by ``depth`` with 2 s smooth edges (ACNS: >= 6 cycles of two alternating patterns, each
+        phase >= 10 s).  Pure function of absolute time."""
+        cyc = self.cape_cycles()
+        if not cyc:
+            return np.ones_like(t)
+        out = np.ones_like(t)
+        for a, b, depth in cyc:
+            if b < t[0] - 3.0 or a > t[-1] + 3.0:
+                continue
+            mid = 0.5 * (a + b)
+            phase_b = smoothstep((t - mid) / 2.0) * (1.0 - smoothstep((t - b) / 2.0))
+            out = out * (1.0 - depth * phase_b)
+        return out
+
     def _ibi_floor_at(self, t: np.ndarray) -> np.ndarray:
         """Interburst residual amplitude; sedation drives it toward true flat."""
         sed = _piecewise(self._sed_t, self._sed_sf, t) if len(self._sed_t) > 1 else np.zeros_like(t)
         deep = np.clip(sed / 0.25, 0.0, 1.0)
         floor = self._ibi_floor0 * (1.0 - deep) + 0.005 * deep
+        if self._state_intervals:
+            # quiet sleep = trace alternant: interburst about 0.42 of the burst voltage (< 50 uV for
+            # 100 uV bursts), a little lower in the first hours; other states have no interburst
+            early = self.bg.get("hours_of_life") is not None and float(self.bg["hours_of_life"]) < 12.0
+            table = {"awake": 1.0, "active_sleep": 1.0, "indeterminate": 0.6, "quiet_sleep": 0.30 if early else 0.42}
+            floor = self._state_lookup(t, table, np.asarray(floor, dtype=float) * np.ones_like(t))
         points = self.bg.get("ibi_floor_at_h")
         if points:
             floor = np.interp(t / 3600.0, [p[0] for p in points], [p[1] for p in points])
@@ -2480,7 +2608,7 @@ class Synthesizer:
 
         delta_w = 0.14 + 0.85 * self.slow_fraction + 0.45 * sleep + 0.70 * temp_slow
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
-        x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :]
+        x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
 
         # Continuous muscle floor.  Before this, ``st_emg`` existed but was
         # reachable only through an explicit artifact event, so a recording with
@@ -2556,6 +2684,7 @@ class Synthesizer:
         env = env * self.postictal_envelope(t)
         env = env * np.clip(0.70 + 0.09 * (temp - 33.0), 0.55, 1.06)
         env = env * amp_w
+        env = env * self.cape_envelope(t)
         gain_points = self.bg.get("amplitude_gain_at_h")
         if gain_points:
             env *= np.interp(t / 3600.0, [p[0] for p in gain_points], [p[1] for p in gain_points])
@@ -2601,7 +2730,7 @@ class Synthesizer:
         env = env * self.burst_envelope(t)
 
         bs = self.bg["burst_suppression"]
-        discharge_count = int(bs.get("epileptiform_discharges", 0))
+        discharge_count = 0 if self._calibrating else int(bs.get("epileptiform_discharges", 0))
         if discharge_count:
             signal = np.zeros_like(t)
             fraction = float(bs.get("highly_epileptiform_fraction", 1.0))

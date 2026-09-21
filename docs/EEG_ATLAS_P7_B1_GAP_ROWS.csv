@@ -1,0 +1,6 @@
+family,contract_id,probes,requested,normalized,measured,verdict,evidence,note
+AT-P01,NEO-BEHAVIORAL-STATE,B1-01,state labels emitted with matching background (QS = trace alternant),background.state_cycle: term,6 state rows in the key; quiet sleep burst:interburst 2.3 (p20 49 uV) vs active sleep 1.6,pass,probes,P7 batch 1
+AT-P01,NEO-CONTINUITY-NORMAL,B1-02,continuous in active sleep / awake,state_cycle term,active sleep <25 uV fraction 0.00,measured,probes,P7 batch 1
+AT-P01,NEO-SHARP-TRANSIENTS,B1-01;B1-07,term transient sharp waves 7.6/h (S22 day 3); > 10/h temporal abnormal,graphoelements.sharp_transient 0.13/min,B1-01 9.0/h; B1-07 23.0/h,pass,probes,P7 batch 1
+AT-P01,NEO-VARIABILITY-REACTIVITY,B1-04;B1-05,"first-hours state: more discontinuity, indeterminate sleep dominant (S22 < 6 h)",background.hours_of_life 3,"quiet/indeterminate p20 32 uV, burst:interburst 3.4",measured,probes,P7 batch 1
+AT-P01,NEO-DYSMATURITY,B1-06,patterns of a younger PMA than stated,dysmature_pma_weeks 34 at pma 40,"graphoelement rates/min: occipital_delta 1.50, temporal_alpha 1.33, frontal_sharp 0.30, anterior_slow 0.40, midline_theta 0.25, delta_brush 2.85",measured,probes,P7 batch 1

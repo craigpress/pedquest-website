@@ -1,0 +1,6 @@
+family,contract_id,probes,requested,normalized,measured,verdict,evidence,note
+AT-P06,BG-REACTIVITY,B2-01;B2-02,stimulation keyed with response present / absent and a visible change only when present,reactivity present|absent + stimulation event,"post/pre p2p present 1.25, absent 1.13",pass,probes,P7 batch 2
+AT-P06,BG-CAPE,B2-03,"cyclic alternating pattern of encephalopathy, >= 6 cycles keyed",background.cape period 40 s depth 0.6,12 cycles keyed; phase B/A p2p 0.45,pass,probes,P7 batch 2
+AT-P06,BG-BREACH,B2-04,breach effect: regional amplitude and fast gain,background.breach left_central gain 2.2 fast 2.5,"C3/C4 p2p 1.75, beta 2.96",pass,probes,P7 batch 2
+AT-P06,BG-AP-GRADIENT,B2-05;B2-06,anteroposterior gradient present vs absent,background.ap_gradient,alpha O/F absent 1.73 vs present 5.39; beta F/O absent 0.53 vs present 1.98,pass,probes,P7 batch 2
+AT-P06,BG-STATE-CHANGES,B2-07,state change keyed (awake / sleep rows) with sleep transients,state_change event,sigma RMS sleep/awake 5.52,pass,probes,P7 batch 2

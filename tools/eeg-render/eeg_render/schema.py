@@ -260,6 +260,26 @@ _BACKGROUND = {
         # (interburst interval, its spread, burst length, interburst floor,
         # burst voltage) from the maturational tables - see spec.PMA_TABLE.
         "pma_weeks": {"type": "number", "minimum": 23, "maximum": 48},
+        # P7 batch 1 (0.4.2), neonates: a term sleep-wake cycle that is EMITTED (state rows in the answer
+        # key) and drives continuity (quiet sleep = trace alternant); hours of life for the first-day
+        # state (Castro Conde 2017, S22); dysmaturity = patterns drawn from a younger PMA than stated
+        "state_cycle": {"enum": ["term"]},
+        "hours_of_life": {"type": "number", "minimum": 0, "maximum": 720},
+        "dysmature_pma_weeks": {"type": "number", "minimum": 23, "maximum": 48},
+        # P7 batch 2 (0.4.2): anteroposterior gradient on/off; cyclic alternating pattern of
+        # encephalopathy (ACNS: >= 6 cycles of two alternating backgrounds, each phase >= 10 s);
+        # breach effect (regional amplitude and fast-activity gain over a skull defect)
+        "ap_gradient": {"enum": ["present", "absent"]},
+        "cape": {"type": "object", "additionalProperties": False, "required": ["period_s"],
+                 "properties": {"period_s": {"type": "number", "minimum": 20, "maximum": 240},
+                                "depth": {"type": "number", "minimum": 0.2, "maximum": 0.9},
+                                "cycles": {"type": "integer", "minimum": 2, "maximum": 400},
+                                "at_min": {"type": "number", "minimum": 0},
+                                "slowing": {"type": "boolean"}}},
+        "breach": {"type": "object", "additionalProperties": False, "required": ["focus"],
+                   "properties": {"focus": {"type": "string"},
+                                  "gain": {"type": "number", "minimum": 1, "maximum": 5},
+                                  "fast_gain": {"type": "number", "minimum": 1, "maximum": 8}}},
         # neonates: per-element rate / amplitude overrides of the PMA table
         # (spec.GRAPHOELEMENT_PMA); `enabled: false` silences one.
         "graphoelements": {
@@ -276,7 +296,7 @@ _BACKGROUND = {
                     },
                 }
                 for name in ("occipital_delta", "temporal_theta", "temporal_alpha", "stop",
-                             "frontal_sharp", "anterior_slow", "midline_theta", "delta_brush")
+                             "frontal_sharp", "anterior_slow", "midline_theta", "delta_brush", "sharp_transient")
             },
         },
         # fraction of bursts that are interhemispherically synchronous
