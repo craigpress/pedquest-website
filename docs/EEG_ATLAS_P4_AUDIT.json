@@ -1,38 +1,38 @@
 {
  "package": "EEG Atlas P4 current-engine baseline",
  "provenance": {
-  "utc": "2026-09-16T03:33:21+00:00",
-  "renderer_version": "0.3.10",
+  "utc": "2026-09-21T02:26:00+00:00",
+  "renderer_version": "0.4.1",
   "renderer_path": "C:\\Users\\craig\\claude\\PedQuest_website\\pedquest-site\\tools\\eeg-render",
-  "site_git_head": "61db78a272aa79a6ede4786855489c721fdbcdf5",
-  "site_git_branch": "eeg-teaching-lab",
+  "site_git_head": "04bd9a858ff4fc7ecc41d8d70b4f6bb3a0881b1f",
+  "site_git_branch": "main",
   "renderer_file_sha256": {
-   "synth.py": "372056834ec8283d615dcf7cf9b46a43477c99493b5907abfea3d95ac3323452",
-   "spec.py": "899398511d6034effa584ab183974ebb55f8ba2c8b3fe3c6683a0572d37f970d",
-   "schema.py": "41749bdbdd5b833ca09c3aa81271e9a7de3fc6e99f70b35aaa7551bee857730b",
+   "synth.py": "6bd4f3dcb361aa7006a19e4f0ee6d6f7be441c996693a297690149c54459b12d",
+   "spec.py": "7d3cfd265b1cf8331648c264562c9e34a0a7bf91deeb41437adf74db91032c55",
+   "schema.py": "7ce0cc5b75de187ed9d7da546b5a86f7012b41669c93c5396fb594b6ababa50c",
    "montage.py": "c8ceb94acc0b2ab1bb904aa6642f9cc6d73850395bb6c8021b363b4437dd57c5",
-   "export/manifest.py": "b7cd42a8b028ec60f3167192a5cf7d4206c19c2154067fe8b958ed09cce8d4fe",
-   "export/edfplus.py": "8568e8f2b25f43d1df304d888fc575bbed1825e3e78754c436e7a42aed8686f0"
+   "export/manifest.py": "5ea3d28dea4e07e21ac91f4d5e0f55168b3839dc4fb033e47d8a0bbf54125afd",
+   "export/edfplus.py": "5abb72f773fbd5b915cfbdc69689dea0c69562b8706a1185ea136ae0f416af07"
   },
   "python": "3.13.12",
   "numpy": "2.4.4",
   "scipy": "1.17.1",
   "platform": "Windows-11-10.0.26200-SP0",
-  "p3_manifest_sha256": "52be4a3b932d5ef063dc8673cd5bc4f5e35c20182f34f6a0e165efd38d1785e2",
+  "p3_manifest_sha256": "afebb6988a1e0f3d8c3fa54be831e4ad2344f4419657efeea173a133b83e57f3",
   "p2_contracts_sha256": "bcef315851b0d0dbbcae518d7447fd69d21255acd2ea08764a557c02046b17ca",
   "probe_module_sha256": "3d602dfae82d0d283529842f2f3a213122f7f14e855432ed38c51a6c2f2274b6",
-  "common_module_sha256": "3c5db887263f54275a5fd26f75d7f3c9bba392aead01bc827a069019f3a7c0cf",
+  "common_module_sha256": "7c07294de09ac42bae608dfe8b56bf56876fa0241ca686a7119945e1d98be9cd",
   "runner_sha256": "f4801be28aac7c6575c4dc0169df94a6ac9aa7c7c6922ad6889cd20639e2ae1f"
  },
  "timing": {
-  "started": 1789529601.026159,
+  "started": 1789957560.3541808,
   "steps": {
-   "technical_gate": 4.03,
-   "probes": 71.67,
-   "references": 7.64,
-   "compare": 0.09
+   "technical_gate": 6.33,
+   "probes": 77.84,
+   "references": 7.67,
+   "compare": 0.1
   },
-  "total_s": 83.5
+  "total_s": 92.1
  },
  "horizon_s": 1800.0,
  "background_window_s": [
@@ -48,24 +48,24 @@
   30.0
  ],
  "probe_spec_hashes": {
-  "P01a": "sha256:d9dcecfc55d0c3c20d5ea5bbe00d8fd56cfe3403ee2d156fd0ffd7ad3b587238",
-  "P01b": "sha256:bd5a77a51eabddada57b19dcfbb9ad06bbb956a301ba3bd33325ee162400dfad",
-  "P01c": "sha256:dae70ee6351986d41819035bef416907e8bb5e052ecf34eb06f25071efca1b86",
-  "P02a": "sha256:e1e9292e44fd2cf909ac0df4bb381cb49c08797ece6c9ba2086f4897ea8ad05e",
-  "P02b": "sha256:a5cad716bc0cd66c34421f4eada8c3c2307d4b1d3e5ad6158914af8b6fda4da3",
-  "P02c": "sha256:98013bb75aac6f4df9abc4d789b4e170a0c885cdecba980e7eac84052c414b26",
-  "P02d": "sha256:272aaf686a03c1acacc6a82820d5fb84370ec90d9426282e6d341b2442e0e77c",
-  "P03a": "sha256:052d868d6812454df51b7bcce11d68dafc8a7f7feac1fba318647c77e8c65761",
-  "P03b": "sha256:2549fe4a39796b220f4280ff21c6e8d13d153a82b4e36c8db093fad1f3085876",
-  "P04a": "sha256:650cc75e2119dc2629daf129790aec9f09998bef4ef3ed7fd15be9efa374ab01",
-  "P05a": "sha256:a2aef599aa561c806ad9ae9de43aeba4651f83db68c351ebc140a750a27afdce",
-  "P06a": "sha256:551ab7e60825c907c983e20e7fd50e0c7596cf93176897dd419b688358e47bd4",
-  "P06b": "sha256:e5627b89c669f85d6b10d488808fd564dbd9ea3fe52b57aa88b0d7da59b6ac3a",
-  "P06c": "sha256:8ec7bf105024143a874dc7915a45194d1c484896ff0644df92b8edb858c142cc",
-  "P07a": "sha256:ea791cd68d2949d8a7d4e6c4ee3befa7eae3245a1f04c6e468f748ef3cf257dd",
-  "P07b": "sha256:bf476f3778e6a8e2f1d5adc9b5a5fe771507ec91449b642c632444799798bce2",
-  "P08a": "sha256:bbeaca5ac5f2634b81cca8f396cc966f86acc2c65bc34488fdc83b0193ace736",
-  "P08b": "sha256:9a0cfb4bcfb57187f61acf397768bcc55324918a606ec683e7523c4f9b355e5b"
+  "P01a": "sha256:d8354c347101eeb88965e630f806a063d97381013268ff09bcdf696c770b76af",
+  "P01b": "sha256:096f1b9d8ee5b9892ac1536bb1b7122aabf64b19cbcdf9f7035052ec44ce6f82",
+  "P01c": "sha256:68e0fc530e21f9556d7db34761dd6dde8cd3eb04e194837280f0dea254ee9bbd",
+  "P02a": "sha256:69695fa467aaabfacd4cc18b1a9aabfe8c4af37808af11e0396ce2be7bbbc406",
+  "P02b": "sha256:62ef91495c388555b343bfb53adb7e8b222875b83943e2c5eec3bb9d9b0253ce",
+  "P02c": "sha256:0c0218fd5fd7466ccde2df901dc75bb858b6e0c4b83bd5841d2277d50d6cbedc",
+  "P02d": "sha256:868a27c3198eb540990af972e96425c441dd7b6ef60a430040d4995ad78f5f6c",
+  "P03a": "sha256:4ad3b3de049e18aa509f499dd77081b10c707ba741073304741f30187daee11f",
+  "P03b": "sha256:1c2aa83b73c0fd757bdd37dd6767fa0eaefc50798d244607d0e2e5bf492cdc6d",
+  "P04a": "sha256:b99fac4b0bc5b1a4102cbda1d66b7970fa022d2ac0eabfc32a4f7776f2e71375",
+  "P05a": "sha256:4b756efc52245fb75989eb62a08829fb17e0c71d8fd03064702003b242166b3a",
+  "P06a": "sha256:883f64a40e9f4d91136d46300e6f4a10a9ac5d9eb237976c0816c5005fdbaee5",
+  "P06b": "sha256:14730185a5a28ac7a3f2ffeda8f6ba107ee8a577b2fbb2a7d588f9333084cc46",
+  "P06c": "sha256:18e4455b581f234aa8c63838327a2fb1ef1ce662cf5f71133a48ac776be2b20f",
+  "P07a": "sha256:8a3edc242c2d954fb1885955e823fc261d481c732968aba1a2038b7556b1b18a",
+  "P07b": "sha256:594cf8baa9274033e839cfba92781e18cb51106b18ab9e563ab35b4e8f6eaa6e",
+  "P08a": "sha256:7ce0eccedd3b3716841817f87470106f32bf82c2268cfd732aa111a49f01c163",
+  "P08b": "sha256:4110802589f6ea170fd1ea8d9d11134463407e0e479a59a24f57ad6819d9952e"
  },
  "probe_errors": {},
  "reference_ids_used": [
@@ -127,7 +127,7 @@
   "bipolar_algebra_max_abs_uv": 0.0,
   "average_algebra_max_abs_uv": 0.0,
   "rebuild_identical": true,
-  "seed_plus_one_max_abs_diff_uv": 151.32030552241503,
+  "seed_plus_one_max_abs_diff_uv": 245.12884719727828,
   "display_path_note": "render_page.page_signals = segment -> derive -> display filters; exported = iter_blocks -> writer. Pre-filter voltages are identical when chunk invariance holds; the display filters are a documented viewing transform.",
   "edf_roundtrip": {
    "reader": "pyedflib 0.1.42",
@@ -151,7 +151,7 @@
    "record_duration_s": 1.0,
    "samples_in_file": 76800,
    "expected_samples": 76800,
-   "max_abs_error_uv": 0.05035473531138468,
+   "max_abs_error_uv": 0.05035476376138792,
    "quantum_uv": 0.10070954451819639,
    "within_half_quantum": true,
    "clipped_samples": 0,
@@ -161,10 +161,10 @@
   "lay_dat": "not re-run here; Persyst .lay/.dat round trip is covered by the renderer test suite and PSCLI_PHASE0A_RESULTS.md"
  },
  "gap_matrix_verdict_counts": {
-  "pass": 7,
-  "partial": 17,
-  "unsupported": 13,
+  "pass": 16,
+  "partial": 10,
   "no_rule": 2,
+  "unsupported": 11,
   "measured": 26
  },
  "gap_matrix_rows": 65,
