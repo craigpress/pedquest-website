@@ -1,22 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireRole, type AuthOk } from "@/lib/admin-auth";
-import { LAB_JOB_COLUMNS, rowToJob } from "@/lib/lab/jobs";
+import { reviseSpecFromFeedback } from "@/lib/lab/draft";
+import {
+  LAB_JOB_COLUMNS, buildJobOptions, newRecordingId, retentionExpiry, rowToJob, specHash,
+} from "@/lib/lab/jobs";
 import {
   LIBRARY_CASE_COLUMNS, caseRowToQuestion, suggestDescription, suggestTitle, summarizeSpec,
 } from "@/lib/lab/library";
 import { notifyAuthorOfDecision, notifyEditorsOfPendingRecordings } from "@/lib/lab/notify";
+import { durationSecondsFromSpec } from "@/lib/lab/spec";
 import { canEditRecording, canReviewRecording, canSeeRecording } from "@/lib/lab/visibility";
 import {
   LAB_REVIEW_DECISIONS, SYNTHETIC_STAMP, type LabJob, type LabReview, type LabReviewDecision,
 } from "@/lib/lab/types";
 
+// `revise` calls the LLM (up to two rounds), so this route needs the same room
+// as the other LLM routes.
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 // Editorial review of one EEG Library recording. Editor or admin.
 //
 // GET  /api/admin/lab/jobs/<uuid>/review
-//   -> { job, reviews, authorEmail, reviewerEmails, suggestion, can: { edit, submit, review, unpublish } }
+//   -> { job, reviews, authorEmail, reviewerEmails, suggestion, can: { edit, submit, review, unpublish, revise } }
 // POST /api/admin/lab/jobs/<uuid>/review  { action, ... }
 //   save      { title, description }              author or admin
 //   submit    { title?, description? }            author or admin (any editor for an AI recording)
@@ -24,6 +31,11 @@ export const runtime = "nodejs";
 //   review    { decision, notes }                 an editor who is not the author
 //   unpublish                                     admin: published → draft
 //   notify                                        nudge the editors about this recording
+//   revise    { feedback? }                       any editor: the model edits the spec from the
+//                                                 feedback (default: the latest changes-requested
+//                                                 note) and a NEW export is queued as a draft of
+//                                                 the requester, linked by parent_job_id. The
+//                                                 original recording is not touched.
 //
 // The status transition is written by the database; the publish gate trigger
 // (20260914_eeg_lab_review.sql) is the last word on whether a recording may
@@ -105,6 +117,9 @@ function permissions(auth: AuthOk, job: LabJob) {
     review: canReviewRecording(auth, job)
       && (job.reviewStatus === "pending_review" || (job.reviewStatus === "published" && job.grandfathered)),
     unpublish: admin && job.reviewStatus === "published",
+    // Any editor who can see a finished recording may ask the model for a
+    // revised copy; the copy is their own draft, so four-eyes is untouched.
+    revise: job.stage === "export" && job.status === "done",
   };
 }
 
@@ -293,6 +308,88 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       authorEmail: job.authorId ? emails.get(job.authorId) ?? null : null,
     }], { origin, source: `nudged by ${auth.email}` });
     return NextResponse.json({ success: true, notified: sent });
+  }
+
+  // ---------------- revise with AI ----------------
+  if (action === "revise") {
+    if (!can.revise) {
+      return NextResponse.json({ error: "The export has to finish before the recording can be revised." }, { status: 400 });
+    }
+    let feedback = cleanText(body.feedback, 4000) ?? null;
+    if (!feedback) {
+      const { data: last } = await supabase.from("eeg_lab_reviews").select("notes")
+        .eq("job_id", id).eq("decision", "changes_requested")
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      feedback = ((last as { notes?: string | null } | null)?.notes ?? "").trim() || null;
+    }
+    if (!feedback) {
+      return NextResponse.json({ error: "Say what should change — there is no changes-requested note to work from." }, { status: 400 });
+    }
+
+    const durationMin = Math.max(1, Math.round(job.durationS / 60));
+    let draft;
+    try {
+      draft = await reviseSpecFromFeedback({
+        spec: job.spec, feedback, title: job.title, durationMin,
+        runPersyst: job.options.runPersyst,
+        timeoutMs: Number(process.env.QBANK_LLM_TIMEOUT_MS ?? 120_000),
+      });
+    } catch (e) {
+      const message = (e as Error).message;
+      return NextResponse.json({
+        error: /abort/i.test(message)
+          ? "The model did not finish the revision in time — nothing was queued; try again or narrow the request."
+          : `The revision failed: ${message}`,
+      }, { status: 422 });
+    }
+    if (!draft.validation.ok) {
+      return NextResponse.json({
+        error: `The revised spec did not validate: ${draft.validation.errors.join("; ")}`,
+        validation: draft.validation, spec: draft.spec, notes: draft.notes,
+      }, { status: 422 });
+    }
+
+    const block = draft.spec;
+    const durationS = durationSecondsFromSpec(block, durationMin);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const lineage = `AI revision of ${job.recordingId ?? job.id} (${stamp}, ${draft.model}) from review feedback:\n${feedback}`;
+    const description = [job.description, lineage].filter(Boolean).join("\n\n").slice(0, DESCRIPTION_MAX);
+    const { data: inserted, error: insErr } = await supabase
+      .from("eeg_lab_jobs")
+      .insert({
+        stage: "export",
+        status: "pending",
+        spec: block,
+        duration_s: durationS,
+        formats: job.formats,
+        options: buildJobOptions({
+          mode: "expert", includeAnswers: job.options.includeAnswers, runPersyst: job.options.runPersyst,
+          mmxPreset: job.options.mmxPreset, panel: job.options.panel,
+        }),
+        recording_id: newRecordingId(),
+        spec_hash: specHash(block),
+        requested_by: `revision:${job.id}:${auth.userId}`,
+        parent_job_id: job.id,
+        author_id: auth.userId,
+        source: "ai",
+        review_status: "draft",
+        qbank_id: job.qbankId,
+        title: job.title,
+        description,
+        expires_at: retentionExpiry(),
+      })
+      .select(LAB_JOB_COLUMNS)
+      .single();
+    if (insErr || !inserted) return dbError(insErr ?? { message: "no row" }, "The spec was revised but the export could not be queued.");
+
+    return NextResponse.json({
+      success: true,
+      job: rowToJob(inserted),
+      revision: {
+        parentJobId: job.id, model: draft.model, repaired: draft.repaired,
+        notes: draft.notes, warnings: draft.validation.warnings, feedback,
+      },
+    }, { status: 201 });
   }
 
   return NextResponse.json({ error: `Unknown action "${action}".` }, { status: 400 });

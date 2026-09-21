@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
     "/api/cron/qbank-generate": ["./content/qbank/**/*"],
     // The lab's prose mode reads IMAGE_SPEC.md at request time for the same reason.
     "/api/admin/lab/jobs": ["./content/qbank/**/*"],
+    // The review route's `revise` action reads it too.
+    "/api/admin/lab/jobs/[id]/review": ["./content/qbank/**/*"],
   },
   async headers() {
     // Content-Security-Policy. Ships as Report-Only first: violations show up in

@@ -183,3 +183,109 @@ export async function draftSpecFromProse(input: {
     repaired,
   };
 }
+
+// ── revision from review feedback ──────────────────────────────────────────
+
+function reviseUserPrompt(input: {
+  spec: unknown;
+  feedback: string;
+  title: string | null;
+  durationMin: number;
+  runPersyst: boolean;
+}): string {
+  return [
+    "Revise the recording spec below to address the editor's review feedback.",
+    "This is an EDIT, not a new recording: keep the seed, the age band, the",
+    "background, every event and every annotation the feedback does not ask you",
+    "to change. Return the WHOLE corrected image block, not a patch.",
+    "",
+    "If the feedback describes something the spec cannot express (a montage",
+    "artefact, a renderer bug), change the nearest spec knob that addresses the",
+    "teaching intent — a different montage, region, spread, depth or timing — and",
+    "leave everything else alone. Do not add a `panels`, `style` or `source`",
+    "block unless the feedback asks for one.",
+    "",
+    ...(input.title ? [`=== RECORDING TITLE ===`, input.title, ""] : []),
+    "=== EDITOR FEEDBACK ===",
+    input.feedback,
+    "",
+    `Keep spec.duration_min at ${input.durationMin} unless the feedback says otherwise.`,
+    ...(input.runPersyst
+      ? ["This recording is processed by Persyst: keep a baseline window and stay",
+         "within the standard array."]
+      : []),
+    "",
+    "=== CURRENT SPEC (JSON) ===",
+    JSON.stringify(input.spec, null, 2),
+    "",
+    "Your response must begin with { and end with }.",
+  ].join("\n");
+}
+
+/**
+ * Feedback + current spec -> revised spec, with the same one-repair cap as
+ * drafting. The caller enqueues the export; nothing here touches the database.
+ */
+export async function reviseSpecFromFeedback(input: {
+  spec: unknown;
+  feedback: string;
+  title: string | null;
+  durationMin: number;
+  runPersyst: boolean;
+  timeoutMs?: number;
+}): Promise<LabDraftResult> {
+  const provider = selectProvider();
+  if (provider === "mock") {
+    throw new Error(
+      "No LLM provider is configured, so AI revision is unavailable. Set " +
+      "OPENWEBUI_BASE_URL/OPENWEBUI_API_KEY/OPENWEBUI_MODEL or ANTHROPIC_API_KEY, " +
+      "or edit the spec by hand in Expert mode.",
+    );
+  }
+
+  const doc = await readImageSpecDoc();
+  const notes: string[] = [];
+  if (!doc) notes.push("IMAGE_SPEC.md was not readable at runtime — the prompt ran without it.");
+
+  const system = systemPrompt(doc);
+  const user = reviseUserPrompt(input);
+  const first = await chat({ system, user, timeoutMs: input.timeoutMs ?? 120_000 });
+
+  let block = normalizeSpecInput(extractJson(first.text));
+  if (!block) throw new Error("The model returned JSON that is not a spec block.");
+
+  const validateOpts = { runPersyst: input.runPersyst, durationS: input.durationMin * 60 };
+  let validation = validateLabSpec(block, validateOpts);
+  let repaired = false;
+
+  if (!validation.ok) {
+    notes.push(`The revision failed ${validation.errors.length} check(s); asked for a repair.`);
+    const second = await chat({
+      system,
+      user: [user, "", "=== YOUR PREVIOUS ANSWER ===", JSON.stringify(block), "",
+        repairPrompt(validation.errors, validation.warnings)].join("\n"),
+      timeoutMs: input.timeoutMs ?? 120_000,
+    });
+    const retry = normalizeSpecInput(extractJson(second.text));
+    if (retry) {
+      const retryValidation = validateLabSpec(retry, validateOpts);
+      if (retryValidation.errors.length < validation.errors.length) {
+        block = retry;
+        validation = retryValidation;
+        repaired = true;
+      } else {
+        notes.push("The repair did not improve the block; the first revision is what is shown.");
+      }
+    }
+  }
+
+  return {
+    spec: block,
+    validation,
+    provider: first.provider,
+    model: first.model || providerModel(provider),
+    promptVersion: LAB_PROMPT_VERSION,
+    notes,
+    repaired,
+  };
+}

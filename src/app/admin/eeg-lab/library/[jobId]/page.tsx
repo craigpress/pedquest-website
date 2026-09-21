@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import {
@@ -48,6 +48,7 @@ interface Can {
   withdraw: boolean;
   review: boolean;
   unpublish: boolean;
+  revise: boolean;
 }
 
 interface ReviewData {
@@ -86,6 +87,7 @@ function triggerDownload(url: string) {
 export default function RecordingPage() {
   const params = useParams<{ jobId: string }>();
   const jobId = params?.jobId;
+  const router = useRouter();
   const { isEditor, loading: roleLoading } = useRole();
 
   const [data, setData] = useState<ReviewData | null>(null);
@@ -93,10 +95,12 @@ export default function RecordingPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
+  const [reviseNotes, setReviseNotes] = useState("");
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 3000); };
 
@@ -154,6 +158,33 @@ export default function RecordingPage() {
     }
   }
 
+  /** Feed the feedback to the model; the route queues a NEW export as this
+   *  editor's draft and we move to it — the original stays as it was. */
+  async function reviseWithAi(feedback: string) {
+    if (!jobId) return;
+    setBusy(true);
+    setError(null);
+    setProgress("Feeding the notes to the model and queueing a revised export — this takes a minute…");
+    try {
+      const res = await fetch(`/api/admin/lab/jobs/${jobId}/review`, {
+        method: "POST", headers: await authHeaders(),
+        body: JSON.stringify({ action: "revise", ...(feedback ? { feedback } : {}) }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "The AI revision failed — nothing was queued.");
+        return;
+      }
+      flash("Revised — the new export is queued. Opening it…");
+      router.push(`/admin/eeg-lab/library/${json.job.id}`);
+    } catch {
+      setError("Network error during the AI revision.");
+    } finally {
+      setBusy(false);
+      setProgress(null);
+    }
+  }
+
   async function download(job: LabJob, artifacts: LabArtifact[]) {
     const instructor = artifacts.filter(isInstructorArtifact);
     if (instructor.length) {
@@ -207,6 +238,8 @@ export default function RecordingPage() {
   const hasPersyst = !!(job.artifacts?.lay && job.artifacts?.dat);
   const hasAnswers = !!job.artifacts?.answers;
   const isAuthor = job.authorId === viewerId;
+  const latestChangeRequest = reviews.find((r) => r.decision === "changes_requested" && r.notes)?.notes ?? "";
+  const reviseFeedback = reviseNotes.trim() || latestChangeRequest;
 
   return (
     <div style={adminShellWide}>
@@ -264,6 +297,11 @@ export default function RecordingPage() {
       {error && (
         <div role="alert" style={{ ...card, borderColor: "var(--accent-secondary)", padding: "12px 16px", marginBottom: 16, color: "var(--accent-secondary)", fontSize: 14, whiteSpace: "pre-wrap" }}>
           {error}
+        </div>
+      )}
+      {progress && (
+        <div role="status" style={{ ...card, borderColor: "var(--accent-primary)", padding: "12px 16px", marginBottom: 16, color: "var(--text-secondary)", fontSize: 14 }}>
+          {progress}
         </div>
       )}
 
@@ -493,6 +531,44 @@ export default function RecordingPage() {
                 </button>
               </div>
             )}
+          </section>
+        )}
+
+        {/* ── AI revision ────────────────────────────────────────────── */}
+        {can.revise && (
+          <section style={{ ...card, padding: 16 }}>
+            <div style={eyebrow}>AI revision</div>
+            <p style={{ ...meta, marginTop: 8 }}>
+              The model edits this recording&apos;s spec from your notes and queues a new export as your draft.
+              This recording is left as it is; the revised one is linked to it and lands in
+              {" "}<Link href="/admin/eeg-lab/review">My recordings</Link> once the worker has exported it.
+            </p>
+            {job.parentJobId && (
+              <p style={{ ...meta, marginTop: 6 }}>
+                This recording is itself an AI revision of{" "}
+                <Link href={`/admin/eeg-lab/library/${job.parentJobId}`}>{job.parentJobId.slice(0, 8)}</Link>.
+              </p>
+            )}
+            <label htmlFor="rp-revise-notes" style={{ ...fieldLabel, marginTop: 12 }}>
+              What should change{latestChangeRequest ? " — blank uses the latest changes-requested note" : ""}
+            </label>
+            <textarea
+              id="rp-revise-notes"
+              value={reviseNotes}
+              onChange={(e) => setReviseNotes(e.target.value)}
+              placeholder={latestChangeRequest || "e.g. move the seizure onset to 40 min and make the asymmetry right-sided"}
+              rows={3}
+              style={{ ...inp, resize: "vertical" }}
+            />
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                type="button" style={btnPrimary} disabled={busy || !reviseFeedback}
+                onClick={() => void reviseWithAi(reviseFeedback)}
+              >
+                Revise with AI
+              </button>
+              {!reviseFeedback && <span style={meta}>Write a note first.</span>}
+            </div>
           </section>
         )}
 

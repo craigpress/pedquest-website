@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
-import { adminShellWide, btnGhost, card, eyebrow, h1, meta, mini } from "@/lib/admin-ui";
+import { adminShellWide, btnGhost, card, eyebrow, fieldLabel, h1, inp, meta, mini } from "@/lib/admin-ui";
 import { displayTitle, humanDuration, labelize, type LibraryEntry, type LibraryFacets } from "@/lib/lab/library";
 
 type Tab = "pending_review" | "legacy" | "mine";
@@ -41,12 +41,46 @@ export default function EegReviewQueuePage() {
   const [facets, setFacets] = useState<LibraryFacets | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Per-row "Revise with AI": which row is open, its note, and the outcome.
+  const [reviseOpen, setReviseOpen] = useState<string | null>(null);
+  const [reviseNotes, setReviseNotes] = useState("");
+  const [reviseBusy, setReviseBusy] = useState<string | null>(null);
+  const [reviseResult, setReviseResult] = useState<Record<string, { ok: boolean; message: string; newJobId?: string }>>({});
 
   const authHeaders = useCallback(async () => {
     const sb = getSupabase();
     const token = sb ? (await sb.auth.getSession()).data.session?.access_token : null;
     return { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   }, []);
+
+  /** POST revise: the model edits the spec from the note and a new export is
+   *  queued as this editor's draft; the recording in the queue is untouched. */
+  async function reviseWithAi(jobId: string) {
+    const feedback = reviseNotes.trim();
+    if (!feedback) return;
+    setReviseBusy(jobId);
+    try {
+      const res = await fetch(`/api/admin/lab/jobs/${jobId}/review`, {
+        method: "POST", headers: await authHeaders(),
+        body: JSON.stringify({ action: "revise", feedback }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setReviseResult((m) => ({ ...m, [jobId]: { ok: false, message: json.error || "The AI revision failed — nothing was queued." } }));
+        return;
+      }
+      setReviseResult((m) => ({
+        ...m,
+        [jobId]: { ok: true, message: `Revised export queued as ${json.job.recordingId ?? json.job.id}.`, newJobId: json.job.id as string },
+      }));
+      setReviseOpen(null);
+      setReviseNotes("");
+    } catch {
+      setReviseResult((m) => ({ ...m, [jobId]: { ok: false, message: "Network error during the AI revision." } }));
+    } finally {
+      setReviseBusy(null);
+    }
+  }
 
   useEffect(() => {
     if (!isEditor) return;
@@ -167,7 +201,51 @@ export default function EegReviewQueuePage() {
                   Review
                 </Link>
                 <Link href={`/admin/eeg-lab/viewer?job=${e.jobId}`} style={mini}>Open in viewer</Link>
+                <button
+                  type="button"
+                  style={mini}
+                  disabled={reviseBusy !== null}
+                  onClick={() => {
+                    setReviseOpen(reviseOpen === e.jobId ? null : e.jobId);
+                    setReviseNotes("");
+                  }}
+                >
+                  {reviseOpen === e.jobId ? "Cancel" : "Revise with AI"}
+                </button>
               </div>
+              {reviseOpen === e.jobId && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: "72ch" }}>
+                  <label htmlFor={`rq-revise-${e.jobId}`} style={fieldLabel}>
+                    What should change in the EEG — the model edits the spec and queues a revised export as your draft
+                  </label>
+                  <textarea
+                    id={`rq-revise-${e.jobId}`}
+                    value={reviseNotes}
+                    onChange={(ev) => setReviseNotes(ev.target.value)}
+                    rows={3}
+                    style={{ ...inp, resize: "vertical" }}
+                    placeholder="e.g. the posterior temporal chain mirrors bilaterally; make the asymmetry hold from 5 h onward"
+                  />
+                  <div>
+                    <button
+                      type="button"
+                      style={{ ...mini, borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }}
+                      disabled={reviseBusy !== null || !reviseNotes.trim()}
+                      onClick={() => void reviseWithAi(e.jobId)}
+                    >
+                      {reviseBusy === e.jobId ? "Revising — this takes a minute…" : "Send to the model"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {reviseResult[e.jobId] && (
+                <p style={{ ...meta, color: reviseResult[e.jobId].ok ? "var(--text-secondary)" : "var(--accent-secondary)", whiteSpace: "pre-wrap" }}>
+                  {reviseResult[e.jobId].message}
+                  {reviseResult[e.jobId].newJobId && (
+                    <>{" "}<Link href={`/admin/eeg-lab/library/${reviseResult[e.jobId].newJobId}`}>Open the new draft</Link>.</>
+                  )}
+                </p>
+              )}
             </div>
           );
         })}

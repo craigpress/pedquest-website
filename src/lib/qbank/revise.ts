@@ -103,13 +103,18 @@ export async function reviseQuestion(input: {
  *  available (it is stored for AI items) the numbers-sourced and references
  *  checks run against it, exactly as for a fresh draft; otherwise they are
  *  omitted and a human editor is the backstop (see file header). */
-export async function critiqueRevision(q: QbankQuestion, articles: RetrievedArticle[] = []): Promise<CriticReport> {
+export async function critiqueRevision(
+  q: QbankQuestion,
+  articles: RetrievedArticle[] = [],
+  /** the editor's feedback — a number the editor wrote ("at 5.5 h") is sourced */
+  feedback = "",
+): Promise<CriticReport> {
   const findings: CriticFinding[] = [
     ...checkStructure(q),
     ...checkOneBestAnswer(q),
     ...checkTerminology(q),
     ...checkCopyrightAndPrivacy(q),
-    ...(articles.length ? checkNumbersSourced(q, articles) : []),
+    ...(articles.length ? checkNumbersSourced(q, articles, [feedback]) : []),
     ...(articles.length ? checkReferences(q, articles) : []),
   ];
   const pmids = (q.references ?? []).map((r) => r.pmid).filter((p): p is string => !!p);
@@ -230,7 +235,7 @@ export async function processRevisionJob(
       : `the revision step failed: ${message}`);
   }
 
-  const critic = await critiqueRevision(revised.question, articles);
+  const critic = await critiqueRevision(revised.question, articles, (job as any).feedback ?? "");
   if (!critic.pass) {
     const reasons = critic.findings.filter((f) => f.severity === "error").map((f) => `${f.check}: ${f.detail}`).join("; ");
     return failJob(`the critic rejected the revision: ${reasons}`, { draft: revised.question, critic_report: critic });

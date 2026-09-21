@@ -24,12 +24,15 @@ export interface CriticReport {
 
 const NUMBER_RE = /\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\b/g;
 
-/** Numbers that are not claims: ages, option letters, years, small counts. */
+/** Numbers that are not claims: ages, option letters, years, small counts,
+ *  and the recording's own timeline / signal descriptors (hours into the
+ *  record, frequencies, amplitudes) — those describe the picture, not a study. */
 function isBoilerplateNumber(token: string, context: string): boolean {
   const n = parseFloat(token);
   if (!Number.isFinite(n)) return true;
   // years and ages read as context, not as study statistics
   if (/\b(year|month|week|day|hour|minute|old|dol|gestation)\b/i.test(context)) return true;
+  if (/\b(h|hr|hrs|min|mins|s|sec|Hz|µV|uV|mm)\b/.test(context)) return true;
   if (n >= 1900 && n <= 2100) return true;
   return false;
 }
@@ -48,8 +51,16 @@ function windowAround(text: string, index: number, span = 40): string {
 export function checkNumbersSourced(
   q: QbankQuestion,
   articles: RetrievedArticle[],
+  /** Other text a number may legitimately come from: the item's own image
+   *  spec (event times, durations, amplitudes are the picture's ground truth)
+   *  and, for a revision, the editor's feedback. */
+  extraSources: (string | null | undefined)[] = [],
 ): CriticFinding[] {
-  const haystack = articles.map((a) => `${a.title} ${a.abstract}`).join(" ");
+  const haystack = [
+    ...articles.map((a) => `${a.title} ${a.abstract}`),
+    JSON.stringify(q.image?.spec ?? null),
+    ...extraSources.filter((s): s is string => typeof s === "string" && s.length > 0),
+  ].join(" ");
   const findings: CriticFinding[] = [];
   const texts: [string, string][] = [
     ["stem.vignette", q.stem?.vignette ?? ""],
