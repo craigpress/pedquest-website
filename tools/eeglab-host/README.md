@@ -222,6 +222,21 @@ Rollback copies on moltbot: `/opt/pedquest-renderer-pre040-20260918.tar.gz`,
 `/opt/pedquest-eeg-render/trends-v2-20260918.tar.gz`. The old trend files require
 the matching viewer engine; engine 3 intentionally rejects them.
 
+### Generator rollouts 0.4.2 and 0.4.3 (2026-09-20)
+
+0.4.2 (P7 batches 1-2: neonatal state cycle, hours of life, transient sharps, dysmaturity; keyed reactivity, CAPE,
+breach, AP gradient) went to moltbot and the CraigsRig pool the same way as 0.4.1 (rollback
+`/opt/pedquest-renderer-pre042-20260920.tar.gz`), DB metadata refreshed at 0.4.2.
+
+0.4.3 = P7 batches 4 and 5, all opt-in, no signal change for the 52 bank specs (sidecars restamped, 52/52 verified,
+bank sidecars carry no manifest so nothing was re-rendered): `clinical_correlate` on ictal events and
+`summary.seizure_burden` in every Lab manifest (ESE / nonconvulsive / neonatal-status flags), a `sporadic_discharges`
+event keyed one by one with the ACNS prevalence category (`summary.sporadic_discharges`), and `background.variants`
+(hypnagogic hypersynchrony, POSTS, posterior slow waves of youth, each keyed as `normal_variant`). Rollout: tar-over-ssh
+into the editable install on moltbot, the three units restarted; CraigsRig pool `pip install --no-deps -e` +
+`restart-pool.ps1 stop|start`; `RENDERER_VERSION=0.4.3 npx tsx scripts/qbank-refresh-sidecars.mts --apply`. Rollback
+copy `/opt/pedquest-renderer-pre043-20260920.tar.gz`.
+
 ## After a host reboot (OMV or moltbot)
 
 Seen 2026-09-13 when the Proxmox host restarted both VMs:
