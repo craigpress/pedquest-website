@@ -346,7 +346,8 @@ def _semantic_checks(kind: str, spec: Dict[str, Any]) -> List[str]:
 
     for i, ev in enumerate(spec.get("events", []) or []):
         t = ev.get("onset_min", ev.get("at_min", ev.get("start_min")))
-        if t is None and ev.get("type") not in ("temperature_change",):
+        # sporadic_discharges default to the whole record (start_min / end_min optional)
+        if t is None and ev.get("type") not in ("temperature_change", "sporadic_discharges"):
             out.append(f"image.spec.events[{i}]: needs onset_min / at_min / start_min")
         if horizon_min and t is not None and t > horizon_min:
             out.append(
@@ -469,6 +470,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
             ms.setdefault(k, v)
         bg["multifocal_spikes"] = {k: float(v) for k, v in ms.items()}
     else:
+        _normalize_variants(bg)
         ms = bg.get("multifocal_spikes")
         bg["multifocal_spikes"] = ({"rate_per_s": float(ms.get("rate_per_s", 0.0)),
                                     "amplitude_uv": float(ms.get("amplitude_uv", 150.0))}
@@ -815,9 +817,40 @@ COMPOSITE_INHERIT = (
 )
 
 
+SPORADIC_DEFAULTS = {"focus": "T3", "rate_per_h": 60.0, "amplitude_uv": 80.0, "morphology": "spike",
+                     "aftergoing_slow": True}
+
+#: Pediatric normal variants (P7 batch 5): defaults per variant; ``rate_per_min`` is the run rate
+#: INSIDE the permitting state, amplitude is peak-to-peak at the maximum.
+VARIANT_DEFAULTS = {
+    "hypnagogic_hypersynchrony": {"amplitude_uv": 200.0, "rate_per_min": 5.0},
+    "posts": {"amplitude_uv": 70.0, "rate_per_min": 6.0},
+    "posterior_slow_waves_of_youth": {"amplitude_uv": 0.0, "rate_per_min": 6.0},   # 0 = 1.3 x background
+}
+
+
+def _normalize_variants(bg: Dict[str, Any]) -> None:
+    """Fill each authored variant with its defaults; an absent key stays absent (bank hashes)."""
+    v = bg.get("variants")
+    if not isinstance(v, dict):
+        return
+    out = {}
+    for name, cfg in v.items():
+        cfg = dict(cfg or {})
+        for k, d in VARIANT_DEFAULTS[name].items():
+            cfg.setdefault(k, d)
+        cfg.setdefault("enabled", True)
+        out[name] = cfg
+    bg["variants"] = out
+
+
 def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
     e = dict(ev)
     kind = e["type"]
+    if kind == "sporadic_discharges":
+        for k, v in SPORADIC_DEFAULTS.items():
+            e.setdefault(k, v)
+        return e
     if kind in ("seizure", "seizure_cluster", "status_epilepticus"):
         if version >= 2 and kind == "seizure":
             # 0.4.0 (Craig, P5 C15/C19): a focal run that never spreads recruits

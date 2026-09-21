@@ -1,0 +1,8 @@
+family,contract_id,probes,requested,normalized,measured,verdict,evidence,note
+AT-P09,SED-MORPHOLOGY,B5-01;B5-03;B5-04,"spike < 70 ms, sharp wave 70-200 ms, surface-negative; polyspike",sporadic_discharges.morphology,spike FWHM 39 ms; sharp wave 94 ms; polyspike 43 ms (first spike); all negative,pass,probes,P7 batch 5
+AT-P09,SED-FIELD,B5-01,maximum at the focus with a field to the first neighbours and none contralaterally,"focus T3, falloff 0.6","first neighbours 0.33 of the focus as generated (0.15 on the page, scalp gain 2.00 at T3), contralateral 0.04",pass,probes,P7 batch 5
+AT-P09,SED-PREVALENCE,B5-01;B5-02;B5-03,ACNS prevalence category from the realized count (abundant / frequent / occasional / rare),summary.sporadic_discharges,120/h -> 129/h frequent; 480/h -> 487/h abundant; 8/h -> 10/h occasional,pass,probes,P7 batch 5
+AT-P09,SED-AFTERGOING,B5-01;B5-05,after-going slow wave present vs absent,aftergoing_slow,slow-wave depth 0.49 with vs 0.02 without,pass,probes,P7 batch 5
+AT-P10,VAR-HYPNAGOGIC,B5-06,"hypnagogic hypersynchrony only in drowsiness, 3-5 Hz, fronto-central maximum",variants.hypnagogic_hypersynchrony,"6 runs at sleep index 0.22-0.69, 3.6-4.9 Hz, Cz/O1 1.89",pass,probes,P7 batch 5
+AT-P10,VAR-POSTS,B5-07,"POSTS only in sleep, occipital, surface-positive, 4-5 Hz runs",variants.posts,"278 runs at sleep index >= 0.61, O1/F3 8.35, positive/negative 2.59",pass,probes,P7 batch 5
+AT-P10,VAR-PSWY,B5-08,"posterior slow waves of youth awake only, occipital, 2.5-4.5 Hz",variants.posterior_slow_waves_of_youth,"352 runs at sleep index <= 0.00, 2.5-4.5 Hz, O1 delta RMS run / 2 s before 1.80",pass,probes,P7 batch 5

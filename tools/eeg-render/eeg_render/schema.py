@@ -97,7 +97,8 @@ _SEIZURE_CORE = {
     # Waveform family of the ictal run. ``ictal`` (default) is the harmonic
     # stack; ``spike_wave`` is a true spike-and-slow-wave complex whose spike
     # keeps its millisecond width as the repetition rate evolves.
-    "morphology": {"enum": ["ictal", "spike_wave", "rda", None]},
+    # ``spike`` / ``sharp_wave`` / ``polyspike`` belong to sporadic_discharges
+    "morphology": {"enum": ["ictal", "spike_wave", "rda", "spike", "sharp_wave", "polyspike", None]},
 }
 
 _EVENT = {
@@ -118,11 +119,24 @@ _EVENT = {
                 # neonatal brief rhythmic discharge: evolving rhythmic activity
                 # shorter than the 10-s seizure minimum (ACNS neonatal)
                 "brd",
+                # P7 batch 5: sporadic (non-periodic) interictal epileptiform
+                # discharges from one focus, keyed one by one with the ACNS
+                # prevalence category (abundant / frequent / occasional / rare)
+                "sporadic_discharges",
             ]
         },
         # how much scalp muscle an ictal run recruits: none (electrographic /
         # paralysed), modest (default, the 0.3.8 behaviour), clinical
         "muscle": {"enum": MUSCLE_LEVELS},
+        # sporadic_discharges: the electrode of maximal negativity, discharges per hour of
+        # record, and whether each spike carries an after-going slow wave
+        "focus": {"type": "string"},
+        "rate_per_h": {"type": "number", "minimum": 0, "maximum": 3600},
+        "aftergoing_slow": {"type": "boolean"},
+        # P7 batch 4: the time-locked clinical correlate of an ictal run, keyed on the seizure row
+        # (ACNS ECSz needs one; "none" = electrographic-only).  Non-EEG: it never changes the signal.
+        "clinical_correlate": {"enum": ["none", "subtle", "focal_clonic", "focal_tonic", "generalized_tonic_clonic",
+                                        "autonomic", "behavioral_arrest", "unknown"]},
         # spasm / tonic_seizure: seconds of diffuse voltage attenuation
         "decrement_s": {"type": "number", "minimum": 0, "maximum": 30},
         # spasm: depth of the decrement (fraction of background removed) and
@@ -303,6 +317,20 @@ _BACKGROUND = {
         "synchrony": {"type": "number", "minimum": 0, "maximum": 1},
         # hypsarrhythmia (or any background): independent multifocal spikes
         # and sharp waves, rate over the whole head per second
+        # P7 batch 5: pediatric normal variants (developmental EEG chapter, S06).  Each is
+        # emitted only in its state (hypnagogic hypersynchrony in drowsiness, POSTS in sleep,
+        # posterior slow waves of youth awake) and keyed as ``normal_variant`` rows.
+        "variants": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                name: {"type": ["object", "null"], "additionalProperties": False,
+                       "properties": {"enabled": {"type": "boolean"},
+                                      "amplitude_uv": {"type": "number", "minimum": 0, "maximum": 600},
+                                      "rate_per_min": {"type": "number", "minimum": 0, "maximum": 60}}}
+                for name in ("hypnagogic_hypersynchrony", "posts", "posterior_slow_waves_of_youth")
+            },
+        },
         "multifocal_spikes": {
             "type": ["object", "null"],
             "additionalProperties": False,

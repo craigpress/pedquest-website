@@ -645,6 +645,8 @@ class Synthesizer:
         self._build_blink_schedule()
         self._build_graphoelement_schedule()
         self._build_multifocal_spikes()
+        self._build_sporadic()
+        self._build_variants()
         self._collect_seizures()
         self.artifacts = [e for e in spec["events"] if e["type"] == "artifact"]
         self.stimulations = [e for e in spec["events"] if e["type"] == "stimulation"]
@@ -1783,6 +1785,192 @@ class Synthesizer:
             rows += np.outer(w, complex_ * amp)
         return rows
 
+
+    # ---------------- P7 batch 5: sporadic epileptiform discharges ----------------
+    #: Kernel widths (s) for the spike component: a spike is < 70 ms, a sharp wave 70-200 ms.
+    _SED_WIDTH = {"spike": 1.0, "sharp_wave": 2.6, "polyspike": 1.0}
+    _SED_FALLOFF = 0.60
+
+    @staticmethod
+    def _sed_kernel(d: np.ndarray, morph: str, width: float, aftergoing: bool) -> np.ndarray:
+        """One surface-NEGATIVE interictal discharge; ``d`` is seconds from the (first) spike peak.
+
+        Asymmetric spike (rise sigma 12 ms, fall 24 ms at width 1 -> FWHM ~42 ms), a small
+        opposite overshoot, and an after-going slow wave of the same polarity (~220 ms later).
+        A polyspike adds two further spikes 55 ms apart before the wave.
+        """
+        rise, fall = 0.012 * width, 0.024 * width
+        def spk(c):
+            return np.exp(-0.5 * ((d - c) / np.where(d < c, rise, fall)) ** 2)
+        k = spk(0.0)
+        if morph == "polyspike":
+            k = k + 0.85 * spk(0.055) + 0.6 * spk(0.110)
+        last = 0.110 if morph == "polyspike" else 0.0
+        k = k - 0.22 * np.exp(-0.5 * ((d - (last + 0.045 * width + 0.03)) / 0.03) ** 2)
+        if aftergoing:
+            k = k + 0.55 * np.exp(-0.5 * ((d - (last + 0.12 * width + 0.16)) / 0.09) ** 2)
+        return -k
+
+    def _build_sporadic(self) -> None:
+        """Draw every sporadic discharge once: (t0, event index, width, amplitude) sorted by time."""
+        self._sed = None
+        self._sed_norm = {}
+        evs = [(i, e) for i, e in enumerate(self.spec["events"]) if e["type"] == "sporadic_discharges"]
+        if not evs:
+            return
+        rows = []
+        for i, e in evs:
+            rate_h = float(e.get("rate_per_h", 0.0) or 0.0)
+            amp = float(e.get("amplitude_uv", 0.0) or 0.0)
+            if rate_h <= 0 or amp <= 0 or str(e["focus"]) not in self._idx:
+                continue
+            rng = substream(self.seed, "sporadic", i)
+            a = float(e["start_min"]) * 60.0 if e.get("start_min") is not None else -60.0
+            b = float(e["end_min"]) * 60.0 if e.get("end_min") is not None else self.duration_s + 60.0
+            mean_gap = 3600.0 / rate_h / np.exp(0.5 * 0.6 ** 2)   # lognormal gaps: mean = exp(s^2/2) x median
+            n = max(2, int((b - a) / mean_gap * 2.0) + 4)
+            gaps = np.maximum(_lognorm(rng, n, 0.6) * mean_gap, 1.5)
+            times = a + np.cumsum(gaps) - 0.5 * mean_gap
+            times = times[(times >= a) & (times < b)]
+            m = times.size
+            width = self._SED_WIDTH[str(e.get("morphology") or "spike")] * rng.uniform(0.88, 1.12, m)
+            amps = amp * _lognorm(rng, m, 0.25)
+            rows.append(np.column_stack([times, np.full(m, i, float), width, amps]))
+            grid = np.linspace(-0.3, 1.0, 2600)
+            k = self._sed_kernel(grid, str(e.get("morphology") or "spike"), 1.0, bool(e.get("aftergoing_slow", True)))
+            self._sed_norm[i] = float(np.ptp(k))
+        if rows:
+            allev = np.vstack(rows)
+            self._sed = allev[np.argsort(allev[:, 0])]
+
+    def sporadic_events(self) -> List[Dict]:
+        """Realized discharges (for the answer key): dicts with t0, event index, width, amplitude."""
+        if getattr(self, "_sed", None) is None:
+            return []
+        out = []
+        for t0, i, w, amp in self._sed:
+            e = self.spec["events"][int(i)]
+            out.append({"t0": float(t0), "index": int(i), "width": float(w), "amplitude_uv": float(amp),
+                        "focus": str(e["focus"]), "morphology": str(e.get("morphology") or "spike"),
+                        "aftergoing_slow": bool(e.get("aftergoing_slow", True))})
+        return out
+
+    def _sed_rows(self, t: np.ndarray) -> np.ndarray:
+        rows = np.zeros((self.n_elec, t.size))
+        ev = getattr(self, "_sed", None)
+        if ev is None or t.size == 0:
+            return rows
+        sel = ev[(ev[:, 0] > t[0] - 1.2) & (ev[:, 0] < t[-1] + 0.4)]
+        for t0, i, width, amp in sel:
+            e = self.spec["events"][int(i)]
+            morph = str(e.get("morphology") or "spike")
+            d = t - t0
+            k = self._sed_kernel(d, morph, float(width), bool(e.get("aftergoing_slow", True)))
+            k *= (d > -0.3 * width) & (d < 0.9 * width + 0.35)
+            k *= amp / max(self._sed_norm.get(int(i), 1.0), 1e-6)
+            # a wider field than the pinned LPD one: first neighbours ~1/3, C3-like ~1/2 (Craig, P5: "no field to
+            # the other electrodes"); the phase reversal at the focus survives on a bipolar chain
+            w = self._gen_weights(str(e["focus"]), self._SED_FALLOFF)
+            rows += np.outer(w, k)
+        return rows
+
+    # ---------------- P7 batch 5: pediatric normal variants ----------------
+    _VAR_FIELD = {
+        # fronto-centro-parietal, generalized and synchronous
+        "hypnagogic_hypersynchrony": {"Fz": 1.0, "Cz": 1.0, "F3": 0.95, "F4": 0.95, "C3": 0.95, "C4": 0.95,
+                                      "Pz": 0.8, "P3": 0.7, "P4": 0.7, "Fp1": 0.6, "Fp2": 0.6, "F7": 0.5, "F8": 0.5,
+                                      "T3": 0.4, "T4": 0.4, "T5": 0.35, "T6": 0.35, "O1": 0.3, "O2": 0.3},
+        # occipital
+        "posts": {"O1": 1.0, "O2": 1.0, "P3": 0.35, "P4": 0.35, "T5": 0.35, "T6": 0.35, "Pz": 0.3},
+        "posterior_slow_waves_of_youth": {"O1": 1.0, "O2": 1.0, "P3": 0.55, "P4": 0.55, "T5": 0.45, "T6": 0.45, "Pz": 0.5},
+    }
+
+    def _build_variants(self) -> None:
+        """Schedule each enabled variant inside its permitting state (drawn once).
+
+        ``self._variants`` is a list of (t0, t1, name, freq_hz, amplitude_uv, side_asym, count).
+        States come from the sleep index: drowsy 0.15-0.75, asleep > 0.55, awake < 0.2.
+        """
+        self._variants = []
+        cfg = self.bg.get("variants") or {}
+        if not cfg:
+            return
+        grid = np.arange(-60.0, self.duration_s + 60.0, 1.0)
+        sleep = self._sleep_at(grid)
+        gate = {"hypnagogic_hypersynchrony": (sleep > 0.15) & (sleep < 0.75),
+                "posts": sleep > 0.55,
+                "posterior_slow_waves_of_youth": sleep < 0.2}
+        for j, name in enumerate(("hypnagogic_hypersynchrony", "posts", "posterior_slow_waves_of_youth")):
+            c = cfg.get(name)
+            if not c or not c.get("enabled", True):
+                continue
+            rate = float(c.get("rate_per_min", 0.0) or 0.0)
+            amp = float(c.get("amplitude_uv", 0.0) or 0.0)
+            if name == "posterior_slow_waves_of_youth" and amp <= 0:
+                # fused with the PDR, so it must stand above the occipital rhythm it rides: 1.5 x the
+                # background scaled by the PDR gain the streams apply at O1/O2 (0.62 x pdr_gain)
+                amp = 1.5 * float(self.bg["amplitude_uv"]) * max(1.0, 0.62 * float(getattr(self, "pdr_gain", 1.0)))
+            if rate <= 0 or amp <= 0:
+                continue
+            rng = substream(self.seed, "variant", j)
+            ok = gate[name]
+            gap = 60.0 / rate / np.exp(0.5 * 0.4 ** 2)
+            t = -60.0 + float(_lognorm(rng, 1, 0.4)[0]) * gap
+            while t < self.duration_s + 60.0:
+                gi = int(np.clip(round(t + 60.0), 0, grid.size - 1))
+                if ok[gi]:
+                    if name == "hypnagogic_hypersynchrony":
+                        dur = float(rng.uniform(1.0, 3.0)); f = float(rng.uniform(3.0, 5.0)); cnt = 0
+                    elif name == "posts":
+                        cnt = int(rng.integers(3, 7)); f = float(rng.uniform(4.0, 5.0)); dur = cnt / f
+                    else:
+                        cnt = int(rng.integers(1, 3)); f = float(rng.uniform(2.5, 4.5)); dur = cnt / f
+                    self._variants.append((t, t + dur, name, f, amp * float(_lognorm(rng, 1, 0.2)[0]),
+                                           float(rng.uniform(-0.25, 0.25)), cnt))
+                    t += dur
+                t += float(_lognorm(rng, 1, 0.4)[0]) * gap
+        self._variants.sort(key=lambda r: r[0])
+
+    def variant_runs(self) -> List[Dict]:
+        return [{"t0": a, "t1": b, "variant": nm, "frequency_hz": f, "amplitude_uv": amp, "count": cnt}
+                for a, b, nm, f, amp, asym, cnt in getattr(self, "_variants", [])]
+
+    def _variant_rows(self, t: np.ndarray) -> np.ndarray:
+        rows = np.zeros((self.n_elec, t.size))
+        runs = getattr(self, "_variants", None)
+        if not runs or t.size == 0:
+            return rows
+        for a, b, name, f, amp, asym, cnt in runs:
+            if b < t[0] - 0.5 or a > t[-1] + 0.5:
+                continue
+            d = t - a
+            dur = b - a
+            if name == "hypnagogic_hypersynchrony":
+                env = np.sin(np.pi * np.clip(d / dur, 0.0, 1.0)) ** 0.7 * ((d >= 0) & (d <= dur))
+                ph = 2 * np.pi * f * d
+                # rhythmic delta-theta with a sharpened crest ("sharp or spiky components")
+                wave = -(np.sin(ph) + 0.28 * np.sin(2 * ph + 0.6)) * env * (0.5 * amp / 1.15)
+            elif name == "posts":
+                # monophasic surface-POSITIVE triangular transients at 4-5 Hz
+                wave = np.zeros_like(t)
+                for k in range(cnt):
+                    c = k / f
+                    dd = d - c
+                    wave += np.exp(-0.5 * (dd / np.where(dd < 0, 0.055, 0.035)) ** 2)
+                wave *= amp * (1.0 - 0.15 * np.abs(np.sin(np.pi * d / dur)))
+            else:
+                # posterior slow waves of youth: 1-2 surface-negative delta waves fused with the PDR
+                wave = np.zeros_like(t)
+                for k in range(cnt):
+                    c = (k + 0.5) / f
+                    wave += np.exp(-0.5 * ((d - c) / (0.22 / f * 1.6)) ** 2)
+                wave *= -0.7 * amp        # a slow wave that stands above the alpha it is fused with
+            base = self._VAR_FIELD[name]
+            field = np.array([base.get(e, 0.0) * (1.0 + asym * (1 if mt.POSITIONS.get(e, (0.0,))[0] > 1e-6 else -1 if mt.POSITIONS.get(e, (0.0,))[0] < -1e-6 else 0))
+                              for e in self.electrodes])
+            rows += np.outer(field, wave)
+        return rows
+
     def _seizure_block(self, t: np.ndarray) -> np.ndarray:
         """Sum of every ictal run overlapping ``t``; shape (n_elec, len(t))."""
         out = np.zeros((self.n_elec, t.size))
@@ -2766,6 +2954,12 @@ class Synthesizer:
         x += self._seizure_block(t)
         # multifocal spikes (hypsarrhythmia), attenuated through a decrement
         x += self._multifocal_spike_rows(t) * (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]
+        # P7 batch 5: sporadic interictal discharges and pediatric normal variants; both ride the
+        # burst gate and any decrement like the multifocal spikes, in absolute microvolts
+        if getattr(self, "_sed", None) is not None or getattr(self, "_variants", None):
+            gate_bv = (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]
+            x += self._sed_rows(t) * gate_bv
+            x += self._variant_rows(t) * gate_bv
 
         # --- always-present ECG contamination + artifacts ------------------
         sensor_rms_uv = SENSOR_RMS_UV

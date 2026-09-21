@@ -1,0 +1,7 @@
+family,contract_id,probes,requested,normalized,measured,verdict,evidence,note
+AT-P05,SZ-ESE,B4-01;B4-02;B4-04,ESE = seizure >= 10 min or >= 20 % of any 60 min; below both -> not status,summary.seizure_burden,B4-01 longest 720 s (duration); B4-02 max hour fraction 0.25 (burden); B4-04 0.04 not status,pass,probes,P7 batch 4
+AT-P05,REP-BURDEN,B4-01..B4-06,seizure burden per hour reported in the key,summary.seizure_burden,B4-01 0.20; B4-02 0.25; B4-03 0.02; B4-04 0.04; B4-05 0.59; B4-06 0.20,pass,probes,P7 batch 4
+AT-P05,SZ-NONCONVULSIVE,B4-01,status without a clinical correlate flagged nonconvulsive,clinical_correlate none,nonconvulsive True,pass,probes,P7 batch 4
+AT-P04,SZ-ECSZ,B4-03,electroclinical seizure: time-locked clinical correlate keyed,seizure.clinical_correlate focal_clonic,correlate on the seizure row; electroclinical true,pass,probes,P7 batch 4
+AT-P05,SZ-ECSZ,B4-02,electroclinical seizure: time-locked clinical correlate keyed,seizure_cluster.clinical_correlate subtle,correlate on every cluster row; electroclinical true,pass,probes,P7 batch 4
+AT-P03,NEO-SEIZURE-BURDEN-STATUS,B4-05;B4-06,neonatal status = seizures >= 50 % of an hour,summary.seizure_burden,B4-05 0.59 status True; B4-06 0.20 status False,pass,probes,P7 batch 4

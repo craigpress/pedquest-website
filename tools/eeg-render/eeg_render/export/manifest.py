@@ -169,6 +169,23 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             rows[-1]["acns_advisory"] = ("shorter than the 10-s ACNS neonatal electrographic seizure minimum; "
                                         "consider type brd")
 
+    # P7 batch 5: every sporadic discharge is keyed (onset = spike peak - 40 ms)
+    for sd in (synth.sporadic_events() if hasattr(synth, "sporadic_events") else []):
+        a0 = sd["t0"] - 0.04
+        a1 = sd["t0"] + (0.55 if sd["aftergoing_slow"] else 0.12) * sd["width"] + (0.11 if sd["morphology"] == "polyspike" else 0.0)
+        if a1 < 0.0 or a0 > duration_s:
+            continue
+        rows.append(_row("sporadic_discharge", a0, a1, fs, duration_s,
+                         focus=sd["focus"], morphology=sd["morphology"], aftergoing_slow=sd["aftergoing_slow"],
+                         amplitude_uv=round(sd["amplitude_uv"], 1), spec_event_index=sd["index"]))
+    # P7 batch 5: pediatric normal variants, each run keyed as a normal (non-epileptiform) finding
+    for vr in (synth.variant_runs() if hasattr(synth, "variant_runs") else []):
+        if vr["t1"] < 0.0 or vr["t0"] > duration_s:
+            continue
+        rows.append(_row("normal_variant", vr["t0"], vr["t1"], fs, duration_s,
+                         variant=vr["variant"], frequency_hz=round(vr["frequency_hz"], 2),
+                         amplitude_uv=round(vr["amplitude_uv"], 1), count=vr["count"], normal_variant=True))
+
     for ev in getattr(synth, "artifacts", []):
         a0 = float(ev["at_min"]) * 60.0
         a1 = a0 + float(ev["duration_s"])
@@ -253,8 +270,93 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
         rows.append(_row("annotation", at, at, fs, duration_s,
                          label=str(ann.get("label", ""))))
 
+    # P7 batch 4: clinical correlate travels with every ictal row (a non-EEG key field)
+    events_spec = synth.spec.get("events", [])
+    for r in rows:
+        if r["kind"] in ("seizure", "seizure_cluster", "status_epilepticus", "spasm", "spasm_cluster", "tonic_seizure"):
+            i = r.get("spec_event_index")
+            corr = str((events_spec[i] if i is not None and i < len(events_spec) else {}).get("clinical_correlate") or "none")
+            r["clinical_correlate"] = corr
+            r["electroclinical"] = corr not in ("none", "unknown")
     rows.sort(key=lambda r: (r["onset_s"], r["kind"]))
     return rows
+
+
+ICTAL_KINDS = ("seizure", "seizure_cluster", "status_epilepticus", "spasm", "spasm_cluster", "tonic_seizure")
+
+
+def acns_prevalence(count: int, duration_s: float) -> str:
+    """ACNS 2021 sporadic epileptiform discharge prevalence from a realized count over ``duration_s``.
+
+    abundant >= 1 per 10 s; frequent >= 1/min; occasional >= 1/h; rare < 1/h (a record shorter than an
+    hour cannot realize "rare": the category is over the record actually keyed).
+    """
+    if count <= 0:
+        return "none"
+    per_h = count / max(duration_s / 3600.0, 1e-9)
+    if per_h >= 360.0:
+        return "abundant"
+    if per_h >= 60.0:
+        return "frequent"
+    if per_h >= 1.0:
+        return "occasional"
+    return "rare"
+
+
+def sporadic_summary(rows: List[Dict], duration_s: float) -> List[Dict]:
+    """Per sporadic_discharges event: realized count, rates and the ACNS prevalence category."""
+    out: Dict[int, Dict] = {}
+    for r in rows:
+        if r["kind"] != "sporadic_discharge":
+            continue
+        i = int(r["spec_event_index"])
+        s = out.setdefault(i, {"spec_event_index": i, "focus": r["focus"], "morphology": r["morphology"], "count": 0})
+        s["count"] += 1
+    for s in out.values():
+        s["per_hour"] = round(s["count"] / max(duration_s / 3600.0, 1e-9), 2)
+        s["per_minute"] = round(s["count"] / max(duration_s / 60.0, 1e-9), 3)
+        s["acns_prevalence"] = acns_prevalence(s["count"], duration_s)
+    return [out[k] for k in sorted(out)]
+
+
+def _summary(synth, duration_s: float) -> Dict:
+    rows = realized_events(synth, duration_s)
+    out = {"seizure_burden": seizure_burden(rows, duration_s, synth.age)}
+    sp = sporadic_summary(rows, duration_s)
+    if sp:
+        out["sporadic_discharges"] = sp
+    return out
+
+
+def seizure_burden(rows: List[Dict], duration_s: float, age: str = "") -> Dict:
+    """Seizure burden and status flags from the realized key (P7 batch 4).
+
+    ACNS 2021 (children and adults): electrographic status = a seizure >= 10 min, or seizures >= 20 % of any
+    60-min window; nonconvulsive when no ictal row carries a clinical correlate.  A neonate is judged by the
+    ACNS neonatal criterion only: status = seizures >= 50 % of any 60-min window (status_basis burden_neonatal).  Windows slide over the record in 10-s steps; a record
+    shorter than an hour is one window.
+    """
+    import numpy as np
+    ict = [r for r in rows if r["kind"] in ICTAL_KINDS and r["offset_s"] > r["onset_s"]]
+    total = float(sum(r["offset_s"] - r["onset_s"] for r in ict))
+    longest = float(max((r["offset_s"] - r["onset_s"] for r in ict), default=0.0))
+    win = min(3600.0, float(duration_s))
+    max_frac = 0.0
+    if ict and win > 0:
+        for start in np.arange(0.0, max(duration_s - win, 0.0) + 1e-9, 10.0):
+            end = start + win
+            cov = sum(max(0.0, min(r["offset_s"], end) - max(r["onset_s"], start)) for r in ict)
+            max_frac = max(max_frac, cov / win)
+    if age == "neonate":
+        basis = "burden_neonatal" if max_frac >= 0.50 else None
+    else:
+        basis = "duration" if longest >= 600.0 else ("burden" if max_frac >= 0.20 else None)
+    status = basis is not None
+    nonconvulsive = bool(status and all(not r.get("electroclinical", False) for r in ict))
+    return {"count": len(ict), "total_s": round(total, 1), "longest_s": round(longest, 1),
+            "max_hour_fraction": round(float(max_frac), 4), "window_s": win,
+            "electrographic_status": status, "status_basis": basis, "nonconvulsive": nonconvulsive,
+            "neonatal_status": bool(age == "neonate" and basis == "burden_neonatal")}
 
 
 def build_manifest(synth: Synthesizer, recording: Recording,
@@ -268,4 +370,5 @@ def build_manifest(synth: Synthesizer, recording: Recording,
         "quantization": {"clipped_samples": int(clipped_samples)},
         "files": dict(files or {}),
         "events": realized_events(synth, recording.duration_s),
+        "summary": _summary(synth, recording.duration_s),
     }

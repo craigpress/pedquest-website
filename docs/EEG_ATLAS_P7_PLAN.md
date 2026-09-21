@@ -135,3 +135,63 @@ Tests: `tests/test_p7_batch2.py` (5). Renderer suite 145 passed / 1 skipped. Cra
 Adult ICU families still have no calibrated microvolt reference (P3): these rows are generator-side measurements and
 Craig's read, not validation against patients.
 
+## Batch 4 — seizure module completion (renderer 0.4.3, 2026-09-20)
+
+Generator (opt-in keys, no signal change): every ictal event accepts `clinical_correlate` (none / subtle /
+focal_clonic / focal_tonic / generalized_tonic_clonic / autonomic / behavioral_arrest / unknown), copied onto each
+realized seizure / cluster row with a derived `electroclinical` flag; the manifest gains `summary.seizure_burden`
+(count, total and longest seizure, the maximum fraction of any sliding 60-min window, `electrographic_status` with
+`status_basis` duration (≥ 10 min) or burden (≥ 20 % of an hour; ACNS 2021), `nonconvulsive` when status carries no
+correlate, and `neonatal_status` = ≥ 50 % of an hour — a neonate is judged by the neonatal rule only). The
+`seizure_cluster` schema nests its per-run parameters under `seizure` (start_min / end_min / interval_min); the P5
+helpers had that wrong, so the first run of this batch realized 90-s default seizures — fixed in the candidates.
+
+Candidates B4-01 … B4-06 (`batch4_candidates.py`; package `p7b4`, CSV `EEG_ATLAS_P7_B4_REVIEW.csv`, hour-long
+records): adult status by duration (12-min nonconvulsive), adult status by burden (15 × 60 s, 25 % of the hour, subtle
+correlate), child electroclinical seizure (focal clonic keyed), child three seizures below status, neonatal status
+(35 × 60 s every 100 s, 58 %) and neonatal high burden below status (20 %).
+
+Contract rows (`EEG_ATLAS_P7_B4_GAP_ROWS.csv`, all **pass**): SZ-ESE (720 s duration / 0.25 burden / 0.04 not
+status), REP-BURDEN (per-hour fraction keyed for all six), SZ-NONCONVULSIVE, SZ-ECSZ for AT-P04 and AT-P05,
+NEO-SEIZURE-BURDEN-STATUS (0.59 status vs 0.20 not). The first neonatal candidate sat exactly on the 50 % threshold
+(realized 0.4995 → false); the candidate was moved to 58 % rather than the rule softened. SZ-POSSIBLE-ECSE (the
+"possible" category needs a treatment-response record) stays pending. Tests: `tests/test_p7_batch4.py` (5).
+
+## Batch 5 — sporadic epileptiform discharges and pediatric normal variants (renderer 0.4.3, 2026-09-20)
+
+Two new families, both from the S-index: **AT-P09 sporadic epileptiform discharges** (S01 §prevalence: abundant ≥ 1 per
+10 s not periodic, frequent ≥ 1/min, occasional ≥ 1/h, rare < 1/h) and **AT-P10 pediatric normal variants** (S06
+developmental chapter: hypnagogic hypersynchrony in drowsiness after the first year, peak 2–4 y; POSTS in sleep from
+school age; posterior slow waves of youth fused with the alpha PDR, persisting into the twenties).
+
+Generator (opt-in, additive; a spec without the keys normalizes unchanged): event `sporadic_discharges` (`focus`
+electrode, `rate_per_h`, `amplitude_uv`, `morphology` spike / sharp_wave / polyspike, `aftergoing_slow`, optional
+`start_min`/`end_min`) — surface-negative kernel (rise 12 / fall 24 ms sigma → spike FWHM ~40 ms, sharp wave ×2.6),
+lognormal timing with a 1.5-s refractory, monopole field at falloff 0.60 (first neighbours ~1/3 as generated; the
+per-electrode scalp gain, capped at 2.0, then multiplies what the page shows), every discharge keyed as a
+`sporadic_discharge` row and summarized per event in `summary.sporadic_discharges` (count, per hour, per minute,
+`acns_prevalence` from the realized count over the keyed record — "rare" needs a record longer than an hour).
+`background.variants` {hypnagogic_hypersynchrony, posts, posterior_slow_waves_of_youth} each with `amplitude_uv` and
+`rate_per_min`; runs are scheduled only inside the permitting state from the sleep index (drowsy 0.15–0.75, asleep
+> 0.55, awake < 0.2) and keyed as `normal_variant` rows (`normal_variant: true`, frequency, count). POSTS are
+surface-positive occipital 4–5 Hz triangles; hypnagogic hypersynchrony a fronto-centro-parietal 3–5 Hz run with a
+sharpened crest; posterior slow waves single or paired occipital 2.5–4.5 Hz waves at 1.5 × background × the PDR gain.
+The runner gained `page_on`: the page lands on the first keyed row of a kind after minute 4.
+
+Candidates B5-01 … B5-08 (`batch5_candidates.py`; package `p7b5`, CSV `EEG_ATLAS_P7_B5_REVIEW.csv`, hour-long
+records): T3 spikes frequent (120/h) and abundant (480/h), F4 sharp waves occasional (8/h), C4 polyspikes, the same T3
+spikes without the slow wave (contrast); hypnagogic hypersynchrony in a 3-year-old falling asleep, POSTS in a sleeping
+adolescent, posterior slow waves of youth in an awake 10-year-old.
+
+Contract rows (`EEG_ATLAS_P7_B5_GAP_ROWS.csv`, all **pass** on discharge-locked averages): SED-MORPHOLOGY (spike 39 ms,
+sharp wave 94 ms, polyspike, all negative), SED-FIELD (first neighbours 0.33 as generated, 0.15 on the page where T3
+carries scalp gain 2.0, contralateral 0.04), SED-PREVALENCE (129/h frequent, 487/h abundant, 10/h occasional),
+SED-AFTERGOING (0.49 vs 0.02), VAR-HYPNAGOGIC (6 runs at sleep index 0.22–0.69, 3.6–4.9 Hz, Cz/O1 1.89), VAR-POSTS (278
+runs at ≥ 0.61, O1/F3 8.4, positive), VAR-PSWY (352 runs awake, O1 delta RMS in the run 1.8 × the 2 s before — the
+first two attempts measured raw p2p against a 2.5× PDR and read 0.94 / 1.13; the wave was raised to 0.7 × amplitude and
+the measure moved to the delta band). Tests: `tests/test_p7_batch5.py` (5); renderer suite 155 passed / 1 skipped.
+
+Open for Craig's read: the field falloff (0.6) and the discharge amplitudes are generator choices with no P3 reference;
+the variant rates (5–6 runs/min inside the state) are placeholders from the chapter's "common"/"frequent" wording.
+Batch 3 (RPP / IIC) waits for the batch-2 review; the remaining unsupported rows are SZ-IIC (batch 3) and
+SZ-POSSIBLE-ECSE (needs a treatment-response record).
