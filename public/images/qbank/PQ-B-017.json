@@ -86,15 +86,15 @@
   "license": "synthetic-original",
   "attribution": null,
   "renderer_version": "0.4.1",
-  "spec_hash": "sha256:647dbff11d0530c919c352de9b155ffe2ce48e32325989c423fb2816b677a398",
+  "spec_hash": "sha256:25e126ba6350f2b601517574d2b2e74425fba9ed57182d3a0c8d29c947579e7e",
   "db_ranges": {
     "fft_L": [
-      -6.488,
-      25.002
+      -5.911,
+      25.611
     ],
     "fft_R": [
-      -6.488,
-      25.002
+      -5.911,
+      25.611
     ]
   },
   "path": "public/images/qbank/PQ-B-017.png"

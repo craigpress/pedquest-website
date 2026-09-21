@@ -202,6 +202,21 @@ retain the existing 19-electrode policy; explicitly preterm (<37 weeks PMA)
 recordings can retain reduced acquisition. Trend regeneration does not change
 raw recording channels.
 
+### Generator rollout 0.4.1 (2026-09-20)
+
+Renderer 0.4.1 (negative-up pages, burst-aware display calibration, authored `ibi_range_s`, no fragment
+rhythmic-pattern runs, reduced-array graphoelement fields, steep short blinks, no muscle floor when unreactive,
+Castro Conde 2017 term anchors) deployed to moltbot by tar-over-ssh into the editable install
+(`/opt/pedquest-eeg-render`, `pip install --no-deps -e .`), all three units restarted and active. Rollback copy:
+`/opt/pedquest-renderer-pre041-20260920.tar.gz` (excludes `.venv`). The CraigsRig pool's venv is editable against
+`pedquest-site/tools/eeg-render`, so it follows main; re-run `pip install --no-deps -e` there after the merge so the
+package metadata reports 0.4.1, then `restart-pool.ps1 stop|start`.
+
+**The 52 bank specs are no longer pinned.** `spec_version: 1` was removed from every question YAML on 2026-09-20 after
+Craig accepted the P5 gallery (31 accept, 1 revise, 1 unscored), and all 52 images were re-rendered at version 2:
+every page now draws negative-up with the version-2 defaults. Refresh database metadata with
+`RENDERER_VERSION=0.4.1 npx tsx scripts/qbank-refresh-sidecars.mts --apply`, not `qbank:import`.
+
 Rollback copies on moltbot: `/opt/pedquest-renderer-pre040-20260918.tar.gz`,
 `/opt/pedquest-eeg-render/trend-sidecar.v2-20260918.mjs`, and
 `/opt/pedquest-eeg-render/trends-v2-20260918.tar.gz`. The old trend files require

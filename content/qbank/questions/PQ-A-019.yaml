@@ -131,7 +131,6 @@ image:
   license: synthetic-original
   attribution: null
   spec:
-    spec_version: 1
     seed: 101919
     layout: panel_over_page
     qeeg_panel:
