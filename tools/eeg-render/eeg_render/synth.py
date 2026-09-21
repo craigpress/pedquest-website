@@ -817,6 +817,22 @@ class Synthesizer:
         gain = np.exp(
             np.where(zk < 0.0, CH_GAIN_LOG_SD_LO, CH_GAIN_LOG_SD_HI) * zk
             + CH_GAIN_ASYM_LOG_SD * ze)
+        if self.spec_version >= 2:
+            # 0.4.4 (Craig, PQ-G-002): independent draws let one electrode sit at 2-3x both of its chain
+            # neighbours, so both derivations around it become mirror images (T3-T5 vs T5-O1 r = -0.84).
+            # Scalp contact varies smoothly over the head: smooth the log-gain with the monopole field
+            # (self 1, first neighbours ~0.3-0.5) before anchoring and capping.
+            logg = np.log(gain)
+            sm = logg.copy()
+            ref_idx = [self._idx[r] for r in mt.REFERENCE_ELECTRODES if r in self._idx]
+            for i, e in enumerate(self.electrodes):
+                if e not in self.scalp:
+                    continue
+                w = mt.monopole_weights(e, self.electrodes, falloff=0.6)
+                wv = np.array([w[c] for c in self.electrodes])
+                wv[ref_idx] = 0.0
+                sm[i] = float(np.dot(wv, logg) / wv.sum())
+            gain = np.exp(sm)
         # Anchor the median SCALP gain at 1 so ``amplitude_uv`` means the
         # median channel of every record.  With ~11 regional draws instead of
         # 19 independent ones, an unanchored median swung ~1.4x between

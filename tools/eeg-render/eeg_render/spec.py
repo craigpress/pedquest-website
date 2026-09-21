@@ -485,7 +485,9 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     bg.setdefault("reactivity", "present")
     bg.setdefault("delta_brushes", "riding" if (version >= 2 and age == "neonate") else bool(ad["delta_brushes"]))
     if version >= 2:
-        bg.setdefault("channel_gain_max", 2.0)
+        # 0.4.4 (Craig, PQ-G-002): 2.0 still allowed a 3x step between neighbours (T5 2.0 vs T3 0.85), which
+        # reads as mirror-image derivations around one electrode; 1.5 plus spatial smoothing in the synth
+        bg.setdefault("channel_gain_max", 1.5)
         unreactive = bg.get("reactivity") != "present" or bg["type"] in ("suppressed", "low_voltage", "burst_suppression")
         # a neonate blinks far less than the awake 15/min of older children; within the state-cycle
         # module (P7 batch 1) the awake default is 4/min, gated further by state in the synthesizer
@@ -856,6 +858,11 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
             # 0.4.0 (Craig, P5 C15/C19): a focal run that never spreads recruits
             # no scalp muscle; muscle comes with clinical spread
             e.setdefault("muscle", "none" if (e.get("spread") or DEFAULT_SEIZURE["spread"]) in (None, "none") else "modest")
+        elif version >= 2 and kind == "seizure_cluster":
+            # 0.4.4 (Craig, PQ-G-002): the same rule for every run of a cluster - the nested block
+            # carries the spread
+            z = e.get("seizure") or {}
+            e.setdefault("muscle", "none" if (z.get("spread") or DEFAULT_SEIZURE["spread"]) in (None, "none") else "modest")
         else:
             e.setdefault("muscle", "modest")
     if kind == "seizure":

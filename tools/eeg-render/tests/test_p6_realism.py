@@ -51,7 +51,7 @@ def test_unversioned_spec_is_version_2_and_gets_the_new_defaults():
     bg = normalize(_img(_child()))["spec"]
     assert bg["spec_version"] == 2
     b = bg["background"]
-    assert b["channel_gain_max"] == 2.0 and b["blink_rate_per_min"] == 15.0 and b["pdr_gain"] == 2.5
+    assert b["channel_gain_max"] == 1.5 and b["blink_rate_per_min"] == 15.0 and b["pdr_gain"] == 2.5
     assert b["blink_amplitude_uv"] == 160.0 and b["amplitude_reference"] == "display" and b["pdr_field"] == "focal"
     n = normalize(_img(_neo()))["spec"]["background"]
     assert n["delta_brushes"] is False and n["delta_brush_events"] is True

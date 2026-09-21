@@ -115,6 +115,10 @@ def iter_blocks(synth: Synthesizer, n_samples: int,
 def _row(kind: str, onset_s: float, offset_s: float, fs: int,
          duration_s: float, **detail) -> Dict:
     """One answer-key entry, clipped to the recording and indexed in samples."""
+    # 0.4.4: state rows hand numpy scalars in; a numpy bool in the key breaks json.dumps in the exporter
+    onset_s = float(onset_s)
+    offset_s = float(offset_s)
+    duration_s = float(duration_s)
     a = max(0.0, float(onset_s))
     b = min(float(duration_s), float(offset_s))
     out = {
@@ -123,8 +127,8 @@ def _row(kind: str, onset_s: float, offset_s: float, fs: int,
         "offset_s": round(b, 6),
         "onset_sample": int(round(a * fs)),
         "offset_sample": int(round(b * fs)),
-        "clipped_at_start": onset_s < 0.0,
-        "clipped_at_end": offset_s > duration_s,
+        "clipped_at_start": bool(onset_s < 0.0),
+        "clipped_at_end": bool(offset_s > duration_s),
         # What the generator was told to produce.  Whether a reader would call
         # it that on inspection is a separate, unverified question.
         "label_type": "commanded",

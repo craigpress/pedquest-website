@@ -186,6 +186,14 @@ def _spec_duration_s(kind: str, spec: dict) -> float:
     return float(spec["duration_min"]) * 60.0
 
 
+def _json_default(o):
+    """numpy scalars in the answer key (a state row's numpy bool broke every export with a state_change since 0.4.2)."""
+    import numpy as _np
+    if isinstance(o, _np.generic):
+        return o.item()
+    raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+
+
 def cmd_export(args) -> int:
     from .export import (baseline_advisory, build_manifest, ekg_row,
                          write_edf_plus, write_lay_dat)
@@ -309,7 +317,7 @@ def cmd_export(args) -> int:
     if args.answers or args.embed_answers:
         manifest = build_manifest(synth, recording, clipped_samples=clipped, files=files)
         key = out_dir / f"{ident}.answers.json"
-        key.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        key.write_text(json.dumps(manifest, indent=2, default=_json_default), encoding="utf-8")
         print(f"  key  {key}  {len(manifest['events'])} realized events")
 
     print(f"  recording {recording.recording_id}  {duration_s / 60:.1f} min @ "

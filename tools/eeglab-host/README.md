@@ -222,6 +222,24 @@ Rollback copies on moltbot: `/opt/pedquest-renderer-pre040-20260918.tar.gz`,
 `/opt/pedquest-eeg-render/trends-v2-20260918.tar.gz`. The old trend files require
 the matching viewer engine; engine 3 intentionally rejects them.
 
+### Generator rollout 0.4.4 (2026-09-21) - PQ-G-002 review fixes
+
+Craig's read of PQ-G-002 in the viewer: mirrored posterior temporal and vertex chains, an alpha-delta asymmetry
+that "recovered" at 5-6 h, too much muscle for a sedated child. 0.4.4 changes the version-2 defaults, so EVERY
+bank image was re-rendered (`render-all --force`, sidecars regenerated and verified): the per-electrode scalp gain
+is smoothed over the head (monopole field, falloff 0.6) and the default `channel_gain_max` is 1.5 (was 2.0 - the
+PQ-G-002 seed had T5/T6/Cz at 2.0 against 0.7-0.85 neighbours, r = -0.84 between the two derivations around T5);
+`seizure_cluster` runs follow the single-seizure muscle rule (no spread = no muscle). The PQ-G-002 spec itself was
+repaired in the database (first right attenuation runs to the end of the record) and re-queued for both the image
+(`eeg_case_render_jobs`) and the Lab export (`eeg_lab_jobs`, a clone of the prior job with the spec wrapped as an
+image block - a bare spec errors with "job spec is not an image block"). The re-render exposed two extra pollers of
+`eeg_case_render_jobs`: a legacy `case-image-worker.service` on moltbot (OpenClaw workspace script at renderer 0.3.11,
+now disabled) and the CraigsRig scheduled task "PedQuest qbank render worker" (system Python running the repo's
+`worker.py`, which imports the package once at start - restart it after every deploy, over ssh: the local
+unelevated shell cannot see the task). Rollout as before; rollback copy
+`/opt/pedquest-renderer-pre044-20260921.tar.gz`. The other 57 Lab recordings still carry their earlier renderer
+versions (PQ-G-002's was 0.3.9); re-exporting them is a separate decision (12-24 h files).
+
 ### Generator rollouts 0.4.2 and 0.4.3 (2026-09-20)
 
 0.4.2 (P7 batches 1-2: neonatal state cycle, hours of life, transient sharps, dysmaturity; keyed reactivity, CAPE,
