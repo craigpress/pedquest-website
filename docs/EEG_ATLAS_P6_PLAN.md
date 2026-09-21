@@ -114,9 +114,12 @@ JSON (`decisions/<id>.json`, `saved_at` 2026-09-19) onto the new hashes, and onl
 Backup: `decisions/EEG_ATLAS_P5_CANDIDATE_REVIEW.backup-20260919-secondpass.csv`. Craig should glance at the accepted
 pages once more rather than re-score them.
 
-Remaining: merge `eeg-teaching-lab` → main, deploy 0.4.1 to both worker fleets (until then new Lab renders are stamped
-0.4.0 and `verify_sidecars` would reject them), Craig's look at the re-rendered gallery, decision on migrating the
-bank pages to negative-up.
+**Closed out 2026-09-20.** Craig's third pass: 31 accept, C08 revise, C18 unscored - "all seem good enough to pass".
+On his instruction the 52 bank specs were unpinned (no `spec_version: 1`) and all 52 images re-rendered at 0.4.1 /
+version 2 (render-all 52/0 failed, `verify_sidecars` 52/52), committed and fast-forwarded to main (`ad4a06e`, pushed);
+moltbot runs 0.4.1 (three units active, rollback `/opt/pedquest-renderer-pre041-20260920.tar.gz`), the CraigsRig pool
+reinstalled at 0.4.1 and restarted, database metadata refreshed with `RENDERER_VERSION=0.4.1` (52 cases, 10 answer
+regions re-derived, review states untouched). P6 is complete; P7 (staged coverage batches) is next.
 
 ## Deliverables
 
