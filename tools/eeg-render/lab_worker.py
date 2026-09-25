@@ -38,6 +38,8 @@ from typing import Any
 from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from eeg_render.visual_qa import run_qa
+from eeg_render.qa_evidence import lab_evidence
 
 log = logging.getLogger("eeg-lab-export")
 
@@ -332,6 +334,7 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
         # the NFS store but not read from it. Best effort: a failure logs and the
         # job still completes; the viewer falls back to computing.
         recording_local = next((produced[e] for e in ("edf", "lay") if e in produced), None)
+        qa_images, qa_context = [], {"coverage": "Missing raw/trend evidence"}
         if recording_local and os.path.exists(cfg.trend_sidecar):
             try:
                 side = subprocess.run(
@@ -344,6 +347,11 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
                 artifacts["trends"] = f"eeglab://{folder}/{sidecar.name}"
                 log.info("job %s: trends sidecar %s (%d epochs, %d bytes)",
                          job["id"], sidecar.name, info.get("nT", 0), info.get("bytes", 0))
+                if info.get("qaPath"):
+                    qa_images, qa_context = lab_evidence(Path(info["qaPath"]), out)
+                    for evidence in qa_images:
+                        _copy_to_store(evidence, dest / evidence.name)
+                    qa_context["evidence_paths"] = [f"eeglab://{folder}/{p.name}" for p in qa_images]
             except Exception as error:  # noqa: BLE001 - never fail the export over the sidecar
                 log.warning("job %s: trends sidecar failed: %s", job["id"], str(error)[:400])
 
@@ -361,6 +369,11 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
 
         if not artifacts:
             raise RuntimeError("export produced no files")
+
+        report["visual_qa"] = run_qa(db, "lab", job["id"], qa_images, {
+            **qa_context, "spec": spec, "duration_s": duration_s,
+            "renderer_version": _renderer_version(cfg.eeg_render),
+        })
 
         db.request(
             f"/rest/v1/eeg_lab_jobs?id=eq.{_q(job['id'])}&claimed_by=eq.{_q(cfg.worker_id)}", "PATCH",

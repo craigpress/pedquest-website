@@ -10,6 +10,7 @@ type MenuLink = { href: string; label: string; hint: string };
 
 /** Learner-facing EEG destinations. A dropdown on desktop, rows in the mobile drawer. */
 const labLinks: MenuLink[] = [
+  { href: "/education/eeg-reference", label: "EEG reference", hint: "Definitions, criteria, examples and qEEG glossary" },
   { href: "/courses", label: "Courses", hint: "Your classes and the EEGs assigned to you" },
   { href: "/education/question-bank", label: "Question bank", hint: "Practice qEEG questions" },
   { href: "/admin/eeg-lab/library", label: "EEG Library", hint: "Find a teaching recording" },
@@ -18,6 +19,7 @@ const labLinks: MenuLink[] = [
 
 /** Editor-only destinations. A menu on desktop, rows in the mobile drawer. */
 const editorLinks: MenuLink[] = [
+  { href: "/admin/eeg-qa", label: "Flagged visual QA", hint: "Unresolved AI review findings" },
   { href: "/admin/qbank", label: "Question bank review", hint: "Review queue and drafts" },
   { href: "/admin/eeg-lab/review", label: "EEG review queue", hint: "Recordings awaiting peer review" },
   { href: "/admin/eeg-lab", label: "EEG Lab console", hint: "Build and queue recordings" },

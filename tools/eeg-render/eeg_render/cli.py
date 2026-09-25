@@ -18,6 +18,7 @@ from typing import List, Optional
 
 from . import RENDERER_VERSION
 from .render import render_image
+from .visual_qa import review_local
 from .spec import SpecError, load_question, normalize, spec_hash, spec_warnings, style_warnings, validate_image
 
 DEFAULT_OUT = "public/images/qbank"
@@ -33,6 +34,11 @@ def _repo_default_out() -> str:
 
 
 def _write_sidecar(out_dir: Path, ident: str, sidecar: dict) -> Path:
+    image = out_dir / f"{ident}.png"
+    sidecar["visual_qa"] = review_local(image, {
+        "renderer_version": sidecar.get("renderer_version"), "spec_hash": sidecar.get("spec_hash"),
+        "coverage": "CLI generated image only", "required_evidence_missing": [
+            "CLI image-only review does not independently validate raw/trend correspondence."]})
     path = out_dir / f"{ident}.json"
     path.write_text(json.dumps(sidecar, indent=2, sort_keys=False) + "\n",
                     encoding="utf-8")

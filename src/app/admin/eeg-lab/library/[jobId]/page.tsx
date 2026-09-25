@@ -10,6 +10,8 @@
  * server-side (`can` on the GET is a UI convenience, not the authorization).
  */
 import { useCallback, useEffect, useState } from "react";
+import EegFeatureLinks from "@/components/EegFeatureLinks";
+import EegVisualQa from "@/components/EegVisualQa";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useRole } from "@/lib/auth";
@@ -294,6 +296,9 @@ export default function RecordingPage() {
           <Link href="/admin/eeg-lab/review" style={mini}>Review queue</Link>
         </div>
       </div>
+
+      {isEditor && <EegVisualQa key={job.id} source="lab" jobId={job.id}/>}
+      <EegFeatureLinks key={job.id} source={isEditor ? "lab" : undefined} resourceId={isEditor ? job.id : undefined} text={`${title} ${description} ${reviewNotes}`} />
 
       {error && (
         <div role="alert" style={{ ...card, borderColor: "var(--accent-secondary)", padding: "12px 16px", marginBottom: 16, color: "var(--accent-secondary)", fontSize: 14, whiteSpace: "pre-wrap" }}>

@@ -15,6 +15,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from eeg_render.render import render_image
+from eeg_render.visual_qa import run_qa
 
 
 def load_env(path: str | None) -> None:
@@ -115,8 +116,17 @@ def process_one(db: Supabase) -> bool:
         point = content.get("point_to_feature") if content.get("question_type") == "point_to_feature" else None
 
         with tempfile.TemporaryDirectory(prefix="pedquest-render-") as directory:
-            png, sidecar = render_image(ident, image, directory, point)
+            qa_images = []
+            png, sidecar = render_image(ident, image, directory, point, qa_images=qa_images)
             digest = sidecar["spec_hash"].split(":")[-1][:16]
+            evidence_urls = [db.upload_png(f"qbank/{ident}/{case['version']}-{digest}-{p.name}", p) for p in qa_images]
+            sidecar["visual_qa"] = run_qa(db, "qbank", job_id, [png, *qa_images], {
+                "case_id": case_id, "evidence_urls": evidence_urls,
+                "image": image, "renderer_version": sidecar.get("renderer_version"),
+                "teaching_objective": content.get("learning_objective"),
+                  "coverage": "Generated image plus three 15s raw windows from the same source at start, midpoint and near end" if qa_images else "Generated image only",
+                  "coverage_warning": "Sampled windows do not verify events outside their coverage or independently validate trend calculations.",
+            })
             public_url = db.upload_png(f"qbank/{ident}/{case['version']}-{digest}.png", png)
 
         sidecar["path"] = public_url
