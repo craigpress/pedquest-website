@@ -69,7 +69,8 @@ def review_images(images: list[Path], context: dict) -> dict:
     payload = {"model": model, "messages": [{"role": "system", "content": PROMPT},
                {"role": "user", "content": content}], "max_tokens": 3000}
     request = Request(base + "/chat/completions", json.dumps(payload).encode(),
-                      {"Authorization": "Bearer " + key, "Content-Type": "application/json"})
+                      {"Authorization": "Bearer " + key, "Content-Type": "application/json",
+                       "x-bf-mcp-include-clients": "none"})
     with urlopen(request, timeout=120) as response:
         result = json.load(response)
     raw = result["choices"][0]["message"]["content"]
