@@ -191,6 +191,9 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
                          amplitude_uv=round(vr["amplitude_uv"], 1), count=vr["count"], normal_variant=True))
 
     for ev in getattr(synth, "artifacts", []):
+        if (synth.spec.get("neuromuscular_blockade") == "complete"
+                and ev.get("kind") == "emg_chewing"):
+            continue
         a0 = float(ev["at_min"]) * 60.0
         a1 = a0 + float(ev["duration_s"])
         if a1 < 0.0 or a0 > duration_s:
@@ -218,17 +221,28 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
     # graphoelement.  They are not in synth.seizures, synth.artifacts or
     # synth._atten, so without this pass a sedation change or a rewarming -- the
     # very thing a trend question is often about -- is missing from the key.
+    sedation = synth.spec.get("sedation")
+    if sedation:
+        rows.append(_row("sedation", 0.0, duration_s, fs, duration_s,
+                         agent=sedation["agent"], level=float(sedation["level"]),
+                         scale="normalized_authored_effect"))
+    if synth.spec.get("neuromuscular_blockade") == "complete":
+        rows.append(_row("neuromuscular_blockade", 0.0, duration_s, fs, duration_s,
+                         level="complete", modeled_effect="generated_emg_removed"))
+
     for i, ev in enumerate(synth.spec.get("events") or []):
         kind = ev.get("type")
         if kind == "sedation_change":
             at = float(ev["at_min"]) * 60.0
             effect = ev.get("effect") or {}
-            ramp_s = float(effect.get("ramp_min") or 0.0) * 60.0
+            ramp_s = max(float(effect.get("ramp_min") or 0.0), 0.5) * 60.0
             if at + ramp_s < 0.0 or at > duration_s:
                 continue
-            rows.append(_row(kind, at, at + ramp_s, fs, duration_s,
-                             direction=ev.get("direction"), agent=ev.get("agent"),
-                             effect=effect, spec_event_index=i))
+            extra = {"direction": ev.get("direction"), "agent": ev.get("agent"),
+                     "effect": effect, "spec_event_index": i}
+            if "level" in ev:
+                extra["level"] = ev["level"]
+            rows.append(_row(kind, at, at + ramp_s, fs, duration_s, **extra))
         elif kind == "temperature_change":
             at = float(ev["at_min"]) * 60.0
             over_s = float(ev.get("over_min") or 0.0) * 60.0

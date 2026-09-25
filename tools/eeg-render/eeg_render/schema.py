@@ -28,7 +28,7 @@ ARTIFACTS = [
     "emg_chewing", "patting", "chest_pt", "ventilator", "ecmo_pump",
     "electrode_pop", "sixty_hz", "ecg", "movement", "sweat", "eye_blink",
 ]
-AGENTS = ["propofol", "midazolam", "pentobarbital", "dexmedetomidine", "ketamine"]
+AGENTS = ["propofol", "midazolam", "pentobarbital", "dexmedetomidine", "ketamine", "remifentanil"]
 #: panel names from IMAGE_SPEC.md ...
 PANELS = [
     "seizure_probability", "rhythmicity_L", "rhythmicity_R", "fft_L", "fft_R",
@@ -183,6 +183,9 @@ _EVENT = {
         "at_min": _num,
         "direction": {"enum": ["increase", "decrease"]},
         "agent": {"enum": AGENTS},
+        # Unitless authored simulation intensity. It is deliberately not a
+        # dose or concentration conversion.
+        "level": {"type": "number", "minimum": 0, "maximum": 1},
         "effect": {
             "type": "object",
             "additionalProperties": False,
@@ -454,6 +457,16 @@ _SOURCE = {
     },
 }
 
+_SEDATION = {
+    "type": "object",
+    "required": ["agent", "level"],
+    "additionalProperties": False,
+    "properties": {
+        "agent": {"enum": AGENTS},
+        "level": {"type": "number", "minimum": 0, "maximum": 1},
+    },
+}
+
 _COMMON = {
     "seed": {"type": "integer"},
     # which DEFAULTS an omitted key gets: 1 = 0.3.x (the committed bank is pinned to it), 2 = 0.4.0
@@ -463,6 +476,10 @@ _COMMON = {
     "channels": {"enum": list({"standard_19", "neonatal_9", "neonatal_reduced"})},
     "montage": {"enum": MONTAGES},
     "background": _BACKGROUND,
+    "sedation": _SEDATION,
+    # Evidence supports modeling complete blockade as removal of generated
+    # scalp EMG. It does not attenuate cerebral or device-origin signals.
+    "neuromuscular_blockade": {"enum": ["complete"]},
     "events": {"type": "array", "items": _EVENT},
     "annotations": {"type": "array", "items": _ANNOTATION},
     "style": _STYLE,

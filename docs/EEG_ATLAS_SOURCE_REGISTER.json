@@ -1,6 +1,6 @@
 {
  "schema_version": "1.0",
- "register_version": "2026-09-19.p6",
+ "register_version": "2026-09-25.pqw109",
  "phase": "P1",
  "asset_root": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources",
  "raw_eeg_downloads": 0,
@@ -1443,6 +1443,30 @@
    "alternatives": [],
    "unresolved": [],
    "review_state": "metadata_checked_not_clinically_adjudicated"
+  },
+  {
+   "id": "S23", "title": "Electroencephalogram signatures of loss and recovery of consciousness from propofol and dexmedetomidine", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4304638/", "doi": "10.1097/ALN.0000000000000419", "format": "html", "population": "healthy adults 18-36; dexmedetomidine n=9, propofol n=8", "role": "sedation spectral direction", "planned_use": "illustrative normalized propofol and dexmedetomidine profiles", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Does not establish pediatric effects or dose-to-level conversion"]
+  },
+  {
+   "id": "S24", "title": "Quantification of the EEG effect of midazolam by aperiodic analysis in volunteers. Pharmacokinetic/pharmacodynamic modelling", "url": "https://pubmed.ncbi.nlm.nih.gov/2323155/", "doi": "10.2165/00003088-199018030-00006", "format": "html", "population": "adult male volunteers, n=8", "role": "midazolam beta direction", "planned_use": "illustrative non-neonatal midazolam beta profile", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Pediatric and neonatal extrapolation not established"]
+  },
+  {
+   "id": "S25", "title": "Effects of midazolam and lidocaine on spectral properties of the EEG in full-term neonates with stroke", "url": "https://pubmed.ncbi.nlm.nih.gov/22464455/", "doi": "10.1016/j.ejpn.2012.03.005", "format": "html", "population": "term neonates with stroke, n=11", "role": "neonatal midazolam direction", "planned_use": "separate neonatal amplitude-attenuation profile", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Injury and small cohort limit generalization"]
+  },
+  {
+   "id": "S26", "title": "Electroencephalogram signatures of ketamine anesthesia-induced unconsciousness", "url": "https://pubmed.ncbi.nlm.nih.gov/27178861/", "doi": "10.1016/j.clinph.2016.03.005", "format": "html", "population": "adult ketamine induction cohort, n=12", "role": "ketamine spectral direction", "planned_use": "illustrative slow-delta and gamma profile", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Does not establish pediatric effects or universal suppression mapping"]
+  },
+  {
+   "id": "S27", "title": "Drug-induced EEG pattern predicts effectiveness of ketamine in treating refractory status epilepticus", "url": "https://doi.org/10.1111/epi.12947", "doi": "10.1111/epi.12947", "format": "html", "population": "refractory status epilepticus, n=11; reported pattern in five", "role": "ketamine context boundary", "planned_use": "prevent a universal monotonic ketamine rule", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Small context-specific cohort"]
+  },
+  {
+   "id": "S28", "title": "Continuous infusion pentobarbital for refractory status epilepticus in children", "url": "https://pubmed.ncbi.nlm.nih.gov/22156786/", "doi": "10.1177/0883073811424941", "format": "html", "population": "pediatric refractory status epilepticus, n=30", "role": "explicit pentobarbital suppression target support", "planned_use": "allow authored suppression target without dose conversion", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["No validated universal dose-to-suppression mapping"]
+  },
+  {
+   "id": "S29", "title": "Altered Frequency Distribution in the Electroencephalogram is Correlated to the Analgesic Effect of Remifentanil", "url": "https://pubmed.ncbi.nlm.nih.gov/25250670/", "doi": "10.1111/bcpt.12330", "format": "html", "population": "healthy adult volunteers", "role": "remifentanil spectral direction", "planned_use": "named illustrative remifentanil profile", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Does not support an opioid-class rule"]
+  },
+  {
+   "id": "S30", "title": "Scalp electrical recording during paralysis: quantitative evidence that EEG frequencies above 20 Hz are contaminated by EMG", "url": "https://pubmed.ncbi.nlm.nih.gov/17574912/", "doi": "10.1016/j.clinph.2007.04.027", "format": "html", "population": "two subjects with and without neuromuscular blockade", "role": "modeled EMG removal under complete blockade", "planned_use": "remove generated muscle while preserving neural and device signals", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Does not establish a partial-blockade scale"]
   }
  ],
  "validation": {

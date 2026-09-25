@@ -427,6 +427,10 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     age = _default_age(kind, s)
     s["age_group"] = age
     s["sample_rate"] = int(s.get("sample_rate", 256))
+    if s.get("sedation") is not None:
+        sed = dict(s["sedation"])
+        sed["level"] = float(sed["level"])
+        s["sedation"] = sed
 
     # ---- channel set -------------------------------------------------
     aeeg_derivations = None
@@ -609,6 +613,14 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
 
     # ---- events ------------------------------------------------------
     s["events"] = [_normalize_event(e, version) for e in (s.get("events") or [])]
+    sed_events = sorted((e for e in s["events"] if e["type"] == "sedation_change"),
+                        key=lambda e: float(e["at_min"]))
+    prior_end = -1.0
+    for event in sed_events:
+        start = float(event["at_min"])
+        if start < prior_end:
+            raise SpecError("sedation_change ramps must not overlap")
+        prior_end = start + float(event["effect"]["ramp_min"])
     s["annotations"] = [
         {"at_min": float(a["at_min"]), "label": str(a["label"])}
         for a in (s.get("annotations") or [])
@@ -815,7 +827,7 @@ def _iter_styles(spec: Dict[str, Any], kind: str):
 #: page shows the *same* synthesized recording the trends were computed from.
 COMPOSITE_INHERIT = (
     "spec_version", "age_group", "sample_rate", "channels", "background", "events",
-    "annotations", "montage", "source",
+    "annotations", "montage", "source", "sedation", "neuromuscular_blockade",
 )
 
 
@@ -962,11 +974,15 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e.setdefault("at_min", 0.0)
         e.setdefault("direction", "increase")
         e.setdefault("agent", "midazolam")
+        legacy = "level" not in e
+        if not legacy:
+            e["level"] = float(e["level"])
         inc = e["direction"] == "increase"
         # a *decrease* with no explicit target means "back toward no burden";
         # defaulting it to the increase target would add suppression on a wean.
-        eff = {"suppression_ratio_target_pct": 25.0 if inc else 0.0,
-               "beta_boost": inc, "ramp_min": 10.0}
+        eff = ({"suppression_ratio_target_pct": 25.0 if inc else 0.0,
+                "beta_boost": inc, "ramp_min": 10.0}
+               if legacy else {"ramp_min": 10.0})
         eff.update(e.get("effect", {}) or {})
         e["effect"] = eff
     elif kind == "attenuation_transient":

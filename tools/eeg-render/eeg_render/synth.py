@@ -707,6 +707,8 @@ class Synthesizer:
             post, common=0.6,
         )
         self.st_beta = self._mk("beta", band_shape(f, 17.5, 4.0, order=1.0), ant, common=0.4)
+        self.st_sed_alpha = self._mk("sed_alpha", band_shape(f, 10.5, 1.8), ant, common=0.65)
+        self.st_sed_gamma = self._mk("sed_gamma", band_shape(f, 35.0, 7.0, order=1.0), near_uniform, common=0.25)
         spindle_hz = float((self.spec.get("style") or {}).get("spindle_hz", 13.0))
         self.st_spindle = self._mk("spindle", band_shape(f, spindle_hz, 0.65), cen, common=0.7)
         self.st_brush = self._mk("brush", band_shape(f, 13.0, 4.5, order=1.0), cen * 0.6 + temp * 0.5, common=0.35)
@@ -930,28 +932,77 @@ class Synthesizer:
         self._temp_t, self._temp_v = tt, tv
 
         # sedation -----------------------------------------------------
+        # These are authored, normalized effect profiles, not dose conversions.
+        # Adult evidence supports each named direction; neonatal support is
+        # limited to the separate midazolam attenuation profile.
+        def profile(agent: str, level: float) -> Dict[str, float]:
+            q = float(np.clip(level, 0.0, 1.0))
+            out = {"delta": 0.0, "alpha": 0.0, "beta": 0.0, "gamma": 0.0,
+                   "spindle": 0.0, "theta_scale": 1.0, "amp": 1.0,
+                   "emg_scale": 1.0 - 0.55*q}
+            if agent == "propofol":
+                out.update(delta=0.65*q, alpha=0.70*q, beta=0.12*q)
+            elif agent == "dexmedetomidine":
+                out.update(delta=0.50*q, spindle=0.80*q)
+            elif agent == "midazolam":
+                if self.age == "neonate":
+                    out.update(amp=1.0 - 0.35*q)
+                else:
+                    out.update(beta=0.75*q)
+            elif agent == "ketamine":
+                out.update(delta=0.45*q, gamma=0.55*q)
+            elif agent == "pentobarbital":
+                out.update(beta=0.30*q, delta=0.25*q)
+            elif agent == "remifentanil":
+                out.update(delta=0.55*q, theta_scale=1.0 - 0.45*q, alpha=-0.30*q)
+            return out
+
+        initial = spec.get("sedation") or {"agent": "midazolam", "level": 0.0}
+        initial_profile = profile(str(initial["agent"]), float(initial["level"]))
         sed_t: List[float] = [0.0]
         bs = self.bg["burst_suppression"]
         sed_sf: List[float] = [float(bs["ibi_s"]) / max(float(bs["ibi_s"]) + float(bs["burst_s"]), 1e-6)]
-        sed_beta: List[float] = [0.10 if self.age != "neonate" else 0.05]
-        sed_amp: List[float] = [1.0]
-        for ev in spec["events"]:
+        sed_beta: List[float] = [(0.10 if self.age != "neonate" else 0.05) + initial_profile["beta"]]
+        sed_amp: List[float] = [initial_profile["amp"]]
+        sed_delta: List[float] = [initial_profile["delta"]]
+        sed_alpha: List[float] = [initial_profile["alpha"]]
+        sed_gamma: List[float] = [initial_profile["gamma"]]
+        sed_spindle: List[float] = [initial_profile["spindle"]]
+        sed_theta: List[float] = [initial_profile["theta_scale"]]
+        sed_emg: List[float] = [initial_profile["emg_scale"]]
+        for ev in sorted(spec["events"], key=lambda x: float(x.get("at_min", 0.0))):
             if ev["type"] != "sedation_change":
                 continue
             t0 = float(ev["at_min"]) * 60.0
             ramp = max(float(ev["effect"]["ramp_min"]), 0.5) * 60.0
-            tgt_sr = float(ev["effect"]["suppression_ratio_target_pct"]) / 100.0
+            tgt_sr = float(ev["effect"].get("suppression_ratio_target_pct", sed_sf[-1] * 100.0)) / 100.0
             inc = ev["direction"] == "increase"
-            beta_tgt = (0.42 if inc else 0.06) if ev["effect"].get("beta_boost", True) else sed_beta[-1]
-            if ev["agent"] in ("pentobarbital", "propofol") and inc:
-                beta_tgt = min(beta_tgt, 0.30)   # deep barbiturate: beta gives way to suppression
-            amp_tgt = float(ev["effect"].get("amplitude_pct", 100.0)) / 100.0
+            if "level" in ev:
+                p = profile(str(ev["agent"]), float(ev["level"]))
+                beta_tgt = (0.10 if self.age != "neonate" else 0.05) + p["beta"]
+            else:
+                p = profile(str(ev["agent"]), 0.0)
+                beta_tgt = ((0.42 if inc else 0.06)
+                            if ev["effect"].get("beta_boost", True) else sed_beta[-1])
+                if ev["agent"] in ("pentobarbital", "propofol") and inc:
+                    beta_tgt = min(beta_tgt, 0.30)
+            amp_tgt = p["amp"] * float(ev["effect"].get("amplitude_pct", 100.0)) / 100.0
             sed_t += [t0, t0 + ramp]
             sed_sf += [sed_sf[-1], tgt_sr]
             sed_beta += [sed_beta[-1], beta_tgt]
             sed_amp += [sed_amp[-1], amp_tgt]
+            sed_delta += [sed_delta[-1], p["delta"]]
+            sed_alpha += [sed_alpha[-1], p["alpha"]]
+            sed_gamma += [sed_gamma[-1], p["gamma"]]
+            sed_spindle += [sed_spindle[-1], p["spindle"]]
+            sed_theta += [sed_theta[-1], p["theta_scale"]]
+            sed_emg += [sed_emg[-1], p["emg_scale"]]
         self._sed_t, self._sed_sf = sed_t, sed_sf
         self._sed_beta, self._sed_amp = sed_beta, sed_amp
+        self._sed_delta, self._sed_alpha = sed_delta, sed_alpha
+        self._sed_gamma, self._sed_spindle = sed_gamma, sed_spindle
+        self._sed_theta = sed_theta
+        self._sed_emg = sed_emg
 
         # attenuation transients ---------------------------------------
         self._atten = [
@@ -2527,6 +2578,8 @@ class Synthesizer:
             rng = substream(self.seed, "art", k)
             w = self._artifact_channels(ev)
             kind = ev["kind"]
+            if self.spec.get("neuromuscular_blockade") == "complete" and kind == "emg_chewing":
+                continue
             sig = self._artifact_waveform(kind, ev, t, i0, rng, gain)
             if sig is None:
                 continue
@@ -2627,7 +2680,7 @@ class Synthesizer:
             w = (np.sin(ph) + 0.45 * np.sin(2 * ph + 0.4) + 0.2 * np.sin(3 * ph + 1.1))
             amp = 34.0 if kind == "patting" else 55.0
             sig = w * amp * gain
-            if kind == "chest_pt":
+            if kind == "chest_pt" and self.spec.get("neuromuscular_blockade") != "complete":
                 sig = sig + self._oa(self.st_emg, i0 + 991, n, 1)[0] * 9.0 * gain
             return sig
 
@@ -2685,7 +2738,8 @@ class Synthesizer:
 
         if kind == "movement":
             slow = self._oa(self.st_delta, i0 + 7717, n, 1)[0] * 95.0 * gain
-            emg = self._oa(self.st_emg, i0 + 313, n, 1)[0] * 22.0 * gain
+            emg = (0.0 if self.spec.get("neuromuscular_blockade") == "complete"
+                   else self._oa(self.st_emg, i0 + 313, n, 1)[0] * 22.0 * gain)
             burst = 0.5 + 0.5 * np.sin(2 * np.pi * 0.28 * t + 1.0)
             return (slow + emg) * burst
 
@@ -2798,21 +2852,33 @@ class Synthesizer:
         beta_w = (_piecewise(self._sed_t, self._sed_beta, t)
                   if len(self._sed_t) > 1 else np.full(n, self._sed_beta[0]))
         amp_w = (_piecewise(self._sed_t, self._sed_amp, t)
-                 if len(self._sed_t) > 1 else np.ones(n))
+                 if len(self._sed_t) > 1 else np.full(n, self._sed_amp[0]))
+        def sed_value(values: List[float]) -> np.ndarray:
+            return (_piecewise(self._sed_t, values, t) if len(self._sed_t) > 1
+                    else np.full(n, values[0]))
+        sed_delta = sed_value(self._sed_delta)
+        sed_alpha = sed_value(self._sed_alpha)
+        sed_gamma = sed_value(self._sed_gamma)
+        sed_spindle = sed_value(self._sed_spindle)
+        sed_theta = sed_value(self._sed_theta)
+        sed_emg = sed_value(self._sed_emg)
 
         # --- background mixture -------------------------------------------
         x = self._stream_signal(self.st_broad, i0, n) * (0.80 + 0.20 * sleep)[None, :]
 
         pdr_w = (1.0 - 0.55 * sleep) * (1.0 - 0.55 * temp_slow)
+        pdr_w *= 1.0 + np.minimum(sed_alpha, 0.0)
         if self.age != "neonate":
             x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
-            x += self._stream_signal(self.st_theta, i0, n) * (0.30 + 0.25 * sleep)[None, :]
+            x += self._stream_signal(self.st_theta, i0, n) * ((0.30 + 0.25 * sleep) * sed_theta)[None, :]
         else:
-            x += self._stream_signal(self.st_theta, i0, n) * 0.22
+            x += self._stream_signal(self.st_theta, i0, n) * (0.22 * sed_theta)[None, :]
 
-        delta_w = 0.14 + 0.85 * self.slow_fraction + 0.45 * sleep + 0.70 * temp_slow
+        delta_w = 0.14 + 0.85 * self.slow_fraction + 0.45 * sleep + 0.70 * temp_slow + sed_delta
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
+        x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
+        x += self._stream_signal(self.st_sed_gamma, i0, n) * sed_gamma[None, :]
 
         # Continuous muscle floor.  Before this, ``st_emg`` existed but was
         # reachable only through an explicit artifact event, so a recording with
@@ -2837,7 +2903,8 @@ class Synthesizer:
         # 0.4.1 (Craig, P5 C08 "shouldn't have fast muscle"): an unreactive patient - sedated,
         # paralysed, post-anoxic - has no tonic muscle, inside bursts included.  Version 2 only.
         unreactive = self.spec_version >= 2 and self.bg.get("reactivity") == "absent"
-        emg_w = ((0.0 if unreactive else EMG_FLOOR_W) * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
+        blocked = self.spec.get("neuromuscular_blockade") == "complete"
+        emg_w = ((0.0 if unreactive or blocked else EMG_FLOOR_W) * sed_emg * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
                  * (1.0 + self.ictal_gate(t))
                  * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
                  * dec
@@ -2851,7 +2918,7 @@ class Synthesizer:
             train_s = (self.spec.get("style") or {}).get("spindle_train_s")
             if train_s is not None:
                 spindle_gate *= np.mod(t - 300.0, 1800.0) < float(train_s)
-            x += self._stream_signal(self.st_spindle, i0, n) * (1.5 * sleep * spindle_gate)[None, :]
+            x += self._stream_signal(self.st_spindle, i0, n) * ((1.5 * sleep + sed_spindle) * spindle_gate)[None, :]
         if self.bg.get("delta_brushes") and self.age == "neonate":
             brush_gate = np.clip(self._oa(self.st_delta, i0 + 4242, n, 1)[0], 0, None)
             # Normalise by a fixed reference window, not this request's own std:

@@ -1,0 +1,2 @@
+family,contract_id,probes,requested,normalized,measured,verdict,evidence,note
+PQW-109,SEDATION-PROFILES,S109-01;S109-02;S109-03;S109-04;S109-05;S109-06;S109-07;S109-08;S109-09,agent-specific authored spectra and complete-blockade EMG removal,sedation level 0-1 / complete NMB,candidate metrics in candidates.json,pending_clinical_review,S23-S30,Craig candidate read required
