@@ -27,6 +27,8 @@ import {
 // ── answer key ─────────────────────────────────────────────────────────────
 
 export interface KeyEvent {
+  /** Stable within one rendered manifest; overrides target this rather than sorted position. */
+  id: string;
   kind: string;
   onsetS: number;
   offsetS: number;
@@ -39,9 +41,9 @@ export interface KeyEvent {
 export function parseAnswerKey(manifest: unknown): KeyEvent[] {
   const m = (typeof manifest === "object" && manifest !== null ? manifest : {}) as { events?: unknown[] };
   return (Array.isArray(m.events) ? m.events : [])
-    .map((e) => e as Record<string, unknown>)
-    .filter((e) => typeof e.onset_s === "number")
-    .map((e) => {
+    .map((e, originalIndex) => ({ event: e as Record<string, unknown>, originalIndex }))
+    .filter(({ event }) => typeof event.onset_s === "number")
+    .map(({ event: e, originalIndex }) => {
       const onsetS = e.onset_s as number;
       const offsetS = typeof e.offset_s === "number" ? Math.max(onsetS, e.offset_s) : onsetS;
       const region = isAnnotationRegion(e.onset_region) ? e.onset_region : null;
@@ -49,7 +51,7 @@ export function parseAnswerKey(manifest: unknown): KeyEvent[] {
         ? e.channels.map(normaliseChannelLabel).filter((c): c is string => c !== null)
         : [];
       const kind = typeof e.kind === "string" ? e.kind : "event";
-      return { kind, onsetS, offsetS, region, channels, label: [kind, e.onset_region ?? e.artifact_kind ?? ""].filter(Boolean).join(" ") };
+      return { id: `original:${originalIndex}`, kind, onsetS, offsetS, region, channels, label: [kind, e.onset_region ?? e.artifact_kind ?? ""].filter(Boolean).join(" ") };
     })
     .sort((a, b) => a.onsetS - b.onsetS);
 }
@@ -100,7 +102,7 @@ export const SEIZURE_TASK: MarkTask = {
   title: "Mark every electrographic seizure (onset to offset)",
   type: "span",
   learnerKinds: ["seizure", "seizure_onset"],
-  keyKinds: ["seizure", "seizure_cluster", "spasm", "spasm_cluster", "tonic_seizure"],
+  keyKinds: ["seizure", "seizure_onset", "seizure_cluster", "spasm", "spasm_cluster", "tonic_seizure"],
   toleranceS: 10,
 };
 

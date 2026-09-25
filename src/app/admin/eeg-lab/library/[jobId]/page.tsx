@@ -22,6 +22,7 @@ import {
   type LabArtifact, type LabJob, type LabReview,
 } from "@/lib/lab/types";
 import { humanDuration, labelize, type LibraryQuestion, type LibrarySummary } from "@/lib/lab/library";
+import AnswerKeyEditor from "@/components/lab/AnswerKeyEditor";
 
 const REVIEW_STATUS_COLOR: Record<string, string> = {
   published: "var(--accent-tertiary)",
@@ -332,6 +333,8 @@ export default function RecordingPage() {
             <Link href={`/admin/eeg-lab/library/${job.id}/results`} style={mini}>Class results</Link>
           </div>
         </section>
+
+        {hasAnswers && <AnswerKeyEditor jobId={job.id} durationS={job.durationS} />}
 
         {/* ── title and description ──────────────────────────────────── */}
         {can.edit && (

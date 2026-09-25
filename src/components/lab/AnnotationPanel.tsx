@@ -18,7 +18,7 @@ export interface Draft extends AnnotationTarget {
 
 export default function AnnotationPanel({
   annotations, draft, storeLabel, busy, trendRows, channelOptions, authorFilter, onAuthorFilter,
-  onDraftChange, onSave, onCancel, onDelete, onJump, onExport,
+  onDraftChange, onSave, onCancel, onDelete, onJump, onExport, onPromote,
 }: {
   annotations: ViewerAnnotation[];
   draft: Draft | null;
@@ -37,6 +37,8 @@ export default function AnnotationPanel({
   onDelete: (id: string) => void;
   onJump: (a: ViewerAnnotation) => void;
   onExport: () => void;
+  /** Editors may promote one of their own graded marks into the merged answer key. */
+  onPromote?: (mark: ViewerAnnotation) => void;
 }) {
   const filter = authorFilter;
   // 40+ channel chips would push Region, Label and the Save button below the fold
@@ -219,6 +221,11 @@ export default function AnnotationPanel({
                   id: a.id, onsetS: a.onsetS, durationS: a.durationS, kind: a.kind, label: a.label, note: a.note,
                   pane: a.pane, trendRow: a.trendRow, channels: a.channels, region: a.region, viewSpanS: a.viewSpanS,
                 })}>edit</button>
+                {onPromote && ["seizure", "seizure_onset", "discharge"].includes(a.kind) && (
+                  <button type="button" style={{ ...mini, color: "var(--accent-primary)" }} onClick={() => onPromote(a)}>
+                    promote to key
+                  </button>
+                )}
                 <button type="button" style={{ ...mini, color: "var(--accent-secondary)" }} onClick={() => onDelete(a.id)}>delete</button>
               </div>
             )}
