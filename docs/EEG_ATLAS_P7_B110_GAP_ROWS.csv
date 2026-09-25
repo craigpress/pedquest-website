@@ -1,0 +1,2 @@
+family,contract_id,probes,requested,normalized,measured,verdict,evidence,note
+PQW-110,VARIANT-ARTIFACT-CONTROLS,A110-01;A110-02;A110-03;A110-04;A110-05;A110-06;A110-07;A110-08;A110-09;A110-10;A110-11;A110-12;V110-01;V110-02;V110-03;V110-04;V110-05;V110-06;V110-07;V110-08;V110-09;V110-10,every requested explicit control plus gating/blocking contrasts,events normalize to authored rules,candidate metrics and key rows in candidates.json,pending_clinical_review,S06;S31-S37,Craig candidate read required

@@ -647,8 +647,10 @@ class Synthesizer:
         self._build_multifocal_spikes()
         self._build_sporadic()
         self._build_variants()
+        self._build_authored_variants()
         self._collect_seizures()
-        self.artifacts = [e for e in spec["events"] if e["type"] == "artifact"]
+        self.artifacts = [e for e in spec["events"]
+                          if e["type"] == "artifact" and self._artifact_eligible(e)]
         self.stimulations = [e for e in spec["events"] if e["type"] == "stimulation"]
         # 0.4.0 ``amplitude_reference: display``: last, once everything a segment needs exists
         self.display_scale = 1.0
@@ -866,6 +868,8 @@ class Synthesizer:
         st_times: List[float] = [0.0]
         st_sleep: List[float] = [0.0 if self.age != "neonate" else 0.35]
         st_arousal: List[Tuple[float, float]] = []
+        rem_starts: List[float] = []
+        rem_intervals: List[Tuple[float, float]] = []
         for ev in spec["events"]:
             if ev["type"] != "state_change":
                 continue
@@ -873,9 +877,18 @@ class Synthesizer:
             if ev["to"] == "arousal":
                 st_arousal.append((t, 30.0))
                 continue
-            target = 1.0 if ev["to"] == "sleep" else 0.0
+            if ev["to"] == "rem":
+                rem_starts.append(t)
+                target = 1.0
+            else:
+                for start in rem_starts:
+                    rem_intervals.append((start, t))
+                rem_starts = []
+                target = 1.0 if ev["to"] == "sleep" else 0.0
             st_times += [max(0.0, t - 30.0), t + 90.0]
             st_sleep += [st_sleep[-1], target]
+        rem_intervals.extend((start, dur) for start in rem_starts)
+        self._rem_intervals = rem_intervals
         order = np.argsort(st_times)
         self._state_t = list(np.asarray(st_times)[order])
         self._state_v = list(np.asarray(st_sleep)[order])
@@ -2039,6 +2052,119 @@ class Synthesizer:
             rows += np.outer(field, wave)
         return rows
 
+    _AUTHORED_FIELDS = {
+        "mu": {"C3": 1.0, "C4": 1.0, "Cz": 0.8, "F3": 0.25, "F4": 0.25, "P3": 0.35, "P4": 0.35},
+        "lambda": {"O1": 1.0, "O2": 1.0, "P3": 0.35, "P4": 0.35},
+        "wicket": {"T3": 1.0, "T4": 1.0, "F7": 0.35, "F8": 0.35, "T5": 0.45, "T6": 0.45},
+        "fourteen_and_six": {"T5": 1.0, "T6": 1.0, "O1": 0.45, "O2": 0.45, "P3": 0.35, "P4": 0.35},
+        "rmtd": {"T3": 1.0, "T4": 1.0, "T5": 0.65, "T6": 0.65},
+        "sreda": {"T5": 1.0, "T6": 1.0, "P3": 0.75, "P4": 0.75, "T3": 0.5, "T4": 0.5},
+        "frontal_arousal_rhythm": {"Fp1": 0.8, "Fp2": 0.8, "F3": 1.0, "F4": 1.0, "Fz": 1.0, "C3": 0.35, "C4": 0.35},
+        "photic_driving": {"O1": 1.0, "O2": 1.0, "P3": 0.5, "P4": 0.5, "Pz": 0.4},
+        "hyperventilation_buildup": {"Fp1": 0.8, "Fp2": 0.8, "F3": 1.0, "F4": 1.0, "C3": 0.85, "C4": 0.85,
+                                      "P3": 0.65, "P4": 0.65, "O1": 0.45, "O2": 0.45},
+    }
+
+    def _authored_variant_eligible(self, ev: Dict) -> bool:
+        """Authored teaching policy plus state checks over the emitted interval."""
+        kind = str(ev["kind"])
+        if kind == "sreda" and self.age != "adult":
+            return False
+        if kind == "lambda" and self.age not in ("child", "adolescent"):
+            return False
+        if kind == "frontal_arousal_rhythm" and self.age not in ("infant", "child"):
+            return False
+        start = float(ev["at_min"]) * 60.0
+        end = start + float(ev["duration_s"])
+        probes = np.linspace(start, end, max(3, int(np.ceil(end - start)) + 1))
+        sleep = self._sleep_at(probes)
+        context = ev["context"]
+        required_context = {
+            "mu": "movement", "lambda": "visual_scanning", "wicket": "drowsy",
+            "fourteen_and_six": "light_sleep", "rmtd": "drowsy",
+            "sreda": "adult_teaching", "frontal_arousal_rhythm": "arousal",
+            "photic_driving": "photic", "hyperventilation_buildup": "hyperventilation",
+        }[kind]
+        if context != required_context:
+            return False
+        if context in ("awake", "movement", "visual_scanning", "photic", "hyperventilation"):
+            return bool(np.all(sleep < 0.2))
+        if context == "drowsy":
+            return bool(np.all((sleep > 0.15) & (sleep < 0.75)))
+        if context == "light_sleep":
+            return bool(np.all(sleep > 0.55))
+        if context == "arousal":
+            return any(at <= start and end <= at + width for at, width in self._arousals)
+        return True
+
+    def _build_authored_variants(self) -> None:
+        self._authored_variants = []
+        for index, ev in enumerate(self.spec["events"]):
+            if ev["type"] != "normal_variant" or not self._authored_variant_eligible(ev):
+                continue
+            a = float(ev["at_min"]) * 60.0
+            b = a + float(ev["duration_s"])
+            blocks = []
+            if ev["kind"] == "mu" and ev.get("block_at_min") is not None:
+                ba = float(ev["block_at_min"]) * 60.0
+                blocks = [(ba, ba + float(ev.get("block_duration_s", 1.0)))]
+            self._authored_variants.append({"t0": a, "t1": b, "variant": ev["kind"],
+                "frequency_hz": float(ev["frequency_hz"]), "amplitude_uv": float(ev["amplitude_uv"]),
+                "side": ev.get("side", "both"), "context": ev["context"], "blocks": blocks,
+                "spec_event_index": index})
+
+    def authored_variant_runs(self) -> List[Dict]:
+        out = []
+        for run in self._authored_variants:
+            intervals = [(run["t0"], run["t1"])]
+            for ba, bb in run["blocks"]:
+                intervals = [(a, min(b, ba)) for a, b in intervals if a < ba] + \
+                            [(max(a, bb), b) for a, b in intervals if b > bb]
+            for a, b in intervals:
+                if b > a:
+                    out.append({**run, "t0": a, "t1": b})
+        return out
+
+    def _authored_variant_rows(self, t: np.ndarray) -> np.ndarray:
+        rows = np.zeros((self.n_elec, t.size))
+        for run in self.authored_variant_runs():
+            a, b, kind = run["t0"], run["t1"], run["variant"]
+            if b < t[0] or a > t[-1]:
+                continue
+            d = t - a
+            live = (t >= a) & (t < b)
+            dur = max(b - a, 1e-6)
+            edge = np.sin(np.pi * np.clip(d / dur, 0.0, 1.0)) ** 0.4 * live
+            f, amp = run["frequency_hz"], run["amplitude_uv"]
+            phase = 2 * np.pi * f * d
+            if kind == "mu":
+                # Arciform central rhythm: rounded positive arches with a
+                # smaller return phase rather than a featureless sine.
+                s = np.sin(phase)
+                wave = (np.maximum(s, 0.0) ** 1.6 + 0.35 * np.minimum(s, 0.0)) * edge * amp
+            elif kind == "lambda":
+                wave = np.maximum(np.sin(phase), 0.0) ** 4 * edge * amp
+            elif kind == "wicket":
+                wave = np.maximum(np.sin(phase), 0.0) ** 1.5 * edge * amp
+            elif kind == "fourteen_and_six":
+                # A selected 14- or 6-Hz positive burst, not simultaneous
+                # superposed frequencies.
+                burst = (np.sin(2 * np.pi * 0.65 * d) > -0.15).astype(float)
+                wave = np.maximum(np.sin(phase), 0.0) ** 2 * burst * edge * amp
+            elif kind == "hyperventilation_buildup":
+                ramp = np.sin(np.pi * np.clip(d / dur, 0.0, 1.0))
+                wave = np.sin(phase) * ramp * amp
+            else:
+                wave = np.sin(phase) * edge * amp
+            field_map = self._AUTHORED_FIELDS[kind]
+            field = np.array([field_map.get(e, 0.0) for e in self.electrodes])
+            if run["side"] in ("left", "right"):
+                want = -1 if run["side"] == "left" else 1
+                field *= np.array([1.0 if np.sign(mt.POSITIONS.get(e, (0.0, 0.0))[0]) == want else 0.12
+                                   for e in self.electrodes])
+            rows += np.outer(field, wave)
+        return rows
+
     def _seizure_block(self, t: np.ndarray) -> np.ndarray:
         """Sum of every ictal run overlapping ``t``; shape (n_elec, len(t))."""
         out = np.zeros((self.n_elec, t.size))
@@ -2559,6 +2685,24 @@ class Synthesizer:
         a0 = float(ev["at_min"]) * 60.0
         return a0, a0 + float(ev["duration_s"])
 
+    def _artifact_eligible(self, ev: Dict) -> bool:
+        """Eligibility for newly authored state-specific artifact controls."""
+        kind = ev.get("kind")
+        if kind not in {"lateral_eye", "slow_roving_eye", "rem_eye_movements", "glossokinetic"}:
+            return True
+        required = {"lateral_eye": "awake", "slow_roving_eye": "drowsy",
+                    "rem_eye_movements": "rem", "glossokinetic": "awake"}[kind]
+        if ev.get("context") != required:
+            return False
+        start, end = self._event_window(ev)
+        probes = np.linspace(start, end, max(3, int(np.ceil(end - start)) + 1))
+        sleep = self._sleep_at(probes)
+        if required == "awake":
+            return bool(np.all(sleep < 0.2))
+        if required == "drowsy":
+            return bool(np.all((sleep > 0.15) & (sleep < 0.75)))
+        return any(a <= start and end <= b for a, b in self._rem_intervals)
+
     def _artifact_block(self, t: np.ndarray, i0: int) -> np.ndarray:
         out = np.zeros((self.n_elec, t.size))
         n = t.size
@@ -2686,7 +2830,7 @@ class Synthesizer:
             return sig
 
         if kind == "ventilator":
-            f0 = 0.35
+            f0 = float(ev.get("frequency_hz", 0.35))
             ph = 2 * np.pi * f0 * t
             w = np.sin(ph) + 0.30 * np.sin(2 * ph + 1.6) + 0.12 * np.sin(4 * ph)
             return w * 30.0 * gain
@@ -2705,8 +2849,8 @@ class Synthesizer:
         if kind == "electrode_pop":
             target = (ev.get("channels") or ["T5"])[0]
             rows = np.zeros((self.n_elec, n))
-            rate = 0.8
-            tau = 0.09
+            rate = float(ev.get("rate_per_h", 2880.0)) / 3600.0
+            tau = float(ev.get("decay_s", 0.09))
             # Draw over the EVENT's window, not the request's, so a given pop
             # keeps its time and amplitude however the recording is chunked.
             a0, a1 = self._event_window(ev)
@@ -2737,6 +2881,43 @@ class Synthesizer:
         if kind == "ecg":
             return self._ecg(t, amplitude=22.0 * gain)
 
+        if kind == "pulse":
+            f0 = float(ev.get("frequency_hz", 1.2))
+            phase = np.mod(t * f0, 1.0)
+            pulse = (np.exp(-0.5 * ((phase - 0.18) / 0.035) ** 2)
+                     - 0.35 * np.exp(-0.5 * ((phase - 0.26) / 0.06) ** 2)) * 38.0 * gain
+            return pulse
+
+        if kind in ("lateral_eye", "slow_roving_eye", "rem_eye_movements"):
+            if kind == "slow_roving_eye":
+                prof = np.sin(2 * np.pi * float(ev.get("frequency_hz", 0.25)) * t) * 90.0 * gain
+            else:
+                a0, a1 = self._event_window(ev)
+                rate = float(ev.get("rate_per_h", 360.0 if kind == "lateral_eye" else 900.0)) / 3600.0
+                count = max(1, int((a1 - a0) * rate))
+                centers = rng.uniform(a0, a1, count)
+                prof = np.zeros(n)
+                for center in centers[(centers > t[0] - 0.4) & (centers < t[-1] + 0.4)]:
+                    d = t - center
+                    prof += np.exp(-0.5 * (d / (0.10 if kind == "lateral_eye" else 0.07)) ** 2)
+                prof *= 110.0 * gain
+            rows = np.zeros((self.n_elec, n))
+            left = {"Fp1": 1.0, "F7": 0.45, "F3": 0.35, "T3": 0.12}
+            right = {"Fp2": -1.0, "F8": -0.45, "F4": -0.35, "T4": -0.12}
+            for i, electrode in enumerate(self.electrodes):
+                rows[i] = prof * (left.get(electrode, 0.0) + right.get(electrode, 0.0))
+            return rows
+
+        if kind == "glossokinetic":
+            f0 = float(ev.get("frequency_hz", 0.7))
+            slow = (np.sin(2 * np.pi * f0 * t) + 0.25 * np.sin(4 * np.pi * f0 * t + 0.6)) * 45.0 * gain
+            rows = np.zeros((self.n_elec, n))
+            field = {"Fp1": 0.7, "Fp2": -0.7, "F7": 1.0, "F8": -1.0,
+                     "T3": 0.65, "T4": -0.65, "F3": 0.35, "F4": -0.35}
+            for i, electrode in enumerate(self.electrodes):
+                rows[i] = slow * field.get(electrode, 0.0)
+            return rows
+
         if kind == "movement":
             slow = self._oa(self.st_delta, i0 + 7717, n, 1)[0] * 95.0 * gain
             emg = (0.0 if self.spec.get("neuromuscular_blockade") == "complete"
@@ -2751,7 +2932,7 @@ class Synthesizer:
 
         if kind == "eye_blink":
             rows = np.zeros((self.n_elec, n))
-            rate = 0.30
+            rate = float(ev.get("rate_per_h", 1080.0)) / 3600.0
             a0, a1 = self._event_window(ev)
             k = max(1, int(rate * (a1 - a0)))
             times = np.sort(rng.uniform(a0, a1, k))
@@ -3040,10 +3221,12 @@ class Synthesizer:
         x += self._multifocal_spike_rows(t) * (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]
         # P7 batch 5: sporadic interictal discharges and pediatric normal variants; both ride the
         # burst gate and any decrement like the multifocal spikes, in absolute microvolts
-        if getattr(self, "_sed", None) is not None or getattr(self, "_variants", None):
+        if (getattr(self, "_sed", None) is not None or getattr(self, "_variants", None)
+                or getattr(self, "_authored_variants", None)):
             gate_bv = (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]
             x += self._sed_rows(t) * gate_bv
             x += self._variant_rows(t) * gate_bv
+            x += self._authored_variant_rows(t) * gate_bv
 
         # --- always-present ECG contamination + artifacts ------------------
         sensor_rms_uv = SENSOR_RMS_UV

@@ -189,6 +189,19 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
         rows.append(_row("normal_variant", vr["t0"], vr["t1"], fs, duration_s,
                          variant=vr["variant"], frequency_hz=round(vr["frequency_hz"], 2),
                          amplitude_uv=round(vr["amplitude_uv"], 1), count=vr["count"], normal_variant=True))
+    for vr in (synth.authored_variant_runs() if hasattr(synth, "authored_variant_runs") else []):
+        kind = vr["variant"]
+        row_kind = ("activation_response" if kind in ("photic_driving", "hyperventilation_buildup")
+                    else "arousal_pattern_pending_review" if kind == "frontal_arousal_rhythm"
+                    else "normal_variant")
+        rows.append(_row(row_kind, vr["t0"], vr["t1"], fs, duration_s,
+                         variant=kind, frequency_hz=round(vr["frequency_hz"], 2),
+                         amplitude_uv=round(vr["amplitude_uv"], 1), context=vr["context"],
+                         teaching_policy=("adult_default" if kind == "sreda" else
+                                          "infant_child_authored_arousal" if kind == "frontal_arousal_rhythm" else
+                                          "source_context"),
+                         clinical_classification=("pending_craig_review" if kind == "frontal_arousal_rhythm" else None),
+                         spec_event_index=vr["spec_event_index"]))
 
     for ev in getattr(synth, "artifacts", []):
         if (synth.spec.get("neuromuscular_blockade") == "complete"
@@ -204,6 +217,10 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             intensity=ev.get("intensity"),
             side=ev.get("side"),
             channels=list(ev.get("channels") or []),
+            context=ev.get("context"),
+            frequency_hz=ev.get("frequency_hz"),
+            staging_claim=("eye_movements_only_not_full_psg_stage"
+                           if ev.get("kind") == "rem_eye_movements" else None),
         ))
 
     for at, dur, side, depth, ramp, delta_depth in getattr(synth, "_atten", []):

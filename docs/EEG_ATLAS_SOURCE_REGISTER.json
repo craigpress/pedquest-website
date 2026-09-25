@@ -1,6 +1,6 @@
 {
  "schema_version": "1.0",
- "register_version": "2026-09-25.pqw109",
+ "register_version": "2026-09-25.pqw110",
  "phase": "P1",
  "asset_root": "C:\\Users\\craig\\claude\\PedQuest_website\\research\\eeg-atlas\\sources",
  "raw_eeg_downloads": 0,
@@ -1467,6 +1467,27 @@
   },
   {
    "id": "S30", "title": "Scalp electrical recording during paralysis: quantitative evidence that EEG frequencies above 20 Hz are contaminated by EMG", "url": "https://pubmed.ncbi.nlm.nih.gov/17574912/", "doi": "10.1016/j.clinph.2007.04.027", "format": "html", "population": "two subjects with and without neuromuscular blockade", "role": "modeled EMG removal under complete blockade", "planned_use": "remove generated muscle while preserving neural and device signals", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Does not establish a partial-blockade scale"]
+  },
+  {
+   "id": "S31", "title": "EEG normal variants: A prospective study using the SCORE system", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9294211/", "doi": "10.1016/j.cnp.2022.06.001", "format": "html", "population": "prospective clinical EEG cohort", "role": "normal-variant morphology and context", "planned_use": "wickets, 14-and-6, RMTD and SREDA authored controls", "status": "remote_reference", "license_scope": "CC BY-NC-ND reference; figures not copied", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Population distributions are not hard biological age exclusions"]
+  },
+  {
+   "id": "S32", "title": "Ocular artifacts in EEG and event-related potentials. I: Scalp topography", "url": "https://pubmed.ncbi.nlm.nih.gov/8260327/", "doi": "10.1007/BF01234127", "format": "html", "population": "human ocular-artifact recordings", "role": "ocular dipole topography", "planned_use": "opposed frontal field for lateral eye controls", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": []
+  },
+  {
+   "id": "S33", "title": "The Rolandic mu rhythm: a clinical study of the atypical group", "url": "https://pubmed.ncbi.nlm.nih.gov/1733617/", "doi": "10.1177/155005949202300105", "format": "html", "population": "clinical EEG cohort, n=241", "role": "mu field and blocking", "planned_use": "central 7-13 Hz authored mu with explicit movement block", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": []
+  },
+  {
+   "id": "S34", "title": "The Normal EEG", "url": "https://www.ncbi.nlm.nih.gov/books/NBK390343/", "doi": null, "format": "html", "population": "educational chapter, lifespan", "role": "sleep/ocular/activation context", "planned_use": "slow roving eyes, REM eye context and photic driving", "status": "remote_reference", "license_scope": "educational reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Exact simulation parameters remain authored choices"]
+  },
+  {
+   "id": "S35", "title": "Appendix 4. Common Artifacts During EEG Recording", "url": "https://www.ncbi.nlm.nih.gov/books/NBK390358/", "doi": null, "format": "html", "population": "educational artifact atlas", "role": "artifact-family distinctions", "planned_use": "ECG versus pulse, EMG versus glossokinetic and existing artifact controls", "status": "remote_reference", "license_scope": "educational reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Direct page was browser-gated during preparation"]
+  },
+  {
+   "id": "S36", "title": "The frontal arousal rhythm", "url": "https://pubmed.ncbi.nlm.nih.gov/9891187/", "doi": "10.1177/155005949903000108", "format": "html", "population": "50 reported cases; seizure history common", "role": "FAR classification caution", "planned_use": "prevent universal benign classification", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Clinical classification remains pending Craig"]
+  },
+  {
+   "id": "S37", "title": "The frontal arousal rhythm (FAR) is an ictal pattern: a case report", "url": "https://pubmed.ncbi.nlm.nih.gov/12515446/", "doi": "10.1177/155005940303400106", "format": "html", "population": "case report", "role": "FAR classification caution", "planned_use": "explicit pending-review key classification", "status": "remote_reference", "license_scope": "reference only", "review_state": "implementation_source_not_clinically_adjudicated", "unresolved": ["Single case does not settle all authored arousal patterns"]
   }
  ],
  "validation": {

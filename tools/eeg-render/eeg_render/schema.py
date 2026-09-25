@@ -27,6 +27,11 @@ SPREAD = ["none", "hemispheric", "generalized", "contralateral"]
 ARTIFACTS = [
     "emg_chewing", "patting", "chest_pt", "ventilator", "ecmo_pump",
     "electrode_pop", "sixty_hz", "ecg", "movement", "sweat", "eye_blink",
+    "lateral_eye", "slow_roving_eye", "rem_eye_movements", "pulse", "glossokinetic",
+]
+AUTHORED_VARIANTS = [
+    "mu", "lambda", "wicket", "fourteen_and_six", "rmtd", "sreda",
+    "frontal_arousal_rhythm", "photic_driving", "hyperventilation_buildup",
 ]
 AGENTS = ["propofol", "midazolam", "pentobarbital", "dexmedetomidine", "ketamine", "remifentanil"]
 #: panel names from IMAGE_SPEC.md ...
@@ -110,6 +115,7 @@ _EVENT = {
                 "seizure", "seizure_cluster", "status_epilepticus",
                 "sedation_change", "attenuation_transient", "temperature_change",
                 "stimulation", "artifact", "state_change", "rhythmic_pattern",
+                "normal_variant",
                 # epileptic spasm: high-voltage generalized slow wave, brief EMG,
                 # then a diffuse electrodecrement with low-voltage fast activity
                 "spasm", "spasm_cluster",
@@ -213,14 +219,22 @@ _EVENT = {
         "to_c": _num,
         "over_min": {"type": "number", "minimum": 0},
         # artifact
-        "kind": {"enum": ARTIFACTS},
+        "kind": {"enum": ARTIFACTS + AUTHORED_VARIANTS},
         "duration_s": _pos,
         "channels": {"type": "array", "items": {"type": "string"}},
         "intensity": {"enum": ["low", "medium", "high"]},
         # artifact waveform model: 1 = 0.3.x, 2 = 0.4.0 (patting in bouts, atlas-style chewing)
         "model": {"type": "integer", "minimum": 1, "maximum": 2},
+        # Explicit teaching-context controls. Eligibility is an authored policy,
+        # not a biological assertion; override must be deliberate and is keyed.
+        "context": {"enum": ["awake", "movement", "visual_scanning", "drowsy", "light_sleep",
+                               "adult_teaching", "arousal", "photic", "hyperventilation", "rem"]},
+        "block_at_min": _num,
+        "block_duration_s": _pos,
+        "stimulus_frequency_hz": {"type": "number", "minimum": 1, "maximum": 30},
+        "decay_s": {"type": "number", "minimum": 0.01, "maximum": 5},
         # state change
-        "to": {"enum": ["sleep", "wake", "arousal"]},
+        "to": {"enum": ["sleep", "wake", "arousal", "rem"]},
     },
     "additionalProperties": False,
 }

@@ -13,7 +13,7 @@ import jsonschema
 import yaml
 
 from . import RENDERER_VERSION
-from .schema import HONOURED_STYLE_KEYS, IMAGE_SCHEMA, spec_schema_for
+from .schema import ARTIFACTS, AUTHORED_VARIANTS, HONOURED_STYLE_KEYS, IMAGE_SCHEMA, spec_schema_for
 
 DEFAULT_PANELS: List[str] = [
     "seizure_probability",
@@ -613,6 +613,17 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
 
     # ---- events ------------------------------------------------------
     s["events"] = [_normalize_event(e, version) for e in (s.get("events") or [])]
+    if s.get("neuromuscular_blockade") == "complete":
+        # Existing chewing/movement events retain PQW-109's contract: blockade
+        # removes their modeled EMG while preserving non-muscle components.
+        # New explicitly authored ocular/tongue motion is contradictory.
+        active_motion = {"glossokinetic", "lateral_eye", "slow_roving_eye",
+                         "rem_eye_movements"}
+        conflicts = [e.get("kind") for e in s["events"]
+                     if e.get("type") == "artifact" and e.get("kind") in active_motion]
+        if conflicts:
+            raise SpecError("complete neuromuscular_blockade conflicts with active movement artifacts: "
+                            + ", ".join(str(x) for x in conflicts))
     sed_events = sorted((e for e in s["events"] if e["type"] == "sedation_change"),
                         key=lambda e: float(e["at_min"]))
     # New normalized-level timelines are ordered and must not overlap after
@@ -846,6 +857,18 @@ VARIANT_DEFAULTS = {
     "posterior_slow_waves_of_youth": {"amplitude_uv": 0.0, "rate_per_min": 6.0},   # 0 = 1.3 x background
 }
 
+AUTHORED_VARIANT_DEFAULTS = {
+    "mu": {"frequency_hz": 10.0, "amplitude_uv": 35.0, "context": "movement"},
+    "lambda": {"frequency_hz": 4.0, "amplitude_uv": 55.0, "context": "visual_scanning"},
+    "wicket": {"frequency_hz": 8.0, "amplitude_uv": 70.0, "context": "drowsy"},
+    "fourteen_and_six": {"frequency_hz": 14.0, "amplitude_uv": 45.0, "context": "light_sleep"},
+    "rmtd": {"frequency_hz": 5.5, "amplitude_uv": 55.0, "context": "drowsy"},
+    "sreda": {"frequency_hz": 6.0, "amplitude_uv": 55.0, "context": "adult_teaching"},
+    "frontal_arousal_rhythm": {"frequency_hz": 6.5, "amplitude_uv": 65.0, "context": "arousal"},
+    "photic_driving": {"frequency_hz": 12.0, "amplitude_uv": 45.0, "context": "photic"},
+    "hyperventilation_buildup": {"frequency_hz": 3.0, "amplitude_uv": 140.0, "context": "hyperventilation"},
+}
+
 
 def _normalize_variants(bg: Dict[str, Any]) -> None:
     """Fill each authored variant with its defaults; an absent key stays absent (bank hashes)."""
@@ -865,9 +888,24 @@ def _normalize_variants(bg: Dict[str, Any]) -> None:
 def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
     e = dict(ev)
     kind = e["type"]
+    if kind == "normal_variant" and e.get("kind") not in AUTHORED_VARIANTS:
+        raise SpecError("normal_variant kind must be an authored normal variant")
+    if kind == "artifact" and e.get("kind") not in ARTIFACTS:
+        raise SpecError("artifact kind must be an artifact waveform")
     if kind == "sporadic_discharges":
         for k, v in SPORADIC_DEFAULTS.items():
             e.setdefault(k, v)
+        return e
+    if kind == "normal_variant":
+        defaults = AUTHORED_VARIANT_DEFAULTS[e["kind"]]
+        e.setdefault("at_min", 0.0)
+        e.setdefault("duration_s", 10.0)
+        e.setdefault("side", "both")
+        for key, value in defaults.items():
+            e.setdefault(key, value)
+        if e["kind"] == "photic_driving":
+            e.setdefault("stimulus_frequency_hz", e["frequency_hz"])
+            e["frequency_hz"] = float(e["stimulus_frequency_hz"])
         return e
     if kind in ("seizure", "seizure_cluster", "status_epilepticus"):
         if version >= 2 and kind == "seizure":
