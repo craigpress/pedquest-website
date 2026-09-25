@@ -21,6 +21,7 @@ import { LayReader } from "../../../src/lib/eeg/lay";
 import type { Recording } from "../../../src/lib/eeg/recording";
 import { createTrendEngine, TREND_ENGINE_VERSION, SR_THRESHOLD_UV, SR_EPOCH_S, SR_WINDOW_S } from "../../../src/lib/eeg/trends";
 import { encodeTrends, readTrendSidecarHeader, TREND_SIDECAR_EXT } from "../../../src/lib/eeg/trend-sidecar";
+import { qaWindows } from "./qa-windows";
 
 const BLOCK_S = 60;
 
@@ -86,16 +87,15 @@ async function computeSidecar(recording: string, out: string): Promise<{ path: s
     writeFileSync(out, Buffer.from(buf));
     // These samples come from the exported recording, never a second synthesis.
     const windows = [];
-    for (const fraction of [0, 0.5, 0.9]) {
-      const start = Math.max(0, Math.min(reader.durationS - 15, reader.durationS * fraction));
+    for (const { start, reason } of qaWindows(engine.trends, reader.durationS)) {
       const win = await reader.readWindow(start, Math.min(reader.durationS, start + 15));
-      windows.push({ t0: win.t0, data: win.data.map((channel) => Array.from(channel)) });
+      windows.push({ t0: win.t0, reason, data: win.data.map((channel) => Array.from(channel)) });
     }
     const qaPath = out + ".qa.json";
     writeFileSync(qaPath, JSON.stringify({ sampleRate: reader.sampleRate, labels: reader.labels,
       suppressionRule: { peakToPeakUv: 2 * SR_THRESHOLD_UV, epochS: SR_EPOCH_S, windowS: SR_WINDOW_S },
       durationS: reader.durationS, windows, trendSidecar: out, engineVersion: TREND_ENGINE_VERSION,
-      coverage: "Three 15-second windows at start, midpoint and near end; full-record calculated trends. Events outside these windows are not visually verified." }));
+      coverage: "Up to five 15-second windows covering start, midpoint, near end and measured bilateral total-power extrema (overlapping windows omitted); full-record calculated trends. Other events are not visually verified." }));
     return { path: out, bytes: buf.byteLength, nT: engine.trends.nT, hopS: engine.trends.hopS, seconds: Math.round((Date.now() - started) / 1000), qaPath };
   } finally {
     close();

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const reviews = (data ?? []).map(({context,...row}) => {
     const paths: unknown[] = Array.isArray(context?.evidence_paths) ? context.evidence_paths : [];
     const evidence = source === "lab" && eeglabConfigured() ? paths.filter((p): p is string =>
-      typeof p === "string" && /^eeglab:\/\/[A-Za-z0-9_-]+\/qa-(raw-[1-3]|trends)\.png$/.test(p)).map((p)=>signEeglabUrl(p,600)) : [];
+      typeof p === "string" && /^eeglab:\/\/[A-Za-z0-9_-]+\/qa-(raw-[1-5]|trends)\.png$/.test(p)).map((p)=>signEeglabUrl(p,600)) : [];
     return {...row, report: evidence.length ? {...row.report,evidence_urls:evidence} : row.report,
       review_url: source === "lab" ? `/admin/eeg-lab/library/${row.job_id}` : context?.case_id ? `/admin/qbank/${context.case_id}` : "/admin/qbank" };
   });

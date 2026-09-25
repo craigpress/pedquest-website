@@ -40,7 +40,12 @@ def lab_evidence(packet: Path, out: Path) -> tuple[list[Path], dict]:
             ax.plot(t, -signals[j] + (n - j) * 100, color="black", linewidth=.4)
         ax.set_yticks([(n-j)*100 for j in range(n)], labels[:n])
         ax.set_xlabel("Elapsed seconds; negative up; exported reference; row spacing 100 µV")
-        ax.set_title("SYNTHETIC EEG — actual exported samples — QA window " + str(i+1))
+        ax.set_title("SYNTHETIC EEG — actual exported samples — QA window " + str(i+1)
+                     + " — " + window.get("reason", "sample"))
+        x = t[-1] + .15
+        ax.plot([x, x], [50, 100], color="black", linewidth=1)
+        ax.text(x + .05, 75, "50 µV", va="center", fontsize=8)
+        ax.set_xlim(t[0], t[-1] + .8)
         ax.grid(axis="x", alpha=.2)
         path = out / f"qa-raw-{i+1}.png"
         fig.savefig(path, dpi=110, bbox_inches="tight"); plt.close(fig)
@@ -65,6 +70,13 @@ def lab_evidence(packet: Path, out: Path) -> tuple[list[Path], dict]:
         ax.set_ylabel(label); ax.legend(loc="upper right")
         if key == "sr": ax.set_ylim(0, 100)
     axes[6].plot(t, arrays["asym"]); axes[6].set_ylabel("Asymmetry %"); axes[6].set_xlabel("Elapsed minutes")
+    axes[6].set_xlim(0, meta.get("durationS", float(arrays["t"][-1])) / 60)
+    for i, window in enumerate(meta["windows"]):
+        start = window["t0"] / 60
+        stop = (window["t0"] + len(window["data"][0]) / meta["sampleRate"]) / 60
+        for ax in axes:
+            ax.axvspan(start, stop, color="cyan", alpha=.12)
+        axes[0].text((start + stop) / 2, 1.01, str(i+1), transform=axes[0].get_xaxis_transform(), ha="center", fontsize=8)
     fig.suptitle("SYNTHETIC — viewer-calculated trends; engine " + str(header["engineVersion"]))
     path = out / "qa-trends.png"
     fig.savefig(path, dpi=110, bbox_inches="tight"); plt.close(fig)
@@ -73,6 +85,7 @@ def lab_evidence(packet: Path, out: Path) -> tuple[list[Path], dict]:
                     "suppression_rule": meta.get("suppressionRule", "not provided"),
                     "spectrogram_scale": {"units": "dB µV²/Hz", "shared_left_right": True, "limits": [float(low), float(high)]},
                     "trend_engine": header["engineVersion"], "aeeg_derivation": header["aeegDerivation"],
+                    "raw_windows": [{"start_s": w["t0"], "reason": w.get("reason", "sample")} for w in meta["windows"]],
                     "numeric_checks": "finite arrays; complete epoch count; valid binary dimensions",
                     "coverage_warning": "Raw EEG coverage is sampled; events outside selected windows need human inspection.",
                     "limitation": "Numeric checks do not independently validate the algorithm; raw samples are in exported reference."}
