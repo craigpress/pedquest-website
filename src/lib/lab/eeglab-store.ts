@@ -28,7 +28,7 @@ function encodeUri(rel: string): string {
 }
 
 export function signEeglabUrl(path: string, ttlS: number, now = Date.now()): string {
-  const base = (process.env.EEG_LAB_BASE_URL ?? "").replace(/\/+$/, "");
+  const base = (process.env.EEG_LAB_BASE_URL ?? "").trim().replace(/\/+$/, "");
   const secret = process.env.EEG_LAB_URL_SECRET ?? "";
   if (!base || !secret) throw new Error("EEG_LAB_BASE_URL / EEG_LAB_URL_SECRET are not set.");
   const uri = encodeUri(path.slice(EEGLAB_SCHEME.length));
