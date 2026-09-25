@@ -615,12 +615,16 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     s["events"] = [_normalize_event(e, version) for e in (s.get("events") or [])]
     sed_events = sorted((e for e in s["events"] if e["type"] == "sedation_change"),
                         key=lambda e: float(e["at_min"]))
-    prior_end = -1.0
-    for event in sed_events:
-        start = float(event["at_min"])
-        if start < prior_end:
-            raise SpecError("sedation_change ramps must not overlap")
-        prior_end = start + float(event["effect"]["ramp_min"])
+    # New normalized-level timelines are ordered and must not overlap after
+    # applying the synthesizer's effective 0.5-minute minimum ramp. Legacy-only
+    # event lists retain their pre-PQW-109 ordering and permissiveness.
+    if any("level" in event for event in sed_events):
+        prior_end = -1.0
+        for event in sed_events:
+            start = float(event["at_min"])
+            if start < prior_end:
+                raise SpecError("sedation_change ramps must not overlap")
+            prior_end = start + max(float(event["effect"]["ramp_min"]), 0.5)
     s["annotations"] = [
         {"at_min": float(a["at_min"]), "label": str(a["label"])}
         for a in (s.get("annotations") or [])

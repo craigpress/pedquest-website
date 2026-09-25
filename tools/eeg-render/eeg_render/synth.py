@@ -970,9 +970,10 @@ class Synthesizer:
         sed_spindle: List[float] = [initial_profile["spindle"]]
         sed_theta: List[float] = [initial_profile["theta_scale"]]
         sed_emg: List[float] = [initial_profile["emg_scale"]]
-        for ev in sorted(spec["events"], key=lambda x: float(x.get("at_min", 0.0))):
-            if ev["type"] != "sedation_change":
-                continue
+        sedation_events = [ev for ev in spec["events"] if ev["type"] == "sedation_change"]
+        if any("level" in ev for ev in sedation_events):
+            sedation_events.sort(key=lambda x: float(x["at_min"]))
+        for ev in sedation_events:
             t0 = float(ev["at_min"]) * 60.0
             ramp = max(float(ev["effect"]["ramp_min"]), 0.5) * 60.0
             tgt_sr = float(ev["effect"].get("suppression_ratio_target_pct", sed_sf[-1] * 100.0)) / 100.0

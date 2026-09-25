@@ -102,6 +102,27 @@ def test_overlapping_sedation_ramps_are_rejected():
         ])
 
 
+def test_effective_minimum_ramps_cannot_create_a_nonmonotonic_timeline():
+    with pytest.raises(SpecError, match="must not overlap"):
+        _spec(events=[
+            {"type": "sedation_change", "at_min": 1.0, "direction": "increase",
+             "agent": "propofol", "level": 0.5, "effect": {"ramp_min": 0.0}},
+            {"type": "sedation_change", "at_min": 1.1, "direction": "increase",
+             "agent": "propofol", "level": 0.8, "effect": {"ramp_min": 0.0}},
+        ])
+
+
+def test_legacy_only_overlaps_keep_original_order_and_remain_valid():
+    spec = _spec(events=[
+        {"type": "sedation_change", "at_min": 2.0, "direction": "increase",
+         "agent": "midazolam", "effect": {"ramp_min": 2.0}},
+        {"type": "sedation_change", "at_min": 1.0, "direction": "decrease",
+         "agent": "midazolam", "effect": {"ramp_min": 2.0}},
+    ])
+    syn = Synthesizer(spec, 600.0)
+    assert syn._sed_t == [0.0, 120.0, 240.0, 60.0, 180.0]
+
+
 def test_sedation_reduces_muscle_without_erasing_fast_cerebral_activity():
     base = _signal(_spec())
     sed = _signal(_spec(sedation={"agent": "ketamine", "level": 1.0}))
