@@ -2964,6 +2964,10 @@ class Synthesizer:
             kind = ev["kind"]
             if self.spec.get("neuromuscular_blockade") == "complete" and kind == "emg_chewing":
                 continue
+            if self.spec_version >= 3 and kind in self._V3_ARTIFACTS:
+                # 0.5.0: each model carries its own per-electrode field (no side mask or gain jitter on top)
+                out += self._artifact_rows_v3(kind, ev, k, t, i0, gain) * live[None, :]
+                continue
             sig = self._artifact_waveform(kind, ev, t, i0, rng, gain)
             if sig is None:
                 continue
@@ -3038,6 +3042,296 @@ class Synthesizer:
                 rows[i] = emg * (0.12 + 0.88 * temporal[i]) - slow * 14.0 * gain * (0.4 * frontal[i] + 0.6 * temporal[i])
             return rows
         return None
+
+    # ---------------- 0.5.0 artifact models (spec_version 3) ----------------
+    # Feature review 2026-09-26 (research/eeg-atlas/feature-review-20260926/artifacts.md, A110-01..12).  Every model
+    # returns (n_elec, n) microvolts with its own per-electrode field, chosen by the ratios it must show in
+    # longitudinal bipolar, and every random draw is keyed to the event index (never to the requested window).
+
+    _V3_ARTIFACTS = frozenset({"lateral_eye", "slow_roving_eye", "rem_eye_movements", "ecg", "pulse", "emg_chewing",
+                               "glossokinetic", "movement", "sweat", "ventilator", "electrode_pop", "sixty_hz"})
+    _MIRROR = {"Fp1": "Fp2", "F7": "F8", "F3": "F4", "T3": "T4", "C3": "C4", "T5": "T6", "P3": "P4", "O1": "O2",
+               "A1": "A2"}
+    #: horizontal corneo-retinal field for gaze to the LEFT; the right side is the negated mirror.  Maximum at F7, with
+    #: Fp1 near the null plane of the horizontal dipole, so Fp1-F7 and F7-T3 reverse at F7 (F7-T3 about 0.6x Fp1-F7),
+    #: Fp1-F3 stays small and the posterior chains are quiet (montages/clean/lateral-eye-movements, REM-Sleep-ex-3).
+    _GAZE_FIELD_L = {"F7": 1.0, "T3": 0.45, "T5": 0.22, "F3": 0.20, "Fp1": 0.10, "C3": 0.10, "O1": 0.08, "P3": 0.05,
+                     "A1": 0.30}
+    #: glossokinetic: bilaterally in-phase, broad, frontotemporal maximum (Tongue-Artifact, Hypoglossal-and-Chewing)
+    _GLOSSO_FIELD = {"F7": 1.0, "F8": 1.0, "T3": 0.8, "T4": 0.8, "Fp1": 0.6, "Fp2": 0.6, "F3": 0.5, "F4": 0.5,
+                     "T5": 0.4, "T6": 0.4, "C3": 0.3, "C4": 0.3, "P3": 0.2, "P4": 0.2, "O1": 0.1, "O2": 0.1,
+                     "Fz": 0.5, "Cz": 0.3, "Pz": 0.15, "A1": 0.7, "A2": 0.7}
+    GAZE_UV = 75.0          # gaze-position scale at F7: saccade steps of 75-150 uV
+    ROVING_UV = 55.0        # RMS of the slow roving drift at F7
+    GLOSSO_UV = 150.0
+    CHEW_EMG_UV = 120.0
+    ECG_ART_UV = 35.0
+    PULSE_UV = 35.0
+    SWEAT_UV = 80.0
+    VENT_UV = 120.0
+    SIXTY_UV = 25.0
+
+    def _art_stream(self, name: str, shape: np.ndarray) -> _Stream:
+        cache = self.__dict__.setdefault("_art_streams", {})
+        if name not in cache:
+            cache[name] = _Stream(name, shape, self._norm_for(shape), np.ones(self.n_elec), 0.0)
+        return cache[name]
+
+    def _gaze_field(self) -> np.ndarray:
+        out = np.zeros(self.n_elec)
+        right = {v: k for k, v in self._MIRROR.items()}
+        for i, e in enumerate(self.electrodes):
+            if e in self._GAZE_FIELD_L:
+                out[i] = self._GAZE_FIELD_L[e]
+            elif e in right and right[e] in self._GAZE_FIELD_L:
+                out[i] = -self._GAZE_FIELD_L[right[e]]
+        return out
+
+    def _gaze_schedule(self, k: int, ev: Dict, kind: str) -> List[Tuple[float, float, float, float]]:
+        """Saccades ``(start, rise_s, from, to)`` over the event window, drawn once per event.
+
+        Gaze position is held between saccades (fixation); the causal 1 Hz LFF turns each step into the reference's
+        sawtooth (fast rise, 0.2-0.35 s return).  lateral_eye: raised-cosine saccades of 30-60 ms alternating left and
+        right at ``rate_per_h``.  rem_eye_movements: clusters of 2-4 saccades in 1-2 s, rise 40-150 ms, the cluster rate
+        set so the saccade rate is ``rate_per_h`` (REM-Sleep-ex-3).
+        """
+        cache = self.__dict__.setdefault("_gaze_sched", {})
+        if k in cache:
+            return cache[k]
+        rng = substream(self.seed, "gaze", k)
+        a0, a1 = self._event_window(ev)
+        rate = float(ev.get("rate_per_h", 360.0 if kind == "lateral_eye" else 900.0)) / 3600.0
+        mean = 1.0 / max(rate, 1e-6)
+        steps: List[Tuple[float, float, float, float]] = []
+        pos = 0.0
+        side = float(rng.choice([-1.0, 1.0]))
+        tt = a0 + float(rng.uniform(0.3, 1.0))
+        while tt < a1:
+            if kind == "rem_eye_movements":
+                n_sac = int(rng.integers(2, 5))
+                span = float(rng.uniform(1.0, 2.0))
+                starts = tt + np.sort(rng.uniform(0.0, span, n_sac))
+                for s0 in starts:
+                    if steps and s0 < steps[-1][0] + steps[-1][1] + 0.12:
+                        continue
+                    to = side * float(rng.uniform(0.4, 1.0))
+                    steps.append((float(s0), float(rng.uniform(0.04, 0.15)), pos, to))
+                    pos = to
+                    side = -side if rng.random() < 0.8 else side
+                tt += span + float(np.clip(rng.lognormal(math.log(max(n_sac * mean - span, 0.5)), 0.5), 0.5, 30.0))
+            else:
+                to = side * float(rng.uniform(0.5, 1.0))
+                steps.append((tt, float(rng.uniform(0.03, 0.06)), pos, to))
+                pos, side = to, -side
+                tt += float(np.clip(rng.lognormal(math.log(mean), 0.5), 0.3, 4.0 * mean))
+        cache[k] = steps
+        return steps
+
+    @staticmethod
+    def _rc(x: np.ndarray) -> np.ndarray:
+        return 0.5 - 0.5 * np.cos(np.pi * np.clip(x, 0.0, 1.0))
+
+    def _gaze_signal(self, steps, t: np.ndarray) -> np.ndarray:
+        g = np.zeros(t.size)
+        for s0, rise, p0, p1 in steps:
+            if s0 > t[-1]:
+                break
+            m = t >= s0
+            g[m] = p0 + (p1 - p0) * self._rc((t[m] - s0) / rise)
+        return g
+
+    def _event_schedule(self, k: int, tag: str, a0: float, a1: float, draw) -> list:
+        """Generic once-per-event timetable: ``draw(rng, t)`` returns ``(item, next_t)``."""
+        cache = self.__dict__.setdefault("_art_events_v3", {})
+        key = (k, tag)
+        if key not in cache:
+            rng = substream(self.seed, "art3-" + tag, k)
+            items, tt = [], a0 + float(rng.uniform(0.0, 0.5))
+            while tt < a1:
+                item, tt = draw(rng, tt)
+                items.append(item)
+            cache[key] = items
+        return cache[key]
+
+    def _artifact_rows_v3(self, kind: str, ev: Dict, k: int, t: np.ndarray, i0: int, gain: float) -> np.ndarray:
+        n = t.size
+        rows = np.zeros((self.n_elec, n))
+        a0, a1 = self._event_window(ev)
+        blocked = self.spec.get("neuromuscular_blockade") == "complete"
+        chans = [c for c in (ev.get("channels") or []) if c in self._idx]
+
+        if kind in ("lateral_eye", "rem_eye_movements"):
+            g = self._gaze_signal(self._gaze_schedule(k, ev, kind), t)
+            return self._gaze_field()[:, None] * (g * self.GAZE_UV * gain)[None, :]
+
+        if kind == "slow_roving_eye":
+            # band-limited random gaze drift centred at 1.4x frequency_hz (0.35 Hz for the default 0.25), so half-waves
+            # are irregular and 0.9-1.8 s long as in Drowsy-state (a pure sine was metronomic: 4.0 s for 15 s)
+            fc = float(np.clip(1.4 * float(ev.get("frequency_hz", 0.25)), 0.15, 0.6))
+            st = self._art_stream(f"art3-roving-{fc:.3f}", band_shape(self._freqs, fc, 0.4 * fc, order=2.0))
+            g = self._oa(st, i0, n, 1)[0]
+            return self._gaze_field()[:, None] * (g * self.ROVING_UV * gain)[None, :]
+
+        if kind == "ecg":
+            return self._ecg(t, amplitude=self.ECG_ART_UV * gain, gradient=True)
+
+        if kind == "pulse":
+            # one electrode's mechanical pulse wave filling each R-R interval, locked to the R wave with a 0.25-0.35 s
+            # delay (cardioballistic-artifact-clean: Cz, Fz-Cz and Cz-Pz mirror images); frequency_hz is ignored
+            delay = float(substream(self.seed, "pulse", k).uniform(0.25, 0.35))
+            rr = 60.0 / _ECG_HR[self.age]
+            onsets = self._beat_times(t[0] - delay - 2 * rr, t[-1]) + delay
+            j = np.clip(np.searchsorted(onsets, t, side="right") - 1, 0, onsets.size - 2)
+            phi = (t - onsets[j]) / (onsets[j + 1] - onsets[j])
+            wave = np.sin(2 * np.pi * phi) + 0.3 * np.sin(4 * np.pi * phi + 0.8)
+            for c in chans or ["Cz"]:
+                if c in self._idx:
+                    rows[self._idx[c]] = wave * self.PULSE_UV * gain
+            return rows
+
+        if kind == "emg_chewing":
+            # independent EMG per electrode (one shared realisation cancels inside F7-T3/T3-T5; A110-10)
+            if blocked:
+                return rows
+            bouts, chews = self._artifact_schedule(ev, kind)
+            base = self._oa(self._art_stream("art3-chew-emg", self.st_emg.shape), i0, n, self.n_elec)
+            env = np.zeros(n)
+            slow = np.zeros(n)
+            for c0, cd in chews:
+                d = (t - c0) / cd
+                m = (d > 0) & (d < 1)
+                env[m] += np.sin(np.pi * d[m]) ** 1.5
+                ms = (d > -0.2) & (d < 1.6)
+                slow[ms] += np.exp(-0.5 * ((d[ms] - 0.6) / 0.45) ** 2)
+            temporal = _profile(self.electrodes, _TEMPORAL, 0.15)
+            frontal = _profile(self.electrodes, _ANTERIOR, 0.1)
+            emg = np.clip(env, 0.0, 1.5) * self.CHEW_EMG_UV * gain
+            return (base * emg[None, :] * (0.12 + 0.88 * temporal)[:, None]
+                    - (slow * 14.0 * gain)[None, :] * (0.4 * frontal + 0.6 * temporal)[:, None])
+
+        if kind == "glossokinetic":
+            # irregular 1-3 Hz waves in bursts of 0.3-0.6 s, bilaterally in phase over a broad field (A110-11)
+            def draw(rng, tt):
+                item = (tt, float(rng.uniform(0.3, 0.6)), float(rng.uniform(1.0, 3.0)),
+                        float(rng.uniform(0.6, 1.0)) * float(rng.choice([-1.0, 1.0])))
+                return item, tt + item[1] + float(np.clip(rng.exponential(0.35), 0.0, 1.5))
+            sig = np.zeros(n)
+            for b0, dur, f, amp in self._event_schedule(k, "glosso", a0, a1, draw):
+                d = t - b0
+                m = (d >= 0) & (d < dur)
+                if m.any():
+                    sig[m] += amp * np.sin(np.pi * d[m] / dur) ** 2 * np.cos(2 * np.pi * f * (d[m] - dur / 2))
+            field = np.array([self._GLOSSO_FIELD.get(e, 0.1) for e in self.electrodes])
+            return field[:, None] * (sig * self.GLOSSO_UV * gain)[None, :]
+
+        if kind == "movement":
+            # abrupt irregular transients (onset 50-150 ms, 0.5-2 s, 100-300 uV), each with its own per-electrode
+            # weights (0.4-1.0, one electrode in ten reversed) and per-electrode sway after the common abrupt onset (each
+            # lead moves on its own), plus a co-timed independent-per-electrode EMG burst
+            # RMS 8-16 uV (shaking-head-artifact, chest-PT-artifact; A110-08)
+            ne = self.n_elec
+
+            def draw(rng, tt):
+                w = rng.uniform(0.4, 1.0, ne) * np.where(rng.random(ne) < 0.1, -1.0, 1.0)
+                item = (tt, float(rng.uniform(0.05, 0.15)), float(rng.uniform(0.5, 2.0)),
+                        float(rng.uniform(100.0, 300.0)) * float(rng.choice([-1.0, 1.0])), w,
+                        float(rng.uniform(0.4, 0.8)), rng.uniform(0.0, 2 * np.pi, ne), float(rng.uniform(8.0, 16.0)))
+                return item, tt + item[2] + float(np.clip(rng.lognormal(math.log(1.2), 0.6), 0.2, 5.0))
+            emg_rows = None
+            if not blocked:     # frontalis / temporalis: RMS 8-16 uV per electrode where the muscle is
+                musc = np.maximum(_profile(self.electrodes, _TEMPORAL, 0.15), _profile(self.electrodes, _ANTERIOR, 0.1))
+                emg_rows = (self._oa(self._art_stream("art3-move-emg", self.st_emg.shape), i0, n, ne)
+                            * (0.35 + 0.65 * musc)[:, None])
+            for s0, onset, dur, amp, w, wig, wph, emg_uv in self._event_schedule(k, "move", a0, a1, draw):
+                d = t - s0
+                m = (d >= 0) & (d < dur + 0.3)
+                if not m.any():
+                    continue
+                dd = d[m]
+                fall = 0.35 * dur
+                shape = self._rc(dd / onset) * (1.0 - self._rc((dd - (dur - fall)) / (fall + 0.3)))
+                sway = 1.0 + wig * np.sin(2 * np.pi * 1.5 * dd[None, :] / dur + wph[:, None])
+                rows[:, m] += (amp * gain) * w[:, None] * shape[None, :] * sway
+                if emg_rows is not None:
+                    burst = np.where(dd < dur, np.sin(np.pi * np.clip(dd / dur, 0, 1)) ** 0.5, 0.0)
+                    rows[:, m] += emg_rows[:, m] * (burst * emg_uv * gain)[None, :]
+            return rows
+
+        if kind == "sweat":
+            # a regional slow (0.1-0.4 Hz) sway: common plus independent per-electrode drift under a regional field,
+            # one frontopolar region by default (drawn per record), left/right frontotemporal, or centred on ``channels``;
+            # about one page row in the dominant chain, posterior chains quiet (Sweat-and-electrode-pop)
+            side = ev.get("side", "all")
+            centres = chans or {"left": ["F7"], "right": ["F8"]}.get(
+                side, [str(substream(self.seed, "sweat", k).choice(["Fp1", "Fp2"]))])
+            field = np.zeros(self.n_elec)
+            for i, e in enumerate(self.electrodes):
+                if e in mt.POSITIONS:
+                    d = min(math.hypot(*np.subtract(mt.POSITIONS[e], mt.POSITIONS[c])) for c in centres)
+                    field[i] = math.exp(-(d / 0.5) ** 2)
+            st = self._art_stream("art3-sweat", band_shape(self._freqs, 0.25, 0.15, order=1.0))
+            r = self._oa(st, i0, n, self.n_elec + 1)
+            return field[:, None] * (0.8 * r[-1][None, :] + 0.6 * r[:-1]) * (self.SWEAT_UV * gain)
+        if kind == "ventilator":
+            # breath-locked bursts (jitter <= 3 %): per breath a 0.3-0.5 s damped 5-12 Hz oscillation plus a slow
+            # half-wave on the tubing-side electrodes, homologous side smaller (ventilator-artifact-water-motion)
+            f_b = float(ev.get("frequency_hz", 0.35))
+            rng = substream(self.seed, "vent", k)
+            f_osc = float(rng.uniform(5.0, 12.0))
+            side = ev.get("side", "all")
+            near = chans or (["F8", "T4"] if side == "right" else ["F7", "T3"])
+            far = [] if chans else [self._MIRROR.get(near[0], near[0])] if side in ("all", "both") else []
+            wts = {near[0]: 1.0, **{c: 0.3 for c in near[1:]}, **{c: 0.35 for c in far}}
+
+            def draw(rng, tt):
+                item = (tt, float(rng.uniform(0.3, 0.5)), float(rng.uniform(0.7, 1.0)), float(rng.uniform(0, 2 * np.pi)))
+                return item, tt + (1.0 / f_b) * float(np.clip(rng.normal(1.0, 0.012), 0.97, 1.03))
+            sig = np.zeros(n)
+            for b0, dur, amp, ph in self._event_schedule(k, "vent", a0, a1, draw):
+                d = t - b0
+                m = (d >= 0) & (d < 0.9)
+                if m.any():
+                    dd = d[m]
+                    osc = np.where(dd < dur, np.sin(np.pi * dd / dur) * np.exp(-dd / (0.6 * dur))
+                                   * np.sin(2 * np.pi * f_osc * dd + ph), 0.0)
+                    sig[m] += amp * (osc + 0.5 * np.sin(np.pi * dd / 0.9))
+            for c, wt in wts.items():
+                if c in self._idx:
+                    rows[self._idx[c]] = sig * wt * self.VENT_UV * gain
+            return rows
+
+        if kind == "electrode_pop":
+            # an abrupt step with exponential decay on ONE electrode, 35-110 uV (0.5-1.5 page rows) (F7-Electrode-Pop, Sweat-and-electrode-pop)
+            target = (chans or ["T5"])[0]
+            rate = float(ev.get("rate_per_h", 2880.0)) / 3600.0
+            tau = float(ev.get("decay_s", 0.2))
+
+            def draw(rng, tt):
+                item = (tt, float(rng.uniform(35.0, 110.0)) * float(rng.choice([-1.0, 1.0])))
+                return item, tt + float(rng.exponential(1.0 / max(rate, 1e-6))) + 0.05
+            prof = np.zeros(n)
+            for p0, amp in self._event_schedule(k, "pop", a0, a1, draw):
+                d = t - p0
+                m = (d >= 0) & (d < 8 * tau)
+                if m.any():
+                    prof[m] += amp * gain * np.exp(-d[m] / tau)
+            rows[self._idx.get(target, 0)] = prof
+            return rows
+
+        if kind == "sixty_hz":
+            # dense 60 Hz (+10 % 120 Hz) only on 1-3 high-impedance electrodes; everything else <= 2 uV with its own
+            # phase, so it does not cancel in bipolar and shows only in chains containing a bad electrode (60hz-artifact)
+            rng = substream(self.seed, "sixty", k)
+            f0 = 60.0 if 60.0 <= 0.45 * self.fs else 50.0
+            bad = chans or list(rng.choice(self.scalp, int(rng.integers(1, 4)), replace=False))
+            amp = rng.uniform(0.3, 2.0, self.n_elec)
+            ph = rng.uniform(0.0, 2 * np.pi, self.n_elec)
+            for c in bad:
+                amp[self._idx[c]] = self.SIXTY_UV * float(rng.uniform(0.6, 1.4))
+            w = 2 * np.pi * f0 * t
+            return (amp * gain)[:, None] * (np.sin(w[None, :] + ph[:, None])
+                                           + 0.1 * np.sin(2 * w[None, :] + 2 * ph[:, None]))
+        return rows
 
     def _artifact_waveform(self, kind: str, ev: Dict, t: np.ndarray, i0: int,
                            rng: np.random.Generator, gain: float):
@@ -3216,8 +3510,20 @@ class Synthesizer:
         lo, vals = self._ecg_jit
         return vals[np.clip(idx - lo, 0, vals.size - 1)]
 
-    def _ecg(self, t: np.ndarray, amplitude: float) -> np.ndarray:
-        """Synthetic QRS train, opposite polarity over the two hemispheres."""
+    def _beat_times(self, t0: float, t1: float) -> np.ndarray:
+        """R-wave times covering [t0, t1], the same beats ``_ecg`` draws."""
+        rr = 60.0 / _ECG_HR[self.age]
+        idx = np.arange(math.floor(t0 / rr) - 1, math.ceil(t1 / rr) + 2, dtype=np.int64)
+        return idx * rr + self._beat_jitter(idx)
+
+    def _ecg(self, t: np.ndarray, amplitude: float, gradient: bool = False) -> np.ndarray:
+        """Synthetic QRS train, opposite polarity over the two hemispheres.
+
+        ``gradient`` (the 0.5.0 ECG artifact): weight ``0.5 x - 0.9 y``, a head-wide anterior-posterior plus
+        left-right gradient.  The hemispheric weights depend only on |x| and the side, so they are nearly equal along
+        each longitudinal chain and cancel there (6 uV bipolar QRS from 22 uV, feature review A110-04); a gradient
+        survives every chain, largest in T5-O1, P3-O1, Cz-Pz and C4-P4 as in the references.
+        """
         rr = 60.0 / _ECG_HR[self.age]
         idx = np.arange(math.floor(t[0] / rr) - 1, math.ceil(t[-1] / rr) + 2, dtype=np.int64)
         beats = idx * rr + self._beat_jitter(idx)
@@ -3246,6 +3552,11 @@ class Synthesizer:
             window = prof[i0:i1]
             window[m] += qrs
         rows = np.zeros((self.n_elec, t.size))
+        if gradient:
+            for i, e in enumerate(self.electrodes):
+                x, y = mt.POSITIONS.get(e, (0.0, 0.0))
+                rows[i] = prof * amplitude * (0.5 * x - 0.9 * y)
+            return rows
         for i, e in enumerate(self.electrodes):
             x, y = mt.POSITIONS.get(e, (0.0, 0.0))
             near_neck = 0.35 + 0.65 * float(np.clip(abs(x), 0.0, 1.2)) / 1.2

@@ -659,10 +659,17 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         f = dict(s.get("filters", {}) or {})
         f.setdefault("lf_hz", 1.0)
         f.setdefault("hf_hz", 70.0)
-        f.setdefault("notch_hz", 60.0)
+        art_kinds = {e.get("kind") for e in s["events"] if e.get("type") == "artifact"}
+        # 0.5.0 (feature review A110-12): a 60 Hz page with the notch on shows nothing; an explicit notch_hz still wins
+        f.setdefault("notch_hz", None if version >= 3 and "sixty_hz" in art_kinds else 60.0)
         s["filters"] = f
         s["highlight"] = None
         s.pop("duration_min", None)
+        if version >= 3 and art_kinds & {"ecg", "pulse"}:
+            # every ECG / pulse artifact reference shows the ECG channel so the reader can time-lock (A110-04/05)
+            st = dict(s.get("style") or {})
+            st.setdefault("show_ecg_channel", True)
+            s["style"] = st
     elif kind == "aeeg":
         s["duration_h"] = float(s.get("duration_h", 6.0))
         s["time_axis"] = s.get("time_axis", "elapsed")

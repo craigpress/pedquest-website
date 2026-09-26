@@ -165,7 +165,8 @@ def page_signals(spec: Dict, synth: Optional[Synthesizer] = None,
     pairs = mt.montage_pairs(spec["montage"], synth.scalp)
     sig = synth.derive(x, pairs, spec["montage"])
     sig = apply_filters(sig, build_filters(fs, spec["filters"], causal), causal)
-    ecg = synth._ecg(t_all, amplitude=260.0)[synth._idx["A1"]] * 0.9
+    # 0.5.0: the ECG channel at about one page row (the 260 uV trace overran three EEG rows on artifact pages)
+    ecg = synth._ecg(t_all, amplitude=90.0 if causal else 260.0)[synth._idx["A1"]] * 0.9
     keep = (t_all >= t0 - 1e-9) & (t_all < t0 + win - 1e-9)
     return synth, t_all[keep], sig[:, keep], pairs, ecg[keep]
 
