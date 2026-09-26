@@ -136,8 +136,8 @@ function ViewerInner() {
     if (!job || roleLoading) return;
     // teachers (not just editors) see everyone's marks and the answer key
     // eslint-disable-next-line react-hooks/set-state-in-effect -- assembling the source from two async results
-    setSource({ kind: "job", job, authHeaders, isInstructor: isTeacher });
-  }, [job, roleLoading, isTeacher, authHeaders]);
+    setSource({ kind: "job", job, authHeaders, isInstructor: isTeacher, canEditKey: isEditor });
+  }, [job, roleLoading, isTeacher, isEditor, authHeaders]);
 
   // Closing a recording returns to wherever it was opened from — the library,
   // a recording page, the review queue or a question — not to this picker.

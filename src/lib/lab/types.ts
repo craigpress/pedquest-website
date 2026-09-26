@@ -203,6 +203,8 @@ export interface LabJob {
   recordingId: string | null;
   specHash: string | null;
   rendererVersion: string | null;
+  /** Rotates when the rendered answer artifact is replaced or completes again. */
+  answerGeneration: string;
   /** artifact -> storage path inside the private `eeg-lab` bucket */
   artifacts: Partial<Record<LabArtifact, string>> | null;
   report: LabJobReport | null;
@@ -281,7 +283,7 @@ export interface LabEnqueueResponse {
 //
 // The shape the Guided form produces. spec.ts turns it into an image block.
 
-export type LabAgeBand = "neonate" | "infant" | "child" | "adolescent";
+export type LabAgeBand = "neonate" | "infant" | "child" | "adolescent" | "adult";
 export type LabChannelSet = "standard_19" | "neonatal_9";
 export type LabMontage = "longitudinal_bipolar" | "referential" | "average" | "neonatal_reduced";
 

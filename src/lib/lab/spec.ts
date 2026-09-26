@@ -31,6 +31,7 @@ export const AGE_BANDS: { id: LabAgeBand; label: string }[] = [
   { id: "infant", label: "Infant" },
   { id: "child", label: "Child" },
   { id: "adolescent", label: "Adolescent" },
+  { id: "adult", label: "Adult" },
 ];
 
 export const CHANNEL_SETS: { id: LabChannelSet; label: string; hint: string }[] = [

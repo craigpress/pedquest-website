@@ -21,6 +21,7 @@ import {
   DISCHARGE_TASK, SEIZURE_TASK, parseAnswerKey, scoreLearner, summariseClass,
   type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask,
 } from "@/lib/lab/scoring";
+import { answerKeyCacheIdentity, applyAnswerOverrides, type AnswerOverrideRow } from "@/lib/lab/answer-overrides";
 
 type AnnotationRow = {
   id: string; user_id: string; user_email: string; onset_s: number; duration_s: number; kind: string;
@@ -64,12 +65,25 @@ const KEY_TTL_MS = 10 * 60 * 1000;
 export async function loadAnswerKey(job: ReturnType<typeof rowToJob>): Promise<{ key: KeyEvent[]; error: string | null }> {
   const answersPath = job.options.includeAnswers ? job.artifacts?.answers : undefined;
   if (!answersPath) return { key: [], error: "This recording has no answer key, so marks are listed but not graded." };
-  const cacheId = `${job.id}|${answersPath}`;
+  const cacheId = answerKeyCacheIdentity(job.id, answersPath, job.answerGeneration);
   const hit = keyCache.get(cacheId);
-  if (hit && Date.now() - hit.at < KEY_TTL_MS) return { key: hit.key, error: null };
-  const out = await fetchAnswerKey(answersPath);
-  if (!out.error) keyCache.set(cacheId, { at: Date.now(), key: out.key });
-  return out;
+  let original: KeyEvent[];
+  if (hit && Date.now() - hit.at < KEY_TTL_MS) original = hit.key;
+  else {
+    const out = await fetchAnswerKey(answersPath);
+    if (out.error) return out;
+    original = out.key;
+    keyCache.set(cacheId, { at: Date.now(), key: original });
+  }
+
+  // Overrides deliberately sit outside the ten-minute artifact cache. A key
+  // edit therefore changes results and course grades on their very next read.
+  const supabase = createServerClient();
+  if (!supabase) return { key: original, error: "Could not load answer-key overrides (Supabase not configured)." };
+  const { data, error } = await supabase.from("eeg_lab_answer_overrides").select("*")
+    .eq("job_id", job.id).order("created_at").order("id");
+  if (error) return { key: original, error: `Could not load answer-key overrides (${error.message}).` };
+  return { key: applyAnswerOverrides(original, (data ?? []) as AnswerOverrideRow[], answersPath, job.answerGeneration), error: null };
 }
 
 async function fetchAnswerKey(answersPath: string): Promise<{ key: KeyEvent[]; error: string | null }> {

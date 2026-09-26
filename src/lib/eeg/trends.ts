@@ -26,7 +26,7 @@ export interface ViewerTrends {
   t: Float32Array;
   nT: number;
   freqs: Float32Array;
-  /** spectrogram, row-major (nF × nT), µV²/Hz, per side */
+  /** spectrogram, time-major (nT × nF), µV²/Hz, per side */
   psd: Record<Side, Float32Array>;
   aeegLo: Record<Side, Float32Array>;
   aeegHi: Record<Side, Float32Array>;

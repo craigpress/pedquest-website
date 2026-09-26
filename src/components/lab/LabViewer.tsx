@@ -33,10 +33,11 @@ import { DEFAULT_PALETTE, PALETTES, loadPalettePreference, savePalettePreference
 import RawPane from "./RawPane";
 import TrendStrip, { TREND_PANELS, TREND_WINDOWS, trendRowLabel, trendStripHeight, type TrendRowId } from "./TrendStrip";
 import AnnotationPanel, { type Draft } from "./AnnotationPanel";
+import { parseAnswerKey, type KeyEvent } from "@/lib/lab/scoring";
 
 export type ViewerSource =
   | { kind: "file"; files: File[] }
-  | { kind: "job"; job: LabJob; authHeaders: () => Promise<Record<string, string>>; isInstructor: boolean };
+  | { kind: "job"; job: LabJob; authHeaders: () => Promise<Record<string, string>>; isInstructor: boolean; canEditKey: boolean };
 
 /**
  * Course context when the recording was opened from an assignment rather than
@@ -57,7 +58,7 @@ export interface ViewerAssignment {
   onReopen: () => Promise<void>;
 }
 
-export interface AnswerSpan { onsetS: number; offsetS: number; label: string }
+export interface AnswerSpan { id: string; onsetS: number; offsetS: number; label: string }
 
 const PAGE_OPTIONS = [5, 10, 15, 20, 30, 60];
 const SENS_OPTIONS = [2, 3, 5, 7, 10, 15, 20, 30, 50];
@@ -87,16 +88,12 @@ interface Opened {
 }
 
 function parseAnswerManifest(json: unknown): AnswerSpan[] {
-  const m = (typeof json === "object" && json !== null ? json : {}) as { events?: unknown[] };
-  return (Array.isArray(m.events) ? m.events : [])
-    .map((e) => e as Record<string, unknown>)
-    .filter((e) => typeof e.onset_s === "number")
-    .map((e) => ({
-      onsetS: e.onset_s as number,
-      offsetS: typeof e.offset_s === "number" ? e.offset_s : (e.onset_s as number),
-      label: [e.kind, e.onset_region ?? e.label].filter(Boolean).join(" "),
-    }));
+  return parseAnswerKey(json).map(answerSpan);
 }
+
+const answerSpan = (event: KeyEvent): AnswerSpan => ({
+  id: event.id, onsetS: event.onsetS, offsetS: event.offsetS, label: event.label,
+});
 
 function downloadText(name: string, text: string, type = "text/plain") {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -524,14 +521,44 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
     const ok = window.confirm("Show the answer key? This overlays the realized events on the recording. It is the instructor copy.");
     if (!ok) return;
     try {
-      const res = await fetch(`/api/admin/lab/jobs/${source.job.id}/download?artifact=answers`, { headers: await source.authHeaders() });
+      const res = await fetch(`/api/admin/lab/jobs/${source.job.id}/answer-key`, { headers: await source.authHeaders(), cache: "no-store" });
       const json = await res.json();
-      if (!res.ok || !json.url) throw new Error(json.error || "Could not fetch the answer key.");
-      const manifest = await (await fetch(json.url)).json();
-      setAnswers(parseAnswerManifest(manifest));
+      if (!res.ok || !Array.isArray(json.key)) throw new Error(json.error || "Could not fetch the answer key.");
+      setAnswers((json.key as KeyEvent[]).map(answerSpan));
       setShowKey(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not fetch the answer key.");
+    }
+  }
+
+  async function promoteAnnotation(mark: ViewerAnnotation) {
+    if (source.kind !== "job" || !source.canEditKey) return;
+    if (!window.confirm(`Promote your ${mark.kind.replaceAll("_", " ")} mark at ${formatClock(mark.onsetS)} to the answer key?`)) return;
+    setAnnBusy(true); setError(null);
+    try {
+      const res = await fetch(`/api/admin/lab/jobs/${source.job.id}/answer-key`, {
+        method: "POST", headers: await source.authHeaders(), body: JSON.stringify({
+          action: "add",
+          event: {
+            kind: mark.kind,
+            onsetS: mark.onsetS,
+            offsetS: mark.onsetS + mark.durationS,
+            region: mark.region,
+            channels: mark.channels,
+            label: mark.label || mark.kind.replaceAll("_", " "),
+          },
+          note: `Promoted from annotation ${mark.id}`,
+          expectedGeneration: source.job.answerGeneration,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !Array.isArray(json.key)) throw new Error(json.error || "Could not promote the mark.");
+      setAnswers((json.key as KeyEvent[]).map(answerSpan));
+      setShowKey(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not promote the mark.");
+    } finally {
+      setAnnBusy(false);
     }
   }
 
@@ -884,6 +911,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
             onDelete={(id) => void deleteAnnotation(id)}
             onJump={(a) => seek(a.onsetS)}
             onExport={exportAnnotations}
+            onPromote={source.kind === "job" && source.canEditKey ? (mark) => void promoteAnnotation(mark) : undefined}
           />
         </div>
       </div>

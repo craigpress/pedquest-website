@@ -145,8 +145,13 @@ def test_worker_attaches_immutable_image_only_to_matching_version(monkeypatch, c
     loader.loader.exec_module(worker)
     calls, uploads = [], []
     monkeypatch.setattr(worker, 'claim_job', lambda db: {'id': 'job', 'case_id': 'case', 'spec': {'seed': 1}})
-    monkeypatch.setattr(worker, 'render_image', lambda *args: (Path('mock.png'),
+    monkeypatch.setattr(worker, 'render_image', lambda *args, **kwargs: (Path('mock.png'),
                         {'width': 1600, 'height': 900, 'spec_hash': 'sha256:0123456789abcdef'}))
+    def qa(db, source, job_id, images, context):
+        assert (source, job_id, context['case_id']) == ('qbank', 'job', 'case')
+        assert not uploads
+        return {'verdict': 'needs_review', 'summary': 'Test review'}
+    monkeypatch.setattr(worker, 'run_qa', qa)
 
     class DB:
         def request(self, path, method='GET', body=None, **kwargs):

@@ -1,0 +1,1792 @@
+[
+  {
+    "id": "bg-symmetry",
+    "name": "Background symmetry",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Symmetric, mildly asymmetric, or markedly asymmetric background.",
+    "criteria": [
+      "Mild: consistent voltage difference <50% on an appropriate referential recording or frequency difference 0.5–1 Hz.",
+      "Marked: voltage difference >=50% or frequency difference >1 Hz.",
+      "Consistent means >80% of relevant instances or record."
+    ],
+    "context": "Non-neonatal EEG; report A.2–A.10 separately by hemisphere when asymmetric.",
+    "pitfalls": [
+      "Do not measure voltage symmetry from longitudinal bipolar amplitude when referential comparison is unavailable."
+    ],
+    "engineering": [
+      "Choose the amplitude statistic and epoch aggregation for percent difference."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=4"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=4"
+      }
+    ]
+  },
+  {
+    "id": "bg-predominant-frequency",
+    "name": "Predominant background frequency",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Band or tied bands most prominent when maximally awake or after stimulation.",
+    "criteria": [
+      "Categories: beta >13 Hz, alpha, theta, delta.",
+      "Report all 2 or 3 bands when equally prominent."
+    ],
+    "context": "Non-neonatal EEG; some terms may be imperfect for infants.",
+    "pitfalls": [
+      "Do not substitute a less-alert state when a more-awake/stimulated state is available."
+    ],
+    "engineering": [
+      "S01 gives no alpha/theta/delta boundaries or tie tolerance; version and review these separately."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=4"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=4"
+      }
+    ]
+  },
+  {
+    "id": "bg-pdr",
+    "name": "Posterior dominant rhythm",
+    "aliases": [
+      "PDR",
+      "posterior dominant rhythm"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Posterior dominant rhythm present with frequency, absent, or unclear.",
+    "criteria": [
+      "Present requires attenuation with eye opening.",
+      "Wait >1 s after eye closure before measuring frequency; report to nearest 0.5 Hz."
+    ],
+    "context": "Non-neonatal EEG with interpretable eye-opening/closure testing.",
+    "pitfalls": [
+      "A posterior rhythm without demonstrated eye-opening attenuation is not present by this definition."
+    ],
+    "engineering": [
+      "Define attenuation threshold and minimum observation duration; S01 does not."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=4"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=4"
+      }
+    ]
+  },
+  {
+    "id": "bg-continuity",
+    "name": "Continuity and low-voltage percent",
+    "aliases": [
+      "burst suppression",
+      "burst attenuation",
+      "discontinuous"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Continuity category from percent of a record/epoch occupied by attenuation or suppression.",
+    "criteria": [
+      "Attenuation: lower activity >=10 µV and <50% of higher-voltage background; suppression: lower activity <10 µV.",
+      "Continuous: low-voltage percent <1%.",
+      "Nearly continuous: 1–9%, with qualifying periods >=1 s; report typical duration.",
+      "Discontinuous: alternating higher activity with 10–49% attenuation/suppression.",
+      "Burst attenuation/suppression: alternating higher activity with 50–99% attenuation/suppression.",
+      "Suppression/attenuation: >99%; suppressed when all activity <10 µV, attenuated when all activity <20 µV but not suppressed.",
+      "For noncontinuous records report attenuation or suppression percent using record/epoch as denominator.",
+      "Stimulus-induced periods are SI-attenuation or SI-suppression."
+    ],
+    "context": "Non-neonatal EEG; these voltage cutoffs differ from neonatal terminology.",
+    "pitfalls": [
+      ">99% is not discontinuous or burst attenuation/suppression."
+    ],
+    "engineering": [
+      "Fix analysis epoch, boundaries, and handling of mixed attenuation plus suppression."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=5"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=5"
+      }
+    ]
+  },
+  {
+    "id": "bg-burst-modifiers",
+    "name": "Burst attenuation/suppression modifiers",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Timing, localization, morphology, highly epileptiform, and identical-burst descriptors.",
+    "criteria": [
+      "Burst averages >=0.5 s and has >=4 phases (>=3 baseline crossings); maximum duration 30 s.",
+      "Report location as generalized, lateralized, bilateral independent, unilateral independent, or multifocal; report typical burst/interburst durations and sharpest component.",
+      "Highly epileptiform: >=2 spikes/sharp waves in most (>50%) bursts at mean >=1 Hz within a burst, where frequency = 1 / typical interpeak latency; alternatively a rhythmic potentially ictal-appearing pattern occurs in most (>50%) bursts. Table 1 states >=1 Hz for this alternative, while A.4.d does not repeat that cutoff. Record frequency and location.",
+      "Identical: first >=0.5 s of each burst, or each stereotyped cluster of >=2 bursts, is visually similar in all channels in most (>90%) bursts."
+    ],
+    "context": "Only burst attenuation or burst suppression.",
+    "pitfalls": [
+      "Shorter or <4-phase events are discharges.",
+      "RPP, BIRD, and seizure classification is outside this contract."
+    ],
+    "engineering": [
+      "Resolve the Table 1/A.4.d frequency-cutoff discrepancy; operationalize visual similarity and potentially ictal appearance."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=3"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=3"
+      }
+    ]
+  },
+  {
+    "id": "bg-reactivity",
+    "name": "Background reactivity",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Cerebral response to stimulation: reactive, unreactive, SIRPIDs-only, unclear, or unknown.",
+    "criteria": [
+      "Qualifying change may be in cerebral voltage or frequency, including attenuation.",
+      "SIRPIDs-only: sole response is a stimulus-induced rhythmic, periodic, or ictal-appearing discharge.",
+      "Unclear: inadequate test, excessive artifact, or equivocal cerebral change. Unknown: not tested or maximally alert throughout."
+    ],
+    "context": "Non-neonatal EEG with documented stimulation.",
+    "pitfalls": [
+      "Muscle activity and eye blinks do not establish reactivity."
+    ],
+    "engineering": [
+      "Define stimulation protocol and cerebral-change threshold; S01 does not fully specify them."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=6"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=6"
+      }
+    ]
+  },
+  {
+    "id": "bg-state-changes",
+    "name": "State changes and N2 transients",
+    "aliases": [
+      "sleep spindles",
+      "K complexes"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Sustained alertness/stimulation-related backgrounds with separate N2-transient characterization.",
+    "criteria": [
+      "Present requires >=2 background types, each sustained >=60 s.",
+      "Stimulation should transition less-alert to more-alert/stimulated; spontaneous transitions qualify; the more-alert state is primary.",
+      "State changes virtually always imply reactivity; reactivity need not imply a state change when it lasts <60 s.",
+      "Categories: present with normal N2 transients; present with abnormal N2 transients; present without N2 transients; absent.",
+      "Describe K-complexes and spindles separately: present-normal, present-abnormal with abnormality, or absent."
+    ],
+    "context": "Non-neonatal EEG; spontaneous or stimulated transitions.",
+    "pitfalls": [
+      "Reactivity lasting <60 s does not alone establish a state change."
+    ],
+    "engineering": [
+      "Define persistence across brief artifact and structured N2 abnormalities."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=7"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=7"
+      }
+    ]
+  },
+  {
+    "id": "bg-cape",
+    "name": "Cyclic alternating pattern of encephalopathy",
+    "aliases": [
+      "CAPE"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Regular spontaneous alternation of two backgrounds: present, absent, or unknown/unclear.",
+    "criteria": [
+      "Each pattern lasts >=10 s and the pair alternates spontaneously/regularly for >=6 complete cycles; a cycle includes each state once.",
+      "Describe each pattern and typical duration; note awake/stimulated versus less-awake state when known.",
+      "If each pattern lasts >60 s, state-change criteria are also met."
+    ],
+    "context": "Non-neonatal encephalopathic EEG; components may include separately classified RPPs.",
+    "pitfalls": [
+      "Stimulus-driven alternation alone is not the stated definition."
+    ],
+    "engineering": [
+      "Define tolerance for 'regular'; S01 does not."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=7"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=7"
+      }
+    ]
+  },
+  {
+    "id": "bg-voltage",
+    "name": "Background voltage",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "High, normal, low, or suppressed peak-to-trough background voltage.",
+    "criteria": [
+      "High: most/all activity >=150 µV.",
+      "Low: most/all activity <20 µV but not suppressed.",
+      "Suppressed: all activity <10 µV.",
+      "For nearly continuous/discontinuous records, use the higher-voltage portion."
+    ],
+    "context": "Non-neonatal standard 10–20 longitudinal bipolar EEG.",
+    "pitfalls": [
+      "Do not apply to neonatal EEG."
+    ],
+    "engineering": [
+      "Define 'most/all' and numeric normal bounds; S01 does not."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=7"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=7"
+      }
+    ]
+  },
+  {
+    "id": "bg-ap-gradient",
+    "name": "Anterior-posterior gradient",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Expected AP gradient present, absent, or reversed.",
+    "criteria": [
+      "Present: clear persistent segment >=1 continuous min with lower-voltage/faster anterior and higher-voltage/slower posterior activity.",
+      "Reversed: same duration and paired criteria in the opposite direction."
+    ],
+    "context": "Non-neonatal EEG with anterior and posterior derivations.",
+    "pitfalls": [
+      "Voltage-only or frequency-only gradient is insufficient."
+    ],
+    "engineering": [
+      "Define quantitative 'clear' threshold."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+      }
+    ]
+  },
+  {
+    "id": "bg-breach",
+    "name": "Breach effect",
+    "aliases": [
+      "breach rhythm"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Breach effect present with location, absent, or unclear.",
+    "criteria": [
+      "Present: higher amplitude and increased sharpness, mainly faster frequencies, versus the rest of brain and especially the contralateral homologous region."
+    ],
+    "context": "EEG over or near a skull defect.",
+    "pitfalls": [
+      "Sharp activity without the skull-defect spatial relationship is insufficient."
+    ],
+    "engineering": [
+      "Define comparison thresholds and whether defect metadata is mandatory."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+      }
+    ]
+  },
+  {
+    "id": "sed-morphology",
+    "name": "Sporadic epileptiform discharge morphology",
+    "aliases": [
+      "spike",
+      "spikes",
+      "sharp wave",
+      "polyspikes"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Nonrhythmic, nonperiodic spikes, sharp waves, and polyspikes.",
+    "criteria": [
+      "Spike: pointed transient distinct from background, duration >=20 ms and <70 ms at EEG baseline.",
+      "Sharp wave: same definition, duration >=70 ms and <=200 ms (source states 70–200 ms).",
+      "Polyspike: >=2 consecutive spikes with no interdischarge interval, total duration <0.5 s.",
+      "Typical, not required: diphasic/triphasic, apiculate, asymmetric slope, followed by slow wave or other background disruption."
+    ],
+    "context": "Non-neonatal EEG; localization may be added.",
+    "pitfalls": [
+      "Rhythmic/periodic discharges are not sporadic.",
+      ">=0.5-s spike trains may enter BIRD or highly epileptiform burst classification, outside scope."
+    ],
+    "engineering": [
+      "S01 does not quantify pointedness/background disruption or explicitly discuss the 200-ms endpoint; adjudicate boundary cases."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+      }
+    ]
+  },
+  {
+    "id": "sed-prevalence",
+    "name": "Sporadic epileptiform discharge prevalence",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Combined prevalence of spikes, polyspikes, and sharp waves.",
+    "criteria": [
+      "Abundant: >=1/10 s, but not periodic.",
+      "Frequent: >=1/min and <1/10 s.",
+      "Occasional: >=1/h and <1/min.",
+      "Rare: <1/h.",
+      "When abundant, mean and maximum count per 10-s epoch may be recorded."
+    ],
+    "context": "Nonrhythmic, nonperiodic sporadic discharges in non-neonatal EEG.",
+    "pitfalls": [
+      "Periodic discharges cannot be abundant sporadic discharges."
+    ],
+    "engineering": [
+      "S01 provides no explicit absent category; represent zero events separately pending review."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=8"
+      }
+    ]
+  },
+  {
+    "id": "rpp-validity",
+    "name": "RPP term construction and validity boundary",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "An RPP name combines one localization main term with one pattern-type main term, then adds applicable modifiers.",
+    "criteria": {
+      "required_components": [
+        "one main_term_1 localization",
+        "one main_term_2 pattern type"
+      ],
+      "minimum_run": {
+        "consecutive_cycles_min": 6,
+        "examples": [
+          "1 Hz for 6 s",
+          "3 Hz for 2 s"
+        ]
+      },
+      "frequency_boundary": "No RPP may have a typical frequency above 4 Hz. A pattern above 4 Hz lasting at least 0.5 s is outside this RPP contract; one shorter than 0.5 s is not an RPP.",
+      "evolution_boundary": "Within RPP terminology, evolution is limited to patterns at or below 4 Hz and shorter than 10 s. Longer evolving patterns and faster short patterns are delegated to the seizure/BIRD contracts."
+    },
+    "context": "All RPP labels in this file.",
+    "pitfalls": [
+      "ESz/ESE/ECSz/ECSE definitions",
+      "BIRD definitions",
+      "IIC derivations"
+    ],
+    "engineering": [
+      "Represent boundary handoffs as validation failures or external labels; do not derive seizure, BIRD, or IIC labels here."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=9"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=9"
+      }
+    ]
+  },
+  {
+    "id": "rpp-location",
+    "name": "Main term 1: localization",
+    "aliases": [
+      "LPD",
+      "LPDs",
+      "GPD",
+      "GPDs",
+      "BIPDs",
+      "LRDA",
+      "GRDA"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Main term 1 specifies the spatial organization of the RPP.",
+    "criteria": {
+      "allowed_values": {
+        "G": {
+          "name": "Generalized",
+          "rule": "Bilaterally synchronous and symmetric, including a restricted field. Bilateral asymmetry or asynchrony that shifts and is not consistently lateralized to one side more than 80% of the time remains G.",
+          "qualifiers": {
+            "predominance": {
+              "frontally": "anterior voltage at least 50% greater than posterior",
+              "occipitally": "posterior voltage at least 50% greater than anterior",
+              "midline": "midline voltage at least 50% greater than parasagittal",
+              "not_otherwise_specified": "similar voltage in all regions and none of the preceding"
+            },
+            "asynchrony": "For shifting asynchrony, record typical inter-side lag."
+          }
+        },
+        "L": {
+          "name": "Lateralized",
+          "rule": "Unilateral; or bilateral with clearly and consistently greater amplitude on one side; or bilateral with a consistent lead-in from one side. Includes focal, regional, and hemispheric patterns.",
+          "qualifiers": {
+            "laterality": "Specify side.",
+            "extent": [
+              "unilateral",
+              "bilateral asymmetric",
+              "bilateral asynchronous",
+              "both asymmetric and asynchronous"
+            ],
+            "consistency": "Bilateral asymmetric and bilateral asynchronous examples require the same side more than 80% of the time.",
+            "lag": "For bilateral asynchronous, record typical inter-side lag.",
+            "lobes": [
+              "F",
+              "P",
+              "T",
+              "O",
+              "hemispheric if no finer localization"
+            ]
+          }
+        },
+        "BI": {
+          "name": "Bilateral independent",
+          "rule": "Two independent, therefore asynchronous, lateralized patterns, one in each hemisphere, occurring simultaneously (overlapping in time), not sequentially.",
+          "qualifiers": {
+            "symmetry": [
+              "symmetric",
+              "asymmetric with L > R or R > L"
+            ],
+            "lobes": [
+              "F",
+              "P",
+              "T",
+              "O",
+              "hemispheric"
+            ]
+          }
+        },
+        "UI": {
+          "name": "Unilateral independent",
+          "rule": "Two independent, therefore asynchronous, periodic or rhythmic patterns in the same hemisphere occurring simultaneously, not sequentially. A focal midline pattern can be ipsilateral to an independent left or right pattern.",
+          "qualifiers": {
+            "per_pattern": [
+              "unilateral/bilateral extent",
+              "asymmetry/asynchrony if bilateral",
+              "side",
+              "most involved lobe(s)"
+            ]
+          }
+        },
+        "Mf": {
+          "name": "Multifocal",
+          "rule": "At least three independent lateralized patterns, with at least one in each hemisphere, all occurring simultaneously.",
+          "qualifiers": {
+            "symmetry": [
+              "symmetric",
+              "asymmetric with L > R or R > L"
+            ],
+            "lobes": [
+              "F",
+              "P",
+              "T",
+              "O",
+              "hemispheric"
+            ]
+          }
+        }
+      }
+    },
+    "context": "All PD, RDA, and SW patterns.",
+    "pitfalls": [
+      "Independent patterns occurring at different times are separate lateralized patterns, not BI or UI.",
+      "Two lateralized sides with fixed interhemispheric latency are lateralized bilateral-asynchronous, not BI."
+    ],
+    "engineering": [
+      "Store the main term and qualifiers independently; do not infer localization from a single channel label."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=9"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=9"
+      }
+    ]
+  },
+  {
+    "id": "rpp-type",
+    "name": "Main term 2: PDs, RDA, and SW",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Main term 2 specifies the repeating waveform organization.",
+    "criteria": {
+      "PDs": {
+        "name": "Periodic discharges",
+        "rule": "Relatively uniform waveform morphology and duration, a discernible inter-discharge interval, and recurrence at nearly regular intervals.",
+        "regularity": "Cycle length varies by less than 50% from one cycle to the next in a majority (>50%) of cycle pairs.",
+        "discharge": "Waveform shorter than 0.5 s irrespective of phases, or at least 0.5 s with no more than 3 phases; must stand out from background."
+      },
+      "RDA": {
+        "name": "Rhythmic delta activity",
+        "rule": "Relatively uniform waveform morphology and duration with no interval between waves; irregular or polymorphic delta is not RDA.",
+        "regularity": "Period varies by less than 50% from the subsequent cycle in a majority (>50%) of cycle pairs.",
+        "frequency_hz": {
+          "min": 0.5,
+          "max": 4.0
+        },
+        "note": "Sharp crests or troughs do not prevent a pattern from being rhythmic."
+      },
+      "SW": {
+        "name": "Spike-and-wave or sharp-and-wave",
+        "rule": "Spike, polyspike, or sharp wave consistently followed by a slow wave in a regular alternating repeating pattern, with a consistent component relationship for at least 6 consecutive cycles and no interval between complexes."
+      }
+    },
+    "context": "RPPs after main-term-1 localization is assigned.",
+    "pitfalls": [
+      "An interval between spike-wave complexes is PDs, with each discharge a spike-and-wave.",
+      "A pattern qualifying as both PDs and RDA is PDs+R, not RDA+S."
+    ],
+    "engineering": [
+      "Preserve source categories as enums; do not collapse PD, RDA, and SW into a generic rhythmicity class."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=12"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=12"
+      }
+    ]
+  },
+  {
+    "id": "rpp-time-rate",
+    "name": "Prevalence, duration, and frequency modifiers",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "These modifiers quantify how much pattern is present, its continuous run length, and its rate.",
+    "criteria": {
+      "prevalence_percent_record_or_epoch": {
+        "continuous": ">=90",
+        "abundant": "50-89",
+        "frequent": "10-49",
+        "occasional": "1-9",
+        "rare": "<1",
+        "denominator": "proportion of the record or epoch that includes or is within the pattern; intervals between widely spaced PDs count as pattern duration",
+        "multiple_patterns": "Record each pattern and its own prevalence."
+      },
+      "typical_duration": {
+        "very_long": ">=1 h",
+        "long": "10-59 min",
+        "intermediate": "1-9.9 min",
+        "brief": "10-59 s",
+        "very_brief": "<10 s",
+        "also_required": "longest continuous duration"
+      },
+      "frequency_hz": {
+        "required": [
+          "typical",
+          "minimum",
+          "maximum"
+        ],
+        "categories": [
+          "<0.5",
+          "0.5",
+          "1",
+          "1.5",
+          "2",
+          "2.5"
+        ],
+        "very_brief_additional_categories": [
+          "3",
+          "3.5",
+          "4"
+        ],
+        "PD_SW_restriction": "Typical frequency >2.5 Hz is an RPP only when duration is <10 s; at >=10 s it is outside this RPP contract."
+      }
+    },
+    "context": "All RPPs; duration is recorded if not continuous.",
+    "pitfalls": [
+      "Do not calculate seizure burden here.",
+      "Do not recast frequency-boundary patterns as seizure/BIRD labels in this contract."
+    ],
+    "engineering": [
+      "Store numeric measurements and categorical bins together so bins remain auditable."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=13"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=13"
+      }
+    ]
+  },
+  {
+    "id": "rpp-waveform-modifiers",
+    "name": "Phases, sharpness, and voltage modifiers",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "These modifiers describe discharge structure, contour, and amplitude.",
+    "criteria": {
+      "phases": {
+        "formula": "1 + number of baseline crossings of the typical discharge",
+        "montage": "longitudinal bipolar, channel where most apparent",
+        "baseline_rule": "Start and end points are not crossings",
+        "bins": [
+          "1",
+          "2",
+          "3",
+          ">3"
+        ]
+      },
+      "sharpness": {
+        "spiky": "component duration at EEG baseline <70 ms",
+        "sharp": "70-200 ms",
+        "sharply_contoured": "steep slope on one side and/or pointed/apiculate inflection, but too long to be sharp",
+        "blunt": "smooth or sinusoidal",
+        "required": "Describe dominant (highest-voltage) phase and sharpest phase if different."
+      },
+      "absolute_voltage_peak_to_trough_uV": {
+        "montage": "standard longitudinal bipolar 10-20, channel where pattern is most apparent",
+        "PD_measurement": "highest-voltage component",
+        "SW_measurement": "spike/sharp component",
+        "bins": {
+          "very_low": "<20",
+          "low": "20-49",
+          "medium": "50-149",
+          "high": ">=150"
+        }
+      },
+      "relative_voltage_PDs_only": "Ratio of the highest-voltage component of the typical discharge to typical between-discharge background in the same channel and montage; bin as <=2 or >2."
+    },
+    "context": "Phases: PDs and the entire SW complex, not RDA. Sharpness and polarity: PDs and spike/sharp component of SW, not RDA. Voltage: PDs, SW, and RDA; relative voltage only PDs.",
+    "pitfalls": [
+      "Do not use background EEG voltage for the RPP voltage modifier."
+    ],
+    "engineering": [
+      "Retain the acquisition montage with every amplitude, phase, and polarity-related field."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=13"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=13"
+      }
+    ]
+  },
+  {
+    "id": "rpp-stimulus-evolution",
+    "name": "Stimulus state, evolution, fluctuation, and static modifiers",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Stimulus modifiers describe reproducible response to alerting stimulation; temporal modifiers describe frequency, morphology, or location change.",
+    "criteria": {
+      "stimulus_state": {
+        "SI": "Reproducibly brought about or exacerbated by alerting stimulus in a less-stimulated state, with or without clinical alerting; may also occur spontaneously.",
+        "ST": "Reproducibly terminated or attenuated by alerting stimulus in a less-stimulated state, with or without clinical alerting; may also self-terminate.",
+        "spontaneous": "Never clearly induced, exacerbated, improved, or terminated by stimulation.",
+        "unknown": "Unclear or untested.",
+        "stimulus_type_required": [
+          "auditory",
+          "light tactile",
+          "patient care/other nonnoxious",
+          "noxious"
+        ]
+      },
+      "evolving": {
+        "minimum": "At least 2 unequivocal sequential changes in the same category.",
+        "frequency": "Two consecutive changes in one direction, each at least 0.5 Hz; each frequency persists at least 3 cycles.",
+        "morphology": "Two consecutive novel morphologies; each morphology, including transition forms, persists at least 3 cycles.",
+        "location": "Sequential spread into or out of at least 2 standard 10-20 electrode locations; involvement of each additional electrode persists at least 3 cycles.",
+        "interstep_gap": "Reach criteria without the changing feature remaining unchanged for 5 or more continuous minutes.",
+        "amplitude": "Voltage/amplitude change alone is neither evolution nor a new morphology."
+      },
+      "fluctuating": {
+        "minimum": "At least 3 changes, no more than 1 minute apart, not qualifying as evolution.",
+        "frequency": "Each change at least 0.5 Hz; each frequency persists at least 3 cycles.",
+        "morphology": "Each morphology persists at least 3 cycles.",
+        "location": "Each change at least 1 standard interelectrode distance; each location persists at least 3 cycles.",
+        "amplitude": "Voltage/amplitude change alone is not fluctuation."
+      },
+      "static": "Neither evolving nor fluctuating.",
+      "additional_reporting": "If evolving or fluctuating in frequency, specify minimum and maximum frequency. For nongeneralized patterns specify spread as none, unilateral, or bilateral."
+    },
+    "context": "Stimulus state applies to RPPs. Evolution/fluctuation/static applies to RPPs within the RPP validity boundary.",
+    "pitfalls": [
+      "SIRPIDs is an umbrella source term; record the specific SI-RPP rather than deriving seizure/IIC/BIRD forms.",
+      "No seizure/BIRD/IIC classification is emitted."
+    ],
+    "engineering": [
+      "Use an event sequence rather than a single classifier score so cycle persistence, direction, and interstep gap can be audited."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=14"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=14"
+      }
+    ]
+  },
+  {
+    "id": "rpp-plus",
+    "name": "Plus modifier and extreme delta brush",
+    "aliases": [
+      "extreme delta brush"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Plus denotes an added feature that makes PDs or RDA more ictal-appearing than the unmodified pattern. Extreme delta brush is a specific +F subtype.",
+    "criteria": {
+      "subtypes": {
+        "+F": "Superimposed theta-or-faster activity, rhythmic or not, on PDs or RDA. It must be part of the pattern, not merely background; for PDs it may be continuous if absent when PDs are absent, or occur regularly with each discharge.",
+        "+R": "Superimposed rhythmic or quasi-rhythmic delta activity; PDs only.",
+        "+S": "Associated sharp waves, spikes, or sharp contour; RDA only; present at least once per 10 s and not an SW pattern.",
+        "combinations": [
+          "PDs+FR",
+          "RDA+FS"
+        ]
+      },
+      "bilateral_rule": "If a bilateral pattern qualifies for plus on only one side, the overall main term still receives the plus modifier.",
+      "EDB": {
+        "definite": "Abundant or continuous RDA+F with fast activity stereotypically related to the delta wave, or abundant/continuous PDs+F where each PD is a single blunt delta wave and fast activity is stereotypically related to that delta wave.",
+        "possible": "Meets either EDB form but is only occasional/frequent, or the fast activity lacks a stereotyped delta-wave relationship.",
+        "not_EDB": "RDA+F/PDs+F lacking both required EDB conditions; a periodic pattern can be EDB only if PDs are blunt delta brushes; fast activity between delta waves or present as background does not qualify."
+      }
+    },
+    "context": "Plus applies to PDs and RDA only, never SW.",
+    "pitfalls": [
+      "Other ictal-appearing attributes, including sharpness, voltage, and fluctuation, are reported through their own modifiers."
+    ],
+    "engineering": [
+      "Encode plus subtypes as a set and EDB as a separately validated subtype; do not infer EDB from +F alone."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=17"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=17"
+      }
+    ]
+  },
+  {
+    "id": "rpp-minor",
+    "name": "Minor modifiers",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Minor modifiers refine onset, morphology, lag, and polarity.",
+    "criteria": {
+      "onset": {
+        "sudden": "Absent to well-developed within 3 s.",
+        "gradual": "Does not meet sudden-onset definition."
+      },
+      "triphasic_morphology": "Three negative-positive-negative phases, each longer than the preceding and the positive phase of highest voltage; or positive-negative biphasic appearance when a low-voltage first negative phase is obscured by background. PDs and SW only.",
+      "anterior_posterior_lag": "Consistent measurable delay >100 ms from most anterior to most posterior derivation, or reverse; report typical anterior-to-posterior delay in ms (negative for posterior-to-anterior) in longitudinal bipolar and referential montage, preferably ipsilateral-ear reference. PDs or spike/sharp component of SW only.",
+      "polarity": {
+        "values": [
+          "positive",
+          "negative",
+          "dipole, tangential",
+          "unclear"
+        ],
+        "rule": "Describe dominant/highest-voltage phase in a referential montage; PDs or spike/sharp component of SW only."
+      }
+    },
+    "context": "As specified per modifier.",
+    "pitfalls": [
+      "Triphasic morphology, lag, and polarity do not apply to RDA."
+    ],
+    "engineering": [
+      "Keep conventional terminology and raw lag in milliseconds together; do not infer polarity from bipolar montage."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=22"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=22"
+      }
+    ]
+  },
+  {
+    "id": "sz-esz",
+    "name": "Electrographic seizure",
+    "aliases": [
+      "electrographic seizure",
+      "ESz"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "An EEG event that meets the ACNS electrographic seizure criteria through discharge rate or definite evolution and duration.",
+    "criteria": [
+      "Either discharges averaging >2.5 Hz for >=10 s (>25 discharges/10 s), OR a pattern with definite evolution lasting >=10 s.",
+      "Sharply contoured discharges >200 ms may qualify through the high-rate pathway even when not technically epileptiform.",
+      "Evolution must satisfy the source RPP evolution criteria; amplitude change alone is insufficient."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": []
+    },
+    "pitfalls": [
+      "Do not infer neonatal seizure criteria from this contract"
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=22"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=22"
+      }
+    ]
+  },
+  {
+    "id": "sz-ese",
+    "name": "Electrographic status epilepticus",
+    "aliases": [
+      "electrographic status epilepticus",
+      "ESE"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Electrographic seizures meeting the ACNS continuous-duration or cumulative hourly-burden criteria for status.",
+    "criteria": [
+      "Qualifying ESz continues for >=10 minutes, OR total ESz duration is >=20% of any 60-minute interval.",
+      "Hourly burden uses the specified 60-minute denominator, not a cropped display's duration."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Enough recording for the continuous-duration branch or a 60-minute burden window"
+      ]
+    },
+    "pitfalls": [],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=23"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=23"
+      }
+    ]
+  },
+  {
+    "id": "sz-ecsz",
+    "name": "Electroclinical seizure",
+    "aliases": [
+      "electroclinical seizure"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "An EEG pattern with a definite time-linked clinical correlate, or both EEG and clinical improvement after parenteral antiseizure medication.",
+    "criteria": [
+      "An EEG pattern with a definite time-locked clinical correlate, OR EEG AND clinical improvement after parenteral antiseizure medication.",
+      "A definite correlate must accompany the pattern and be absent when that pattern is absent; subtle signs can qualify.",
+      "Duration <10 s qualifies only with a definite clinical correlate. An ECSz need not meet ESz; report both when both qualify."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Clinical event/video evidence or documented EEG and clinical medication response"
+      ]
+    },
+    "pitfalls": [
+      "Muscle artifact synthesized beside an event is not proof of a clinical correlate"
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+      }
+    ]
+  },
+  {
+    "id": "sz-ecse",
+    "name": "Electroclinical status epilepticus",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Electroclinical seizures meeting status-duration or hourly-burden criteria, with a separate threshold for ongoing bilateral tonic-clonic activity.",
+    "criteria": [
+      "ECSz persists >=10 continuous minutes OR occupies >=20% of any 60-minute interval.",
+      "Exception: ongoing bilateral tonic-clonic motor seizure qualifies at >=5 continuous minutes.",
+      "Known epileptic encephalopathy additionally requires increased prominence/frequency of discharges from baseline with clinical deterioration, OR EEG and clinical improvement following parenteral antiseizure medication."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Clinical state, baseline in known epileptic encephalopathy, treatment/response timing where used"
+      ]
+    },
+    "pitfalls": [],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+      }
+    ]
+  },
+  {
+    "id": "sz-possible-ecse",
+    "name": "Possible electroclinical status epilepticus",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "A qualifying prolonged ictal-interictal continuum pattern that improves electrographically after parenteral antiseizure medication without clinical improvement.",
+    "criteria": [
+      "An IIC RPP persists >=10 continuous minutes OR >=20% of any 60-minute interval.",
+      "Parenteral antiseizure medication improves the EEG without clinical improvement.",
+      "All duration, IIC and response requirements are conjunctive."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Medication route/time and separate EEG versus clinical response"
+      ]
+    },
+    "pitfalls": [
+      "Already qualifying ESz/ESE excluded"
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+      }
+    ]
+  },
+  {
+    "id": "sz-nonconvulsive",
+    "name": "Nonconvulsive seizure/status qualifier",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "A qualifier indicating that a seizure or status event lacks prominent motor activity; it does not mean there is no clinical correlate.",
+    "criteria": [
+      "No prominent motor activity; applies to electrographic or electroclinical seizure/status.",
+      "Prefer nonconvulsive to subclinical: absence of prominent movement does not establish absence of clinical contribution."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Clinical motor observations; cannot be inferred from EEG alone"
+      ]
+    },
+    "pitfalls": [],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+      }
+    ]
+  },
+  {
+    "id": "sz-si",
+    "name": "Stimulus-induced seizure/IIC/BIRDs qualifier",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "A qualifier for a qualifying pattern reproducibly induced or exacerbated by an alerting stimulus.",
+    "criteria": [
+      "Alerting stimulus reproducibly induces or exacerbates the qualifying phenomenon; prepend SI to the qualifying term."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Stimulus timestamps and responses; distinguish artifact"
+      ]
+    },
+    "pitfalls": [
+      "Temporal proximity alone without reproducibility is insufficient"
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+      }
+    ]
+  },
+  {
+    "id": "sz-birds",
+    "name": "Brief potentially ictal rhythmic discharges",
+    "aliases": [
+      "BIRDs"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "Brief potentially ictal rhythmic discharges with specified frequency, duration and morphology/context requirements.",
+    "criteria": [
+      "Focal (L/BI/UI/Mf) or generalized rhythmic activity >4 Hz, at least six waves at a regular rate, duration >=0.5 s and <10 s.",
+      "Exclude known normal/benign patterns, activity forming part of burst-suppression/attenuation, and definite clinical correlates.",
+      "Definite: evolution OR morphology AND location resembling interictal discharges or seizures in the same patient.",
+      "Possible: sharply contoured without either definite criterion.",
+      "Paroxysmal fast activity of the stated duration can qualify, focal or generalized, subject to the defining exclusions."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Same-patient comparative EEG if similarity branch is used"
+      ]
+    },
+    "pitfalls": [
+      "Do not equate neonatal BRDs with this definition"
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=24"
+      }
+    ]
+  },
+  {
+    "id": "sz-iic",
+    "name": "Ictal-interictal continuum",
+    "aliases": [
+      "IIC",
+      "ictal interictal continuum"
+    ],
+    "category": "Critical-care EEG",
+    "definition": "EEG patterns that do not meet definite seizure criteria but may contribute to impaired alertness, symptoms or neuronal injury in the appropriate clinical context.",
+    "criteria": [
+      "Always exclude ESz/ESE.",
+      "Pathway A: PD/SW averages >1 and <=2.5 Hz over 10 s.",
+      "Pathway B: PD/SW averages >=0.5 and <=1 Hz over 10 s AND (has a plus modifier OR fluctuation).",
+      "Pathway C: lateralized RDA averages >1 Hz for >=10 s AND (has a plus modifier OR fluctuation); includes LRDA, BIRDA, UIRDA and MfRDA.",
+      "IIC describes an electrographic category, not a diagnosis or an automatic treatment order."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Full clinical context for interpretation; only waveform category is derived here"
+      ]
+    },
+    "pitfalls": [
+      "GRDA does not qualify through pathway C"
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=25"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=25"
+      }
+    ]
+  },
+  {
+    "id": "rep-minimum",
+    "name": "Minimum clinical reporting context",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Recommended review, communication and reporting context for critical-care EEG.",
+    "criteria": [
+      "Review/report first 30–60 minutes promptly.",
+      "Written report at least once per 24 hours; significant intervening changes get separate epochs/reports.",
+      "Communication updates at least twice daily recommended except unusually stable circumstances."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Clinical-care reporting recommendation; not a synthetic waveform criterion"
+      ]
+    },
+    "pitfalls": [],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=26"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=26"
+      }
+    ]
+  },
+  {
+    "id": "rep-burden",
+    "name": "Pattern/seizure burden and index",
+    "aliases": [],
+    "category": "Critical-care EEG",
+    "definition": "Measures of the duration or frequency-weighted duration of a pattern over an explicitly defined reporting interval.",
+    "criteria": [
+      "Daily burden: total pattern or seizure duration per 24 hours; hourly and maximal hourly burdens also reportable.",
+      "Daily pattern index: daily burden multiplied by mean frequency; retain units (Hz-hours or Hz-minutes)."
+    ],
+    "context": {
+      "population": "non-neonatal",
+      "setting": "critical care; other settings with contextual review",
+      "required_context": [
+        "Observation interval and interpretable duration must be retained; do not treat missing EEG as absence"
+      ]
+    },
+    "pitfalls": [],
+    "engineering": [
+      "Union overlapping intervals for occupied time; declare missing-data denominator policy in P3 rather than invent it as ACNS rule."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS critical-care EEG terminology",
+      "version": "2021",
+      "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=26"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/UserFiles/file/ACNSStandardizedCriticalCareEEGTerminology_rev2021.pdf#page=26"
+      }
+    ]
+  },
+  {
+    "id": "neo-reporting-context",
+    "name": "Neonatal recording context and daily reporting",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Minimum context needed to interpret each 24-hour neonatal continuous video-EEG period and its clinically relevant changes.",
+    "criteria": [
+      "Record postmenstrual age (PMA) at acquisition; PMA is gestational age from last menstrual period plus chronological age.",
+      "Source categories are preterm <37 weeks PMA, term 37 up to 44 weeks PMA, and post-term 44 to 48 weeks PMA; the literal wording overlaps at 44 weeks and does not state whether 48 weeks is inclusive.",
+      "Record neuroactive medications and ideally administration times, including sedatives, hypnotics, anxiolytics, anesthetics, and antiseizure drugs.",
+      "Record hypothermia depth, duration, and whether spontaneous or induced; record major hemodynamic, respiratory, or cardiorespiratory changes.",
+      "Record hours uninterpretable for technical reasons; characterize the first hour, one background hour in each later 24-hour period, and additional epochs after relevant change.",
+      "Record seizure onset, burden, resolution, and status epilepticus onset and resolution."
+    ],
+    "context": "Every neonatal recording and each reported 24-hour period.",
+    "pitfalls": [
+      "A waveform-only example without PMA and recording context cannot satisfy this contract."
+    ],
+    "engineering": [
+      "Pending Craig: encode term as the half-open interval [37,44) weeks and post-term as beginning at 44 weeks; the upper 48-week boundary remains unresolved."
+    ],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=3"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=3"
+      }
+    ]
+  },
+  {
+    "id": "neo-behavioral-state",
+    "name": "Behavioral state and sleep-wake cycling",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "State assignment combines EEG and polysomnographic behavior and is interpreted relative to PMA.",
+    "criteria": [
+      "A state requires its defining features for >=60 seconds.",
+      "Allowed states are awake, active sleep, quiet sleep, transitional sleep, and indeterminate sleep; transitional sleep mixes features of the states on either side, while indeterminate sleep cannot be assigned to active or quiet sleep.",
+      "Term awake and active sleep use continuous low-to-medium voltage mixed-frequency activité moyenne; active sleep additionally has closed eyes, REM, irregular respiration, and body movement.",
+      "Term quiet sleep has closed eyes, absent REM, little movement, and near term commonly tracé alternant; mature continuous high-voltage slow activity and 10-12 Hz spindles emerge around 46 weeks PMA.",
+      "Sleep-wake cycling records orderly alteration among states: term complete sleep-wake cycles are typically 3-4 hours and sleep-only cycles 40-70 minutes; preterm sleep cycles are 30-50 minutes below 35 weeks PMA and 50-65 minutes beyond 35 weeks PMA.",
+      "Unspecified state change requires distinct EEG patterns differing in discontinuity, voltage, or frequency, with each state lasting >=60 seconds."
+    ],
+    "context": "Neonatal recordings with sufficient EEG, eye, respiratory, movement, and preferably EMG observations.",
+    "pitfalls": [
+      "Do not force active or quiet sleep when clinical and EEG features are insufficient or discordant.",
+      "A short page cannot establish sleep-wake cycling."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=4"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=4"
+      }
+    ]
+  },
+  {
+    "id": "neo-continuity-normal",
+    "name": "Normal continuity, tracé discontinu, and tracé alternant",
+    "aliases": [
+      "tracé alternant",
+      "trace alternant",
+      "tracé discontinu",
+      "trace discontinu"
+    ],
+    "category": "Neonatal EEG",
+    "definition": "Normal neonatal continuity and discontinuity are PMA- and state-dependent rather than fixed adult categories.",
+    "criteria": [
+      "Continuous activity has no interruption and <2 seconds of attenuation below 25 µV peak-to-peak.",
+      "An interburst interval (IBI) is attenuation below an age-dependent level described broadly as <25-50 µV peak-to-peak for >=2 seconds; Table 1 supplies the age bins.",
+      "Normal maximum IBI/voltage by PMA: <30 weeks, 35 seconds and <25 µV; 30-33 weeks, 20 seconds and <25 µV; 34-36 weeks, 10 seconds and approximately 25 µV; 37-40 weeks, 6 seconds and >25 µV.",
+      "Tracé discontinu contains 50-300 µV bursts with low-voltage IBIs and age-appropriate graphoelements; it is developmentally expected mainly from 26-40 weeks PMA and becomes confined to quiet sleep with maturation.",
+      "Tracé alternant occurs only in quiet sleep: 50-150 µV delta bursts lasting roughly 4-10 seconds alternate with 25-50 µV mixed theta-delta periods that never fall below 25 µV; it appears around 34-36 weeks, is minimal by 42 weeks, and is absent by 46 weeks PMA."
+    ],
+    "context": "Background assessment in preterm, term, and post-term neonates.",
+    "pitfalls": [
+      "Do not label age-appropriate discontinuity excessive using a fixed IBI threshold.",
+      "The source gives no Table 1 normal IBI row above 40 weeks PMA."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=5"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=5"
+      }
+    ]
+  },
+  {
+    "id": "neo-discontinuity-abnormal",
+    "name": "Excessive discontinuity and neonatal burst suppression",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Separates PMA-inappropriate discontinuity that retains normal elements from invariant burst suppression lacking normal graphoelements.",
+    "criteria": [
+      "Excessive discontinuity has IBIs too long or too voltage-depressed for PMA while bursts retain some age-appropriate patterns or graphoelements.",
+      "Burst suppression has invariant abnormal bursts separated by prolonged IBIs with voltage <5 µV peak-to-peak.",
+      "Permitted activity within burst-suppression IBIs is limited to sparse activity up to 15 µV in one electrode, transient activity up to 15 µV for <2 seconds, or the source-described >2:1 voltage asymmetry in multiple electrodes.",
+      "Burst suppression is unreactive and lacks spontaneous lability; bursts lack recognizable normal graphoelements and should be described as >100 µV or <100 µV, with typical burst and IBI durations and burst-component sharpness recorded."
+    ],
+    "context": "Discontinuous neonatal backgrounds assessed against PMA and state.",
+    "pitfalls": [
+      "Do not call a variable or reactive record with normal graphoelements burst suppression.",
+      "Do not infer severity from discontinuity without PMA and state."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=8"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=8"
+      }
+    ]
+  },
+  {
+    "id": "neo-symmetry-synchrony",
+    "name": "Background symmetry and interhemispheric synchrony",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Symmetry compares homologous content and voltage; synchrony compares burst onset timing and has a non-linear developmental course.",
+    "criteria": [
+      "Persistent >2:1 voltage difference between homologous regions, or persistent disparity in frequency or graphoelement distribution, is abnormal asymmetry; fleeting differences may remain normal.",
+      "A burst pair is synchronous when left and right onsets differ by <=1.5 seconds; report the percentage of synchronous bursts.",
+      "Near-complete synchrony is expected before roughly 27-29 weeks and again near term; about 70% synchrony may occur around 29-30 weeks and some asynchrony is expected from 30-37 weeks.",
+      "After 38 weeks PMA, substantial asynchrony is not expected; abnormal asynchrony means a clearly excessive PMA-adjusted proportion of bursts with onset difference >1.5 seconds."
+    ],
+    "context": "Multichannel neonatal background, with synchrony assessed during discontinuous portions.",
+    "pitfalls": [
+      "Synchrony does not describe continuous portions without identifiable bursts.",
+      "No universal abnormal percentage cutoff is supplied; judgment remains PMA-conditioned."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=9"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=9"
+      }
+    ]
+  },
+  {
+    "id": "neo-voltage-eci",
+    "name": "Term background voltage and electrocerebral inactivity",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Voltage categories for term neonatal background plus the separately standardized technical claim of electrocerebral inactivity (ECI).",
+    "criteria": [
+      "Normal term background has most activity >=25 µV peak-to-peak in every behavioral state.",
+      "Borderline low voltage is continuous, retains normal activity and graphoelements, and is persistently >=10 and <25 µV peak-to-peak.",
+      "Low-voltage suppressed background lacks normal features, has fundamental baseline <10 µV peak-to-peak, permits >=10 µV transients only when <2 seconds, and is invariant and unreactive.",
+      "ECI means no discernible cerebral activity at or above 2 µV peak-to-peak when reviewed at sensitivity 2 µV/mm and only when ECI technical standards were met; otherwise report only that the record may be consistent with ECI."
+    ],
+    "context": "Voltage categories apply primarily to term infants; ECI requires a recording performed to separate ECI technical standards.",
+    "pitfalls": [
+      "The source declines to define normal voltage limits for premature infants.",
+      "Do not determine cerebral death from this EEG term alone.",
+      "Do not apply ECI after a standard neonatal acquisition that lacks ECI technical requirements."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=10"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=10"
+      }
+    ]
+  },
+  {
+    "id": "neo-variability-reactivity",
+    "name": "Background variability and reactivity",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Variability is spontaneous change from internal state; reactivity is cerebral EEG change after external stimulation.",
+    "criteria": [
+      "A qualifying response is a conspicuous change in frequency, continuity, or voltage.",
+      "Record each feature as yes, no, or unclear/unknown/not applicable.",
+      "Variability first appears near 25 weeks PMA, increases by 28 weeks, and is well established around 30-31 weeks.",
+      "Reactivity first appears around 30-32 weeks PMA; record stimulus type and strength.",
+      "Separate cerebral change from movement, EMG, crying, and respiratory artifacts; arousal-related voltage attenuation is not automatically discontinuity."
+    ],
+    "context": "Neonatal background with sufficient longitudinal state sampling and documented stimulation.",
+    "pitfalls": [
+      "Behavioral or muscle response alone is not cerebral EEG reactivity.",
+      "Absence during one short state sample does not establish global absence."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=11"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=11"
+      }
+    ]
+  },
+  {
+    "id": "neo-dysmaturity",
+    "name": "EEG dysmaturity",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "The EEG background appears developmentally appropriate for an infant at least two weeks younger than the actual PMA.",
+    "criteria": [
+      "Difference between actual PMA and EEG-implied PMA is >=2 weeks.",
+      "Persistent dysmaturity is abnormal; the source frames the concept longitudinally."
+    ],
+    "context": "Serial or sufficiently comprehensive neonatal recordings with an assigned EEG maturational age.",
+    "pitfalls": [
+      "Do not infer dysmaturity from one isolated feature without an overall maturational assessment."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=12"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=12"
+      }
+    ]
+  },
+  {
+    "id": "neo-graphoelements",
+    "name": "Normal neonatal graphoelements",
+    "aliases": [
+      "delta brushes",
+      "encoches frontales",
+      "STOP",
+      "temporal theta"
+    ],
+    "category": "Neonatal EEG",
+    "definition": "Named developmental background hallmarks whose morphology, state, distribution, and expected PMA window jointly determine normality.",
+    "criteria": [
+      "Monorhythmic delta: 24-34 weeks PMA, up to 200 µV peak-to-peak, stereotyped delta usually occipital, temporal, or central and rarely frontal; typically symmetric, synchronous, and often surface positive.",
+      "Delta brushes: most prominent 24-36 weeks, 0.3-1.5 Hz slow waves at 50-250 µV with superimposed 8-12 or 18-22 Hz activity; peak expression 32-34 weeks, with state distribution changing by PMA and occasional quiet-sleep occurrence through 40 weeks.",
+      "Rhythmic temporal theta: 24-34 weeks, 25-120 µV theta in approximately 2-second temporal bursts, typically symmetric and maximal at 29-32 weeks; similar activity may occur at vertex or occipital sites.",
+      "Anterior dysrhythmia: 32-44 weeks, 50-100 µV frontal delta waves singly or in brief runs, typically symmetric and synchronous.",
+      "Encoches frontales: 34-44 weeks, 50-100 µV broad diphasic frontal transients lasting 0.5-0.75 seconds with small initial negative and larger positive phase; typically symmetric/synchronous and enriched during transition from active to quiet sleep."
+    ],
+    "context": "Neonatal background interpreted with PMA and state.",
+    "pitfalls": [
+      "A named morphology outside its PMA/state/distribution context is not automatically a normal graphoelement.",
+      "The source states that its list is not exhaustive."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=12"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=12"
+      }
+    ]
+  },
+  {
+    "id": "neo-sharp-transients",
+    "name": "Neonatal sharp-wave transients",
+    "aliases": [
+      "positive sharp waves",
+      "PSWY"
+    ],
+    "category": "Neonatal EEG",
+    "definition": "Distinct positive or negative transients are classified using baseline duration, abundance, spatial distribution, repetition, PMA, and background context.",
+    "criteria": [
+      "A spike lasts <100 ms at baseline; a sharp wave lasts 100-200 ms; the transient must stand apart from background rather than be only sharply contoured background.",
+      "Physiologic negative sharp waves are usually 100-200 ms, solitary, symmetric, and mid-temporal/central/centro-temporal against a PMA-normal background; frontal, vertex, and occipital locations are uncommon.",
+      "Abnormal negative transients are supported by abnormal background, concentration in one region or hemisphere, atypical location, high abundance, or repetitive runs; source-cited outcome data call rates >11/hour preterm and >13/hour term abnormal.",
+      "Positive Rolandic/vertex sharp waves are centered at C3/C4 or vertex with adjacent field; excessive positive mid-temporal waves can indicate focal pathology, while cited upper normal observations are 3/hour preterm and 1.5/hour term."
+    ],
+    "context": "Transient assessment in the most continuous portions of neonatal EEG, preferably wakefulness or active sleep.",
+    "pitfalls": [
+      "Do not count fleeting sharp contour embedded in discontinuous bursts as a distinct transient.",
+      "Abundance boundaries remain debated and the cited rates are not presented as a complete standalone diagnostic rule."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=13"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=13"
+      }
+    ]
+  },
+  {
+    "id": "neo-brd",
+    "name": "Brief rhythmic discharge",
+    "aliases": [
+      "BRD",
+      "brief rhythmic discharge"
+    ],
+    "category": "Neonatal EEG",
+    "definition": "An evolving rhythmic neonatal discharge resembling seizure activity but lasting less than ten seconds.",
+    "criteria": [
+      "Rhythmic electrical activity shows evolution and duration <10 seconds.",
+      "Record accompanying background abnormality and confirmed seizures; these are common contexts but not stated as mandatory criteria."
+    ],
+    "context": "Neonatal evolving rhythmic events below seizure duration.",
+    "pitfalls": [
+      "An event lasting >=10 seconds may meet neonatal seizure criteria instead.",
+      "A very brief rhythmic pattern without evolution belongs with non-seizure rhythmic/periodic patterns, not BRD."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=14"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=14"
+      }
+    ]
+  },
+  {
+    "id": "neo-seizure",
+    "name": "Neonatal seizure type, electrographic definition, and spread",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "A neonatal electrographic seizure is a sudden abnormal repetitive evolving EEG event meeting voltage and duration thresholds; clinical coupling is classified separately.",
+    "criteria": [
+      "Electrographic seizure is repetitive and unequivocally evolves in frequency, voltage, morphology, or location, reaches >=2 µV peak-to-peak, and lasts >=10 seconds; there is no minimum electrical frequency.",
+      "The 2 µV threshold marks seizure beginning and end; two events are separate only when the inter-event interval is >=10 seconds.",
+      "Electroclinical seizure has definite simultaneous clinical seizure signs; electrographic-only seizure has no specific visible clinical sign; clinical-only events have no simultaneous EEG seizure.",
+      "Spread classes are diffuse asynchronous involvement of all electrodes, bilateral independent, migrating between hemispheres, lateralized within one hemisphere, unifocal onset, or multifocal onset from >=3 independent foci with >=1 in each hemisphere.",
+      "Restricted locations may be frontal, central, temporal, occipital, vertex, anterior quadrant, posterior quadrant, or hemispheric left/right."
+    ],
+    "context": "Neonatal EEG events with calibrated voltage, continuous duration, evolution, and clinical/video correlation when a clinical class is assigned.",
+    "pitfalls": [
+      "Do not call evolving activity <10 seconds a seizure; use BRD.",
+      "Do not call repetitive activity without evolution a seizure even when >10 seconds.",
+      "Do not confuse arousal or drowsiness background transitions with seizures.",
+      "Do not use generalized synchronous terminology where the neonatal source specifies diffuse asynchronous spread."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=15"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=15"
+      }
+    ]
+  },
+  {
+    "id": "neo-seizure-burden-status",
+    "name": "Neonatal seizure burden and status epilepticus",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Seizure burden is quantified over an explicit denominator; neonatal status is defined by seizure occupancy of a one-hour epoch.",
+    "criteria": [
+      "Clinical burden may be reported as seizure count per hour or total seizure duration divided by the duration of the epoch of interest.",
+      "Research temporal-spatial burden sums seizure duration per hour in five non-overlapping neonatal montage regions so each electrode is counted once; the source lists Fp3-T3, C3-O1, Fp4-T4, C4-O2, Fz-Pz or an alternate pairing.",
+      "Status epilepticus is present when summed seizure duration is >=50% of any defined 60-minute epoch."
+    ],
+    "context": "Continuous neonatal EEG with complete seizure start/stop annotations and a defined analysis epoch.",
+    "pitfalls": [
+      "Do not report a percentage without the epoch denominator.",
+      "The source explicitly describes the 50% status cutoff as somewhat arbitrary rather than outcome-validated."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=16"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=16"
+      }
+    ]
+  },
+  {
+    "id": "neo-rpp-pattern-location",
+    "name": "Neonatal rhythmic and periodic patterns of uncertain significance",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Non-seizure periodic discharges and rhythmic delta activity are described by waveform organization, minimum cycles, onset, spread, and neonatal location terms.",
+    "criteria": [
+      "Periodic discharges have relatively uniform morphology/duration, a measurable interdischarge interval, and near-regular recurrence: cycle length varies <50% between adjacent cycles in >50% of cycle pairs.",
+      "A discharge has <=3 phases or lasts <=0.5 seconds regardless of phases; a burst lasts >0.5 seconds and has >=4 phases.",
+      "RDA repeats relatively uniform waveforms without an inter-wave interval and has cycle-length variation <50% in >50% of adjacent cycle pairs.",
+      "PD or RDA must persist for >=6 cycles.",
+      "Location is lateralized, diffuse with asynchronous all-electrode involvement, bilateral independent, or multifocal; report onset focus, maximal spread, and F/C/T/O/Z or hemispheric predominance as applicable.",
+      "For diffuse patterns, frontal, occipital, or midline predominance requires amplitude >=50% greater than the comparison region in an appropriate referential montage."
+    ],
+    "context": "Neonatal rhythmic or periodic patterns that do not have seizure-defining evolution.",
+    "pitfalls": [
+      "Evolution is not an RPP modifier in neonates because evolution defines BRD or seizure according to duration.",
+      "Neonatal RDA is not necessarily abnormal; normal rhythmic occipital delta and anterior dysrhythmia can meet rhythmic form."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=17"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=17"
+      }
+    ]
+  },
+  {
+    "id": "neo-rpp-modifiers",
+    "name": "Neonatal rhythmic/periodic duration, polarity, and sharpness modifiers",
+    "aliases": [],
+    "category": "Neonatal EEG",
+    "definition": "Neonatal RPPs use a limited modifier set with neonatal duration boundaries and bipolar polarity measurement.",
+    "criteria": [
+      "Record typical duration and preferably longest continuous duration: very long >=1 hour; long 5-59 minutes; intermediate 1-4.9 minutes; brief 10-59 seconds; very brief <10 seconds without evolution.",
+      "Determine predominant-phase polarity in a traditional bipolar montage as positive, negative, or unclear.",
+      "Measure sharpness at baseline for predominant and sharpest phase: spiky <100 ms; sharp 100-200 ms; sharply contoured theta/delta is >200 ms with steep or pointed morphology; blunt is smooth or sinusoidal."
+    ],
+    "context": "Non-continuous neonatal PD/RDA patterns; polarity and sharpness apply only to PDs and the spike/sharp component of spike-wave patterns, not RDA.",
+    "pitfalls": [
+      "Do not apply polarity or sharpness to RDA.",
+      "Do not use the newer non-neonatal 10-59 minute long-duration boundary; S09 specifies 5-59 minutes.",
+      "Very brief evolving events are BRDs, not static RPP duration examples."
+    ],
+    "engineering": [],
+    "status": "Source-extracted draft · clinical editorial review pending",
+    "source": {
+      "title": "ACNS neonatal terminology, official PDF",
+      "version": "2012 guideline / 2013 publication",
+      "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=18"
+    },
+    "examples": [
+      {
+        "title": "Official source: figures and examples",
+        "url": "https://www.acns.org/pdf/guidelines/Guideline-16.pdf#page=18"
+      }
+    ]
+  }
+]

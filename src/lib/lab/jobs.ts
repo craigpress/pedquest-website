@@ -24,7 +24,7 @@ import {
 /** The columns every route selects. Kept in one place so the shapes agree. */
 export const LAB_JOB_COLUMNS =
   "id,stage,status,spec,duration_s,formats,options,recording_id,spec_hash," +
-  "renderer_version,artifacts,report,error,attempts,max_attempts,last_exit_code," +
+  "renderer_version,answer_generation,artifacts,report,error,attempts,max_attempts,last_exit_code," +
   "requested_by,parent_job_id,expires_at,created_at,updated_at," +
   "review_status,author_id,source,qbank_id,title,description,grandfathered," +
   "submitted_at,reviewed_by,reviewed_at,published_at";
@@ -152,6 +152,7 @@ export function rowToJob(input: unknown): LabJob {
     recordingId: str(row.recording_id),
     specHash: str(row.spec_hash),
     rendererVersion: str(row.renderer_version),
+    answerGeneration: str(row.answer_generation) ?? "",
     artifacts,
     report: (typeof row.report === "object" && row.report !== null
       ? row.report

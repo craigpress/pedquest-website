@@ -19,8 +19,9 @@ import { basename, dirname, extname, join } from "node:path";
 import { EdfReader, type ByteSource } from "../../../src/lib/eeg/edf";
 import { LayReader } from "../../../src/lib/eeg/lay";
 import type { Recording } from "../../../src/lib/eeg/recording";
-import { createTrendEngine, TREND_ENGINE_VERSION } from "../../../src/lib/eeg/trends";
+import { createTrendEngine, TREND_ENGINE_VERSION, SR_THRESHOLD_UV, SR_EPOCH_S, SR_WINDOW_S } from "../../../src/lib/eeg/trends";
 import { encodeTrends, readTrendSidecarHeader, TREND_SIDECAR_EXT } from "../../../src/lib/eeg/trend-sidecar";
+import { qaWindows } from "./qa-windows";
 
 const BLOCK_S = 60;
 
@@ -70,7 +71,7 @@ async function openRecording(path: string): Promise<{ reader: Recording; close: 
   throw new Error(`not a recording: ${path}`);
 }
 
-async function computeSidecar(recording: string, out: string): Promise<{ path: string; bytes: number; nT: number; hopS: number; seconds: number }> {
+async function computeSidecar(recording: string, out: string): Promise<{ path: string; bytes: number; nT: number; hopS: number; seconds: number; qaPath: string }> {
   const started = Date.now();
   const { reader, close } = await openRecording(recording);
   try {
@@ -84,7 +85,18 @@ async function computeSidecar(recording: string, out: string): Promise<{ path: s
     }
     const buf = encodeTrends(engine.trends, { durationS: reader.durationS, sampleRate: reader.sampleRate, channels: reader.labels.length });
     writeFileSync(out, Buffer.from(buf));
-    return { path: out, bytes: buf.byteLength, nT: engine.trends.nT, hopS: engine.trends.hopS, seconds: Math.round((Date.now() - started) / 1000) };
+    // These samples come from the exported recording, never a second synthesis.
+    const windows = [];
+    for (const { start, reason } of qaWindows(engine.trends, reader.durationS)) {
+      const win = await reader.readWindow(start, Math.min(reader.durationS, start + 15));
+      windows.push({ t0: win.t0, reason, data: win.data.map((channel) => Array.from(channel)) });
+    }
+    const qaPath = out + ".qa.json";
+    writeFileSync(qaPath, JSON.stringify({ sampleRate: reader.sampleRate, labels: reader.labels,
+      suppressionRule: { peakToPeakUv: 2 * SR_THRESHOLD_UV, epochS: SR_EPOCH_S, windowS: SR_WINDOW_S },
+      durationS: reader.durationS, windows, trendSidecar: out, engineVersion: TREND_ENGINE_VERSION,
+      coverage: "Up to five 15-second windows covering start, midpoint, near end and measured bilateral total-power extrema (overlapping windows omitted); full-record calculated trends. Other events are not visually verified." }));
+    return { path: out, bytes: buf.byteLength, nT: engine.trends.nT, hopS: engine.trends.hopS, seconds: Math.round((Date.now() - started) / 1000), qaPath };
   } finally {
     close();
   }

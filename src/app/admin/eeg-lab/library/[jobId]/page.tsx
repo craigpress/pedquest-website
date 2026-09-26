@@ -10,6 +10,8 @@
  * server-side (`can` on the GET is a UI convenience, not the authorization).
  */
 import { useCallback, useEffect, useState } from "react";
+import EegFeatureLinks from "@/components/EegFeatureLinks";
+import EegVisualQa from "@/components/EegVisualQa";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useRole } from "@/lib/auth";
@@ -22,6 +24,7 @@ import {
   type LabArtifact, type LabJob, type LabReview,
 } from "@/lib/lab/types";
 import { humanDuration, labelize, type LibraryQuestion, type LibrarySummary } from "@/lib/lab/library";
+import AnswerKeyEditor from "@/components/lab/AnswerKeyEditor";
 
 const REVIEW_STATUS_COLOR: Record<string, string> = {
   published: "var(--accent-tertiary)",
@@ -294,6 +297,9 @@ export default function RecordingPage() {
         </div>
       </div>
 
+      {isEditor && <EegVisualQa key={job.id} source="lab" jobId={job.id}/>}
+      <EegFeatureLinks key={job.id} source={isEditor ? "lab" : undefined} resourceId={isEditor ? job.id : undefined} text={`${title} ${description} ${reviewNotes}`} />
+
       {error && (
         <div role="alert" style={{ ...card, borderColor: "var(--accent-secondary)", padding: "12px 16px", marginBottom: 16, color: "var(--accent-secondary)", fontSize: 14, whiteSpace: "pre-wrap" }}>
           {error}
@@ -332,6 +338,8 @@ export default function RecordingPage() {
             <Link href={`/admin/eeg-lab/library/${job.id}/results`} style={mini}>Class results</Link>
           </div>
         </section>
+
+        {hasAnswers && <AnswerKeyEditor jobId={job.id} durationS={job.durationS} />}
 
         {/* ── title and description ──────────────────────────────────── */}
         {can.edit && (

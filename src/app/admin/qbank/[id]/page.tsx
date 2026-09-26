@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import EegViewer from "@/components/EegViewer";
+import EegFeatureLinks from "@/components/EegFeatureLinks";
+import EegVisualQa from "@/components/EegVisualQa";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import {
@@ -347,6 +349,9 @@ export default function AdminQbankItemPage() {
           .qbi-grid, .qbi-2, .qbi-3, .qbi-diff { grid-template-columns: 1fr; }
         }
       `}</style>
+
+      {item.renderJob ? <EegVisualQa key={item.renderJob.id} source="qbank" jobId={item.renderJob.id}/> : <p>No generation-bound visual QA recorded.</p>}
+      <EegFeatureLinks key={id} source="qbank" resourceId={id} text={`${form.title} ${form.vignette} ${form.imageCaption} ${form.explanation} ${form.learningObjective}`} tags={form.tagsText.split(",").map((t) => t.trim())}/>
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
         <div>

@@ -59,6 +59,7 @@ def render_image(
     image: Dict[str, Any],
     out_dir: str | Path,
     point_to_feature: Optional[Dict[str, Any]] = None,
+    qa_images: Optional[list[Path]] = None,
 ) -> Tuple[Path, Dict[str, Any]]:
     """Render one *raw* (un-normalized) image block; returns (png, sidecar)."""
     norm = normalize(image)
@@ -75,7 +76,8 @@ def render_image(
         norm["attribution"] = ds_attr
 
     if kind == "qeeg_panel":
-        geo, _ = render_qeeg_panel(spec, str(png), synth=ds_source, header_note=note)
+        synth = ds_source or Synthesizer(spec, _nominal_duration_s(kind, spec))
+        geo, _ = render_qeeg_panel(spec, str(png), synth=synth, header_note=note)
         electrodes = ds_source.scalp if ds_source else None
     elif kind == "eeg_page":
         trends = None
@@ -104,6 +106,17 @@ def render_image(
     sidecar = build_sidecar(ident, norm, geo, point_to_feature, electrodes,
                             extra={"db_ranges": ranges} if ranges else None)
     sidecar["path"] = f"public/images/qbank/{ident}.png"
+    if qa_images is not None and kind in ("qeeg_panel", "aeeg"):
+        # Reuse the exact source object used by the trend render.
+        duration = _nominal_duration_s(kind, spec)
+        for i, fraction in enumerate((0, .5, .9)):
+            start = max(0, min(duration - 15, duration * fraction))
+            page = normalize({"kind": "eeg_page", "license": "synthetic-original",
+                "spec": {"seed": spec.get("seed", 0), "age_group": spec.get("age_group", "child"), "at_min": start/60,
+                         "window_s": 15, "montage": "longitudinal_bipolar"}})["spec"]
+            path = out_dir / f"{ident}-qa-raw-{i+1}.png"
+            render_eeg_page(page, str(path), synth=synth, header_note="QA: paired source used for generated trend")
+            qa_images.append(path)
     return png, sidecar
 
 
