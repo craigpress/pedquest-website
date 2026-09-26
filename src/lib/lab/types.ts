@@ -283,7 +283,7 @@ export interface LabEnqueueResponse {
 //
 // The shape the Guided form produces. spec.ts turns it into an image block.
 
-export type LabAgeBand = "neonate" | "infant" | "child" | "adolescent";
+export type LabAgeBand = "neonate" | "infant" | "child" | "adolescent" | "adult";
 export type LabChannelSet = "standard_19" | "neonatal_9";
 export type LabMontage = "longitudinal_bipolar" | "referential" | "average" | "neonatal_reduced";
 
