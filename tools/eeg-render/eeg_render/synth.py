@@ -46,6 +46,7 @@ from scipy import ndimage, signal as sps
 from . import montage as mt
 from .rng import substream
 from . import state_v3 as sv3
+from . import variants_v3 as vv3
 
 FRAME_S = 32.0          # overlap-add frame length
 
@@ -1227,9 +1228,15 @@ class Synthesizer:
     def _eye_factor(self, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """(PDR factor, blink factor) from the eye timeline: eyes closed 1.0 / 0.1, eyes open 0.3 / 1.0, with the PDR
         briefly back to 0.85 from 0.15 s to about 1.2 s after each eyes-open blink (Craig on B2-06)."""
-        if not self._eyes:
+        force = getattr(self, "_eye_force", None)
+        if not self._eyes and not force:
             return np.ones(t.shape), np.ones(t.shape)
-        closed = sv3.weight(t, self._eyes, {"closed": 1.0, "open": 0.0}, xfade=0.6, default=1.0)
+        closed = (sv3.weight(t, self._eyes, {"closed": 1.0, "open": 0.0}, xfade=0.6, default=1.0) if self._eyes
+                  else np.ones(t.shape))
+        for a, b, st in force or ():
+            # 0.5.0: visual scanning holds the eyes open, photic stimulation holds them closed (normal-variants.md)
+            m = np.clip(np.minimum(t - a + 0.3, b + 0.3 - t) / 0.3, 0.0, 1.0)
+            closed = closed * (1 - m) + (0.0 if st == "open" else 1.0) * m
         boost = np.zeros(t.shape)
         for pk in self._blink_t[(self._blink_t > t[0] - 1.5) & (self._blink_t < t[-1])] + 0.10:
             d = t - pk
@@ -2679,8 +2686,12 @@ class Synthesizer:
         States come from the sleep index: drowsy 0.15-0.75, asleep > 0.55, awake < 0.2.
         """
         self._variants = []
+        self._variants_v3: List[Tuple[str, Dict]] = []
         cfg = self.bg.get("variants") or {}
         if not cfg:
+            return
+        if self.spec_version >= 3 and self._hypno:
+            self._build_variants_v3(cfg)
             return
         grid = np.arange(-60.0, self.duration_s + 60.0, 1.0)
         sleep = self._sleep_at(grid)
@@ -2718,11 +2729,88 @@ class Synthesizer:
                 t += float(_lognorm(rng, 1, 0.4)[0]) * gap
         self._variants.sort(key=lambda r: r[0])
 
+    #: 0.5.0: HH amplitude_uv means the peak-to-peak a reader measures in the best longitudinal-bipolar derivation
+    #: (review B5-06: the broad field showed 0.44 of the request on the chain); this undoes the lagged-field loss
+    _HH_BIPOLAR_CAL = 1.5
+    #: 0.5.0: default PSWY peak (O1, uV) per uV of background amplitude x the occipital PDR weight; tuned so the
+    #: displayed P3-O1 / T5-O1 wave is about twice the eyes-closed background p2p (Craig, B5-08: "can't see them")
+    _PSWY_PER_BG = 1.8
+
+    def _build_variants_v3(self, cfg: Dict) -> None:
+        """0.5.0 scheduled variants driven by the hypnogram and eye state (drawn once per record).
+
+        HH: N1 (hypnagogic) and at arousals out of N2/N3 (hypnopompic, Craig's reference figure).  POSTS: episodic
+        trains through N1-N2.  PSWY: wake with eyes closed, where the PDR they ride on is present.
+        """
+        def merged(stages):
+            out = []
+            for a, b, st in self._hypno:
+                if st not in stages:
+                    continue
+                a, b = max(a, -60.0), min(b, self.duration_s + 60.0)
+                if b <= a:
+                    continue
+                if out and abs(out[-1][1] - a) < 1e-6:
+                    out[-1] = (out[-1][0], b)
+                else:
+                    out.append((a, b))
+            return out
+
+        c = cfg.get("hypnagogic_hypersynchrony")
+        if c and c.get("enabled", True) and float(c.get("rate_per_min") or 0) > 0:
+            amp = float(c.get("amplitude_uv") or 0.0) * self._HH_BIPOLAR_CAL
+            deep = [(a, b) for a, b, st in self._hypno if st in ("N2", "N3")]
+            starts = [a for a, w in self._arousals_v3 if any(x0 <= a < x1 for x0, x1 in deep)]
+            for r in vv3.hh_schedule(self.seed, merged(("N1",)), float(c["rate_per_min"]), amp, starts):
+                self._variants_v3.append(("hypnagogic_hypersynchrony", r))
+        c = cfg.get("posts")
+        if c and c.get("enabled", True) and float(c.get("amplitude_uv") or 0) > 0:
+            for r in vv3.posts_schedule(self.seed, merged(("N1", "N2")), float(c["amplitude_uv"])):
+                self._variants_v3.append(("posts", r))
+        c = cfg.get("posterior_slow_waves_of_youth")
+        if c and c.get("enabled", True) and float(c.get("rate_per_min") or 0) > 0:
+            amp = float(c.get("amplitude_uv") or 0.0)
+            if amp <= 0:
+                amp = self._PSWY_PER_BG * float(self.bg["amplitude_uv"]) * max(1.0, 0.62 * self.pdr_gain)
+            wake = merged(("W",))
+            if self._eyes:
+                closed = [(a, b) for a, b, st in self._eyes if st == "closed" and b - a > 2.0]
+                wake = [(max(a, x0) + 1.0, min(b, x1) - 0.5) for a, b in wake for x0, x1 in closed
+                        if min(b, x1) - max(a, x0) > 2.0]
+            for r in vv3.pswy_schedule(self.seed, wake, float(c["rate_per_min"]), amp, self.dominant_hz):
+                self._variants_v3.append(("posterior_slow_waves_of_youth", r))
+        self._variants_v3.sort(key=lambda kr: kr[1]["t0"])
+        pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
+        self._var_y = pos[:, 1]
+        self._var_xs = np.sign(np.where(np.abs(pos[:, 0]) < 1e-6, 0.0, pos[:, 0]))
+
     def variant_runs(self) -> List[Dict]:
+        if getattr(self, "_variants_v3", None):
+            return [{"t0": r["t0"], "t1": r["t1"], "variant": nm, "frequency_hz": float(r.get("hz", 0.0)),
+                     "amplitude_uv": float(r["amp"]), "count": int(len(r["times"]) if nm == "posts" else r.get("count", 0))}
+                    for nm, r in self._variants_v3]
         return [{"t0": a, "t1": b, "variant": nm, "frequency_hz": f, "amplitude_uv": amp, "count": cnt}
                 for a, b, nm, f, amp, asym, cnt in getattr(self, "_variants", [])]
 
+    def _variant_rows_v3(self, t: np.ndarray) -> np.ndarray:
+        rows = np.zeros((self.n_elec, t.size))
+        for nm, r in self._variants_v3:
+            if r["t1"] < t[0] - 0.5 or r["t0"] > t[-1] + 0.5:
+                continue
+            if nm == "hypnagogic_hypersynchrony":
+                rows += vv3.hh_rows(r, t, self.electrodes, self._var_y, self._var_xs)
+            elif nm == "posts":
+                rows += vv3.posts_rows(r, t, vv3.side_field("posts", self.electrodes, "left"),
+                                       vv3.side_field("posts", self.electrodes, "right"))
+            else:
+                w = vv3.pswy_wave(r, t)
+                rows += np.outer(vv3.side_field(nm, self.electrodes, "left") * r["gl"]
+                                 + vv3.side_field(nm, self.electrodes, "right") * r["gr"], w)
+        return rows
+
     def _variant_rows(self, t: np.ndarray) -> np.ndarray:
+        if getattr(self, "_variants_v3", None):
+            return self._variant_rows_v3(t)
         rows = np.zeros((self.n_elec, t.size))
         runs = getattr(self, "_variants", None)
         if not runs or t.size == 0:
@@ -2798,6 +2886,9 @@ class Synthesizer:
         if context == "drowsy":
             return bool(np.all((sleep > 0.15) & (sleep < 0.75)))
         if context == "light_sleep":
+            if self.spec_version >= 3 and self._hypno:
+                # 0.5.0: staged sleep - drowsiness through N2 is light sleep (14 & 6 occur from N1)
+                return bool(np.all(np.isin(self.stage_at(probes), ["N1", "N2"])))
             return bool(np.all(sleep > 0.55))
         if context == "arousal":
             return any(at <= start and end <= at + width for at, width in self._arousals)
@@ -2814,15 +2905,38 @@ class Synthesizer:
             if ev["kind"] == "mu" and ev.get("block_at_min") is not None:
                 ba = float(ev["block_at_min"]) * 60.0
                 blocks = [(ba, ba + float(ev.get("block_duration_s", 1.0)))]
-            self._authored_variants.append({"t0": a, "t1": b, "variant": ev["kind"],
+            run = {"t0": a, "t1": b, "variant": ev["kind"],
                 "frequency_hz": float(ev["frequency_hz"]), "amplitude_uv": float(ev["amplitude_uv"]),
                 "side": ev.get("side", "both"), "context": ev["context"], "blocks": blocks,
-                "spec_event_index": index})
+                "spec_event_index": index}
+            if self.spec_version >= 3:
+                # 0.5.0: bursts / trains drawn once per event, each hemisphere on its own schedule
+                run["bursts"] = vv3.authored_schedule(self.seed, index, run)
+            self._authored_variants.append(run)
+        # 0.5.0: visual scanning and movement hold the eyes open (lambda, and mu is read with the PDR attenuated -
+        # Mu-IV, very-nice-Mu); photic stimulation holds them closed
+        self._eye_force = [(r["t0"], r["t1"], "closed" if r["context"] == "photic" else "open")
+                           for r in self._authored_variants
+                           if self.spec_version >= 3 and r["context"] in ("visual_scanning", "movement", "photic")]
+        pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
+        self._av_y = pos[:, 1]
+
+    #: 0.5.0: kinds keyed per train (the key follows what is visible), not per authored window
+    _AV_TRAIN_KEYED = ("mu", "wicket", "fourteen_and_six", "rmtd", "frontal_arousal_rhythm")
 
     def authored_variant_runs(self) -> List[Dict]:
         out = []
         for run in self._authored_variants:
             intervals = [(run["t0"], run["t1"])]
+            if run.get("bursts") and run["variant"] in self._AV_TRAIN_KEYED:
+                intervals = []
+                for bu in sorted(run["bursts"], key=lambda x: x["t0"]):
+                    if bu["amp"] < 0.3 * run["amplitude_uv"]:
+                        continue            # the attenuated side of an authored one-sided variant
+                    if intervals and bu["t0"] <= intervals[-1][1]:
+                        intervals[-1] = (intervals[-1][0], max(intervals[-1][1], bu["t1"]))
+                    else:
+                        intervals.append((bu["t0"], bu["t1"]))
             for ba, bb in run["blocks"]:
                 intervals = [(a, min(b, ba)) for a, b in intervals if a < ba] + \
                             [(max(a, bb), b) for a, b in intervals if b > bb]
@@ -2831,7 +2945,39 @@ class Synthesizer:
                     out.append({**run, "t0": a, "t1": b})
         return out
 
+    def _authored_variant_rows_v3(self, t: np.ndarray) -> np.ndarray:
+        rows = np.zeros((self.n_elec, t.size))
+        for run in self._authored_variants:
+            kind = run["variant"]
+            tail = 25.0 if kind == "hyperventilation_buildup" else 0.5
+            if run["t1"] + tail < t[0] or run["t0"] > t[-1] + 0.5:
+                continue
+            sc = vv3.bipolar_scale(kind, self.electrodes)
+            fields = {sd: sc * vv3.side_field(kind, self.electrodes, sd) for sd in ("left", "right")}
+            part = np.zeros((self.n_elec, t.size))
+            gaze = np.zeros(t.size)
+            for bu in run["bursts"]:
+                if kind == "hyperventilation_buildup":
+                    part += vv3.hv_rows(bu, t, fields[bu["side"]], self._av_y)
+                    continue
+                if kind == "lambda" and bu["side"] == "left" and t[0] - 3.0 < bu["saccade"] < t[-1] + 0.1:
+                    # the saccade that times each lambda: a lateral eye movement step at F7/F8 (opposed)
+                    gaze += bu["gaze"] * np.clip((t - bu["saccade"]) / 0.03, 0.0, 1.0) * (t < bu["saccade"] + 3.0)                         * np.exp(-np.clip(t - bu["saccade"], 0.0, None) / 0.6)
+                if bu["t1"] < t[0] - 0.3 or bu["t0"] > t[-1] + 0.3:
+                    continue
+                part += np.outer(fields[bu["side"]], vv3.burst_wave(kind, bu, t))
+            if kind == "lambda" and gaze.any():
+                lat = np.array([{"F7": 1.0, "F8": -1.0, "Fp1": 0.35, "Fp2": -0.35, "T3": 0.25, "T4": -0.25}.get(e, 0.0)
+                                for e in self.electrodes])
+                part += np.outer(lat, 30.0 * gaze)
+            for ba, bb in run["blocks"]:
+                part[:, (t >= ba) & (t < bb)] = 0.0
+            rows += part
+        return rows
+
     def _authored_variant_rows(self, t: np.ndarray) -> np.ndarray:
+        if self.spec_version >= 3:
+            return self._authored_variant_rows_v3(t)
         rows = np.zeros((self.n_elec, t.size))
         for run in self.authored_variant_runs():
             a, b, kind = run["t0"], run["t1"], run["variant"]
@@ -4341,7 +4487,7 @@ class Synthesizer:
         # P7 batch 5: sporadic interictal discharges and pediatric normal variants; both ride the
         # burst gate and any decrement like the multifocal spikes, in absolute microvolts
         if (getattr(self, "_sed", None) is not None or getattr(self, "_variants", None)
-                or getattr(self, "_authored_variants", None)):
+                or getattr(self, "_variants_v3", None) or getattr(self, "_authored_variants", None)):
             gate_bv = (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]
             x += self._sed_rows(t) * gate_bv
             x += self._variant_rows(t) * gate_bv
