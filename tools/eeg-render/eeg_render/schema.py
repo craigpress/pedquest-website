@@ -484,7 +484,7 @@ _SEDATION = {
 _COMMON = {
     "seed": {"type": "integer"},
     # which DEFAULTS an omitted key gets: 1 = 0.3.x (the committed bank is pinned to it), 2 = 0.4.0
-    "spec_version": {"type": "integer", "minimum": 1, "maximum": 2},
+    "spec_version": {"type": "integer", "minimum": 1, "maximum": 3},
     "age_group": {"enum": AGE_GROUPS},
     "sample_rate": {"type": "integer", "minimum": 100, "maximum": 1024},
     "channels": {"enum": list({"standard_19", "neonatal_9", "neonatal_reduced"})},
@@ -534,6 +534,8 @@ _EEG_PAGE_SPEC = {
         **_COMMON,
         "at_min": {"type": "number", "minimum": 0},
         "window_s": {"type": "number", "minimum": 5, "maximum": 30},
+        # 0.4.5: draw the 200 ms minor rule (version-2 pages show the 1 s rule only)
+        "grid_minor": {"type": "boolean"},
         "sensitivity_uv_mm": {"type": "number", "minimum": 1, "maximum": 100},
         "filters": {
             "type": "object",

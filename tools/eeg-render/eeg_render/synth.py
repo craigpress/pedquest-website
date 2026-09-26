@@ -1165,16 +1165,23 @@ class Synthesizer:
         gaps = _lognorm(rng, n, 0.55) / rate
         times = np.cumsum(gaps) - 60.0
         self._blink_t = times[times < span]
+        if self.spec_version >= 3:
+            # 0.5.0: per-blink amplitude and time course, drawn once per record (a window never re-draws them)
+            shp = substream(self.seed, "blink-shape")
+            k = self._blink_t.size
+            self._blink_amp = _lognorm(shp, k, 0.3) if k else np.empty(0)
+            self._blink_sr = 0.040 * shp.uniform(0.85, 1.2, k)
+            self._blink_sf = 0.050 * shp.uniform(0.8, 1.6, k)
 
     def blink_rows(self, t: np.ndarray, wake: np.ndarray) -> np.ndarray:
         """Blink deflections over ``t``; ``wake`` is the 0..1 gate."""
         rows = np.zeros((self.n_elec, t.size))
         if self._blink_t.size == 0 or t.size == 0:
             return rows
-        sel = self._blink_t[(self._blink_t > t[0] - 0.6) & (self._blink_t < t[-1] + 0.6)]
-        if sel.size == 0:
+        idx = np.nonzero((self._blink_t > t[0] - 0.6) & (self._blink_t < t[-1] + 0.6))[0]
+        if idx.size == 0:
             return rows
-        prof = self._blink_profile(t, sel) * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * wake
+        prof = self._blink_profile(t, self._blink_t[idx], idx) * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * wake
         field = self._blink_field()
         for i, e in enumerate(self.electrodes):
             rows[i] = prof * field[i]
@@ -1188,19 +1195,42 @@ class Synthesizer:
     _BLINK_FIELD_V2 = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.32, "F8": 0.32, "F3": 0.30, "F4": 0.30,
                        "Fz": 0.22, "T3": 0.06, "T4": 0.06, "C3": 0.05, "C4": 0.05, "Cz": 0.04}
 
+    #: 0.5.0 (feature review 2026-09-26, 15 blinks in 6 learningeeg figures, longitudinal bipolar): Fp1-F7 is
+    #: larger than Fp1-F3 and F7-T3 is 0.14-0.36 of Fp1-F7, so F7/F8 carry less field than F3/F4 (v2 had them equal).
+    _BLINK_FIELD_V3 = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.15, "F8": 0.15, "F3": 0.35, "F4": 0.35,
+                       "Fz": 0.35, "T3": 0.02, "T4": 0.02, "C3": 0.12, "C4": 0.12, "Cz": 0.10}
+
     def _blink_field(self) -> np.ndarray:
+        if self.spec_version >= 3:
+            # F3-C3/Fp1-F3 varies four-fold between patients: one per-record scale on the frontal row
+            scale = float(substream(self.seed, "blink-field").uniform(0.6, 1.4))
+            return np.array([self._BLINK_FIELD_V3.get(e, 0.02) * (scale if e in ("F3", "F4", "Fz") else 1.0)
+                             for e in self.electrodes])
         table = self._BLINK_FIELD_V2 if self.spec_version >= 2 else _BLINK_FIELD
         default = 0.02 if self.spec_version >= 2 else 0.04
         return np.array([table.get(e, default) for e in self.electrodes])
 
-    def _blink_profile(self, t: np.ndarray, times: np.ndarray) -> np.ndarray:
+    def _blink_profile(self, t: np.ndarray, times: np.ndarray, idx: Optional[np.ndarray] = None) -> np.ndarray:
         """Unit-peak blink deflections at ``times`` (positive = cornea-positive at Fp).
 
-        Version 2: eyelid closure in ~100 ms (rise sigma 45 ms) and a return with a
-        120 ms time constant: ~0.14 s at half height, ~0.4 s in all, the 0.2-0.4 s of
-        a real blink.  Version 1 keeps the 0.3.x symmetric 75 ms Gaussian.
+        Version 3: split Gaussian peaking 100 ms after the blink time, rise sigma 40 ms and fall
+        sigma 50 ms (each jittered per blink) and a lognormal per-blink amplitude.  Through the
+        causal 1 Hz LFF this gives the reference 10 %/50 % rise at -82/-44 ms, baseline crossing at
+        +74 ms and the -0.4 undershoot without an explicit opposite lobe.  Version 2: eyelid closure
+        in ~100 ms (rise sigma 45 ms) and a return with a 120 ms time constant.  Version 1 keeps the
+        0.3.x symmetric 75 ms Gaussian.
         """
         prof = np.zeros(t.size)
+        if self.spec_version >= 3:
+            for j, tt in enumerate(times):
+                # scheduled blinks carry their own draws; event blinks (eye_blink artifact) use the nominal shape
+                k = None if idx is None else idx[j]
+                sr, sf, a = (0.040, 0.050, 1.0) if k is None else (self._blink_sr[k], self._blink_sf[k], self._blink_amp[k])
+                d = t - tt - 0.10
+                m = (d > -0.20) & (d < 0.30)
+                dd = d[m]
+                prof[m] += a * np.exp(-0.5 * (dd / np.where(dd < 0, sr, sf)) ** 2)
+            return prof
         sharp = self.spec_version >= 2
         for tt in times:
             d = t - tt

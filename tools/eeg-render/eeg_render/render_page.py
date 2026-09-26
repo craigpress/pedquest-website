@@ -105,15 +105,21 @@ def page_polarity(spec: Dict) -> float:
     return -1.0 if int(spec.get("spec_version") or 1) >= 2 else 1.0
 
 
-def build_filters(fs: int, filters: Dict) -> List[np.ndarray]:
-    """SOS chain for the display filters (LF high-pass, HF low-pass, notch)."""
+def build_filters(fs: int, filters: Dict, causal: bool = False) -> List[np.ndarray]:
+    """SOS chain for the display filters (LF high-pass, HF low-pass, notch).
+
+    ``causal`` (spec_version 3) is the review-station filter: a single-pole high-pass (the RC
+    "time constant" of a clinical LFF) run forward only.  The version-1/2 chain is a 2nd-order
+    Butterworth run forward and backward, which rings before every blink, saccade and pop and
+    removes most of a 0.25 Hz roving eye movement or a ventilator wave (feature review 2026-09-26).
+    """
     nyq = fs / 2.0
     out: List[np.ndarray] = []
     lf = filters.get("lf_hz")
     hf = filters.get("hf_hz")
     notch = filters.get("notch_hz")
     if lf:
-        out.append(sps.butter(2, min(float(lf) / nyq, 0.99), btype="high", output="sos"))
+        out.append(sps.butter(1 if causal else 2, min(float(lf) / nyq, 0.99), btype="high", output="sos"))
     if hf and float(hf) < nyq * 0.98:
         out.append(sps.butter(4, float(hf) / nyq, btype="low", output="sos"))
     if notch and 0 < float(notch) < nyq * 0.98:
@@ -122,10 +128,26 @@ def build_filters(fs: int, filters: Dict) -> List[np.ndarray]:
     return out
 
 
-def apply_filters(sig: np.ndarray, sos_chain: List[np.ndarray]) -> np.ndarray:
+def apply_filters(sig: np.ndarray, sos_chain: List[np.ndarray], causal: bool = False) -> np.ndarray:
     for sos in sos_chain:
-        sig = sps.sosfiltfilt(sos, sig, axis=-1)
+        if causal:
+            # start each row in its steady state at the first sample (no switch-on transient)
+            x = np.atleast_2d(sig)
+            zi = sps.sosfilt_zi(sos)[:, None, :] * x[None, :, :1]
+            sig = sps.sosfilt(sos, x, axis=-1, zi=zi)[0].reshape(sig.shape)
+        else:
+            sig = sps.sosfiltfilt(sos, sig, axis=-1)
     return sig
+
+
+def causal_filters(spec: Dict) -> bool:
+    return int(spec.get("spec_version") or 1) >= 3
+
+
+def filter_warmup_s(filters: Dict) -> float:
+    """Pre-window padding a causal chain needs to settle: eight single-pole time constants."""
+    lf = filters.get("lf_hz")
+    return max(4.0, 8.0 / (2.0 * np.pi * float(lf))) if lf else 4.0
 
 
 def page_signals(spec: Dict, synth: Optional[Synthesizer] = None,
@@ -137,10 +159,12 @@ def page_signals(spec: Dict, synth: Optional[Synthesizer] = None,
     if synth is None:
         synth = Synthesizer(spec, t0 + win + 60.0)
     fs = synth.fs
-    t_all, x = synth.segment(t0 - pad_s, t0 + win + pad_s)
+    causal = causal_filters(spec)
+    pre = max(pad_s, filter_warmup_s(spec["filters"])) if causal else pad_s
+    t_all, x = synth.segment(max(0.0, t0 - pre) if causal else t0 - pad_s, t0 + win + pad_s)
     pairs = mt.montage_pairs(spec["montage"], synth.scalp)
     sig = synth.derive(x, pairs, spec["montage"])
-    sig = apply_filters(sig, build_filters(fs, spec["filters"]))
+    sig = apply_filters(sig, build_filters(fs, spec["filters"], causal), causal)
     ecg = synth._ecg(t_all, amplitude=260.0)[synth._idx["A1"]] * 0.9
     keep = (t_all >= t0 - 1e-9) & (t_all < t0 + win - 1e-9)
     return synth, t_all[keep], sig[:, keep], pairs, ecg[keep]
@@ -208,8 +232,11 @@ def render_eeg_page(
         # --- grid ----------------------------------------------------------
         for k in range(int(np.floor(win)) + 1):
             ax.axvline(t0 + k, color=PAGE_GRID, linewidth=0.7, zorder=0)
-        for k in np.arange(0, win + 1e-9, 0.2):
-            ax.axvline(t0 + k, color=PAGE_GRID_MINOR, linewidth=0.35, zorder=0)
+        # 0.4.5 (Craig, P7 batch 2): clinical paper shows the 1 s rule only; the 200 ms minor rule is
+        # version-1 legacy or an explicit ``grid_minor: true``
+        if int(spec.get("spec_version") or 1) < 2 or bool(spec.get("grid_minor")):
+            for k in np.arange(0, win + 1e-9, 0.2):
+                ax.axvline(t0 + k, color=PAGE_GRID_MINOR, linewidth=0.35, zorder=0)
 
         # --- traces ----------------------------------------------------------
         polarity = page_polarity(spec)
