@@ -158,6 +158,8 @@ BURST_EDGE_S: Dict[str, Tuple[float, float, float, float, float]] = {
 #: by the run's ``muscle`` setting.  ``modest`` is the 0.3.8 constant.
 MUSCLE_FACTOR: Dict[str, float] = {"none": 0.0, "modest": 1.5, "clinical": 4.0}
 _BURST_EDGE_DEFAULT = (0.11, 0.11, 0.0, 0.0, 0.0)
+#: 0.5.0 burst suppression (feature review C21, learningeeg L4): bursts start abruptly (40 ms rise, 30 ms lag)
+BURST_EDGE_BS_V3 = (0.04, 0.35, 0.03, 0.08, 0.0)
 
 #: Spontaneous blinks per second, awake.  ~0.25/s is 15/min, an ordinary rate.
 #: Set to 0 to disable.  Gated by wakefulness and by the burst envelope, so a
@@ -526,6 +528,9 @@ class SeizureInstance:
     #: frequency/amplitude trajectory: ``sweep`` (0.3.x log glide) or ``recruit``
     #: (0.4.0: low-voltage fast onset, stepwise slowing, build-up, late clonic bursting)
     profile: str = "sweep"
+    #: 0.5.0: clinical correlate with a clonic phase (focal_clonic, generalized_tonic_clonic) - the ictal EMG
+    #: comes in bursts time-locked to the run's clonic modulation instead of as a continuous floor
+    clonic: bool = False
 
     @property
     def t1(self) -> float:
@@ -764,14 +769,44 @@ class Synthesizer:
         # P7 batch 2: breach effect - over a skull defect the background is larger and carries
         # more sharply contoured fast activity (Niedermeyer: 2-3x amplitude, beta accentuated)
         self._breach_fast = np.ones(self.n_elec)
+        self._breach_gain = None
         br = self.bg.get("breach")
-        if br:
+        if br and self.spec_version >= 3:
+            # 0.5.0 (feature review B2-04, learningeeg L5): the defect is a plateau over a region - the focus and
+            # its neighbours in the longitudinal chain unless ``breach.region`` names them - weight 1.0 across it and
+            # a 0.3 falloff outside.  The single-electrode monopole made the two derivations sharing C3 mirror
+            # images (r = -0.59) and leaked x1.5 into T3.  The gain is applied to cerebral activity only in
+            # segment(): a skull defect does not amplify scalp muscle.  Inside the plateau every derivation carries
+            # the full requested gain, so there is no bipolar-dilution factor.
+            w = self._breach_plateau(br)
+            self._breach_gain = 1.0 + (float(br.get("gain", 2.0)) - 1.0) * w
+            self._breach_fast = 1.0 + (float(br.get("fast_gain", 2.5)) - 1.0) * w
+        elif br:
             w = self._gen_weights(str(br["focus"]))      # monopole field around the defect (neighbours ~0.24)
             # ``gain`` is what the reader measures on the bipolar display montage: a derivation of two
             # partially correlated electrodes (spatial kernel 0.65) dilutes a referential gain, so the
             # focus electrode is raised by 1.6x the requested excess (P7 batch 2: requested 2.2 read 1.36)
             self.gain_asym = self.gain_asym * (1.0 + 1.6 * (float(br.get("gain", 2.0)) - 1.0) * w)
             self._breach_fast = 1.0 + (float(br.get("fast_gain", 2.5)) - 1.0) * w
+
+    def _breach_plateau(self, br: Dict) -> np.ndarray:
+        region = list(br.get("region") or [])
+        focus = str(br["focus"])
+        if not region:
+            region = [focus]
+            for a, b in mt.montage_pairs("longitudinal_bipolar", self.scalp):
+                if focus in (a, b) and b is not None:
+                    region.append(b if a == focus else a)
+        region = [e for e in dict.fromkeys(region) if e in mt.POSITIONS and e in self._idx]
+        w = np.zeros(self.n_elec)
+        for i, e in enumerate(self.electrodes):
+            if e in region:
+                w[i] = 1.0
+            elif e in mt.POSITIONS:
+                x, y = mt.POSITIONS[e]
+                w[i] = max(math.exp(-((math.hypot(x - mt.POSITIONS[r][0], y - mt.POSITIONS[r][1]) / 0.3) ** 2))
+                           for r in region)
+        return w
 
     # ---------------- slow amplitude modulation ----------------
 
@@ -1594,7 +1629,55 @@ class Synthesizer:
         period = float(c["period_s"]); depth = float(c.get("depth", 0.6))
         at = float(c.get("at_min", 0.0)) * 60.0
         n = int(c.get("cycles") or max(6, int((self.duration_s - at) // period)))
+        if self.spec_version >= 3:
+            return [(a, b, depth) for a, _, b, _, _ in self._cape_v3(at, period, n)]
         return [(at + k * period, at + (k + 1) * period, depth) for k in range(n)]
+
+    #: 0.5.0 CAPE: cycle-length log-SD, the transition range (s) and the shortest phase (ACNS: each phase >= 10 s)
+    _CAPE_LOG_SD = 0.25
+    _CAPE_TRANSITION_S = (4.0, 8.0)
+    _CAPE_MIN_PHASE_S = 10.0
+    #: share of ``depth`` taken by the envelope, and the phase-B stream weights: delta x(1 - 0.6), theta x(1 + 1.2),
+    #: beta x(1 + 1.5) - lower-voltage faster activity against higher-voltage delta (ACNS CAPE: two patterns)
+    _CAPE_ENV_SHARE = 0.9
+    _CAPE_SPECTRUM = (0.6, 1.2, 1.5)
+
+    def _cape_v3(self, at: float, period: float, n: int) -> List[Tuple[float, float, float, float, float]]:
+        """(start, mid, end, rise_s, fall_s) per CAPE cycle, drawn once (feature review B2-03: a strictly periodic
+        40-s square wave).  Cycle length is lognormal around ``period_s``; the attenuated phase begins at 40-60 %
+        of the cycle; transitions are raised-cosine ramps of 4-8 s; every phase keeps >= 10 s of plateau."""
+        cached = self.__dict__.get("_cape_v3_cache")
+        if cached is not None:
+            return cached
+        rng = substream(self.seed, "cape-v3")
+        out, a = [], at
+        lo_tr, hi_tr = self._CAPE_TRANSITION_S
+        for _ in range(n):
+            rise, fall = (float(v) for v in rng.uniform(lo_tr, hi_tr, 2))
+            shortest = 2.0 * self._CAPE_MIN_PHASE_S + rise + fall
+            p = max(shortest, period * float(_lognorm(rng, 1, self._CAPE_LOG_SD)[0]))
+            frac = float(rng.uniform(0.4, 0.6))
+            mid = float(np.clip(a + frac * p, a + self._CAPE_MIN_PHASE_S + 0.5 * (rise + fall),
+                                a + p - self._CAPE_MIN_PHASE_S - 0.5 * (rise + fall)))
+            out.append((a, mid, a + p, rise, fall))
+            a += p
+        self._cape_v3_cache = out
+        return out
+
+    def cape_phase(self, t: np.ndarray) -> np.ndarray:
+        """0 in the higher-voltage phase, 1 in the attenuated phase, raised-cosine between (spec_version 3)."""
+        out = np.zeros_like(t)
+        c = self.bg.get("cape")
+        if not c or self.spec_version < 3 or t.size == 0:
+            return out
+        self.cape_cycles()
+        for a, mid, b, rise, fall in self._cape_v3_cache:
+            if b + fall < t[0] or a > t[-1] + rise:
+                continue
+            up = np.clip((t - (mid - 0.5 * rise)) / rise, 0.0, 1.0)
+            down = np.clip((t - (b - 0.5 * fall)) / fall, 0.0, 1.0)
+            out = np.maximum(out, 0.5 - 0.5 * np.cos(np.pi * up) - (0.5 - 0.5 * np.cos(np.pi * down)))
+        return np.clip(out, 0.0, 1.0)
 
     def cape_envelope(self, t: np.ndarray) -> np.ndarray:
         """Cyclic alternating pattern of encephalopathy: the second half of every cycle is attenuated
@@ -1603,6 +1686,9 @@ class Synthesizer:
         cyc = self.cape_cycles()
         if not cyc:
             return np.ones_like(t)
+        if self.spec_version >= 3:
+            # the phase-B spectrum shift (segment: less delta, more theta/beta) removes part of the voltage itself
+            return 1.0 - self._CAPE_ENV_SHARE * cyc[0][2] * self.cape_phase(t)
         out = np.ones_like(t)
         for a, b, depth in cyc:
             if b < t[0] - 3.0 or a > t[-1] + 3.0:
@@ -1629,7 +1715,39 @@ class Synthesizer:
         return floor
 
     def _burst_edge(self) -> Tuple[float, float, float, float, float]:
+        if self.spec_version >= 3 and self.bg["type"] == "burst_suppression":
+            return BURST_EDGE_BS_V3
         return BURST_EDGE_S.get(self.bg["type"], _BURST_EDGE_DEFAULT)
+
+    #: 0.5.0 burst-onset transient: peak-to-peak as a multiple of amplitude_uv, and the frontocentral foci whose
+    #: per-burst weights give it a field that survives the bipolar chain
+    _BS_ONSET_GAIN = 1.5
+    _BS_ONSET_FOCI = ("F3", "F4", "C3", "C4", "Fz", "Cz")
+    _BS_ONSET_NORM = 0.65
+
+    def _burst_onset_rows(self, t: np.ndarray) -> np.ndarray:
+        """Sharp-then-slow transient opening each burst (spec_version 3 burst suppression).
+
+        Feature review C21 / learningeeg L4: bursts start abruptly with a high-voltage sharply contoured transient
+        rather than on a smooth ramp.  A 30-ms surface-negative sharp component and a 150-ms opposite slow wave
+        at 1.5x ``amplitude_uv`` peak-to-peak on the frontocentral maximum; per-burst weights keyed by burst index.
+        """
+        out = np.zeros((self.n_elec, t.size))
+        if t.size == 0:
+            return out
+        amp = self._BS_ONSET_GAIN * float(self.bg["amplitude_uv"]) * self._BS_ONSET_NORM
+        for k in self._bursts_touching(t, 1.0, 1.0):
+            a = float(self._burst_start[k])
+            if a < t[0] - 1.0 or a > t[-1] + 0.5:
+                continue
+            rng = substream(self.seed, "bs-onset", k)
+            wts = rng.uniform(0.3, 1.0, len(self._BS_ONSET_FOCI))
+            g = float(_lognorm(rng, 1, 0.25)[0])
+            d = t - (a + 0.03)
+            wave = -np.exp(-0.5 * (d / 0.03) ** 2) + 0.55 * np.exp(-0.5 * ((d - 0.12) / 0.075) ** 2)
+            field = sum(wi * self._gen_weights(f) for wi, f in zip(wts, self._BS_ONSET_FOCI) if f in self._idx)
+            out += field[:, None] * (amp * g * wave)[None, :]
+        return out
 
     def _bursts_touching(self, t: np.ndarray, rise: float, fall: float) -> range:
         """Indices of scheduled bursts whose ramps reach into ``t``."""
@@ -1837,6 +1955,8 @@ class Synthesizer:
         for z in out:
             if z.kind in ("seizure", "seizure_cluster", "status_epilepticus"):
                 z.muscle = str(self.spec["events"][z.index].get("muscle") or "modest")
+                if self.spec_version >= 3:
+                    z.clonic = self.spec["events"][z.index].get("clinical_correlate") in ("focal_clonic", "generalized_tonic_clonic")
         out.sort(key=lambda z: z.t0)
         if self.spec_version >= 3:
             # 0.5.0 (feature review, PQ-G-002 snr 0.4-1.5): an ictal request can no longer sink into its own
@@ -2385,10 +2505,23 @@ class Synthesizer:
             if phase is None:
                 continue
             psi = substream(self.seed, "szharm", inst.index).uniform(0, 2 * np.pi, 4)
+            base = int(self.seed) * 31 + inst.index * 1009 + inst.ordinal * 101
+            v3run = (self.spec_version >= 3 and inst.morph == "ictal"
+                     and inst.kind in ("seizure", "seizure_cluster", "status_epilepticus"))
+            late = None
             spread = self._spread_region(inst)
             if spread is None:
                 s = np.zeros_like(u)
                 phase_d = None
+                if v3run and inst.duration_s > 30.0:
+                    # 0.5.0 (feature review B4-01: a 12-min status stayed in 3-4 derivations): a run longer than
+                    # 30 s spreads late through its own hemisphere at half voltage, without leaving the onset zone
+                    hemi = mt.HEMISPHERE_OF_REGION.get(inst.onset_region, "both")
+                    if hemi in ("left", "right") and inst.onset_region != f"{hemi}_hemisphere":
+                        late = f"{hemi}_hemisphere"
+                        t_late = float(np.clip(0.30 * inst.duration_s, 15.0, 45.0))
+                        s = 0.5 * smoothstep((t - inst.t0 - t_late) / 8.0)
+                        phase_d, _, _, f_d = self._ictal_phase(inst, t - 0.18)
             else:
                 onset_frac = {"hemispheric": 0.22, "generalized": 0.30,
                               "contralateral": 0.42}.get(inst.spread, 0.3)
@@ -2399,21 +2532,38 @@ class Synthesizer:
                 # every generalized event look like it propagated.
                 lag = 0.02 if spread == "generalized" else 0.18
                 phase_d, _, _, f_d = self._ictal_phase(inst, t - lag)
+            psi_d = psi
+            if v3run:
+                # 0.5.0 (feature review B4-02/C14/C18: harmonic comb on the CSA): per-cycle period and
+                # morphology jitter, keyed by the absolute cycle index so every window sees the same run
+                psi0 = psi
+                psi = self._cycle_psi(phase, psi0, base)
+                phase = self._cycle_warp(phase, base)
+                if phase_d is not None:
+                    psi_d = self._cycle_psi(phase_d, psi0, base)
+                    phase_d = self._cycle_warp(phase_d, base)
+            if late is not None:
+                spread = late
 
             # One jitter stream per discharge, shared by every generator, with
             # the head-wide desynchrony carried by each generator's y position.
             # Independent per-generator noise would be averaged away: ~19
             # generators sum into every electrode.
-            base = int(self.seed) * 31 + inst.index * 1009 + inst.ordinal * 101
             onset_scale = self._field_scale(inst.onset_region)
             onset_fall = mt.generator_falloff(inst.onset_region)
-            for gi, (focus, ga, gph) in enumerate(
-                    mt.region_generators(inst.onset_region, self.electrodes)):
+            gens = [(g, 1.0) for g in mt.region_generators(inst.onset_region, self.electrodes)]
+            extra = [g for g in mt.FOCAL_RECRUIT_GENERATORS.get(inst.onset_region, []) if g[0] in self._idx] if v3run else []
+            if extra:
+                # 0.5.0 (feature review B4-01, learningeeg L1): the rest of the chain joins over the first ~10 s
+                delays = substream(self.seed, "szfield", inst.index, inst.ordinal).uniform(1.0, 7.0, len(extra))
+                gens += [(g, smoothstep((t - inst.t0 - d) / 3.0)) for g, d in zip(extra, delays)]
+            onset_keep = (1.0 - 0.55 * s) if late is None else 1.0
+            for gi, ((focus, ga, gph), join) in enumerate(gens):
                 w = self._gen_weights(focus, onset_fall) * onset_scale
                 wv = (self._wave(phase, psi, gph, inst.morph, inst.plus_fast,
                                  f_inst, base, mt.POSITIONS.get(focus, (0.0, 0.0))[1],
                                  base + 7919 * (gi + 1))
-                      * amp * ga * (1.0 - 0.55 * s))
+                      * amp * ga * onset_keep * join)
                 out += w[:, None] * wv[None, :]
             if spread is not None and phase_d is not None:
                 spread_scale = self._field_scale(spread)
@@ -2421,13 +2571,36 @@ class Synthesizer:
                 for gi, (focus, ga, gph) in enumerate(
                         mt.region_generators(spread, self.electrodes)):
                     w = self._gen_weights(focus, spread_fall) * spread_scale
-                    wv = (self._wave(phase_d, psi, gph, inst.morph, inst.plus_fast,
+                    wv = (self._wave(phase_d, psi_d, gph, inst.morph, inst.plus_fast,
                                      f_d, base + 500_003,
                                      mt.POSITIONS.get(focus, (0.0, 0.0))[1],
                                      base + 500_003 + 7919 * (gi + 1))
                           * amp * ga * s)
                     out += w[:, None] * wv[None, :]
         return out
+
+    #: 0.5.0 per-cycle jitter of an ictal run: phase warp amplitude in cycles (period SD about 0.82x this, ~7 %)
+    #: and the per-cycle phase wobble of harmonics 2-4 in radians.  0.12 (period SD ~10 %) smeared the comb a
+    #: little more but halved the heuristic seizure-probability trend on B4-02 (median run max 0.92 -> 0.48);
+    #: 0.08 keeps it at 0.77
+    _CYCLE_WARP = 0.08
+    _CYCLE_PSI = (0.0, 0.675, 1.2, 1.65)
+
+    @staticmethod
+    def _cycle_interp(cyc: np.ndarray, salt: int) -> np.ndarray:
+        """Per-cycle uniform [-1, 1) noise, smoothly interpolated across each cycle (keyed by absolute cycle)."""
+        k = np.floor(cyc)
+        a = 2.0 * _cycle_noise(k, salt) - 1.0
+        b = 2.0 * _cycle_noise(k + 1.0, salt) - 1.0
+        return a + (b - a) * smoothstep(cyc - k)
+
+    def _cycle_warp(self, phase: np.ndarray, base: int) -> np.ndarray:
+        return phase + 2 * np.pi * self._CYCLE_WARP * self._cycle_interp(phase / (2 * np.pi), base + 17)
+
+    def _cycle_psi(self, phase: np.ndarray, psi: np.ndarray, base: int) -> np.ndarray:
+        cyc = phase / (2 * np.pi)
+        return np.stack([psi[k] + self._CYCLE_PSI[k] * self._cycle_interp(cyc, base + 31 * (k + 1))
+                         for k in range(4)])
 
     @staticmethod
     def _wave(phase: np.ndarray, psi: np.ndarray, offset_cycles: float,
@@ -2745,6 +2918,14 @@ class Synthesizer:
                 shape = smoothstep((t - inst.t0) / ramp) * (1.0 - smoothstep((t - (inst.t1 - ramp)) / ramp))
                 if inst.kind == "tonic_seizure":
                     shape = shape * (0.35 + 0.65 * smoothstep(u / 0.7))   # tonic EMG builds
+                elif inst.clonic and inst.profile == "recruit" and inst.morph == "ictal":
+                    # 0.5.0 (feature review B4-03: focal clonic keyed, no clonic artifact): myogenic bursts on the
+                    # peaks of the run's clonic modulation (_recruit_phase), little EMG before the clonic phase
+                    _, _, _, clonic_hz, clonic_ph = self._recruit_breakpoints(inst)
+                    w = smoothstep((np.clip(u, 0.0, 1.0) - 0.68) / 0.15)
+                    pulse = (0.5 + 0.5 * np.cos(2 * np.pi * clonic_hz * (t - inst.t0) + clonic_ph)) ** 4
+                    shape = shape * (0.05 * (1.0 - w) + w * pulse)
+                    factor = max(factor, MUSCLE_FACTOR["clinical"])
                 elif inst.spread not in (None, "none"):
                     # Muscle follows clinical spread, not electrographic onset:
                     # a focal-onset run recruits muscle as it generalizes.
@@ -2801,6 +2982,41 @@ class Synthesizer:
             # positive exponent overflows.
             env[m] *= 1.0 - depth * np.exp(-d[m] / max(inst.postictal_s / 1.6, 1.0))
         return np.clip(env, 0.05, 1.0)
+
+    #: 0.5.0 focal postictal delta: peak RMS over the onset zone in background-RMS units, and the sample offset of
+    #: the private delta realizations (far past any record, so they never coincide with the background's)
+    _PI_DELTA_GAIN = 2.5
+    _PI_DELTA_OFFSET = 2_000_000_000
+
+    def _postictal_delta_rows(self, t: np.ndarray, i0: int, n: int) -> np.ndarray:
+        """Focal polymorphic delta over the onset zone after an ictal run (spec_version 3).
+
+        Feature review B4-03 / C14 / C18: every run ended in a clean cut back to background.  The default
+        postictal attenuation (``postictal_envelope``) now has focal slowing on top: one independent 1-3 Hz source
+        per onset generator, so it has a gradient and survives the bipolar chain, rising over 1.5 s from offset and
+        decaying with tau = max(postictal_attenuation_s, duration/2), at most 120 s.
+        """
+        out = np.zeros((self.n_elec, n))
+        if self.spec_version < 3 or t.size == 0:
+            return out
+        lo, hi = float(t[0]), float(t[-1])
+        for inst in self.ictal:
+            if (inst.kind not in ("seizure", "seizure_cluster", "status_epilepticus") or inst.morph != "ictal"
+                    or inst.postictal_s <= 0):
+                continue
+            tau = min(max(inst.postictal_s, 0.5 * inst.duration_s), 120.0)
+            if inst.t1 > hi or inst.t1 + 3.0 * tau < lo:
+                continue
+            d = t - inst.t1
+            shape = np.zeros(n)
+            m = (d >= 0) & (d < 3.0 * tau)
+            shape[m] = smoothstep(d[m] / 1.5) * np.exp(-d[m] / tau)
+            gens = mt.region_generators(inst.onset_region, self.electrodes)
+            src = self._oa(self.st_delta, i0 + self._PI_DELTA_OFFSET, n, len(gens))
+            fall = mt.generator_falloff(inst.onset_region)
+            for gi, (focus, ga, _) in enumerate(gens):
+                out += self._gen_weights(focus, fall)[:, None] * (ga * src[gi] * shape)[None, :]
+        return out * (self._PI_DELTA_GAIN * self.amp_rms)
 
     # ---------------- overlap-add noise ----------------
 
@@ -3304,6 +3520,12 @@ class Synthesizer:
 
         # 0.5.0: sleep raises voltage (the review measured wake 34 -> sleep 34 uV); deeper stages carry more delta
         delta_w = 0.14 + 0.85 * self.slow_fraction + (1.1 if v3state else 0.45) * sleep + 0.70 * temp_slow + sed_delta
+        cape_b = self.cape_phase(t) if (self.spec_version >= 3 and self.bg.get("cape")) else None
+        if cape_b is not None:
+            delta_w = delta_w * (1.0 - self._CAPE_SPECTRUM[0] * cape_b)
+            beta_w = beta_w * (1.0 + self._CAPE_SPECTRUM[2] * cape_b)
+            x += (self._stream_signal(self.st_theta, i0, n)
+                  * (self._CAPE_SPECTRUM[1] * (0.30 + 0.25 * sleep) * sed_theta * cape_b)[None, :])
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
         x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
@@ -3340,7 +3562,9 @@ class Synthesizer:
                  * dec
                  # an infant's temporalis floor is a fraction of a child's
                  * (0.45 if self.age == "infant" else 1.0))
-        x += self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
+        muscle_term = self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
+        if self._breach_gain is None:
+            x += muscle_term
 
         if v3state:
             # 0.5.0: scheduled spindle packets in N2/N3 (2.6 background-RMS units at the field maximum); the drug
@@ -3370,6 +3594,10 @@ class Synthesizer:
         if float(self.slow_side.max()) > 0:
             slow_extra = self._stream_signal(self.st_pdr_slow, i0, n)
             x += slow_extra * (self.slow_side[:, None] * 0.55)
+        if self._breach_gain is not None:
+            # 0.5.0: breach gain on cerebral activity only, then the muscle floor.  The display calibration measures
+            # the record without the defect, so a breach no longer turns the rest of the head down (T3 read 0.9x)
+            x = (x if self._calibrating else x * self._breach_gain[:, None]) + muscle_term
 
         # --- amplitude, asymmetry, envelopes ------------------------------
         x *= self.amp_rms
@@ -3469,6 +3697,10 @@ class Synthesizer:
         if self._calibrating:
             return t, x            # background only: what the display calibration measures
         x += self._seizure_block(t)
+        if self.spec_version >= 3 and self.bg["type"] == "burst_suppression":
+            x += self._burst_onset_rows(t) * self._ch_gain[:, None]
+        if self.spec_version >= 3 and self.ictal:
+            x += self._postictal_delta_rows(t, i0, n)
         # multifocal spikes (hypsarrhythmia), attenuated through a decrement
         x += self._multifocal_spike_rows(t) * (dec * self.burst_envelope(t))[None, :] * self._ch_gain[:, None]
         # P7 batch 5: sporadic interictal discharges and pediatric normal variants; both ride the

@@ -237,6 +237,10 @@ def pma_defaults(pma: float) -> Dict[str, float]:
 #: to normal background).
 V3_POSTICTAL_S = 20.0
 
+#: 0.5.0 burst suppression: interburst residual (uV peak-to-peak on the display montage) and ECG default
+V3_IBI_RESIDUAL_UV = 3.0
+V3_BS_ECG_UV = 10.0
+
 DEFAULT_SEIZURE = {
     "duration_s": 90.0,
     "onset_region": "left_temporal",
@@ -550,6 +554,13 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     if bg["type"] == "burst_suppression":
         bs.setdefault("burst_s", 2.0)
         bs.setdefault("ibi_s", 8.0)
+        if version >= 3:
+            # 0.5.0 (feature review C21, learningeeg L4): the interburst carries residual low-voltage activity
+            # (about 3 uV, under the 10-uV suppression limit) rather than a 1-uV ruler-flat line, and the ECG that
+            # shows through a suppressed record
+            bs.setdefault("ibi_floor", min(0.15, max(0.02, V3_IBI_RESIDUAL_UV / float(bg["amplitude_uv"]))))
+            if "baseline_ecg_uv" not in (s.get("background") or {}):
+                bg["baseline_ecg_uv"] = V3_BS_ECG_UV
     else:
         cyc = preset["cycle_s"]
         bs.setdefault("burst_s", cyc * (1.0 - preset["suppression_fraction"]))

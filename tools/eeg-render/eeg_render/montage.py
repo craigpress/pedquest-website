@@ -247,6 +247,21 @@ REGION_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
     "midline":         [("Cz", 1.00, 0.00), ("Fz", 0.55, 0.06), ("Pz", 0.50, 0.09)],
 }
 
+#: spec_version 3 (0.5.0, feature review seizures-icu B4-01..04): generators a focal ictal run RECRUITS over its
+#: first seconds, on top of ``REGION_GENERATORS``.  The v2 sets kept a temporal seizure in F7-T3/T3-T5 for its
+#: whole length; learningeeg L1/L2 show the whole ipsilateral chain involved about 10 s after onset with a leak
+#: into the parasagittal chain.  Each extra source joins at a per-run delay (synth ``_seizure_block``).
+FOCAL_RECRUIT_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
+    "left_temporal":   [("F7", 0.45, -0.18), ("T5", 0.45, 0.22), ("C3", 0.25, 0.05)],
+    "right_temporal":  [("F8", 0.45, -0.18), ("T6", 0.45, 0.22), ("C4", 0.25, 0.05)],
+    "left_frontal":    [("F7", 0.40, 0.16), ("C3", 0.30, 0.12), ("Fz", 0.30, 0.04)],
+    "right_frontal":   [("F8", 0.40, 0.16), ("C4", 0.30, 0.12), ("Fz", 0.30, 0.04)],
+    "left_central":    [("P3", 0.40, 0.18), ("Cz", 0.30, 0.05), ("T3", 0.30, 0.12)],
+    "right_central":   [("P4", 0.40, 0.18), ("Cz", 0.30, 0.05), ("T4", 0.30, 0.12)],
+    "left_occipital":  [("T5", 0.40, 0.18), ("P3", 0.35, 0.12), ("Pz", 0.25, 0.05)],
+    "right_occipital": [("T6", 0.40, 0.18), ("P4", 0.35, 0.12), ("Pz", 0.25, 0.05)],
+}
+
 #: Intended scalp topography of a *generalized* discharge, peak 1.0.
 #:
 #: Generalized spike-and-wave is frontally maximal with a smooth
