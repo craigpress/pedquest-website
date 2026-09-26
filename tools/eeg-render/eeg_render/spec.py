@@ -874,6 +874,18 @@ AUTHORED_VARIANT_DEFAULTS = {
 }
 
 
+#: spec_version 3 overrides of AUTHORED_VARIANT_DEFAULTS
+#: (amplitude_uv is then the p2p in the best longitudinal-bipolar derivation for the display-scaled kinds; see
+#: variants_v3.DISPLAY_SCALED)
+AUTHORED_VARIANT_DEFAULTS_V3 = {
+    # mu about 1.5x the background in F3-C3 (Mu-IV, very-nice-Mu)
+    "mu": {"amplitude_uv": 60.0},
+    # SREDA is conspicuous against an adult PDR (Westmoreland & Klass), about twice the background
+    "sreda": {"amplitude_uv": 90.0},
+    "frontal_arousal_rhythm": {"frequency_hz": 8.0},
+}
+
+
 def _normalize_variants(bg: Dict[str, Any]) -> None:
     """Fill each authored variant with its defaults; an absent key stays absent (bank hashes)."""
     v = bg.get("variants")
@@ -905,6 +917,12 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e.setdefault("at_min", 0.0)
         e.setdefault("duration_s", 10.0)
         e.setdefault("side", "both")
+        if version >= 3:
+            # 0.5.0 (normal-variants.md): mu read against the background, FAR 7-10 Hz not 6.5
+            e.setdefault("amplitude_uv", AUTHORED_VARIANT_DEFAULTS_V3.get(e["kind"], {}).get("amplitude_uv",
+                                                                                          defaults["amplitude_uv"]))
+            e.setdefault("frequency_hz", AUTHORED_VARIANT_DEFAULTS_V3.get(e["kind"], {}).get("frequency_hz",
+                                                                                          defaults["frequency_hz"]))
         for key, value in defaults.items():
             e.setdefault(key, value)
         if e["kind"] == "photic_driving":
