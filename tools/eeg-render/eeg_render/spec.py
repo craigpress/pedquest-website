@@ -233,6 +233,10 @@ def pma_defaults(pma: float) -> Dict[str, float]:
             for i, k in enumerate(keys)}
 
 
+#: 0.5.0: seizures end in a postictal attenuation by default (the review found every run cut straight back
+#: to normal background).
+V3_POSTICTAL_S = 20.0
+
 DEFAULT_SEIZURE = {
     "duration_s": 90.0,
     "onset_region": "left_temporal",
@@ -908,6 +912,10 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
             e["frequency_hz"] = float(e["stimulus_frequency_hz"])
         return e
     if kind in ("seizure", "seizure_cluster", "status_epilepticus"):
+        if version >= 3 and e.get("clinical_correlate") in ("focal_clonic", "focal_tonic", "generalized_tonic_clonic"):
+            # 0.5.0 (feature review: B4-03 keyed focal clonic with no clonic artifact): a motor correlate
+            # brings its myogenic artifact even when the discharge does not spread
+            e.setdefault("muscle", "modest")
         if version >= 2 and kind == "seizure":
             # 0.4.0 (Craig, P5 C15/C19): a focal run that never spreads recruits
             # no scalp muscle; muscle comes with clinical spread
@@ -921,6 +929,8 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
             e.setdefault("muscle", "modest")
     if kind == "seizure":
         e.setdefault("onset_min", 0.0)
+        if version >= 3:
+            e.setdefault("postictal_attenuation_s", V3_POSTICTAL_S)
         for k, v in DEFAULT_SEIZURE.items():
             if k == "evolution":
                 evo = dict(v)
@@ -994,10 +1004,15 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e["evolution"] = evo
     elif kind == "seizure_cluster":
         z = dict(e.get("seizure", {}) or {})
+        if version >= 3:
+            z.setdefault("postictal_attenuation_s", V3_POSTICTAL_S)
         for k, v in DEFAULT_SEIZURE.items():
             if k == "evolution":
                 evo = dict(v)
                 evo.update(z.get("evolution", {}) or {})
+                # 0.5.0: cluster runs recruit like single seizures (they used the 0.3.x sweep)
+                if version >= 3:
+                    evo.setdefault("profile", "recruit")
                 z["evolution"] = evo
             else:
                 z.setdefault(k, v)

@@ -82,6 +82,9 @@ _EVOLUTION = {
         # sweep: one log-frequency glide (0.3.x); recruit (0.4.0): low-voltage fast
         # onset, stepwise slowing with amplitude build-up, late clonic bursting
         "profile": {"enum": ["sweep", "recruit"]},
+        # 0.5.0 (spec_version 3): "relative" floors the run at 1.5x (onset) / 2x (established) the background
+        # peak-to-peak so it stays visible; "absolute" keeps the authored voltages
+        "amplitude_mode": {"enum": ["relative", "absolute"]},
     },
 }
 
@@ -262,6 +265,8 @@ _BACKGROUND = {
         # record never engages the burst-envelope blink gate, so an
         # unresponsive patient needs this set explicitly.
         "blink_rate_per_min": {"type": "number", "minimum": 0, "maximum": 60},
+        # 0.5.0 (spec_version 3): "cycling" draws N1/N2/N3/REM cycles inside every sleep span; "static" holds N2
+        "sleep_staging": {"enum": ["cycling", "static"]},
         # 0.4.0: peak blink voltage at Fp (0.3.x fixed 95; version-2 default 160)
         "blink_amplitude_uv": {"type": "number", "minimum": 0, "maximum": 500},
         # 0.4.0: what amplitude_uv (and the events' amplitudes) mean - the referential
@@ -447,6 +452,8 @@ _STYLE = {
         "show_reference_seizure_strip": {"type": "boolean"},
         "spindle_hz": {"type": "number", "minimum": 10, "maximum": 16},
         "spindle_train_s": {"type": "number", "minimum": 30, "maximum": 600},
+        # 0.5.0 (spec_version 3): spindles per minute of N2 (N3 gets 0.35x); authored default 4
+        "spindle_rate_per_min": {"type": "number", "minimum": 0, "maximum": 15},
         "seizure_onset_region_by_index": {"type": "array", "items": {"enum": REGIONS}},
         "show_detector_event_strip": {"type": "boolean"},
         "detector_marks_at_min": {"type": "array", "items": {"type": "number"}},

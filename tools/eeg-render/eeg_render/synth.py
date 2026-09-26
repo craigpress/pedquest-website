@@ -45,6 +45,7 @@ from scipy import ndimage, signal as sps
 
 from . import montage as mt
 from .rng import substream
+from . import state_v3 as sv3
 
 FRAME_S = 32.0          # overlap-add frame length
 
@@ -550,6 +551,11 @@ _ANTERIOR = {
     "T3": 0.50, "T4": 0.50, "P3": 0.35, "P4": 0.35, "Pz": 0.35,
     "T5": 0.28, "T6": 0.28, "O1": 0.20, "O2": 0.20,
 }
+_PDR_FIELD_V3 = {
+    "O1": 1.00, "O2": 1.00, "P3": 0.40, "P4": 0.40, "Pz": 0.42, "T5": 0.50, "T6": 0.50,
+    "T3": 0.12, "T4": 0.12, "C3": 0.10, "C4": 0.10, "Cz": 0.10,
+    "F3": 0.04, "F4": 0.04, "Fz": 0.04, "F7": 0.04, "F8": 0.04, "Fp1": 0.03, "Fp2": 0.03,
+}
 _CENTRAL = {
     "C3": 1.00, "C4": 1.00, "Cz": 1.00, "P3": 0.55, "P4": 0.55, "Pz": 0.60,
     "F3": 0.55, "F4": 0.55, "Fz": 0.60, "T3": 0.35, "T4": 0.35,
@@ -702,6 +708,10 @@ class Synthesizer:
         # 0.4.0 (Craig, P5 C13): a focal posterior field for the dominant rhythm keeps it
         # occipito-parietal instead of leaking into central and frontal derivations
         post_pdr = np.power(post, 2.2) if self.bg.get("pdr_field") == "focal" else post
+        if self.spec_version >= 3:
+            # 0.5.0 (feature review: C3-P3 alpha 0.87-0.99 of P3-O1): occipital maximum with a steep parietal fall, so
+            # longitudinal bipolar shows the PDR best in P3-O1 / T5-O1 and about half of it in C3-P3
+            post_pdr = _profile(ch, _PDR_FIELD_V3, 0.03)
         self.st_pdr = self._mk("pdr", band_shape(f, self.dominant_hz, 1.45), post_pdr, common=0.65)
         self.st_pdr_slow = self._mk(
             "pdrslow",
@@ -893,6 +903,9 @@ class Synthesizer:
         self._state_t = list(np.asarray(st_times)[order])
         self._state_v = list(np.asarray(st_sleep)[order])
         self._arousals = st_arousal
+        self._hypno: List[Tuple[float, float, str]] = []
+        if self.spec_version >= 3 and self.age != "neonate":
+            self._build_state_v3(spec, dur)
 
         # neonatal sleep-wake cycling shows on aEEG as a slow, regular
         # widening/narrowing of the band; maturity sets its depth and period
@@ -1028,6 +1041,141 @@ class Synthesizer:
         ]
         self._dur_guard = dur
 
+    #: 0.5.0 per-electrode spindle field (central maximum; temporal chains carry lower-voltage spindles, Craig on
+    #: PQ-G-002: "lower voltage, but not absent") and a small anterior-to-posterior phase lag (traveling spindle)
+    _SPINDLE_FIELD_V3 = {"C3": 1.0, "C4": 1.0, "Cz": 1.0, "F3": 0.75, "F4": 0.75, "Fz": 0.85, "P3": 0.75, "P4": 0.75,
+                         "Pz": 0.8, "T3": 0.55, "T4": 0.55, "F7": 0.4, "F8": 0.4, "T5": 0.4, "T6": 0.4,
+                         "Fp1": 0.25, "Fp2": 0.25, "O1": 0.25, "O2": 0.25}
+    _SPINDLE_LAG_RAD_PER_UNIT = 1.1
+    _VERTEX_FIELD = {"Cz": 1.0, "Fz": 0.55, "Pz": 0.5, "C3": 0.45, "C4": 0.45, "F3": 0.3, "F4": 0.3, "P3": 0.3, "P4": 0.3,
+                     "T3": 0.1, "T4": 0.1, "Fp1": 0.08, "Fp2": 0.08, "O1": 0.08, "O2": 0.08, "F7": 0.1, "F8": 0.1,
+                     "T5": 0.08, "T6": 0.08}
+    _KCOMPLEX_FIELD = {"Fz": 1.0, "F3": 0.85, "F4": 0.85, "Cz": 0.7, "C3": 0.5, "C4": 0.5, "Fp1": 0.55, "Fp2": 0.55,
+                       "Pz": 0.3, "P3": 0.25, "P4": 0.25, "F7": 0.45, "F8": 0.45, "T3": 0.2, "T4": 0.2, "T5": 0.1,
+                       "T6": 0.1, "O1": 0.05, "O2": 0.05}
+    #: peak microvolts at the field maximum (median; lognormal per event).  Pediatric vertex waves and K-complexes are
+    #: typically the largest waves of an N2 page; the bipolar chains show the field gradient, about a third of this
+    _VERTEX_UV = {"infant": 170.0, "child": 200.0, "adolescent": 140.0, "adult": 90.0}
+    _KCOMPLEX_UV = {"infant": 300.0, "child": 350.0, "adolescent": 250.0, "adult": 160.0}
+
+    def _build_state_v3(self, spec: Dict, dur: float) -> None:
+        grid = np.arange(0.0, dur + 1.0, 1.0)
+        asleep = _piecewise(self._state_t, self._state_v, grid) >= 0.5
+        staged = (self.bg.get("sleep_staging") or "cycling") == "cycling"
+        sp = sv3.spans(grid, asleep)
+        if staged:
+            hyp = sv3.build_hypnogram(self.seed, sp, self.age, dur)
+        else:
+            hyp, prev = [], -120.0
+            for a, b in sp:
+                hyp += [(prev, a, "W"), (a, b, "N2")]
+                prev = b
+            hyp.append((prev, dur + 120.0, "W"))
+        for a, b in self._rem_intervals:            # authored REM overrides the drawn stage
+            cut = []
+            for x0, x1, st in hyp:
+                if x1 <= a or x0 >= b:
+                    cut.append((x0, x1, st))
+                    continue
+                if x0 < a:
+                    cut.append((x0, a, st))
+                if x1 > b:
+                    cut.append((b, x1, st))
+            hyp = sorted(cut + [(a, b, "R")])
+        self._hypno = [iv for iv in hyp if iv[1] > iv[0]]
+        self._arousals_v3 = sv3.build_arousals(self.seed, self._hypno) + [(a, w) for a, w in self._arousals]
+        eyes_on = self.bg.get("reactivity") == "present" and float(self.bg.get("blink_rate_per_min") or 0.0) > 0
+        self._eyes = sv3.build_eye_timeline(self.seed, self._hypno) if eyes_on else []
+        style = spec.get("style") or {}
+        rate = float(style.get("spindle_rate_per_min", 4.0))
+        self._sp_t = sv3.schedule_transients(self.seed, "spindles", self._hypno, sv3.SPINDLE, rate, 1.5)
+        self._sp = sv3.spindle_params(self.seed, self._sp_t.size, self.age)
+        vrate = 6.0 if self.age in ("infant", "child") else 3.0
+        self._vx_t = sv3.schedule_transients(self.seed, "vertex", self._hypno, sv3.VERTEX, vrate, 2.0)
+        self._kc_t = sv3.schedule_transients(self.seed, "kcomplex", self._hypno, sv3.KCOMPLEX, 1.5, 4.0)
+        vr = substream(self.seed, "vertex-shape")
+        self._vx_a = np.exp(vr.normal(0.0, 0.25, self._vx_t.size))
+        kr = substream(self.seed, "kcomplex-shape")
+        self._kc_a = np.exp(kr.normal(0.0, 0.25, self._kc_t.size))
+        pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
+        self._sp_field = np.array([self._SPINDLE_FIELD_V3.get(e, 0.2) for e in self.electrodes])
+        self._sp_lag = -self._SPINDLE_LAG_RAD_PER_UNIT * pos[:, 1]
+        self._vx_field = np.array([self._VERTEX_FIELD.get(e, 0.05) for e in self.electrodes])
+        self._kc_field = np.array([self._KCOMPLEX_FIELD.get(e, 0.05) for e in self.electrodes])
+
+    def stage_at(self, t: np.ndarray) -> np.ndarray:
+        """Sleep stage label per sample (spec_version 3, non-neonatal); '' otherwise."""
+        out = np.full(t.shape, "", dtype=object)
+        for a, b, st in self._hypno:
+            out[(t >= a) & (t < b)] = st
+        return out
+
+    def _eye_factor(self, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """(PDR factor, blink factor) from the eye timeline: eyes closed 1.0 / 0.1, eyes open 0.3 / 1.0, with the PDR
+        briefly back to 0.85 from 0.15 s to about 1.2 s after each eyes-open blink (Craig on B2-06)."""
+        if not self._eyes:
+            return np.ones(t.shape), np.ones(t.shape)
+        closed = sv3.weight(t, self._eyes, {"closed": 1.0, "open": 0.0}, xfade=0.6, default=1.0)
+        boost = np.zeros(t.shape)
+        for pk in self._blink_t[(self._blink_t > t[0] - 1.5) & (self._blink_t < t[-1])] + 0.10:
+            d = t - pk
+            m = (d > 0.15) & (d < 1.2)
+            boost[m] = np.maximum(boost[m], np.sin(np.pi * (d[m] - 0.15) / 1.05) ** 2)
+        pdr = closed + (1.0 - closed) * (0.3 + 0.55 * boost)
+        return pdr, 0.1 + 0.9 * (1.0 - closed)
+
+    def _eye_event_rows(self, t: np.ndarray) -> np.ndarray:
+        """Eye closure (Fp positive, about 2x a blink, back by 300 ms) and eye opening (Fp negative, 1.5x a blink,
+        80 ms rise, 100 ms plateau, 170 ms decay) at each eye-state change (feature review, artifacts.md 1f)."""
+        rows = np.zeros((self.n_elec, t.size))
+        if not self._eyes:
+            return rows
+        a_uv = float(self.bg.get("blink_amplitude_uv", BLINK_UV))
+        prof = np.zeros(t.size)
+        for (a, b, st) in self._eyes[1:]:
+            d = t - a
+            if d[-1] < -0.3 or d[0] > 1.5:
+                continue
+            if st == "closed":
+                m = (d > -0.15) & (d < 0.8)
+                dd = d[m]
+                prof[m] += 2.0 * np.where(dd < 0, np.exp(-0.5 * (dd / 0.045) ** 2), np.exp(-0.5 * (dd / 0.11) ** 2))
+            else:
+                m = (d > -0.1) & (d < 1.2)
+                dd = d[m]
+                up = np.clip(dd / 0.08, 0.0, 1.0) ** 2
+                prof[m] += -1.5 * np.where(dd < 0.18, up, np.exp(-(dd - 0.18) / 0.17))
+        return prof[None, :] * a_uv * self._blink_field()[:, None]
+
+    def _spindle_rows_v3(self, t: np.ndarray) -> np.ndarray:
+        env, c, s = sv3.packets(t, self._sp_t, self._sp["dur"], self._sp["hz"], self._sp["amp"], self._sp["ph"])
+        if not env.any():
+            return np.zeros((self.n_elec, t.size))
+        lag = self._sp_lag[:, None]
+        return self._sp_field[:, None] * (c[None, :] * np.cos(lag) - s[None, :] * np.sin(lag))
+
+    def _sleep_transient_rows(self, t: np.ndarray) -> np.ndarray:
+        """Vertex sharp waves (surface-negative, about 150 ms, central) and K-complexes (sharp negative then positive
+        slow wave, >= 0.5 s, frontal-central), microvolts."""
+        rows = np.zeros((self.n_elec, t.size))
+        vuv = self._VERTEX_UV.get(self.age, 90.0)
+        for tt, a in zip(self._vx_t, self._vx_a):
+            d = t - tt
+            m = (d > -0.15) & (d < 0.45)
+            if m.any():
+                dd = d[m]
+                w = -np.exp(-0.5 * (dd / 0.045) ** 2) + 0.35 * np.exp(-0.5 * ((dd - 0.14) / 0.06) ** 2)
+                rows[:, m] += (vuv * a) * self._vx_field[:, None] * w[None, :]
+        kuv = self._KCOMPLEX_UV.get(self.age, 150.0)
+        for tt, a in zip(self._kc_t, self._kc_a):
+            d = t - tt
+            m = (d > -0.2) & (d < 1.4)
+            if m.any():
+                dd = d[m]
+                w = -np.exp(-0.5 * (dd / 0.07) ** 2) + 0.6 * np.exp(-0.5 * ((dd - 0.45) / 0.18) ** 2)
+                rows[:, m] += (kuv * a) * self._kc_field[:, None] * w[None, :]
+        return rows
+
     def temperature_at(self, t: np.ndarray) -> np.ndarray:
         return _piecewise(self._temp_t, self._temp_v, t) if len(self._temp_t) > 1 else np.full_like(t, 36.5)
 
@@ -1054,6 +1202,9 @@ class Synthesizer:
         return out
 
     def _sleep_at(self, t: np.ndarray) -> np.ndarray:
+        if self._hypno:
+            v = sv3.weight(t, self._hypno, sv3.DEPTH)
+            return np.clip(v * (1.0 - 0.9 * sv3.arousal_gate(t, self._arousals_v3)), 0.0, 1.0)
         if self._state_intervals:
             v = self._state_lookup(t, self._STATE_SLEEP, np.zeros_like(t, dtype=float))
             for at, width in self._arousals:
@@ -1585,15 +1736,28 @@ class Synthesizer:
                 dur1 = float(z.get("duration_end_s", dur0))
                 span = max(end - t, 1e-6)
                 k = 0
+                v3 = self.spec_version >= 3
+                vr = substream(self.seed, "cluster-v3", i)
                 while t <= end + 1e-6:
                     frac = min(max((t - float(ev["start_min"]) * 60.0) / span, 0.0), 1.0)
+                    if v3:
+                        # 0.5.0 (feature review: B4-02/05/06 near-clones, metronomic sawtooth aEEG): each run
+                        # draws its own timing, length, frequencies and voltage around the authored values
+                        t_k = t + float(np.clip(vr.normal(0.0, 0.10 * step), -0.25 * step, 0.25 * step))
+                        d_k = (dur0 + (dur1 - dur0) * frac) * float(_lognorm(vr, 1, 0.35)[0])
+                        f_k = float(_lognorm(vr, 1, 0.12)[0])
+                        a_k = float(_lognorm(vr, 1, 0.20)[0])
+                    else:
+                        t_k = t + float(jit.normal(0.0, step * 0.03))
+                        d_k = (dur0 + (dur1 - dur0) * frac) * float(_lognorm(jit, 1, 0.10)[0])
+                        f_k = a_k = 1.0
                     out.append(SeizureInstance(
-                        t0=t + float(jit.normal(0.0, step * 0.03)),
-                        duration_s=(dur0 + (dur1 - dur0) * frac) * float(_lognorm(jit, 1, 0.10)[0]),
+                        t0=t_k,
+                        duration_s=d_k,
                         onset_region=z["onset_region"],
-                        start_hz=float(evo["start_hz"]), end_hz=float(evo["end_hz"]),
-                        amp_start=float(evo["amplitude_start_uv"]),
-                        amp_end=float(evo["amplitude_end_uv"]),
+                        start_hz=float(evo["start_hz"]) * f_k, end_hz=float(evo["end_hz"]) * f_k,
+                        amp_start=float(evo["amplitude_start_uv"]) * a_k,
+                        amp_end=float(evo["amplitude_end_uv"]) * a_k,
                         spread=z["spread"], postictal_s=float(z["postictal_attenuation_s"]),
                         morph=z.get("morphology") or "ictal",
                         profile=str(evo.get("profile") or "sweep"),
@@ -1674,6 +1838,17 @@ class Synthesizer:
             if z.kind in ("seizure", "seizure_cluster", "status_epilepticus"):
                 z.muscle = str(self.spec["events"][z.index].get("muscle") or "modest")
         out.sort(key=lambda z: z.t0)
+        if self.spec_version >= 3:
+            # 0.5.0 (feature review, PQ-G-002 snr 0.4-1.5): an ictal request can no longer sink into its own
+            # background.  Onset at least 1.5x and the established run at least 2x the background peak-to-peak
+            # (display-referenced amplitude_uv); evolution.amplitude_mode "absolute" keeps the authored voltages.
+            bg_pp = float(self.bg.get("amplitude_uv") or 0.0)
+            modes = {i: str(((ev.get("seizure") or ev).get("evolution") or {}).get("amplitude_mode", "relative"))
+                     for i, ev in enumerate(self.spec["events"])}
+            for z in out:
+                if z.kind in ("seizure", "seizure_cluster", "status_epilepticus") and z.morph == "ictal"                         and modes.get(z.index) != "absolute" and bg_pp > 0:
+                    z.amp_start = max(z.amp_start, 1.5 * bg_pp)
+                    z.amp_end = max(z.amp_end, 2.0 * bg_pp)
         self.seizures = out
         self.ictal = [z for z in out if z.kind != "rhythmic_pattern"]
         self.rhythmic_patterns = [z for z in out if z.kind == "rhythmic_pattern"]
@@ -2336,6 +2511,13 @@ class Synthesizer:
             windows = [(t0, min(t0 + 60.0, dur)) for t0 in (30.0, 0.25 * dur, 0.50 * dur, 0.75 * dur)]
         else:
             windows = [(0.0, max(10.0, dur - 5.0))]
+        if self.spec_version >= 3 and self._hypno:
+            # 0.5.0: amplitude_uv is the BASELINE (awake) voltage.  Measure it in wake only, so sleep stages raise
+            # the display instead of being normalised back down (feature review: wake 34 -> sleep 34 uV).
+            wake = [(max(a, 0.0), min(b, dur)) for a, b, st in self._hypno if st == "W" and min(b, dur) - max(a, 0.0) >= 20.0]
+            if wake:
+                step = max(1, len(wake) // 4)
+                windows = [(a + 2.0, min(b - 2.0, a + 62.0)) for a, b in wake[::step][:4]]
         bursty = self.bg["type"] in ("discontinuous", "excessively_discontinuous", "trace_alternant",
                                      "burst_suppression", "hypsarrhythmia")
         if bursty:
@@ -2367,7 +2549,14 @@ class Synthesizer:
                     # divide out this window's slow envelope: the record-wide median of
                     # that envelope is put back below, so the calibration targets the
                     # long-run page, not whichever swing these windows caught
-                    e = float(np.mean(self.slow_am(np.linspace(t0, t1, max(8, int(t1 - t0))))))
+                    tg = np.linspace(t0, t1, max(8, int(t1 - t0)))
+                    e = float(np.mean(self.slow_am(tg)))
+                    if self.spec_version >= 3:
+                        # and the unsedated baseline (factor 1.0): a drug's amplitude change, including one present
+                        # from t = 0, must survive calibration (feature review: neonatal midazolam 0.72x -> 0.94x)
+                        amp = (_piecewise(self._sed_t, self._sed_amp, tg) if len(self._sed_t) > 1
+                               else np.full(tg.size, self._sed_amp[0]))
+                        e *= max(float(np.mean(amp)), 1e-3)
                     chunks.append(np.ptp(rows[:, : m * n].reshape(rows.shape[0], m, n), axis=2) / max(e, 1e-6))
         finally:
             self._calibrating = False
@@ -2398,15 +2587,16 @@ class Synthesizer:
         f_start, f_end = max(inst.start_hz, 0.5), max(inst.end_hz, 0.5)
         f_onset = float(np.clip(f_start * rng.uniform(2.0, 3.0), f_start * 1.5, 22.0))
         # steps every 2.5-5 s through the middle 70 % of the run; at least 4
-        n_mid = max(4, int(round(0.70 * dur / float(rng.uniform(2.5, 5.0)))))
-        u = np.concatenate([[0.0, 0.15], np.linspace(0.15, 0.85, n_mid + 1)[1:], [1.0]])
+        u_on, u_off = self._recruit_bounds(dur)
+        n_mid = max(4, int(round((u_off - u_on) * dur / float(rng.uniform(2.5, 5.0)))))
+        u = np.concatenate([[0.0, u_on], np.linspace(u_on, u_off, n_mid + 1)[1:], [1.0]])
         logf = np.empty_like(u)
         logf[0] = math.log(f_onset)
         logf[1] = math.log(f_start)
         # mean-reverting random walk around the start->end glide (log domain)
         dev = 0.0
         for k in range(2, u.size - 1):
-            frac = (u[k] - 0.15) / 0.70
+            frac = (u[k] - u_on) / (u_off - u_on)
             glide = math.log(f_start) + (math.log(f_end) - math.log(f_start)) * frac
             dev = 0.55 * dev + float(rng.normal(0.0, 0.16))
             logf[k] = glide + dev
@@ -2422,6 +2612,17 @@ class Synthesizer:
         clonic_ph = float(rng.uniform(0, 2 * np.pi))
         cache[key] = (u, f, cum, clonic_hz, clonic_ph)
         return cache[key]
+
+    def _recruit_bounds(self, dur: float) -> Tuple[float, float]:
+        """Fractions of the run at which the onset ends and the offset begins.
+
+        Versions 1-2 use a fixed 15 % onset and 85 % offset, so a 12-min seizure spent 108 s in a
+        quarter-voltage onset and its visible length fell short of the key (feature review, B4-01,
+        C15, C19).  Version 3 caps them in seconds: onset at most 4 s, offset at most 10 s.
+        """
+        if self.spec_version >= 3:
+            return min(0.15, 4.0 / dur), max(0.85, 1.0 - 10.0 / dur)
+        return 0.15, 0.85
 
     def _recruit_phase(self, inst: SeizureInstance, t: np.ndarray):
         dur = max(inst.duration_s, 1.0)
@@ -2442,10 +2643,16 @@ class Synthesizer:
                        (u1 - u0) * dur * f0 * s)
         phase = 2 * np.pi * (cum[k] + seg)
         # amplitude: quarter-voltage onset, build to amplitude_end by 75 %, fall off at the end
-        a = np.interp(uu, [0.0, 0.15, 0.75, 1.0],
-                      [0.25 * inst.amp_start, inst.amp_start, inst.amp_end, 0.55 * inst.amp_end])
+        if self.spec_version >= 3:
+            u_on, u_off = self._recruit_bounds(dur)
+            a = np.interp(uu, [0.0, u_on, u_off, 1.0],
+                          [0.8 * inst.amp_start, inst.amp_start, inst.amp_end, 0.7 * inst.amp_end])
+            ramp = min(0.04, 0.5 / dur)
+        else:
+            a = np.interp(uu, [0.0, 0.15, 0.75, 1.0],
+                          [0.25 * inst.amp_start, inst.amp_start, inst.amp_end, 0.55 * inst.amp_end])
+            ramp = 0.04
         amp = a / 2.9 * self._ictal_gain(inst)
-        ramp = 0.04
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
         # clonic bursting over the last third: the run breaks into groups at 1-2 Hz
         w = smoothstep((uu - 0.68) / 0.15)
@@ -2499,6 +2706,8 @@ class Synthesizer:
         amp = ((inst.amp_start + (inst.amp_end - inst.amp_start) * uu)
                / 2.9 * self._ictal_gain(inst))
         ramp = 0.07 if inst.kind != "rhythmic_pattern" else 0.14
+        if self.spec_version >= 3 and inst.kind in ("seizure", "seizure_cluster", "status_epilepticus"):
+            ramp = min(ramp, 2.0 / dur)
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
         # cycle-group waxing and waning
         amp = amp * (1.0 + inst.fluctuate * np.sin(2 * np.pi * 0.11 * uu * dur + wax_phase))
@@ -3078,7 +3287,14 @@ class Synthesizer:
         # --- background mixture -------------------------------------------
         x = self._stream_signal(self.st_broad, i0, n) * (0.80 + 0.20 * sleep)[None, :]
 
-        pdr_w = (1.0 - 0.55 * sleep) * (1.0 - 0.55 * temp_slow)
+        v3state = bool(self._hypno)
+        if v3state:
+            aro = sv3.arousal_gate(t, self._arousals_v3)
+            stage_pdr = sv3.weight(t, self._hypno, sv3.PDR)
+            eye_pdr, eye_blink = self._eye_factor(t)
+            pdr_w = np.maximum(stage_pdr * eye_pdr, 0.6 * aro) * (1.0 - 0.55 * temp_slow)
+        else:
+            pdr_w = (1.0 - 0.55 * sleep) * (1.0 - 0.55 * temp_slow)
         pdr_w *= 1.0 + np.minimum(sed_alpha, 0.0)
         if self.age != "neonate":
             x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
@@ -3086,7 +3302,8 @@ class Synthesizer:
         else:
             x += self._stream_signal(self.st_theta, i0, n) * (0.22 * sed_theta)[None, :]
 
-        delta_w = 0.14 + 0.85 * self.slow_fraction + 0.45 * sleep + 0.70 * temp_slow + sed_delta
+        # 0.5.0: sleep raises voltage (the review measured wake 34 -> sleep 34 uV); deeper stages carry more delta
+        delta_w = 0.14 + 0.85 * self.slow_fraction + (1.1 if v3state else 0.45) * sleep + 0.70 * temp_slow + sed_delta
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
         x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
@@ -3116,7 +3333,8 @@ class Synthesizer:
         # paralysed, post-anoxic - has no tonic muscle, inside bursts included.  Version 2 only.
         unreactive = self.spec_version >= 2 and self.bg.get("reactivity") == "absent"
         blocked = self.spec.get("neuromuscular_blockade") == "complete"
-        emg_w = ((0.0 if unreactive or blocked else EMG_FLOOR_W) * sed_emg * (1.0 - 0.75 * sleep) * self.burst_envelope(t)
+        sleep_emg = (np.maximum(sv3.weight(t, self._hypno, sv3.EMG), 0.8 * aro) if v3state else (1.0 - 0.75 * sleep))
+        emg_w = ((0.0 if unreactive or blocked else EMG_FLOOR_W) * sed_emg * sleep_emg * self.burst_envelope(t)
                  * (1.0 + self.ictal_gate(t))
                  * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
                  * dec
@@ -3124,7 +3342,11 @@ class Synthesizer:
                  * (0.45 if self.age == "infant" else 1.0))
         x += self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
 
-        if self.age != "neonate":
+        if v3state:
+            # 0.5.0: scheduled spindle packets in N2/N3 (2.6 background-RMS units at the field maximum); the drug
+            # spindle weight (dexmedetomidine) adds to the stage rate through the same packets
+            x += self._spindle_rows_v3(t) * (2.6 * (1.0 + sed_spindle))[None, :]
+        elif self.age != "neonate":
             spindle_phase = np.mod(t, 3.7)
             spindle_gate = np.where(spindle_phase < 1.2, np.sin(np.pi * spindle_phase / 1.2) ** 2, 0.0)
             train_s = (self.spec.get("style") or {}).get("spindle_train_s")
@@ -3277,7 +3499,13 @@ class Synthesizer:
         # and it would have lifted burst-suppression interburst intervals past
         # the <5 uV suppression criterion.
         # A staring absence does not blink; see ABSENCE_EMG_DROP.
-        x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)))
+        if v3state:
+            gate = sv3.weight(t, self._hypno, sv3.BLINK) * eye_blink * env * (1.0 - self.absence_gate(t))
+            x += self.blink_rows(t, gate)
+            x += self._eye_event_rows(t) * (env * (1.0 - self.absence_gate(t)))[None, :]
+            x += self._sleep_transient_rows(t) * env[None, :] * self._ch_gain[:, None]
+        else:
+            x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)))
         # Neonatal graphoelements (microvolts; burst-bound ones gated inside).
         if self.age == "neonate":
             x += self.graphoelement_rows(t) * self._ch_gain[:, None]
