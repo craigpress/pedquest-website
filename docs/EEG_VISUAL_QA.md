@@ -13,6 +13,12 @@ Deployed September25 from `eeg-visual-qa`: website and worker release `32adf15`;
 
 ## References and concept tags
 
+September26 UI refinement: the queue combines both sources, searches titles/findings, leads with the recommended correction, previews raw/trend evidence inline, and links directly to the existing editor. Model metadata and full summaries are collapsed. This is an advisory triage surface, not a separate approval workflow; model flags remain audit records. API title enrichment is editor-gated.
+
+The reference browser now filters instantly by term/category and expands criteria in place. Permanent pages share the same compact criteria/context layout. Empty sections and duplicate source links are omitted; generation notes are collapsed. Eleven ACNS feature entries link to the specific pages in the official 2021 EEG examples supplement. Other chapter-level sources are labelled as chapters rather than specific examples. Neonatal monitoring links directly to the publisher guideline, which may require access.
+
+Visual checks used desktop and390px browser viewports. QA interactions were checked with the actual shared component and two synthetic saved reports in a temporary local-only fixture (archived outside the website before build); no production browser editor session was available. Search, category/source filters, empty states, inline expansion and image switching passed. The reference/data and API auth tests passed4/4, focused lint/TypeScript and146-page webpack build passed.
+
 `/education/eeg-reference` and stable feature permalinks expose77 entries: existing47 draft feature contracts plus30 glossary/context entries. ACNS2021 critical-care terminology, neonatal terminology2013, neonatal monitoring indications2025, ILAE2025 and neonatal2021 classifications, IFCN2017 glossary and AES sources are distinguished. References remain explicitly editorial drafts; copied source PDFs and local/private source paths are not published.
 
 Question-bank and Lab review screens derive concept tags from text and existing tags, distinguish explicit/mentioned/uncertain/negated terms, and link definitions. Editors can confirm or dismiss a match; corrections persist separately and are not overwritten by subsequent matching. This is deterministic phrase matching, not clinical NLP or visual feature detection; ambiguous phrasing requires editorial review.

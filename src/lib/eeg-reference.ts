@@ -60,7 +60,32 @@ const PANEL_ALIASES: Record<string,string[]> = {
   "theta-delta-ratio": ["theta_delta_ratio_lateral","theta_delta_ratio_parasagittal"],
   "asymmetry": ["asymmetry_relative","asymmetry_index"], "total-power": ["total_power_L","total_power_R"],
 };
-for (const ref of EEG_REFERENCES) ref.aliases.push(...(PANEL_ALIASES[ref.id] ?? []));
+// Page numbers refer to the ACNS-linked 2021 EEG examples supplement.
+const ACNS_EXAMPLES: Record<string, [string, number][]> = {
+  "bg-continuity": [["Burst attenuation · EEG 1", 2], ["Burst suppression · EEG 2", 3]],
+  "bg-burst-modifiers": [["Identical highly epileptiform bursts · EEG 3", 4]],
+  "rpp-location": [["Lateralized periodic discharges", 9], ["Bilateral independent periodic discharges", 10]],
+  "rpp-type": [["Generalized periodic discharges", 6], ["Generalized rhythmic delta", 7], ["Generalized spike-and-wave", 15]],
+  "rpp-stimulus-evolution": [["Evolution · EEG 16", 17], ["Fluctuation · EEG 17", 18]],
+  "rpp-plus": [["Extreme delta brush · EEG 22", 23]],
+  "rpp-minor": [["Triphasic morphology and lag · EEG 23", 24]],
+  "sz-esz": [["Electrographic seizure · EEG 24", 25]],
+  "sz-ecsz": [["Electroclinical seizure · EEG 25", 28]],
+  "sz-birds": [["BIRDs · EEG 27", 31]],
+  "sz-iic": [["Focal ictal-interictal continuum · EEG 28", 32]],
+};
+for (const ref of EEG_REFERENCES) {
+  ref.aliases.push(...(PANEL_ALIASES[ref.id] ?? []));
+  if (ACNS_EXAMPLES[ref.id]) ref.examples = ACNS_EXAMPLES[ref.id].map(([title, page]) => ({
+    title: `${title} · PDF p. ${page}`,
+    url: `https://cdn-links.lww.com/permalink/jcnp/a/jcnp_2020_11_20_fong_1_sdc1.pdf#page=${page}`,
+  }));
+  if (ref.id === "neonatal-monitoring-2025") {
+    ref.source.url = "https://journals.lww.com/clinicalneurophys/fulltext/2025/01000/the_american_clinical_neurophysiology_society.1.aspx";
+    ref.source.title = "ACNS neonatal monitoring guideline (publisher access)";
+    ref.examples = [];
+  }
+}
 const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[_–—-]/g, " ").toLowerCase();
 export function matchEegFeatures(text: string, tags: string[] = []): FeatureMention[] {
   const normalized = normalize(text);
