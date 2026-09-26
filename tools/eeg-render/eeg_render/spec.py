@@ -166,6 +166,26 @@ GRAPHOELEMENT_PMA_V2: Dict[str, List[Tuple[float, float, float]]] = {
 }
 
 
+#: 0.5.0, spec_version 3 (feature review B1-06: a dysmature 34-w record showed 9-Hz temporal bursts with no delta wave
+#: next to the brushes): temporal alpha bursts belong to 33 w and are gone AT 34 w (Hrachovy & Mizrahi), so the curve
+#: reaches zero at 34.0 instead of 34.2.
+GRAPHOELEMENT_PMA_V3: Dict[str, List[Tuple[float, float, float]]] = {
+    "temporal_alpha": [(32.6, 0.0, 0.0), (33.0, 2.5, 80.0), (33.6, 2.0, 80.0), (34.0, 0.0, 0.0)],
+}
+
+#: 0.5.0: the longest ACCEPTABLE single interburst interval by PMA (learningeeg.com/neonatal: 60 s at 24 w, 40 s at
+#: 26 w, 20 s at 28 w, 10-20 s at 30-34 w, 10 s at 34-36 w, 6 s at 37-40 w; the same 6 s term ceiling as Laoprasert,
+#: rec 2446).  Version 3 caps normal records at it and derives excessive discontinuity from it.
+MAX_IBI_PMA: List[Tuple[float, float]] = [
+    (24.0, 60.0), (26.0, 40.0), (28.0, 20.0), (33.0, 20.0), (34.0, 10.0), (36.0, 10.0), (37.0, 6.0), (48.0, 6.0),
+]
+
+
+def max_acceptable_ibi_s(pma: float) -> float:
+    import numpy as _np
+    return float(_np.interp(float(pma), [p[0] for p in MAX_IBI_PMA], [p[1] for p in MAX_IBI_PMA]))
+
+
 def graphoelement_defaults(pma: float, version: int = 1) -> Dict[str, Dict[str, float]]:
     """Rate and amplitude of every graphoelement at ``pma`` weeks (zero outside its span)."""
     import numpy as _np
@@ -173,6 +193,8 @@ def graphoelement_defaults(pma: float, version: int = 1) -> Dict[str, Dict[str, 
     table = dict(GRAPHOELEMENT_PMA)
     if version >= 2:
         table.update(GRAPHOELEMENT_PMA_V2)
+    if version >= 3:
+        table.update(GRAPHOELEMENT_PMA_V3)
     for name, pts in table.items():
         xs = [p[0] for p in pts]
         if pma < xs[0] or pma > xs[-1]:
@@ -213,15 +235,27 @@ DELTA_BRUSH_PMA: List[Tuple[float, float, float]] = [
 DELTA_BRUSH_NO_PMA = {"rate_per_min": 2.0, "amplitude_uv": 200.0}
 
 
-def delta_brush_defaults(pma: Optional[float]) -> Dict[str, float]:
+#: 0.5.0, spec_version 3: the x1.7 above compensated a waveform that realized ~0.2 of the request (feature review
+#: B1-06(a): 51 uV displayed for 247 uV requested).  The version-3 brush realizes its amplitude as the displayed
+#: peak-to-peak in the derivation of largest field, so the table returns to the atlas range (delta 50-250 uV, rec
+#: 2446), upper half at the peak age, which puts the brush delta at 2-3x the surrounding burst delta (ACNS 2013 Fig. 2a).
+DELTA_BRUSH_PMA_V3: List[Tuple[float, float, float]] = [
+    (24.0, 0.3, 80.0), (26.0, 1.0, 120.0), (30.0, 3.0, 170.0), (33.0, 3.5, 180.0),
+    (35.0, 2.2, 160.0), (37.0, 0.9, 130.0), (38.0, 0.3, 110.0), (40.0, 0.15, 100.0), (41.0, 0.0, 0.0),
+]
+DELTA_BRUSH_NO_PMA_V3 = {"rate_per_min": 2.0, "amplitude_uv": 150.0}
+
+
+def delta_brush_defaults(pma: Optional[float], version: int = 1) -> Dict[str, float]:
     import numpy as _np
+    table = DELTA_BRUSH_PMA_V3 if version >= 3 else DELTA_BRUSH_PMA
     if pma is None:
-        return dict(DELTA_BRUSH_NO_PMA)
-    xs = [p[0] for p in DELTA_BRUSH_PMA]
+        return dict(DELTA_BRUSH_NO_PMA_V3 if version >= 3 else DELTA_BRUSH_NO_PMA)
+    xs = [p[0] for p in table]
     if pma < xs[0] or pma > xs[-1]:
         return {"rate_per_min": 0.0, "amplitude_uv": 0.0}
-    return {"rate_per_min": float(_np.interp(pma, xs, [p[1] for p in DELTA_BRUSH_PMA])),
-            "amplitude_uv": float(_np.interp(pma, xs, [p[2] for p in DELTA_BRUSH_PMA]))}
+    return {"rate_per_min": float(_np.interp(pma, xs, [p[1] for p in table])),
+            "amplitude_uv": float(_np.interp(pma, xs, [p[2] for p in table]))}
 
 
 def pma_defaults(pma: float) -> Dict[str, float]:
@@ -499,6 +533,11 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         unreactive = bg.get("reactivity") != "present" or bg["type"] in ("suppressed", "low_voltage", "burst_suppression")
         # a neonate blinks far less than the awake 15/min of older children; within the state-cycle
         # module (P7 batch 1) the awake default is 4/min, gated further by state in the synthesizer
+        if version >= 3 and age == "neonate":
+            # 0.5.0 (feature review, neonatal item 4: 15/min 160-uV bifrontal dips on every TD, encephalopathy and
+            # seizure page): no blinks without a state cycle; with one, ~2/min and only while awake (the synth
+            # gates them to the awake state).  Newborn spontaneous blinking is rare, typically < 2/min.
+            bg.setdefault("blink_rate_per_min", 0.0 if (unreactive or not bg.get("state_cycle")) else 2.0)
         bg.setdefault("blink_rate_per_min", 0.0 if unreactive else (4.0 if (age == "neonate" and bg.get("state_cycle")) else 15.0))
         if age != "neonate":
             bg.setdefault("pdr_gain", 2.5)
@@ -525,9 +564,26 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         pma_eff = float(pma_eff)
     if bg.get("dysmature_pma_weeks") is not None:
         bg["dysmature_pma_weeks"] = float(bg["dysmature_pma_weeks"])
-    if pma is not None and age == "neonate" and bg["type"] in (
-            "discontinuous", "excessively_discontinuous", "trace_alternant"):
+    if version >= 3 and pma is not None and age == "neonate" and bg["type"] == "excessively_discontinuous":
+        # 0.5.0 (feature review C06: the 39-w record inherited the NORMAL 39-w row, IBI 3.75 s and floor 0.44, so it
+        # read as normal trace alternant): excessive discontinuity is an IBI too long for the PMA (LE-text, ACNS 2013
+        # Fig. 2c), so the mean IBI is 1.5x the longest acceptable IBI at that PMA and the interburst is near flat
         row = pma_defaults(pma_eff)
+        bs.setdefault("burst_s", row["burst_s"])
+        bs.setdefault("ibi_s", 1.5 * max_acceptable_ibi_s(pma_eff))
+        bs.setdefault("ibi_sigma", 0.35)
+        bs.setdefault("ibi_floor", min(row["ibi_floor"], 0.10))
+        if "amplitude_uv" not in (s.get("background") or {}):
+            bg["amplitude_uv"] = row["amplitude_uv"]
+    if pma is not None and age == "neonate" and bg["type"] in (
+            ("discontinuous", "trace_alternant") if version >= 3 else
+            ("discontinuous", "excessively_discontinuous", "trace_alternant")):
+        row = pma_defaults(pma_eff)
+        if version >= 3 and not bg.get("ibi_range_s"):
+            # 0.5.0 (feature review B1-10: 10 % of 37-w IBIs above the 6-s ceiling; C07: an authored 6-s ceiling came
+            # out median 7.5 s): a NORMAL discontinuous record never exceeds the longest acceptable IBI for its PMA;
+            # the scheduler resamples any draw above it.  An explicit ``ibi_range_s`` or ``ibi_max_s`` wins.
+            bs.setdefault("ibi_max_s", max_acceptable_ibi_s(pma_eff))
         bs.setdefault("burst_s", row["burst_s"])
         bs.setdefault("ibi_s", row["ibi_s"])
         bs.setdefault("ibi_sigma", row["ibi_sigma"])
@@ -541,6 +597,12 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     # sf 0.44, floor 0.42.  In the first hours of life (S22, < 6 h): max IBI 5.75 s, lower interburst.
     if bg.get("state_cycle") == "term" and age == "neonate":
         early = bg.get("hours_of_life") is not None and float(bg["hours_of_life"]) < 12.0
+        if version >= 3:
+            # 0.5.0 (feature review B1-01/B1-04: max IBI 8.0 s at day 3 and 13.4 s in the first hours): 5.75 s and
+            # 3.7 s were the published MAXIMA and had been used as the mean.  Means of 3.2 / 3.0 s with sigma 0.25
+            # put the ~99th percentile at 5.7 / 5.4 s, and the resample cap holds the maximum (S22; LE: 6 s at 37-40 w)
+            bs.setdefault("ibi_s", 3.2 if early else 3.0)
+            bs.setdefault("ibi_max_s", 5.75 if early else max_acceptable_ibi_s(pma_eff if pma_eff is not None else 40.0))
         bs.setdefault("burst_s", 4.0 if early else 4.5)
         bs.setdefault("ibi_s", 5.0 if early else 3.5)
         bs.setdefault("ibi_sigma", 0.25)
@@ -576,7 +638,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     ge = graphoelement_defaults(pma_eff, version) if (pma is not None and age == "neonate") else {
         name: {"rate_per_min": 0.0, "amplitude_uv": 0.0} for name in GRAPHOELEMENT_PMA}
     if bg.get("delta_brush_events") and age == "neonate":
-        ge["delta_brush"] = delta_brush_defaults(pma_eff)
+        ge["delta_brush"] = delta_brush_defaults(pma_eff, version)
     # P7 batch 1, first hours of life (Castro Conde 2017, < 6 h vs day 3): encoches 12/h (not 30), rolandic
     # bursts 0.9/h (not 17), transient sharps 37/h (not 7.6), a fifth of bursts brushed (not 5 %)
     if age == "neonate" and version >= 2 and bg.get("hours_of_life") is not None and bg["hours_of_life"] < 12.0:

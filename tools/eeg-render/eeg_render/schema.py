@@ -386,6 +386,9 @@ _BACKGROUND = {
                 # extreme prematurity and ~1.5x at term
                 "ibi_sigma": {"type": "number", "minimum": 0, "maximum": 1.5},
                 "ibi_floor": {"type": "number", "minimum": 0, "maximum": 1},
+                # 0.5.0 (spec_version 3): longest interburst interval the scheduler may draw; a longer draw is
+                # resampled.  Normal neonatal records default to the longest acceptable IBI for their PMA.
+                "ibi_max_s": _pos,
                 "epileptiform_discharges": {"type": "integer", "minimum": 2, "maximum": 20},
                 "highly_epileptiform_fraction": {"type": "number", "minimum": 0, "maximum": 1},
                 "interpeak_latency_s": _pos,

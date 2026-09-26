@@ -108,6 +108,11 @@ CH_GAIN_ASYM_LOG_SD = 0.12
 #: continuous depth, not a stage, so there is no REM atonia here - the model
 #: has no REM to hook onto.
 EMG_FLOOR_W = 0.70
+#: 0.5.0 neonatal burst composition (spec_version 3; weights in background-RMS units beside the delta stream):
+#: theta 4-7 Hz and a small 8-20 Hz stream, tuned so the displayed relative delta (0.5-4 / 0.5-30 Hz) of a term
+#: record falls from 0.93-0.96 to ~0.8 with theta >= 0.1 (feature review, neonatal item 5)
+NEO_THETA_W = 0.95
+NEO_FAST_W = 0.20
 
 #: Extra muscle during an ictal run, as a multiple of the tonic floor.  Applied
 #: through ``ictal_gate`` and multiplied by the same wakefulness factor, so a
@@ -1219,6 +1224,20 @@ class Synthesizer:
 
     # ---------------- burst / interburst schedule ----------------
 
+    def _pma_eff(self) -> float:
+        """Maturational PMA: the dysmature PMA when the record carries a younger PMA's patterns."""
+        return float(self.bg.get("dysmature_pma_weeks") or self.bg.get("pma_weeks") or 40.0)
+
+    def _qs_sf_v3(self, term_sf: float) -> float:
+        """0.5.0 (feature review B1-09: 43-w quiet sleep was still day-3 trace alternant): TA is minimal by 42 w
+        and gone by 46 w, replaced by continuous 50-150 uV slow-wave sleep (ACNS 2013), so the quiet-sleep
+        interburst share falls from the term value at 40 w to 0.15 at 43 w and 0 at 46 w."""
+        return float(np.interp(self._pma_eff(), [40.0, 43.0, 46.0], [term_sf, 0.15, 0.0]))
+
+    def _qs_floor_v3(self, term_floor: float) -> float:
+        """Quiet-sleep interburst voltage over the same span: 0.42 at term to 0.65 at 43 w and 0.85 at 46 w."""
+        return float(np.interp(self._pma_eff(), [40.0, 43.0, 46.0], [term_floor, 0.65, 0.85]))
+
     def suppression_fraction_at(self, t: np.ndarray) -> np.ndarray:
         """Target fraction of time spent in the interburst state."""
         bs = self.bg["burst_suppression"]
@@ -1234,7 +1253,10 @@ class Synthesizer:
             sleep = 0.35 * self._sleep_at(t)
         if self._state_intervals and self.bg["type"] == "continuous":
             early = self.bg.get("hours_of_life") is not None and float(self.bg["hours_of_life"]) < 12.0
-            base = self._state_lookup(t, self._STATE_SF_EARLY if early else self._STATE_SF, np.zeros_like(t, dtype=float))
+            table = self._STATE_SF_EARLY if early else self._STATE_SF
+            if self.spec_version >= 3:
+                table = dict(table, quiet_sleep=self._qs_sf_v3(table["quiet_sleep"]))
+            base = self._state_lookup(t, table, np.zeros_like(t, dtype=float))
             sleep = np.zeros_like(t)     # the state table already carries sleep
         out = (sed if len(self._sed_t) > 1 else base) + cold + sleep
         return np.clip(out, 0.0, 0.96)
@@ -1266,9 +1288,37 @@ class Synthesizer:
             self._burst_end = np.asarray(ends)
             self._ibi_floor0 = floor0
             return
+        # 0.5.0 (feature review B1-04/C07/B1-01/B1-10: the cycle stretch below turned an authored 6-s IBI into a
+        # 7.5-s median and the 5-s first-hours mean into a 13-s maximum): a neonatal record draws its IBI directly
+        # around the authored ``ibi_s``, scaled only by how far the current state's interburst share departs from
+        # the reference, and resamples any draw above ``ibi_max_s``.  Sedation-driven records keep the old model.
+        direct = self.spec_version >= 3 and self.age == "neonate" and len(self._sed_t) <= 1
+        ibi_max = float(bs["ibi_max_s"]) if direct and bs.get("ibi_max_s") else None
+        if direct:
+            if self._state_intervals and self.bg["type"] == "continuous":
+                early = self.bg.get("hours_of_life") is not None and float(self.bg["hours_of_life"]) < 12.0
+                sf_ref = (self._STATE_SF_EARLY if early else self._STATE_SF)["quiet_sleep"]
+            else:
+                sf_ref = float(bs["ibi_s"]) / max(float(bs["ibi_s"]) + float(bs["burst_s"]), 1e-6)
+            sf_ref = max(sf_ref, 0.05)
         # a deep-sedation interburst is genuinely flat; a preterm interburst is not
         while t < horizon:
             sf = float(self.suppression_fraction_at(np.array([max(t, 0.0)]))[0])
+            if direct and sf >= 0.03:
+                burst = max(0.25, float(bs["burst_s"]) * float(_lognorm(rng, 1, 0.22)[0]))
+                mean = float(bs["ibi_s"]) * sf / sf_ref
+                sig = float(bs.get("ibi_sigma", 0.26))
+                ibi = max(0.25, mean * float(_lognorm(rng, 1, sig)[0]))
+                tries = 0
+                while ibi_max is not None and ibi > ibi_max and tries < 30:
+                    ibi = max(0.25, mean * float(_lognorm(rng, 1, sig)[0]))
+                    tries += 1
+                if ibi_max is not None:
+                    ibi = min(ibi, ibi_max)
+                starts.append(t)
+                ends.append(t + burst)
+                t += burst + ibi
+                continue
             cyc = cycle0 * (1.0 + 1.35 * max(0.0, sf - 0.3))
             if sf < 0.03:
                 # Continuous: extend the running pseudo-burst instead of
@@ -1471,7 +1521,15 @@ class Synthesizer:
                 # runs are longest at 28-31 w ("commonly >30 s"), short before 28 w
                 pma = float(self.bg.get("pma_weeks") or 32.0)
                 mean_s = 3.0 if pma < 28.0 else (14.0 if pma <= 31.0 else 6.0)
+            if name == "delta_brush" and self.spec_version >= 3:
+                # 0.5.0: brushes live inside bursts (own substream so every other element keeps its draws)
+                times = self._brush_times_v3(rate, span)
+                m = times.size
+                rng = substream(self.seed, "graphoelement-v3", name)
+                mean_s, dur_sd = 1.0, 0.22
             dur = np.clip(mean_s * _lognorm(rng, m, dur_sd), 0.3, 60.0) if dur_sd > 0 else np.full(m, mean_s)
+            if name == "delta_brush" and self.spec_version >= 3:
+                dur = np.clip(dur, 0.7, 1.6)
             freq = rng.uniform(f0, f1, m) if f1 > 0 else np.zeros(m)
             if name == "sharp_transient":      # the freq column carries the region index for this element
                 freq = rng.choice(len(self._SHARP_REGION_P), size=m, p=self._SHARP_REGION_P).astype(float)
@@ -1479,6 +1537,42 @@ class Synthesizer:
             aj = amp * _lognorm(rng, m, 0.30)
             phase = rng.uniform(0, 2 * np.pi, m)
             self._ge_events[name] = np.column_stack([times, dur, freq, side, aj, phase])
+            if name == "delta_brush" and self.spec_version >= 3:
+                # second carrier, FM phase and per-brush fast ratio (columns of self._brush_v3)
+                self._ge_events[name][:, 4] = amp * _lognorm(rng, m, 0.20)
+                self._brush_v3 = np.column_stack([rng.uniform(10.0, 20.0, m), rng.uniform(0, 2 * np.pi, m),
+                                                  rng.uniform(0, 2 * np.pi, m), rng.uniform(0.85, 1.15, m)])
+
+    def _brush_times_v3(self, rate: float, span: float) -> np.ndarray:
+        """0.5.0 (feature review C33: one brush per page at 32 w, scheduled independently of the bursts): brush
+        times drawn inside the scheduled bursts, at the authored per-minute rate overall.  At 30-34 w, when most
+        delta waves of a burst carry fast activity (ACNS 2013 Fig. 2a; LE-33wED), at least half of a burst's
+        ~1.8-s delta waves are brushed.  A continuous stretch (the scheduler's merged 30-s pseudo-bursts) keeps the plain rate."""
+        rng = substream(self.seed, "brush-times-v3")
+        segs = [(max(float(a), -60.0), min(float(b), span)) for a, b in zip(self._burst_start, self._burst_end)
+                if b > -60.0 and a < span]
+        long_t = sum(b - a for a, b in segs if b - a >= 29.9)
+        short_t = sum(b - a for a, b in segs if b - a < 29.9)
+        frac = short_t / max(span + 60.0 - long_t, 1e-6)
+        dense = 30.0 <= self._pma_eff() <= 34.0
+        out: List[float] = []
+        for a, b in segs:
+            L = b - a
+            lam = rate / 60.0 * L
+            if L < 29.9:
+                lam /= max(frac, 0.2)
+                if dense:
+                    lam = max(lam, 0.5 * L / 1.8)
+            n = int(rng.poisson(lam))
+            lo, hi = a + 0.8, b - 1.8      # clear of the burst edge ramps
+            if n == 0 or hi <= lo:
+                continue
+            last = -1e9
+            for tt in np.sort(rng.uniform(lo, hi, n)):
+                if tt - last >= 1.6:
+                    out.append(float(tt))
+                    last = tt
+        return np.asarray(out)
 
     #: 0.4.1: spread of a tabled field onto electrodes the table does not name, in head
     #: units (adjacent 10-20 electrodes sit ~0.5 apart, so a neighbour of a 1.0 electrode
@@ -1537,7 +1631,12 @@ class Synthesizer:
         for name, ev in self._ge_events.items():
             _, _, _, lat, burst_bound = self._GE_SHAPE[name]
             target = bound if burst_bound else free
-            sel = ev[(ev[:, 0] + ev[:, 1] > t[0] - 1.0) & (ev[:, 0] < t[-1] + 1.0)]
+            hit = (ev[:, 0] + ev[:, 1] > t[0] - 1.0) & (ev[:, 0] < t[-1] + 1.0)
+            if name == "delta_brush" and self.spec_version >= 3:
+                for j in np.nonzero(hit)[0]:
+                    target += self._brush_rows_v3(t, ev[j], self._brush_v3[j])
+                continue
+            sel = ev[hit]
             for t0, dur, freq, side, amp, phase in sel:
                 if name == "frontal_sharp":
                     # broad biphasic transient, negative then positive, ~0.4 s
@@ -1586,6 +1685,43 @@ class Synthesizer:
             bound *= self.burst_envelope(t)[None, :]
         return bound + free
 
+    #: 0.5.0 (feature review B1-06(d): O1/T3/T5 at 1.0/0.85/0.8 cancelled in T3-O1 and T3-T5): one temporal maximum
+    #: with a steep fall, so the complex phase-reverses at T3/T4 (ACNS 2013 Fig. 2a: Fp2-T4 against T4-O2)
+    _BRUSH_FIELD_OCCTEMP_V3 = {"T3": 1.0, "T5": 0.5, "O1": 0.35, "C3": 0.35, "P3": 0.3}
+
+    def _brush_rows_v3(self, t: np.ndarray, ev: np.ndarray, extra: np.ndarray) -> np.ndarray:
+        """0.5.0 delta brush (feature review B1-06(a)/C33; Craig: "the beta must ride on the delta wave").
+
+        One surface-negative delta wave whose trough is ``amp`` in the longitudinal-bipolar derivation of largest
+        field difference (the referential field is scaled up by that difference, so a focal field does not dilute
+        the request), 0.7-1.6 s long (the causal 0.5 Hz display LFF turns it into a trough and an equal rebound, so
+        the displayed peak-to-peak is about the request), with 10-20 Hz fast activity from two carriers (+-15 % FM)
+        confined to the trough by ``win**3``.  Fast peak = 0.15 of the delta (0.20 at 33.5-35.5 w, "extremely high
+        voltage beta"): displayed fast/delta 0.3-0.4, as in ACNS Fig. 2a and LE-33wED.  Ratio and field read the
+        dysmature PMA when one is set (B1-06(c)).
+        """
+        t0, dur, f1, side, amp, _ = ev
+        f2, ph1, ph2, rj = extra
+        pma = self._pma_eff()
+        fld = self._BRUSH_FIELD_CENTRAL if pma < 31.0 else self._BRUSH_FIELD_OCCTEMP_V3
+        w = self._table_field(fld, side)
+        key = (id(fld), float(np.sign(side)))
+        cache = self.__dict__.setdefault("_brush_diff", {})
+        if key not in cache:
+            pairs = mt.montage_pairs("longitudinal_bipolar", self.scalp)
+            cache[key] = max((abs(w[self._idx[a]] - w[self._idx[b]]) for a, b in pairs if b is not None), default=1.0)
+        A = amp / max(cache[key], 0.2)
+        ratio = (0.20 if 33.5 <= pma <= 35.5 else 0.15) * rj
+        d = t - t0
+        u = d / max(dur, 1e-3)
+        inside = (u > 0) & (u < 1)
+        win = np.where(inside, np.sin(np.pi * np.clip(u, 0, 1)), 0.0)
+        c1 = 2 * np.pi * f1 * d - 0.15 * f1 * dur * np.cos(2 * np.pi * u + ph1) + ph1
+        c2 = 2 * np.pi * f2 * d - 0.15 * f2 * dur * np.cos(2 * np.pi * u + ph2) + ph2
+        carrier = (np.sin(c1) + 0.8 * np.sin(c2)) / 1.5
+        sig = -A * win + ratio * A * win ** 3 * carrier
+        return np.outer(w, sig)
+
     def cape_cycles(self) -> List[Tuple[float, float, float]]:
         """(onset_s, offset_s, depth) of each CAPE cycle; empty without ``background.cape``."""
         c = self.bg.get("cape")
@@ -1622,11 +1758,28 @@ class Synthesizer:
             # 100 uV bursts), a little lower in the first hours; other states have no interburst
             early = self.bg.get("hours_of_life") is not None and float(self.bg["hours_of_life"]) < 12.0
             table = {"awake": 1.0, "active_sleep": 1.0, "indeterminate": 0.6, "quiet_sleep": 0.30 if early else 0.42}
-            floor = self._state_lookup(t, table, np.asarray(floor, dtype=float) * np.ones_like(t))
+            if self.spec_version >= 3:
+                if self.bg["type"] == "continuous":
+                    table["quiet_sleep"] = self._qs_floor_v3(table["quiet_sleep"])
+                else:
+                    # 0.5.0 (feature review B1-06: dysmature 34-w quiet sleep got the term 0.42 floor, 0 % < 25 uV):
+                    # a discontinuous record keeps its PMA row's interburst voltage in quiet sleep
+                    table["quiet_sleep"] = self._ibi_floor0
+            floor =self._state_lookup(t, table, np.asarray(floor, dtype=float) * np.ones_like(t))
         points = self.bg.get("ibi_floor_at_h")
         if points:
             floor = np.interp(t / 3600.0, [p[0] for p in points], [p[1] for p in points])
         return floor
+
+    def _neo_theta_gain(self, t: np.ndarray) -> np.ndarray:
+        """(n_elec, n) factor that gives the theta stream its own interburst floor once ``burst_envelope_rows``
+        multiplies everything: theta keeps part of the burst-to-interburst gap back when the interburst is
+        trace-alternant-like (floor >= 0.4; a quarter, so the alternation stays visible), none when it is quiescent (TD, floor <= 0.2)."""
+        rows = self.burst_envelope_rows(t)
+        floor = self._ibi_floor_at(t)[None, :]
+        e = np.clip((rows - floor) / np.maximum(1.0 - floor, 1e-6), 0.0, None)
+        ft = floor + (1.0 - floor) * 0.25 * smoothstep((floor - 0.2) / 0.2)
+        return (ft + (1.0 - ft) * e) / np.maximum(rows, 1e-6)
 
     def _burst_edge(self) -> Tuple[float, float, float, float, float]:
         return BURST_EDGE_S.get(self.bg["type"], _BURST_EDGE_DEFAULT)
@@ -1738,9 +1891,24 @@ class Synthesizer:
                 k = 0
                 v3 = self.spec_version >= 3
                 vr = substream(self.seed, "cluster-v3", i)
+                neo = v3 and self.age == "neonate"
                 while t <= end + 1e-6:
                     frac = min(max((t - float(ev["start_min"]) * 60.0) / span, 0.0), 1.0)
-                    if v3:
+                    if neo:
+                        # 0.5.0 (feature review B4-05/06: 35 near-clones, onset gaps CV 4 %): neonatal seizures run
+                        # 10 s to many minutes (ACNS 2013: median 1 min, 75 % <= 2.5 min, range 10 s-46 min), so the
+                        # duration is a wide log-normal (sigma 0.7) around the authored MEAN, clipped to 10 s-10 min;
+                        # the interictal gap after each run is log-normal (sigma 0.45) around interval - duration
+                        # (>= 10 s), so the mean onset spacing and the hourly burden stay as authored; frequency
+                        # +-20 %, voltage +-30 %.
+                        t_k = t
+                        d_k = float(np.clip((dur0 + (dur1 - dur0) * frac) * float(_lognorm(vr, 1, 0.7)[0])
+                                            * math.exp(-0.5 * 0.7 ** 2), 10.0, 600.0))
+                        f_k = float(_lognorm(vr, 1, 0.20)[0])
+                        a_k = float(_lognorm(vr, 1, 0.30)[0])
+                        gap = d_k + max(10.0, max(step - (dur0 + (dur1 - dur0) * frac), 10.0)
+                                        * float(_lognorm(vr, 1, 0.45)[0]) * math.exp(-0.5 * 0.45 ** 2))
+                    elif v3:
                         # 0.5.0 (feature review: B4-02/05/06 near-clones, metronomic sawtooth aEEG): each run
                         # draws its own timing, length, frequencies and voltage around the authored values
                         t_k = t + float(np.clip(vr.normal(0.0, 0.10 * step), -0.25 * step, 0.25 * step))
@@ -1763,7 +1931,7 @@ class Synthesizer:
                         profile=str(evo.get("profile") or "sweep"),
                         index=i, ordinal=k, kind="seizure_cluster",
                     ))
-                    t += step
+                    t += gap if neo else step
                     k += 1
             elif ev["type"] == "status_epilepticus":
                 evo = ev["evolution"]
@@ -3299,11 +3467,27 @@ class Synthesizer:
         if self.age != "neonate":
             x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
             x += self._stream_signal(self.st_theta, i0, n) * ((0.30 + 0.25 * sleep) * sed_theta)[None, :]
+        elif self.spec_version >= 3:
+            # 0.5.0 (feature review, neonatal item 5: rel delta 0.93-0.96 and rel alpha <= 0.01 on every card): bursts
+            # carry dense theta and superimposed fast activity, and the trace-alternant interburst is MIXED theta and
+            # delta (ACNS 2013), not a voltage-scaled copy of the burst.  Theta therefore takes a higher interburst
+            # floor than the delta (``_neo_theta_gain``: the burst envelope is divided back out and re-applied with
+            # that floor), and a small fast stream rides the bursts.
+            x += (self._stream_signal(self.st_theta, i0, n) * (NEO_THETA_W * sed_theta)[None, :]
+                  * self._neo_theta_gain(t))
+            x += self._stream_signal(self.st_brush, i0 + 7717, n) * NEO_FAST_W
         else:
             x += self._stream_signal(self.st_theta, i0, n) * (0.22 * sed_theta)[None, :]
 
         # 0.5.0: sleep raises voltage (the review measured wake 34 -> sleep 34 uV); deeper stages carry more delta
         delta_w = 0.14 + 0.85 * self.slow_fraction + (1.1 if v3state else 0.45) * sleep + 0.70 * temp_slow + sed_delta
+        if self.spec_version >= 3 and self.age == "neonate" and self._state_intervals:
+            # 0.5.0 (feature review B1-09): past term, quiet sleep becomes continuous HIGH-voltage slow-wave sleep
+            # (ACNS 2013: 50-150 uV delta/theta replacing TA by 46 w), the highest-voltage state of the cycle
+            mature = float(np.interp(self._pma_eff(), [40.0, 44.0], [0.0, 1.0]))
+            if mature > 0:
+                delta_w = delta_w + 1.6 * mature * self._state_lookup(
+                    t, {"awake": 0.0, "active_sleep": 0.0, "indeterminate": 0.3, "quiet_sleep": 1.0}, np.zeros_like(t))
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
         x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
@@ -3504,6 +3688,11 @@ class Synthesizer:
             x += self.blink_rows(t, gate)
             x += self._eye_event_rows(t) * (env * (1.0 - self.absence_gate(t)))[None, :]
             x += self._sleep_transient_rows(t) * env[None, :] * self._ch_gain[:, None]
+        elif self.spec_version >= 3 and self.age == "neonate":
+            # 0.5.0: a neonate blinks only while awake (feature review, neonatal item 4), never in active sleep
+            awake = self._state_lookup(t, {"awake": 1.0, "active_sleep": 0.0, "indeterminate": 0.0, "quiet_sleep": 0.0},
+                                       1.0 - sleep)
+            x += self.blink_rows(t, awake * env * (1.0 - self.absence_gate(t)))
         else:
             x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)))
         # Neonatal graphoelements (microvolts; burst-bound ones gated inside).
