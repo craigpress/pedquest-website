@@ -474,6 +474,10 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         for k in ("dominant_hz", "amplitude_uv", "slow_fraction"):
             bg.setdefault(k, HYPSARRHYTHMIA_DEFAULTS[k])
         ms = dict(bg.get("multifocal_spikes") or {})
+        if version >= 3:
+            # 0.5.0 (feature review HYPS: 184-uV discharges sat at 0.7x a 263-uV background): the spikes stand
+            # above the chaotic slow activity, as in the 50-uV/mm reference
+            ms.setdefault("amplitude_uv", 400.0)
         for k, v in HYPSARRHYTHMIA_DEFAULTS["multifocal_spikes"].items():
             ms.setdefault(k, v)
         bg["multifocal_spikes"] = {k: float(v) for k, v in ms.items()}
@@ -954,6 +958,11 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e.setdefault("onset_region", "generalized")
         e.setdefault("spread", "none")
         e.setdefault("decrement_s", 3.5)
+        if version >= 3:
+            # 0.5.0 (feature review SPASM, infantile-spasm-i/-ii): the decrement leaves residual activity and
+            # fast/EMG (0.95 drew a flat line in every channel), and a brief EMG burst follows the slow wave
+            e.setdefault("decrement_depth", 0.6)
+            e.setdefault("muscle", "modest")
         e.setdefault("decrement_depth", 0.95)
         # Cerebral fast activity, NOT muscle: beta rides the slow wave itself
         # (wave_fast_uv) and lower-voltage beta rides the electrodecrement

@@ -177,6 +177,8 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
     for sd in (synth.sporadic_events() if hasattr(synth, "sporadic_events") else []):
         a0 = sd["t0"] - 0.04
         a1 = sd["t0"] + (0.55 if sd["aftergoing_slow"] else 0.12) * sd["width"] + (0.11 if sd["morphology"] == "polyspike" else 0.0)
+        if "end_s" in sd:            # 0.5.0 polyspike: every spike plus the after-going wave
+            a1 = sd["end_s"]
         if a1 < 0.0 or a0 > duration_s:
             continue
         rows.append(_row("sporadic_discharge", a0, a1, fs, duration_s,
