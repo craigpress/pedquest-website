@@ -773,6 +773,12 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     else:
         s.pop("source", None)
 
+    if version >= 3 and any(e.get("type") == "sedation_change"
+                            and (e.get("effect") or {}).get("suppression_ratio_target_pct") for e in s["events"]):
+        # 0.5.0: drug-induced bursts last 1-2 s with interburst intervals of a few seconds (sedation.md S109-06), so the
+        # 2 s sustained-suppression rule (chosen against postictal chatter) would drop most of them from the SR trend
+        s["style"] = {**(s.get("style") or {})}
+        s["style"].setdefault("suppression_min_duration_s", 1.0)
     s["style"] = _normalize_style(kind, s.get("style", {}))
     return s
 

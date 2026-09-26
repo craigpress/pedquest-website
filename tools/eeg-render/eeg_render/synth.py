@@ -837,6 +837,15 @@ class Synthesizer:
         self.st_brush = self._mk("brush", band_shape(f, 13.0, 4.5, order=1.0), cen * 0.6 + temp * 0.5, common=0.35)
         self.st_theta = self._mk("theta", band_shape(f, 5.0, 1.8, order=1.0), temp * 0.6 + cen * 0.5, common=0.5)
         self.st_emg = self._mk("emg", hp_lp_shape(f, 22.0, 95.0), temp, common=0.15)
+        if self.spec_version >= 3:
+            # 0.5.0 sedation streams (seeded by name, so adding them moves no other stream).  Benzodiazepine beta is
+            # diffuse (learningeeg: dominates every chain), so part anterior, part uniform, with less shared component
+            # than a uniform field would need to survive the bipolar chain.
+            self.st_sed_beta = self._mk("sed_beta3", band_shape(f, 16.5, 3.0, order=1.0), 0.55 * ant + 0.45 * near_uniform,
+                                        common=0.35)
+            self.st_barb = self._mk("sed_barb", band_shape(f, 14.5, 2.0), 0.6 * ant + 0.4 * near_uniform, common=0.35)
+            self.st_gamma3 = self._mk("sed_gamma3", band_shape(f, 28.5, 2.6), near_uniform, common=0.2)
+            self.st_burst = self._mk("sed_burst", band_shape(f, 2.2, 2.4, order=1.0), near_uniform, common=0.3)
         if self.bg["type"] == "hypsarrhythmia":
             # "no topographical distribution, no frequency or amplitude
             # gradient": the slow activity is asynchronous between regions, so
@@ -1131,6 +1140,8 @@ class Synthesizer:
                 out.update(beta=0.30*q, delta=0.25*q)
             elif agent == "remifentanil":
                 out.update(delta=0.55*q, theta_scale=1.0 - 0.45*q, alpha=-0.30*q)
+            if self.spec_version >= 3:
+                out.update(self._sed_profile_v3(agent, q, out))
             return out
 
         initial = spec.get("sedation") or {"agent": "midazolam", "level": 0.0}
@@ -1146,6 +1157,7 @@ class Synthesizer:
         sed_spindle: List[float] = [initial_profile["spindle"]]
         sed_theta: List[float] = [initial_profile["theta_scale"]]
         sed_emg: List[float] = [initial_profile["emg_scale"]]
+        sed_v3: Dict[str, List[float]] = {k: [initial_profile[k]] for k in self._SED_V3_KEYS if k in initial_profile}
         sedation_events = [ev for ev in spec["events"] if ev["type"] == "sedation_change"]
         if any("level" in ev for ev in sedation_events):
             sedation_events.sort(key=lambda x: float(x["at_min"]))
@@ -1174,12 +1186,17 @@ class Synthesizer:
             sed_spindle += [sed_spindle[-1], p["spindle"]]
             sed_theta += [sed_theta[-1], p["theta_scale"]]
             sed_emg += [sed_emg[-1], p["emg_scale"]]
+            for k in sed_v3:
+                sed_v3[k] += [sed_v3[k][-1], p[k]]
+        self._sed_v3 = sed_v3
         self._sed_t, self._sed_sf = sed_t, sed_sf
         self._sed_beta, self._sed_amp = sed_beta, sed_amp
         self._sed_delta, self._sed_alpha = sed_delta, sed_alpha
         self._sed_gamma, self._sed_spindle = sed_gamma, sed_spindle
         self._sed_theta = sed_theta
         self._sed_emg = sed_emg
+        if self.spec_version >= 3:
+            self._build_sed_schedules_v3()
 
         # attenuation transients ---------------------------------------
         self._atten = [
@@ -1190,6 +1207,142 @@ class Synthesizer:
             for e in spec["events"] if e["type"] == "attenuation_transient"
         ]
         self._dur_guard = dur
+
+    # ---------------- 0.5.0 sedation (spec_version 3) ----------------
+    #: v3-only sedation timelines, interpolated like the others (feature review 2026-09-26, sedation.md): ``loc`` loss of
+    #: consciousness 0..1 (removes blinks and eye-state events), ``pdr`` posterior-rhythm multiplier, ``beta3`` diffuse
+    #: waxing/waning benzodiazepine beta, ``barb`` barbiturate 13-16 Hz fast activity, ``gamma3`` ketamine 25-32 Hz gamma,
+    #: ``keta`` depth of the ketamine slow-delta / gamma alternation
+    _SED_V3_KEYS = ("loc", "pdr", "beta3", "barb", "gamma3", "keta")
+    #: drug spindle packet weight (background-RMS units at the field maximum, per unit spindle level)
+    _DRUG_SPINDLE_W = 3.5
+    #: residual interburst floor (fraction of the background) under drug-induced burst suppression
+    _SED_IBI_FLOOR_V3 = 0.01
+
+    def _sed_profile_v3(self, agent: str, q: float, out: Dict[str, float]) -> Dict[str, float]:
+        """A drug REPLACES the awake background instead of adding to it (sedation.md systematic item 1).
+
+        Hypnotics at level >= 0.7 are unconscious: the posterior dominant rhythm, spontaneous blinks and eye-state
+        events go and tonic muscle falls.  Sources: Purdon 2015 (S23 context; propofol alpha anteriorizes, occipital alpha
+        lost; dexmedetomidine 9-15 Hz spindles 1-2 s long in a sleep-like slow background; ketamine 25-32 Hz gamma with
+        slow-delta); Akeju 2014 (S23, dex spindle peak 12.9 Hz); Breimer 1990 (S24, midazolam subjects asleep, largest
+        change 12-30 Hz); Jennekens 2012 (S25, neonatal midazolam: amplitude down, relative delta down, theta up); Akeju
+        2016 (S26, ketamine: theta up, alternating slow-delta and gamma); Barberio 2011 (S28, pentobarbital); Graversen
+        2014 (S29, remifentanil volunteers stay awake).  Weights are authored, not dose conversions."""
+        loc = float(smoothstep((q - 0.2) / 0.5))
+        v = {"loc": loc, "pdr": 1.0, "beta3": 0.0, "barb": 0.0, "gamma3": 0.0, "keta": 0.0}
+        if agent == "propofol":
+            v.update(pdr=1.0 - 0.95 * loc, emg_scale=1.0 - 0.9 * q, delta=1.1 * q, alpha=1.5 * q, beta=0.05 * q)
+        elif agent == "dexmedetomidine":
+            v.update(pdr=1.0 - 0.9 * loc, emg_scale=1.0 - q, delta=0.9 * q, theta_scale=1.0 + 0.25 * q,
+                     spindle=q)
+        elif agent == "midazolam":
+            if self.age == "neonate":
+                v.update(loc=0.0, amp=1.0 - 0.3 * q, theta_scale=1.0 + 0.4 * q, delta=-0.15 * q)
+            else:
+                v.update(pdr=1.0 - 0.75 * loc, emg_scale=1.0 - 0.8 * q, beta3=0.9 * q)
+        elif agent == "ketamine":
+            v.update(pdr=1.0 - 0.9 * loc, emg_scale=1.0 - 0.4 * q, theta_scale=1.0 + 1.5 * q, gamma=0.0,
+                     gamma3=1.0 * q, keta=float(np.clip((q - 0.3) / 0.4, 0.0, 1.0)))
+        elif agent == "pentobarbital":
+            v.update(pdr=1.0 - 0.95 * loc, emg_scale=1.0 - 0.9 * q, beta=0.05 * q, barb=0.9 * q)
+        else:                                   # remifentanil: awake volunteers (S29)
+            v.update(loc=0.0)
+        return v
+
+    def _sed_v3_at(self, key: str, t: np.ndarray, neutral: float) -> np.ndarray:
+        vals = self._sed_v3.get(key) if self.spec_version >= 3 else None
+        if not vals:
+            return np.full(t.shape, neutral)
+        return _piecewise(self._sed_t, vals, t) if len(self._sed_t) > 1 else np.full(t.shape, vals[0])
+
+    def _sed_driven_bs(self) -> bool:
+        """Burst suppression that comes from a sedation_change target, not from ``background.type``."""
+        return (self.spec_version >= 3 and len(self._sed_t) > 1 and max(self._sed_sf[1:]) > 0.03
+                and self.bg["type"] == "continuous" and self.bg.get("ibi_range_s") is None)
+
+    def _build_sed_schedules_v3(self) -> None:
+        """Drug-driven transients, drawn once per record (never per requested window)."""
+        dur = self.duration_s
+        # dexmedetomidine spindles: irregular (lognormal inter-onset, mean 6 s), 1-2 s long (Purdon 2015); thinned by the
+        # spindle weight at each onset so a ramp raises their density
+        rng = substream(self.seed, "sed_spindle")
+        spmax = max(self._sed_spindle) if self._sed_spindle else 0.0
+        n = int((dur + 120.0) / 2.0) + 8 if spmax > 0 else 0
+        gaps = 6.0 * _lognorm(rng, n, 0.4) / math.exp(0.08) if n else np.empty(0)
+        cand = np.cumsum(gaps) - 30.0 if n else np.empty(0)
+        spd = np.clip(2.2 * _lognorm(rng, n, 0.25), 1.4, 3.2) if n else np.empty(0)
+        hz = rng.uniform(12.0, 14.0, n) if n else np.empty(0)
+        amp = _lognorm(rng, n, 0.25) if n else np.empty(0)
+        ph = rng.uniform(0.0, 2 * np.pi, n) if n else np.empty(0)
+        u = rng.uniform(0.0, 1.0, n) if n else np.empty(0)
+        keep = np.zeros(n, bool)
+        last_end = -1e9
+        for i in range(n):
+            if cand[i] > dur + 30.0:
+                break
+            w = float(_piecewise(self._sed_t, self._sed_spindle, np.array([max(cand[i], 0.0)]))[0]) / spmax \
+                if len(self._sed_t) > 1 else self._sed_spindle[0] / spmax
+            if u[i] < w and cand[i] > last_end + 0.8:
+                keep[i] = True
+                last_end = cand[i] + spd[i]
+        self._dsp = {"t": cand[keep], "dur": spd[keep], "hz": hz[keep], "amp": amp[keep], "ph": ph[keep]}
+        # ketamine: alternating slow-delta (median 2.5 s) and gamma (median 1.5 s) epochs (Akeju 2016 "gamma burst")
+        kr = substream(self.seed, "sed_ketamine")
+        ep, t = [], -30.0
+        while t < dur + 30.0:
+            t += 2.5 * float(_lognorm(kr, 1, 0.35)[0])
+            g = 1.5 * float(_lognorm(kr, 1, 0.35)[0])
+            ep.append((t, t + g))
+            t += g
+        self._keta_ep = np.asarray(ep) if ep else np.empty((0, 2))
+        # benzodiazepine beta waxes and wanes over 3-10 s (learningeeg "background after benzos")
+        br = substream(self.seed, "sed_beta_am")
+        self._beta_am = (br.uniform(0.10, 0.18), br.uniform(0.2, 0.3), br.uniform(0, 2 * np.pi), br.uniform(0, 2 * np.pi))
+
+    def _keta_gate(self, t: np.ndarray) -> np.ndarray:
+        """1 inside a ketamine gamma epoch, 0 in a slow-delta epoch, 0.25 s raised-cosine edges."""
+        g = np.zeros(t.shape)
+        ep = self._keta_ep
+        for a, b in ep[(ep[:, 1] > t[0] - 0.5) & (ep[:, 0] < t[-1] + 0.5)]:
+            g = np.maximum(g, np.clip(np.minimum((t - a) / 0.25, (b - t) / 0.25) + 0.5, 0.0, 1.0))
+        return 0.5 - 0.5 * np.cos(np.pi * g)
+
+    def _drug_spindle_rows(self, t: np.ndarray) -> np.ndarray:
+        d = self._dsp
+        env, c, s = sv3.packets(t, d["t"], d["dur"], d["hz"], d["amp"], d["ph"])
+        if not env.any():
+            return np.zeros((self.n_elec, t.size))
+        lag = self._sp_lag[:, None]
+        return self._sp_field[:, None] * (c[None, :] * np.cos(lag) - s[None, :] * np.sin(lag))
+
+    def _burst_content_rows(self, t: np.ndarray, i0: int) -> np.ndarray:
+        """Barbiturate burst: high-voltage polymorphic delta/theta plus sharp transients (learningeeg burst-suppression
+        pages; Purdon 2015 Fig 2F), in background-RMS units; the burst envelope applied later confines it to bursts."""
+        n = t.size
+        rows = self._stream_signal(self.st_burst, i0, n) * 2.5
+        rise, fall, _, _, _ = self._burst_edge()
+        pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes], float)
+        for k in self._bursts_touching(t, rise, fall):
+            a, b = float(self._burst_start[k]), float(self._burst_end[k])
+            if b < t[0] - 0.5 or a > t[-1] + 0.5:
+                continue
+            rng = substream(self.seed, "sed_burst", k)
+            m = int(rng.integers(2, 5))
+            for j in range(m):
+                c0 = a + (b - a) * float(rng.uniform(0.1, 0.85))
+                wd = float(rng.uniform(0.035, 0.06))
+                sgn = -1.0 if rng.uniform() < 0.8 else 1.0        # surface-negative sharp waves mostly
+                fx, fy = rng.normal(0.0, 0.6, 2)
+                field = np.clip(1.0 + fx * pos[:, 0] + fy * pos[:, 1], 0.2, 1.8)
+                field[[self._idx[e] for e in mt.REFERENCE_ELECTRODES]] *= 0.3
+                d = t - c0
+                mm = (d > -0.3) & (d < 0.5)
+                if mm.any():
+                    dd = d[mm]
+                    w = sgn * (np.exp(-0.5 * (dd / wd) ** 2) - 0.35 * np.exp(-0.5 * ((dd - 2.6 * wd) / (2.2 * wd)) ** 2))
+                    rows[:, mm] += 5.0 * float(rng.uniform(0.7, 1.3)) * field[:, None] * w[None, :]
+        return rows
 
     #: 0.5.0 per-electrode spindle field (central maximum; temporal chains carry lower-voltage spindles, Craig on
     #: PQ-G-002: "lower voltage, but not absent") and a small anterior-to-posterior phase lag (traveling spindle)
@@ -1453,6 +1606,7 @@ class Synthesizer:
                 sf_ref = float(bs["ibi_s"]) / max(float(bs["ibi_s"]) + float(bs["burst_s"]), 1e-6)
             sf_ref = max(sf_ref, 0.05)
         # a deep-sedation interburst is genuinely flat; a preterm interburst is not
+        sed_bs = self._sed_driven_bs()
         while t < horizon:
             sf = float(self.suppression_fraction_at(np.array([max(t, 0.0)]))[0])
             if direct and sf >= 0.03:
@@ -1483,6 +1637,17 @@ class Synthesizer:
                     starts.append(t)
                     ends.append(t + 30.0)
                 t += 30.0
+                continue
+            if sed_bs:
+                # 0.5.0 (sedation.md S109-06): drug-induced bursts last about 1-2 s (learningeeg burst-suppression pages,
+                # Purdon 2015 Fig 2F) with irregular interburst intervals; the authored suppression ratio sets the IBI
+                # the authored ratio is honoured on what reads as burst: the scheduled burst plus about 0.9 s of
+                # edges, slow tails and sub-threshold interburst margins (0.5 s-epoch SR trend, 5 uV page reading)
+                burst = float(np.clip(1.1 * _lognorm(rng, 1, 0.3)[0], 0.5, 3.0))
+                ibi = max(0.5, 2.05 * min(sf, 0.95) / max(1.0 - sf, 0.05) * float(_lognorm(rng, 1, 0.4)[0]) * 0.92)
+                starts.append(t)
+                ends.append(t + burst)
+                t += burst + ibi
                 continue
             burst = max(0.25, cyc * (1.0 - sf) * float(_lognorm(rng, 1, 0.22)[0]))
             # IBI spread widens with prematurity (spec.PMA_TABLE); 0.26 is the
@@ -1954,7 +2119,8 @@ class Synthesizer:
         """Interburst residual amplitude; sedation drives it toward true flat."""
         sed = _piecewise(self._sed_t, self._sed_sf, t) if len(self._sed_t) > 1 else np.zeros_like(t)
         deep = np.clip(sed / 0.25, 0.0, 1.0)
-        floor = self._ibi_floor0 * (1.0 - deep) + 0.005 * deep
+        # 0.5.0: a drug-induced suppression keeps low-voltage residual activity, not a dead line (sedation.md S109-06)
+        floor = self._ibi_floor0 * (1.0 - deep) + (self._SED_IBI_FLOOR_V3 if self._sed_driven_bs() else 0.005) * deep
         if self._state_intervals:
             # quiet sleep = trace alternant: interburst about 0.42 of the burst voltage (< 50 uV for
             # 100 uV bursts), a little lower in the first hours; other states have no interburst
@@ -1984,6 +2150,10 @@ class Synthesizer:
         return (ft + (1.0 - ft) * e) / np.maximum(rows, 1e-6)
 
     def _burst_edge(self) -> Tuple[float, float, float, float, float]:
+        if self._sed_driven_bs():
+            # 0.5.0: drug-induced bursts start and stop abruptly (learningeeg burst-suppression pages), with the
+            # burst-suppression lag and regional tilt
+            return (0.12, 0.2, 0.05, 0.08, 0.0)
         if self.spec_version >= 3 and self.bg["type"] == "burst_suppression":
             return BURST_EDGE_BS_V3
         return BURST_EDGE_S.get(self.bg["type"], _BURST_EDGE_DEFAULT)
@@ -3397,12 +3567,9 @@ class Synthesizer:
                     # long-run page, not whichever swing these windows caught
                     tg = np.linspace(t0, t1, max(8, int(t1 - t0)))
                     e = float(np.mean(self.slow_am(tg)))
-                    if self.spec_version >= 3:
-                        # and the unsedated baseline (factor 1.0): a drug's amplitude change, including one present
-                        # from t = 0, must survive calibration (feature review: neonatal midazolam 0.72x -> 0.94x)
-                        amp = (_piecewise(self._sed_t, self._sed_amp, tg) if len(self._sed_t) > 1
-                               else np.full(tg.size, self._sed_amp[0]))
-                        e *= max(float(np.mean(amp)), 1e-3)
+                    # spec_version 3: segment() synthesizes the drug-free background while calibrating, so a drug's
+                    # amplitude change, including one present from t = 0, survives calibration (feature review:
+                    # neonatal midazolam 0.72x -> 0.94x; additive anesthetic streams were normalised away too)
                     chunks.append(np.ptp(rows[:, : m * n].reshape(rows.shape[0], m, n), axis=2) / max(e, 1e-6))
         finally:
             self._calibrating = False
@@ -3840,6 +4007,10 @@ class Synthesizer:
             return bool(np.all((sleep > 0.15) & (sleep < 0.75)))
         return any(a <= start and end <= b for a, b in self._rem_intervals)
 
+    #: 0.5.0: an authored blink needs the lids, which complete neuromuscular blockade paralyses (Whitham 2007, S30); the
+    #: other ocular/tongue kinds are already rejected by spec.normalize, device and cardiac artifacts stay
+    _SKELETAL_ARTIFACTS_V3 = ("eye_blink",)
+
     def _artifact_block(self, t: np.ndarray, i0: int) -> np.ndarray:
         out = np.zeros((self.n_elec, t.size))
         n = t.size
@@ -3861,6 +4032,9 @@ class Synthesizer:
             w = self._artifact_channels(ev)
             kind = ev["kind"]
             if self.spec.get("neuromuscular_blockade") == "complete" and kind == "emg_chewing":
+                continue
+            if (self.spec_version >= 3 and self.spec.get("neuromuscular_blockade") == "complete"
+                    and kind in self._SKELETAL_ARTIFACTS_V3):
                 continue
             if self.spec_version >= 3 and kind in self._V3_ARTIFACTS:
                 # 0.5.0: each model carries its own per-electrode field (no side mask or gain jitter on top)
@@ -4492,6 +4666,20 @@ class Synthesizer:
         sed_spindle = sed_value(self._sed_spindle)
         sed_theta = sed_value(self._sed_theta)
         sed_emg = sed_value(self._sed_emg)
+        v3 = self.spec_version >= 3
+        sed_loc = self._sed_v3_at("loc", t, 0.0)
+        sed_pdr = self._sed_v3_at("pdr", t, 1.0)
+        if v3 and self._calibrating:
+            # 0.5.0: amplitude_uv is the UNSEDATED baseline voltage, so calibrate on the drug-free background and let a
+            # drug's amplitude change (neonatal midazolam attenuation, anesthetic slow/alpha growth) reach the page
+            beta_w = np.full(n, 0.10 if self.age != "neonate" else 0.05)
+            amp_w = np.ones(n)
+            sed_delta, sed_alpha, sed_gamma, sed_spindle = (np.zeros(n) for _ in range(4))
+            sed_theta, sed_emg, sed_pdr = np.ones(n), np.ones(n), np.ones(n)
+            sed_loc = np.zeros(n)
+
+        def s3(key: str, neutral: float) -> np.ndarray:
+            return np.full(n, neutral) if self._calibrating else self._sed_v3_at(key, t, neutral)
 
         # --- background mixture -------------------------------------------
         x = self._stream_signal(self.st_broad, i0, n) * (0.80 + 0.20 * sleep)[None, :]
@@ -4505,6 +4693,8 @@ class Synthesizer:
         else:
             pdr_w = (1.0 - 0.55 * sleep) * (1.0 - 0.55 * temp_slow)
         pdr_w *= 1.0 + np.minimum(sed_alpha, 0.0)
+        if v3:
+            pdr_w = pdr_w * sed_pdr
         if self.age != "neonate":
             x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
             x += self._stream_signal(self.st_theta, i0, n) * ((0.30 + 0.25 * sleep) * sed_theta)[None, :]
@@ -4539,6 +4729,30 @@ class Synthesizer:
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
         x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
         x += self._stream_signal(self.st_sed_gamma, i0, n) * sed_gamma[None, :]
+        bs_mix = None
+        if v3:
+            beta3 = s3("beta3", 0.0)
+            if beta3.any():
+                f1, f2, p1, p2 = self._beta_am
+                am = np.clip(1.0 + 0.6 * np.sin(2 * np.pi * f1 * t + p1) + 0.35 * np.sin(2 * np.pi * f2 * t + p2), 0.15, None)
+                x += self._stream_signal(self.st_sed_beta, i0, n) * (beta3 * am)[None, :]
+            barb = s3("barb", 0.0)
+            if barb.any():
+                x += self._stream_signal(self.st_barb, i0, n) * barb[None, :]
+            gamma3 = s3("gamma3", 0.0)
+            if gamma3.any():
+                keta = s3("keta", 0.0)
+                g = self._keta_gate(t)
+                # gamma rides its own epochs and the slow-delta takes the rest (Akeju 2016 "gamma burst")
+                x += self._stream_signal(self.st_gamma3, i0, n) * (gamma3 * (1.0 - keta * (1.0 - g) * 0.8))[None, :]
+                x += self._stream_signal(self.st_delta, i0 + 3331, n) * (0.9 * gamma3 * keta * (1.0 - g))[None, :]
+            if self._sed_driven_bs() and not self._calibrating:
+                # 0.5.0: a barbiturate burst is not gated awake EEG (sedation.md S109-06): past sf 0.1 the burst
+                # content becomes high-voltage polymorphic slow and sharp activity
+                sf = _piecewise(self._sed_t, self._sed_sf, t)
+                bs_mix = np.clip((sf - 0.1) / 0.2, 0.0, 1.0)
+                if bs_mix.any():
+                    x = x * (1.0 - 0.8 * bs_mix)[None, :] + self._burst_content_rows(t, i0) * bs_mix[None, :]
 
         # Continuous muscle floor.  Before this, ``st_emg`` existed but was
         # reachable only through an explicit artifact event, so a recording with
@@ -4579,6 +4793,9 @@ class Synthesizer:
             # 0.5.0: scheduled spindle packets in N2/N3 (2.6 background-RMS units at the field maximum); the drug
             # spindle weight (dexmedetomidine) adds to the stage rate through the same packets
             x += self._spindle_rows_v3(t) * (2.6 * (1.0 + sed_spindle))[None, :]
+            if not self._calibrating and self._dsp["t"].size:
+                # dexmedetomidine spindles in wake too: their own irregular schedule, same packet shape and field
+                x += self._drug_spindle_rows(t) * (self._DRUG_SPINDLE_W * sed_spindle)[None, :]
         elif self.age != "neonate":
             spindle_phase = np.mod(t, 3.7)
             spindle_gate = np.where(spindle_phase < 1.2, np.sin(np.pi * spindle_phase / 1.2) ** 2, 0.0)
@@ -4744,10 +4961,13 @@ class Synthesizer:
         # and it would have lifted burst-suppression interburst intervals past
         # the <5 uV suppression criterion.
         # A staring absence does not blink; see ABSENCE_EMG_DROP.
+        # 0.5.0: an unconscious patient does not blink or open the eyes, and under complete neuromuscular blockade the
+        # lids and extraocular muscles are paralysed too (sedation.md S109-01..06, S109-09)
+        eyes = (np.zeros(n) if blocked else 1.0 - sed_loc) if v3 else 1.0
         if v3state:
-            gate = sv3.weight(t, self._hypno, sv3.BLINK) * eye_blink * env * (1.0 - self.absence_gate(t))
+            gate = sv3.weight(t, self._hypno, sv3.BLINK) * eye_blink * env * (1.0 - self.absence_gate(t)) * eyes
             x += self.blink_rows(t, gate)
-            x += self._eye_event_rows(t) * (env * (1.0 - self.absence_gate(t)))[None, :]
+            x += self._eye_event_rows(t) * (env * (1.0 - self.absence_gate(t)) * eyes)[None, :]
             x += self._sleep_transient_rows(t) * env[None, :] * self._ch_gain[:, None]
         elif self.spec_version >= 3 and self.age == "neonate":
             # 0.5.0: a neonate blinks only while awake (feature review, neonatal item 4), never in active sleep
@@ -4755,7 +4975,7 @@ class Synthesizer:
                                        1.0 - sleep)
             x += self.blink_rows(t, awake * env * (1.0 - self.absence_gate(t)))
         else:
-            x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)))
+            x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)) * eyes)
         # Neonatal graphoelements (microvolts; burst-bound ones gated inside).
         if self.age == "neonate":
             x += self.graphoelement_rows(t) * self._ch_gain[:, None]
