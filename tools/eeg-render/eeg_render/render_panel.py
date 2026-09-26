@@ -294,16 +294,33 @@ RATIO_BANDS = {"alpha_delta_ratio": "adr", "theta_delta_ratio": "tdr"}
 REGION_PAIRS = {"lateral": ("LL", "RL"), "parasagittal": ("LP", "RP")}
 
 
-def _ratio_axis(st: Dict, key: str, series) -> tuple:
+def _ratio_axis(st: Dict, key: str, series, spec: Optional[Dict] = None,
+                t_min: Optional[np.ndarray] = None) -> tuple:
     """Fit a shared y-window to every series drawn on a paired panel.
 
     Both traces must share one axis or the comparison the panel exists for is
     meaningless, and a fitted window is needed because a delta-dominant record
     lives near 0.05 where a fixed 0-2 axis shows a flat line on the floor.
+
+    spec_version 3 (feature review PQ-G-002: a 0.033 vs 0.017 alpha/delta split drawn on a 0-0.5 axis set by the
+    awake first 20 min): the window is fitted to the 5-95th percentile of the samples after the first state change,
+    so a brief awake stretch and the seizure spikes are clipped rather than squashing the rest of the record.
     """
     rng = st.get(key)
     if rng and len(rng) == 2:
         return float(rng[0]), float(rng[1])
+    if spec is not None and t_min is not None and int(spec.get("spec_version") or 1) >= 3:
+        changes = [float(e["at_min"]) for e in spec.get("events") or [] if e.get("type") == "state_change"]
+        keep = np.asarray(t_min) >= (min(changes) if changes else -1.0)
+        if keep.sum() < 10:
+            keep = np.ones_like(keep, dtype=bool)
+        both = np.concatenate([np.asarray(v)[keep] for v in series])
+        p5, p95 = float(np.percentile(both, 5)), float(np.percentile(both, 95))
+        span = max(p95 - p5, 1e-3)
+        hi = _nice_ceiling(p95 + 0.35 * span, fine=True)
+        lo = max(0.0, p5 - 0.35 * span)
+        lo = 0.0 if lo < 0.3 * hi else lo
+        return lo, hi
     both = np.concatenate([np.asarray(v) for v in series])
     top = float(np.percentile(both, 99.5))
     bottom = float(np.percentile(both, 0.5))
@@ -477,7 +494,7 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
 
     elif name in ("alpha_delta_ratio", "theta_delta_ratio"):
         series = tr.adr if name == "alpha_delta_ratio" else tr.tdr
-        lo, hi = _ratio_axis(st, f"{name}_axis", [series["left"], series["right"]])
+        lo, hi = _ratio_axis(st, f"{name}_axis", [series["left"], series["right"]], spec, t_min)
         _paired_panel(ax, t_min, series["left"], series["right"], theme, lo, hi)
 
     elif name.endswith(("_lateral", "_parasagittal")) and name.startswith(
@@ -488,7 +505,7 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
         left, right = series.get(left_key), series.get(right_key)
         if left is None or right is None:
             return
-        lo, hi = _ratio_axis(st, f"{base}_axis", [left, right])
+        lo, hi = _ratio_axis(st, f"{base}_axis", [left, right], spec, t_min)
         _paired_panel(ax, t_min, left, right, theme, lo, hi)
 
     elif name in ("suppression_ratio", "suppression_ratio_global"):
@@ -508,7 +525,7 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
             _paired_panel(ax, t_min, tr.sr["left"], tr.sr["right"], theme, lo, hi, fmt="{:g}")
 
     elif name in ("theta_delta_ratio_L", "theta_delta_ratio_R"):
-        lo, hi = _ratio_axis(st, "theta_delta_ratio_axis", [tr.tdr["left"], tr.tdr["right"]])
+        lo, hi = _ratio_axis(st, "theta_delta_ratio_axis", [tr.tdr["left"], tr.tdr["right"]], spec, t_min)
         mid = (lo + hi) / 2.0
         _line_panel(ax, t_min, tr.tdr[side], theme.asym_left, theme, lo, hi,
                     [lo, mid, hi], [f"{lo:.3g}", f"{mid:.3g}", f"{hi:.3g}"], fill=False)

@@ -318,7 +318,10 @@ _BACKGROUND = {
         "breach": {"type": "object", "additionalProperties": False, "required": ["focus"],
                    "properties": {"focus": {"type": "string"},
                                   "gain": {"type": "number", "minimum": 1, "maximum": 5},
-                                  "fast_gain": {"type": "number", "minimum": 1, "maximum": 8}}},
+                                  "fast_gain": {"type": "number", "minimum": 1, "maximum": 8},
+                                  # 0.5.0 (spec_version 3): electrodes of the plateau over the defect; default the
+                                  # focus and its neighbours in the longitudinal bipolar chain
+                                  "region": {"type": "array", "items": {"type": "string"}, "minItems": 1}}},
         # neonates: per-element rate / amplitude overrides of the PMA table
         # (spec.GRAPHOELEMENT_PMA); `enabled: false` silences one.
         "graphoelements": {
