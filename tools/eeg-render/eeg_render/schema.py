@@ -142,6 +142,9 @@ _EVENT = {
         "focus": {"type": "string"},
         "rate_per_h": {"type": "number", "minimum": 0, "maximum": 3600},
         "aftergoing_slow": {"type": "boolean"},
+        # 0.5.0 (spec_version 3): spikes per polyspike (each discharge draws n-1..n+1, clipped to 3-8, at
+        # 55-80 ms intervals).  v3 also accepts focus "generalized_frontocentral" (myoclonic / JME field).
+        "n_spikes": {"type": "integer", "minimum": 3, "maximum": 8},
         # P7 batch 4: the time-locked clinical correlate of an ictal run, keyed on the seizure row
         # (ACNS ECSz needs one; "none" = electrographic-only).  Non-EEG: it never changes the signal.
         "clinical_correlate": {"enum": ["none", "subtle", "focal_clonic", "focal_tonic", "generalized_tonic_clonic",

@@ -262,6 +262,8 @@ _BLINK_FIELD = {
 #: test_suppressed_raw_intervals_survive_sensor_noise. It also bought almost
 #: nothing: line length moved 1241 -> 1267 against a target band of 543-2376.
 SENSOR_RMS_UV = 0.25
+#: 0.5.0 polymorphic focal delta weight (background-RMS units at the side's maximum, full slowing_hz >= 3)
+POLYDELTA_W = 1.0
 _SMOOTH_EPS = 1e-12
 
 
@@ -417,6 +419,102 @@ _SW_FREQS, _SW_MEANS, _SW_RMSS = _sw_norm()
 
 
 # --------------------------------------------------------------------------
+# 0.5.0 (spec_version 3): periodic discharge in SECONDS
+# --------------------------------------------------------------------------
+# Feature review 2026-09-26 (C26/C27): ``_periodic_template`` is defined in
+# fractions of a cycle, so the sharp phase measured FWHM 138 ms at 0.5 Hz, 69 ms
+# at 1 Hz and 34 ms at 2 Hz.  A discharge keeps its duration whatever its
+# repetition rate (PLEDs.webp: narrow sharp, long flat interval at 0.75 Hz), so
+# the v3 complex is a function of seconds from the sharp peak and the period
+# only adds baseline.  The numbers are the 1-Hz template's (which C25 passed),
+# with an asymmetric sharp phase (rise 30 ms, fall 50 ms; with the dip and the 1-Hz display high-pass the displayed
+# sharp phase measures FWHM 55-66 ms at 0.5, 1 and 2 Hz, against about 59-70 ms for the accepted 1-Hz C25).
+_PD_RISE, _PD_FALL = 0.030, 0.050
+_PD_DIP_LAG, _PD_DIP_SIGMA, _PD_DIP_GAIN = 0.080, 0.045, 0.55
+_PD_WAVE_LAG, _PD_WAVE_SIGMA, _PD_WAVE_GAIN = 0.300, 0.130, 0.42
+_PD_AMP_VAR, _PD_WIDTH_VAR = 0.25, 0.20     # +/- per-cycle amplitude and width (C26: identical stamps)
+
+
+def _pd_kernel(tau: np.ndarray, width: float | np.ndarray = 1.0) -> np.ndarray:
+    """One periodic discharge (same polarity as ``_periodic_template``); ``tau`` is seconds from the sharp peak."""
+    sig = np.where(tau < 0.0, _PD_RISE, _PD_FALL) * width
+    return (np.exp(-0.5 * (tau / sig) ** 2)
+            - _PD_DIP_GAIN * np.exp(-0.5 * ((tau - _PD_DIP_LAG * width) / (_PD_DIP_SIGMA * width)) ** 2)
+            + _PD_WAVE_GAIN * np.exp(-0.5 * ((tau - _PD_WAVE_LAG) / _PD_WAVE_SIGMA) ** 2))
+
+
+def _pd_cycle(tau: np.ndarray, period: np.ndarray, k: Optional[np.ndarray] = None,
+              salt: int = 0) -> np.ndarray:
+    """The discharge plus its neighbours (the slow wave outlasts a 2-4 Hz cycle), jittered per absolute cycle."""
+    out = np.zeros_like(tau)
+    for n in (-1, 0, 1, 2, 3):
+        if k is None:
+            out = out + _pd_kernel(tau + n * period)
+            continue
+        kk = k - n
+        amp = 1.0 + (_cycle_noise(kk, salt + 131) - 0.5) * (2.0 * _PD_AMP_VAR)
+        wid = 1.0 + (_cycle_noise(kk, salt + 137) - 0.5) * (2.0 * _PD_WIDTH_VAR)
+        out = out + amp * _pd_kernel(tau + n * period, wid)
+    return out
+
+
+def _pd_norm() -> tuple:
+    """Per-frequency mean and peak-to-peak of the unjittered cycle, interpolated at use (partition-independent)."""
+    freqs = np.geomspace(0.2, 8.0, 128)
+    means = np.empty_like(freqs)
+    ptps = np.empty_like(freqs)
+    for i, f in enumerate(freqs):
+        period = 1.0 / f
+        tau = np.linspace(-0.5 * period, 0.5 * period, 4096, endpoint=False)
+        v = _pd_cycle(tau, np.full_like(tau, period))
+        means[i] = v.mean()
+        ptps[i] = float(np.ptp(v)) or 1.0
+    return freqs, means, ptps
+
+
+_PD_FREQS, _PD_MEANS, _PD_PTPS = _pd_norm()
+
+#: 0.5.0 (spec_version 3): ACNS 2021 rhythmic-delta / periodic-discharge band for a rhythmic_pattern authored inside
+#: it, and the largest in-run frequency drift as a FRACTION of the run rate (it was an absolute ~0.2-0.6 Hz)
+_RPP_BAND = (0.5, 4.0)
+_RPP_DRIFT = 0.05
+
+
+# 0.5.0 (spec_version 3): polyspike as discrete biphasic spikes.  Feature review B5-04: three summed monophasic
+# spikes left the inter-spike valleys at 0.44-0.55 of the peak, so the complex read as one notched 97-ms sharp wave
+# (Craig: "merged on a sharp wave").  eeg0094_db1.png and myoclonic-jerk-examples/p1.webp show 4-8 spikes at
+# 55-80 ms intervals, each swinging through the baseline, then a slow wave.
+_PS_RISE, _PS_FALL = 0.010, 0.014          # s, negative spike limbs (surface sign applied by the caller)
+_PS_TROUGH_LAG, _PS_TROUGH_SIGMA = 0.028, 0.014
+_PS_WAVE_LAG, _PS_WAVE_SIGMA, _PS_WAVE_GAIN = 0.150, 0.100, 0.90
+
+
+def _polyspike_kernel(d: np.ndarray, lags: np.ndarray, gains: np.ndarray, troughs: np.ndarray,
+                      width: float, aftergoing: bool) -> np.ndarray:
+    """Spikes at ``lags`` (s) with heights ``gains``, each followed by an opposite trough, then the slow wave.
+
+    Returned with the spike phase POSITIVE; ``_sed_kernel`` negates it like the single spike.
+    """
+    k = np.zeros_like(d)
+    for c, g, tr in zip(lags, gains, troughs):
+        x = d - c
+        k = k + g * (np.exp(-0.5 * (x / np.where(x < 0.0, _PS_RISE * width, _PS_FALL * width)) ** 2)
+                     - tr * np.exp(-0.5 * ((x - _PS_TROUGH_LAG * width) / (_PS_TROUGH_SIGMA * width)) ** 2))
+    if aftergoing:
+        k = k + _PS_WAVE_GAIN * np.exp(-0.5 * ((d - (float(lags[-1]) + _PS_WAVE_LAG)) / _PS_WAVE_SIGMA) ** 2)
+    return k
+
+
+def _polyspike_unit_ptp(width: float = 1.0, trough: float = 0.6) -> float:
+    """Peak-to-peak of ONE biphasic spike: what ``amplitude_uv`` names for a v3 polyspike."""
+    d = np.linspace(-0.05, 0.1, 1501)
+    return float(np.ptp(_polyspike_kernel(d, np.array([0.0]), np.array([1.0]), np.array([trough]), width, False)))
+
+
+_PS_UNIT_PTP = _polyspike_unit_ptp(1.0, 0.6)
+
+
+# --------------------------------------------------------------------------
 # small helpers
 # --------------------------------------------------------------------------
 
@@ -528,6 +626,8 @@ class SeizureInstance:
     morph: str = "ictal"
     fluctuate: float = 0.22
     plus_fast: float = 0.0
+    #: 0.5.0 (spec_version 3): "+S" - sharp transients embedded in rhythmic delta, relative to the delta amplitude
+    plus_sharp: float = 0.0
     #: frequency/amplitude trajectory: ``sweep`` (0.3.x log glide) or ``recruit``
     #: (0.4.0: low-voltage fast onset, stepwise slowing, build-up, late clonic bursting)
     profile: str = "sweep"
@@ -765,6 +865,15 @@ class Synthesizer:
                 lateral = float(smoothstep(sign * x / 0.25)) if hemispheric else float(np.clip(sign * x, 0.0, 1.0))
                 self.gain_asym[i] = 1.0 - att * lateral
                 self.slow_side[i] = lateral * min(1.0, slw / 3.0)
+        self.st_polydelta = None
+        if self.spec_version >= 3 and float(self.slow_side.max()) > 0:
+            # 0.5.0 (feature review C32: the "slowed" side was only attenuated, delta fraction F7-T3 0.57 vs F8-T4
+            # 0.62): polymorphic delta - broadband 1-3 Hz with no dominant peak, mostly independent per electrode -
+            # on the affected side (tinc-left-temporal-slowing.webp, tinyc-Right-Temporal-Polymorphic-Delta-Slowing)
+            side = self.slow_side / float(self.slow_side.max())
+            for e in mt.REFERENCE_ELECTRODES:
+                side[self._idx[e]] = 0.0
+            self.st_polydelta = self._mk("polydelta", bg_shape(f, 1.0) * hp_lp_shape(f, 1.0, 3.2), side, common=0.15)
 
         # P7 batch 2: breach effect - over a skull defect the background is larger and carries
         # more sharply contoured fast activity (Niedermeyer: 2-3x amplitude, beta accentuated)
@@ -2011,11 +2120,18 @@ class Synthesizer:
             # background.  Onset at least 1.5x and the established run at least 2x the background peak-to-peak
             # (display-referenced amplitude_uv); evolution.amplitude_mode "absolute" keeps the authored voltages.
             bg_pp = float(self.bg.get("amplitude_uv") or 0.0)
-            modes = {i: str(((ev.get("seizure") or ev).get("evolution") or {}).get("amplitude_mode", "relative"))
-                     for i, ev in enumerate(self.spec["events"])}
+            # a rhythmic_pattern's evolution is the string "none", not a dict
+            modes = {i: str(evo.get("amplitude_mode", "relative")) if isinstance(evo, dict) else "relative"
+                     for i, evo in ((i, (ev.get("seizure") or ev).get("evolution"))
+                                    for i, ev in enumerate(self.spec["events"]))}
             for z in out:
                 if z.kind in ("seizure", "seizure_cluster", "status_epilepticus") and z.morph == "ictal"                         and modes.get(z.index) != "absolute" and bg_pp > 0:
                     z.amp_start = max(z.amp_start, 1.5 * bg_pp)
+                    z.amp_end = max(z.amp_end, 2.0 * bg_pp)
+                elif z.kind == "spasm" and modes.get(z.index) != "absolute" and bg_pp > 0:
+                    # 0.5.0 (feature review SPASM): the slow wave is the largest deflection on the page, also on a
+                    # hypsarrhythmic background (infantile-spasm-ii: it towers over the 300-uV chaos)
+                    z.amp_start = max(z.amp_start, 2.0 * bg_pp)
                     z.amp_end = max(z.amp_end, 2.0 * bg_pp)
         self.seizures = out
         self.ictal = [z for z in out if z.kind != "rhythmic_pattern"]
@@ -2057,6 +2173,9 @@ class Synthesizer:
         plus = str(ev.get("plus_modifier") or "").lower()
         morph = "periodic" if ev.get("periodic") else "rda"
         plus_fast = 0.30 if ("+f" in plus or "fast" in plus) else 0.0
+        # 0.5.0 (feature review C30): "+S" was never read; "+FS" carries both
+        plus_sharp = (1.0 if self.spec_version >= 3 and morph == "rda"
+                      and ("+s" in plus or "+fs" in plus or "sharp" in plus) else 0.0)
         fluct = float(ev.get("fluctuation", 0.45 if "fluctuat" in modifier else 0.15))
         rate_jitter = float(ev.get("rate_jitter", 0.0))     # 0.4.0: run-to-run repetition-rate wander
         duty_gap = 0.55 if "intermittent" in modifier else 0.30
@@ -2094,12 +2213,19 @@ class Synthesizer:
                 dur = min(dur, end - t)
                 # drawn only when asked for, so version-1 specs keep their RNG stream
                 fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
+                f_run = f0 * fmul * fj
+                if self.spec_version >= 3 and _RPP_BAND[0] <= f0 <= _RPP_BAND[1]:
+                    # 0.5.0 (feature review C27/C31: run rates 0.39-0.46 Hz on a 0.5-Hz card, 4.5-5.0 Hz on a 4-Hz
+                    # card): an authored rate inside the ACNS 0.5-4 Hz band stays inside it, including the in-run
+                    # drift (+/- _RPP_DRIFT of the rate, see _ictal_phase)
+                    f_run = float(np.clip(f_run, _RPP_BAND[0] * (1.0 + _RPP_DRIFT) + 1e-6,
+                                          _RPP_BAND[1] * (1.0 - _RPP_DRIFT) - 1e-6))
                 out.append(SeizureInstance(
                     t0=t, duration_s=dur, onset_region=region,
-                    start_hz=f0 * fmul * fj, end_hz=f0 * fmul * fj, amp_start=amp, amp_end=amp,
+                    start_hz=f_run, end_hz=f_run, amp_start=amp, amp_end=amp,
                     spread="none", postictal_s=0.0, index=i, ordinal=k * len(generators) + gi,
                     kind="rhythmic_pattern", morph=morph, fluctuate=fluct,
-                    plus_fast=plus_fast,
+                    plus_fast=plus_fast, plus_sharp=plus_sharp,
                 ))
                 t += dur + max(run * duty_gap * float(_lognorm(grng, 1, 0.3)[0]), 3.0)
                 k += 1
@@ -2154,6 +2280,8 @@ class Synthesizer:
         is applied to the background in ``segment`` and here gets its
         low-voltage 16-22 Hz fast activity (``fast_uv``).
         """
+        if self.spec_version >= 3:
+            return self._spasm_rows_v3(inst, t)
         d = t - inst.t0
         dur = max(inst.duration_s, 0.3)
         # main negative deflection at ~45% of the wave, flanked by smaller positive phases
@@ -2179,6 +2307,62 @@ class Synthesizer:
             fast = 0.5 * inst.fast_uv * w * np.sin(2 * np.pi * f_hz * d + rng.uniform(0, 2 * np.pi))
             gen = np.array([0.7 + 0.3 * self._SPASM_FIELD.get(e, 0.0) for e in self.electrodes])
             rows += np.outer(gen, fast)
+        return rows
+
+    #: 0.5.0 (feature review SPASM): a steep vertex-parietal field.  The 0.3.x field was nearly flat (largest bipolar
+    #: difference 0.3; Cz-Pz 0.0), so a 420-uV slow wave measured 59 uV on Cz-Pz against a 58-uV background.  This
+    #: one gives every longitudinal chain a share (Fz-Cz 0.45, Cz-Pz 0.40, P3-O1 0.30, F3-C3 0.30, C3-P3 0.25,
+    #: T3-T5 0.18) as in infantile-spasm-craig-20260926.png, where Cz-Pz, P3-O1 and the temporal chains carry the
+    #: largest deflection on the page.
+    _SPASM_FIELD_V3 = {"Cz": 1.0, "C3": 0.70, "C4": 0.70, "Pz": 0.60, "Fz": 0.55, "P3": 0.45, "P4": 0.45,
+                       "F3": 0.40, "F4": 0.40, "T5": 0.30, "T6": 0.30, "F7": 0.20, "F8": 0.20,
+                       "O1": 0.15, "O2": 0.15, "T3": 0.12, "T4": 0.12, "Fp1": 0.10, "Fp2": 0.10}
+
+    def _spasm_rows_v3(self, inst: SeizureInstance, t: np.ndarray) -> np.ndarray:
+        """0.5.0 spasm: a slow wave that is the largest bipolar deflection, visible overriding fast activity.
+
+        ``amplitude_start_uv`` is the slow wave's peak-to-peak on the largest longitudinal-bipolar derivation.
+        The fast activity riding the wave (``wave_fast_uv``) and the decrement (``fast_uv``) has a per-electrode
+        amplitude field**2 and an independent phase and frequency per electrode, so it survives the bipolar
+        subtraction (a common-mode 0.7-1.0 field cancelled).  The wave spreads front to back over 20-40 ms.
+        """
+        rng = substream(self.seed, "spasm", inst.index, inst.ordinal)
+        r3 = substream(self.seed, "spasm-v3", inst.index, inst.ordinal)
+        dur = max(inst.duration_s, 0.3)
+        jitter = float(np.clip(_lognorm(rng, 1, 0.2)[0], 0.75, 1.3))
+        field = np.array([self._SPASM_FIELD_V3.get(e, 0.0) for e in self.electrodes])
+        pairs = [(self._idx[a], self._idx[b]) for a, b in mt.montage_pairs("longitudinal_bipolar", self.scalp)
+                 if b is not None and a in self._idx and b in self._idx]
+        max_diff = max((abs(field[a] - field[b]) for a, b in pairs), default=1.0) or 1.0
+        ap_lag = float(r3.uniform(0.020, 0.040))
+        ypos = np.array([mt.POSITIONS.get(e, (0.0, 0.0))[1] for e in self.electrodes])
+        lag = ap_lag * (1.0 - np.clip(ypos, -1.0, 1.0)) / 2.0          # frontal first
+        d = (t - inst.t0)[None, :] - lag[:, None]
+        wave = (-1.0 * np.exp(-0.5 * ((d - 0.45 * dur) / (0.17 * dur)) ** 2)
+                + 0.42 * np.exp(-0.5 * ((d - 0.12 * dur) / (0.10 * dur)) ** 2)
+                + 0.50 * np.exp(-0.5 * ((d - 0.85 * dur) / (0.16 * dur)) ** 2))
+        rows = field[:, None] * wave * (inst.amp_start / 1.5 / max_diff * jitter)
+        f2 = field ** 2
+        n_e = self.n_elec
+        f_wave = float(r3.uniform(17.0, 24.0))
+        fw = f_wave + r3.normal(0.0, 1.2, n_e)
+        ph = r3.uniform(0.0, 2 * np.pi, n_e)
+        dd = t - inst.t0
+        env_w = np.exp(-0.5 * ((dd - 0.5 * dur) / (0.30 * dur)) ** 2)
+        rows += (0.5 * inst.wave_fast_uv * jitter * f2[:, None]
+                 * np.sin(2 * np.pi * fw[:, None] * dd[None, :] + ph[:, None]) * env_w[None, :])
+        if inst.fast_uv > 0 and inst.decrement_s > 0:
+            start = inst.t0 + 0.55 * dur
+            w = smoothstep((t - start) / 0.3) * (1.0 - smoothstep((t - (start + inst.decrement_s)) / 0.5))
+            f_hz = float(r3.uniform(16.0, 22.0))
+            fd = f_hz + r3.normal(0.0, 1.2, n_e)
+            pd = r3.uniform(0.0, 2 * np.pi, n_e)
+            fb = fd + r3.uniform(3.0, 6.0, n_e)          # a second, beating component: irregular, not a sine train
+            pb = r3.uniform(0.0, 2 * np.pi, n_e)
+            gen = 0.4 + 0.6 * field
+            rows += (0.5 * inst.fast_uv * gen[:, None] * w[None, :]
+                     * (0.75 * np.sin(2 * np.pi * fd[:, None] * dd[None, :] + pd[:, None])
+                        + 0.5 * np.sin(2 * np.pi * fb[:, None] * dd[None, :] + pb[:, None])))
         return rows
 
     def _build_multifocal_spikes(self) -> None:
@@ -2211,30 +2395,68 @@ class Synthesizer:
         foci = list(rng.choice(left, n_foci // 2, replace=False)) + list(rng.choice(right, n_foci // 2, replace=False))
         per = rate / n_foci
         ev = []
-        for fi in foci:
+        v3 = self.spec_version >= 3
+        for k, fi in enumerate(foci):
             n = max(1, int(span * per * 1.8))
-            times = np.cumsum(_lognorm(rng, n, 0.55) / per) - 60.0
-            times = times[times < span]
-            m = times.size
-            width = rng.uniform(0.85, 1.15, m)       # duration scale of the LPD complex
-            amps = amp * _lognorm(rng, m, 0.30)
+            if v3:
+                # 0.5.0: times, widths and amplitudes from per-focus streams, so the first discharges of a focus
+                # do not depend on how long a record the synthesizer was built for (page vs answer key)
+                times = np.cumsum(_lognorm(substream(self.seed, "multifocal-v3", k, "t"), n, 0.55) / per) - 60.0
+                times = times[times < span]
+                m = times.size
+                width = substream(self.seed, "multifocal-v3", k, "w").uniform(0.85, 1.15, m)
+                amps = amp * _lognorm(substream(self.seed, "multifocal-v3", k, "a"), m, 0.30)
+            else:
+                times = np.cumsum(_lognorm(rng, n, 0.55) / per) - 60.0
+                times = times[times < span]
+                m = times.size
+                width = rng.uniform(0.85, 1.15, m)       # duration scale of the LPD complex
+                amps = amp * _lognorm(rng, m, 0.30)
             ev.append(np.column_stack([times, np.full(m, fi, float), width, amps]))
         allev = np.vstack(ev)
-        self._mf_spikes = allev[np.argsort(allev[:, 0])]
+        order = np.argsort(allev[:, 0])
+        self._mf_spikes = allev[order]
+        self._mf_poly = None
+        if v3:
+            # 0.5.0 (feature review HYPS): the discharges are surface-negative spikes (FWHM ~40 ms) and, for 30 %
+            # of them, polyspikes of 2-4 spikes - drawn per discharge, keyed by its own time in ms
+            self._mf_poly = []
+            for t0 in self._mf_spikes[:, 0]:
+                prng = substream(self.seed, "multifocal-poly", int(round(float(t0) * 1000.0)))
+                self._mf_poly.append(self._polyspike_params(prng, 3, lo=2) if prng.uniform() < 0.30 else None)
+
+    #: v3 multifocal spike normalization: peak-to-peak of the single spike-and-wave kernel
+    _MF_SPIKE_PTP = None
 
     def _multifocal_spike_rows(self, t: np.ndarray) -> np.ndarray:
         rows = np.zeros((self.n_elec, t.size))
         ev = getattr(self, "_mf_spikes", None)
         if ev is None or t.size == 0:
             return rows
-        sel = ev[(ev[:, 0] > t[0] - 1.0) & (ev[:, 0] < t[-1] + 0.2)]
-        for t0, fi, width, amp in sel:
+        poly = getattr(self, "_mf_poly", None)
+        if poly is not None and Synthesizer._MF_SPIKE_PTP is None:
+            grid = np.linspace(-0.3, 1.0, 2600)
+            Synthesizer._MF_SPIKE_PTP = float(np.ptp(self._sed_kernel(grid, "spike", 1.0, True)))
+        live_ev = (ev[:, 0] > t[0] - 1.0) & (ev[:, 0] < t[-1] + 0.2)
+        for j in np.flatnonzero(live_ev):
+            t0, fi, width, amp = ev[j]
             d = t - t0
-            x = d / width
-            live = (x >= 0.0) & (x < 1.0)
-            complex_ = ((_periodic_template(x) - _PERIODIC_MEAN)
-                        / _PERIODIC_RMS / _PERIODIC_PTP)
-            complex_ *= live
+            if poly is not None:
+                pp = poly[j]
+                if pp is None:
+                    complex_ = self._sed_kernel(d, "spike", float(width), True) / Synthesizer._MF_SPIKE_PTP
+                    complex_ *= (d > -0.3 * width) & (d < 0.9 * width + 0.35)
+                else:
+                    lags, gains, troughs = pp
+                    complex_ = (-_polyspike_kernel(d, lags, gains, troughs, float(width), True)
+                                / _PS_UNIT_PTP)
+                    complex_ *= (d > -0.1) & (d < float(lags[-1]) + 0.55)
+            else:
+                x = d / width
+                live = (x >= 0.0) & (x < 1.0)
+                complex_ = ((_periodic_template(x) - _PERIODIC_MEAN)
+                            / _PERIODIC_RMS / _PERIODIC_PTP)
+                complex_ *= live
             w = self._gen_weights(self.electrodes[int(fi)], mt.PINNED_FALLOFF)
             rows += np.outer(w, complex_ * amp)
         return rows
@@ -2265,48 +2487,150 @@ class Synthesizer:
             k = k + 0.55 * np.exp(-0.5 * ((d - (last + 0.12 * width + 0.16)) / 0.09) ** 2)
         return -k
 
+    #: 0.5.0 (spec_version 3) table fields for a sporadic ``focus`` that is not one electrode.  Myoclonic / JME
+    #: polyspike-and-wave (eeg0094_db1.png, myoclonic-jerk-examples/p1.webp): bilateral, frontal maximum, largest in
+    #: F3-C3 / F4-C4 / Fz-Cz with Fp-F and P-O smaller, temporal chains small.  Weights are chosen for the
+    #: longitudinal-bipolar differences, not the referential map (a flat frontocentral field cancels in the chain).
+    _SED_FIELDS = {
+        "generalized_frontocentral": {
+            "F3": 1.0, "F4": 1.0, "Fz": 0.95, "Fp1": 0.55, "Fp2": 0.55, "C3": 0.45, "C4": 0.45, "Cz": 0.45,
+            "P3": 0.40, "P4": 0.40, "Pz": 0.35, "F7": 0.35, "F8": 0.35, "T3": 0.30, "T4": 0.30,
+            "T5": 0.20, "T6": 0.20, "O1": 0.10, "O2": 0.10},
+    }
+    #: ACNS 2021 "abundant" is >= 1 per 10 s: from that rate up no inter-discharge gap may exceed 10 s.
+    _SED_ABUNDANT_PER_H = 360.0
+
+    def _sed_focus_ok(self, focus: str) -> bool:
+        return focus in self._idx or (self.spec_version >= 3 and focus in self._SED_FIELDS)
+
+    def _sed_field(self, focus: str) -> np.ndarray:
+        if focus in self._idx:
+            return self._gen_weights(focus, self._SED_FALLOFF)
+        tab = self._SED_FIELDS[focus]
+        return np.array([tab.get(e, 0.0) for e in self.electrodes])
+
+    #: v3 sporadic schedule block (s): counts, gaps and per-discharge draws are keyed by block, so the schedule does
+    #: not depend on the synthesis horizon (a page renders with t0 + window + 60 s, the key with the whole record)
+    _SED_BLOCK_S = 600.0
+
+    def _sed_schedule_v3(self, i: int, rate_h: float, a: float, b: float) -> List[Tuple[np.random.Generator, np.ndarray]]:
+        """Discharge times with the requested rate over [a, b), in horizon-independent blocks (0.5.0).
+
+        Feature review B5-01/02: lognormal gaps (sigma 0.6) left long empty stretches, so an abundant (480/h)
+        record had 10-s epochs with no discharge.  Each 600-s block gets floor(rate x 600 s + u) discharges (the
+        authored rate in expectation, exactly for >= 6/h), lognormal gaps of sigma 0.5 (irregular: ACNS abundant is
+        "not periodic") clipped to [1 s, 10 s when abundant] and rescaled to the block, so an abundant record meets
+        >= 1 per 10 s everywhere, block joins included.  Returns (block rng, times) pairs; the rng then draws that
+        block's per-discharge parameters.
+        """
+        L = self._SED_BLOCK_S
+        hi = 10.0 if rate_h >= self._SED_ABUNDANT_PER_H else np.inf
+        out = []
+        for k in range(int(np.ceil((b - a) / L))):
+            rng = substream(self.seed, "sporadic-v3", i, k)
+            n = int(np.floor(rate_h * L / 3600.0 + rng.uniform()))
+            if n <= 0:
+                out.append((rng, np.zeros(0)))
+                continue
+            gaps = _lognorm(rng, n, 0.5)
+            for _ in range(6):
+                gaps = np.clip(gaps * (L / float(gaps.sum())), min(1.0, L / n), 0.98 * hi)
+            gaps = gaps * (L / float(gaps.sum()))
+            # the block's last gap is split across its two ends, so a join between blocks is (g_n + g'_n) / 2:
+            # inside the same [1 s, 10 s] limits as every other gap
+            out.append((rng, a + k * L + 0.5 * gaps[-1] + np.concatenate([[0.0], np.cumsum(gaps[:-1])])))
+        return out
+
+    @staticmethod
+    def _polyspike_params(rng: np.random.Generator, n_spikes: int, lo: int = 3):
+        """One polyspike's spike lags, heights and troughs (0.5.0; drawn once per discharge)."""
+        n = int(np.clip(n_spikes + int(rng.integers(-1, 2)), lo, 8))
+        isi = float(rng.uniform(0.060, 0.075))
+        steps = np.clip(isi + rng.uniform(-0.010, 0.010, n - 1), 0.055, 0.080)
+        lags = np.concatenate([[0.0], np.cumsum(steps)])
+        gains = rng.uniform(0.8, 1.1, n)
+        if rng.uniform() < 0.5:
+            gains = np.sort(gains)                 # crescendo; otherwise roughly flat
+        gains = gains / gains[0]                   # the first spike is the keyed (t0) one at amplitude 1
+        troughs = rng.uniform(0.5, 0.7, n)
+        return lags, gains, troughs
+
     def _build_sporadic(self) -> None:
         """Draw every sporadic discharge once: (t0, event index, width, amplitude) sorted by time."""
         self._sed = None
         self._sed_norm = {}
+        self._sed_poly: List = []
         evs = [(i, e) for i, e in enumerate(self.spec["events"]) if e["type"] == "sporadic_discharges"]
         if not evs:
             return
+        v3 = self.spec_version >= 3
         rows = []
+        polys: List = []
         for i, e in evs:
             rate_h = float(e.get("rate_per_h", 0.0) or 0.0)
             amp = float(e.get("amplitude_uv", 0.0) or 0.0)
-            if rate_h <= 0 or amp <= 0 or str(e["focus"]) not in self._idx:
+            if rate_h <= 0 or amp <= 0 or not self._sed_focus_ok(str(e["focus"])):
                 continue
-            rng = substream(self.seed, "sporadic", i)
+            morph = str(e.get("morphology") or "spike")
             a = float(e["start_min"]) * 60.0 if e.get("start_min") is not None else -60.0
             b = float(e["end_min"]) * 60.0 if e.get("end_min") is not None else self.duration_s + 60.0
-            mean_gap = 3600.0 / rate_h / np.exp(0.5 * 0.6 ** 2)   # lognormal gaps: mean = exp(s^2/2) x median
-            n = max(2, int((b - a) / mean_gap * 2.0) + 4)
-            gaps = np.maximum(_lognorm(rng, n, 0.6) * mean_gap, 1.5)
-            times = a + np.cumsum(gaps) - 0.5 * mean_gap
-            times = times[(times >= a) & (times < b)]
-            m = times.size
-            width = self._SED_WIDTH[str(e.get("morphology") or "spike")] * rng.uniform(0.88, 1.12, m)
-            amps = amp * _lognorm(rng, m, 0.25)
-            rows.append(np.column_stack([times, np.full(m, i, float), width, amps]))
+            if v3:
+                ns = int(e.get("n_spikes") or 5)
+                for brng, times in self._sed_schedule_v3(i, rate_h, a, b):
+                    m = times.size
+                    if m == 0:
+                        continue
+                    width = self._SED_WIDTH[morph] * brng.uniform(0.88, 1.12, m)
+                    # 0.5.0 (feature review B5-01: a 90-uV request drew 61 uV): the authored voltage is what is drawn,
+                    # within -10 / +30 %
+                    amps = amp * np.clip(_lognorm(brng, m, 0.10), 0.9, 1.3)
+                    pp = ([self._polyspike_params(brng, ns) for _ in range(m)] if morph == "polyspike"
+                          else [None] * m)
+                    keep = (times >= a) & (times < b)
+                    rows.append(np.column_stack([times, np.full(m, i, float), width, amps])[keep])
+                    polys.extend(p for p, kk in zip(pp, keep) if kk)
+                if morph == "polyspike":
+                    # amplitude_uv is the peak-to-peak of one spike (review B5-04), not of the whole complex
+                    self._sed_norm[i] = _PS_UNIT_PTP
+                    continue
+            else:
+                rng = substream(self.seed, "sporadic", i)
+                mean_gap = 3600.0 / rate_h / np.exp(0.5 * 0.6 ** 2)   # lognormal gaps: mean = exp(s^2/2) x median
+                n = max(2, int((b - a) / mean_gap * 2.0) + 4)
+                gaps = np.maximum(_lognorm(rng, n, 0.6) * mean_gap, 1.5)
+                times = a + np.cumsum(gaps) - 0.5 * mean_gap
+                times = times[(times >= a) & (times < b)]
+                m = times.size
+                width = self._SED_WIDTH[morph] * rng.uniform(0.88, 1.12, m)
+                amps = amp * _lognorm(rng, m, 0.25)
+                rows.append(np.column_stack([times, np.full(m, i, float), width, amps]))
+                polys.extend([None] * m)
             grid = np.linspace(-0.3, 1.0, 2600)
-            k = self._sed_kernel(grid, str(e.get("morphology") or "spike"), 1.0, bool(e.get("aftergoing_slow", True)))
+            k = self._sed_kernel(grid, morph, 1.0, bool(e.get("aftergoing_slow", True)))
             self._sed_norm[i] = float(np.ptp(k))
         if rows:
             allev = np.vstack(rows)
-            self._sed = allev[np.argsort(allev[:, 0])]
+            order = np.argsort(allev[:, 0], kind="stable") if v3 else np.argsort(allev[:, 0])
+            self._sed = allev[order]
+            self._sed_poly = [polys[j] for j in order]
 
     def sporadic_events(self) -> List[Dict]:
         """Realized discharges (for the answer key): dicts with t0, event index, width, amplitude."""
         if getattr(self, "_sed", None) is None:
             return []
         out = []
-        for t0, i, w, amp in self._sed:
+        poly = getattr(self, "_sed_poly", None) or [None] * len(self._sed)
+        for (t0, i, w, amp), pp in zip(self._sed, poly):
             e = self.spec["events"][int(i)]
-            out.append({"t0": float(t0), "index": int(i), "width": float(w), "amplitude_uv": float(amp),
-                        "focus": str(e["focus"]), "morphology": str(e.get("morphology") or "spike"),
-                        "aftergoing_slow": bool(e.get("aftergoing_slow", True))})
+            row = {"t0": float(t0), "index": int(i), "width": float(w), "amplitude_uv": float(amp),
+                   "focus": str(e["focus"]), "morphology": str(e.get("morphology") or "spike"),
+                   "aftergoing_slow": bool(e.get("aftergoing_slow", True))}
+            if pp is not None:
+                # 0.5.0: the key spans every spike and the after-going wave
+                row["n_spikes"] = int(len(pp[0]))
+                row["end_s"] = float(t0 + pp[0][-1] + (_PS_WAVE_LAG + 2.0 * _PS_WAVE_SIGMA
+                                                       if row["aftergoing_slow"] else 0.05))
+            out.append(row)
         return out
 
     def _sed_rows(self, t: np.ndarray) -> np.ndarray:
@@ -2314,17 +2638,26 @@ class Synthesizer:
         ev = getattr(self, "_sed", None)
         if ev is None or t.size == 0:
             return rows
-        sel = ev[(ev[:, 0] > t[0] - 1.2) & (ev[:, 0] < t[-1] + 0.4)]
-        for t0, i, width, amp in sel:
+        poly = getattr(self, "_sed_poly", None) or [None] * len(ev)
+        live = (ev[:, 0] > t[0] - 1.2) & (ev[:, 0] < t[-1] + 0.4)
+        for j in np.flatnonzero(live):
+            t0, i, width, amp = ev[j]
             e = self.spec["events"][int(i)]
             morph = str(e.get("morphology") or "spike")
             d = t - t0
-            k = self._sed_kernel(d, morph, float(width), bool(e.get("aftergoing_slow", True)))
-            k *= (d > -0.3 * width) & (d < 0.9 * width + 0.35)
+            after = bool(e.get("aftergoing_slow", True))
+            pp = poly[j]
+            if pp is not None:
+                lags, gains, troughs = pp
+                k = -_polyspike_kernel(d, lags, gains, troughs, float(width), after)
+                k *= (d > -0.1) & (d < float(lags[-1]) + 0.55)
+            else:
+                k = self._sed_kernel(d, morph, float(width), after)
+                k *= (d > -0.3 * width) & (d < 0.9 * width + 0.35)
             k *= amp / max(self._sed_norm.get(int(i), 1.0), 1e-6)
             # a wider field than the pinned LPD one: first neighbours ~1/3, C3-like ~1/2 (Craig, P5: "no field to
             # the other electrodes"); the phase reversal at the focus survives on a bipolar chain
-            w = self._gen_weights(str(e["focus"]), self._SED_FALLOFF)
+            w = self._sed_field(str(e["focus"]))
             rows += np.outer(w, k)
         return rows
 
@@ -2573,6 +2906,7 @@ class Synthesizer:
             # Independent per-generator noise would be averaged away: ~19
             # generators sum into every electrode.
             base = int(self.seed) * 31 + inst.index * 1009 + inst.ordinal * 101
+            v3 = self.spec_version >= 3
             onset_scale = self._field_scale(inst.onset_region)
             onset_fall = mt.generator_falloff(inst.onset_region)
             for gi, (focus, ga, gph) in enumerate(
@@ -2580,7 +2914,7 @@ class Synthesizer:
                 w = self._gen_weights(focus, onset_fall) * onset_scale
                 wv = (self._wave(phase, psi, gph, inst.morph, inst.plus_fast,
                                  f_inst, base, mt.POSITIONS.get(focus, (0.0, 0.0))[1],
-                                 base + 7919 * (gi + 1))
+                                 base + 7919 * (gi + 1), v3, inst.plus_sharp)
                       * amp * ga * (1.0 - 0.55 * s))
                 out += w[:, None] * wv[None, :]
             if spread is not None and phase_d is not None:
@@ -2592,7 +2926,7 @@ class Synthesizer:
                     wv = (self._wave(phase_d, psi, gph, inst.morph, inst.plus_fast,
                                      f_d, base + 500_003,
                                      mt.POSITIONS.get(focus, (0.0, 0.0))[1],
-                                     base + 500_003 + 7919 * (gi + 1))
+                                     base + 500_003 + 7919 * (gi + 1), v3, inst.plus_sharp)
                           * amp * ga * s)
                     out += w[:, None] * wv[None, :]
         return out
@@ -2601,7 +2935,8 @@ class Synthesizer:
     def _wave(phase: np.ndarray, psi: np.ndarray, offset_cycles: float,
               morph: str = "ictal", plus_fast: float = 0.0,
               f_inst: Optional[np.ndarray] = None, salt: int = 0,
-              lead: float = 0.0, gsalt: Optional[int] = None) -> np.ndarray:
+              lead: float = 0.0, gsalt: Optional[int] = None,
+              v3: bool = False, plus_sharp: float = 0.0) -> np.ndarray:
         """Waveform for one generator, from its instantaneous phase.
 
         ``ictal``      four harmonics at 1/k^1.3 - the spiky, non-sinusoidal
@@ -2629,6 +2964,17 @@ class Synthesizer:
             wave = _sw_cycle(tau, period, np.floor(cycles), salt, lead, gsalt)
             wave = ((wave - np.interp(f, _SW_FREQS, _SW_MEANS))
                     / np.interp(f, _SW_FREQS, _SW_RMSS))
+        elif morph == "periodic" and v3 and f_inst is not None:
+            # 0.5.0: seconds-based discharge (C26/C27), same peak-to-peak (in RMS units) as the cycle template
+            f = np.clip(f_inst, 0.2, 8.0)
+            period = 1.0 / f
+            # the generator offset is a time lag too (0.5 s per offset cycle, <= 50 ms), not a cycle fraction that
+            # grew to 200 ms between T3 and T5 at 0.5 Hz
+            cycles = (phase + 2 * np.pi * offset_cycles * 0.5 * f) / (2 * np.pi)
+            k = np.floor(cycles + 0.5)
+            wave = _pd_cycle((cycles - k) * period, period, k, salt)
+            wave = ((wave - np.interp(f, _PD_FREQS, _PD_MEANS))
+                    / np.interp(f, _PD_FREQS, _PD_PTPS) * _PERIODIC_PTP)
         elif morph == "periodic":
             x = np.mod(p / (2 * np.pi), 1.0)
             wave = _periodic_template(x)
@@ -2643,6 +2989,19 @@ class Synthesizer:
             if morph == "ictal":
                 wave += 0.22 * np.sin(6.0 * p + psi[0]) * (0.6 + 0.4 * np.sin(0.7 * p))
                 wave /= 1.012
+            elif plus_sharp > 0 and f_inst is not None:
+                # 0.5.0 "+S" (feature review C30: the modifier was never read): a surface-negative sharp transient
+                # (rise 18 / fall 30 ms, FWHM ~57 ms, in SECONDS) on the negative crest of the delta wave, on 50-100 %
+                # of cycles with +/-25 % amplitude, keyed by absolute cycle (grda-plus-s-clean.webp)
+                period = 1.0 / np.clip(f_inst, 0.2, 30.0)
+                c = (p + psi[0] - 1.5 * np.pi) / (2 * np.pi)
+                kc = np.floor(c + 0.5)
+                tau = (c - kc) * period
+                p_on = 0.5 + 0.5 * float(_cycle_noise(np.zeros(1), salt + 227)[0])
+                on = (_cycle_noise(kc, salt + 211) < p_on).astype(float)
+                g = 0.75 + 0.5 * _cycle_noise(kc, salt + 223)
+                sig = np.where(tau < 0.0, 0.018, 0.030)
+                wave = wave - plus_sharp * 1.4 * on * g * np.exp(-0.5 * (tau / sig) ** 2)
         if plus_fast > 0:
             wave = wave + plus_fast * np.sin(9.0 * p + psi[1]) * (0.5 + 0.5 * np.sin(p))
         return wave
@@ -2861,9 +3220,14 @@ class Synthesizer:
         nj = 6
         wax_phase = float(jr.uniform(0, 2 * np.pi))
         wander = np.zeros_like(uu)
-        for a, fq, p in zip(jr.uniform(0.10, 0.32, nj),
-                            jr.uniform(0.03, 0.30, nj),
-                            jr.uniform(0, 2 * np.pi, nj)):
+        amps_j = jr.uniform(0.10, 0.32, nj)
+        fqs_j = jr.uniform(0.03, 0.30, nj)
+        phs_j = jr.uniform(0, 2 * np.pi, nj)
+        if self.spec_version >= 3 and inst.kind == "rhythmic_pattern":
+            # 0.5.0 (feature review C27/C31): the drift is proportional to the rate - at most _RPP_DRIFT of f0 - so
+            # a 0.5-Hz LPD or a 4-Hz LRDA stays inside its ACNS band (sum a*fq was an absolute 0.2-0.6 Hz)
+            amps_j = amps_j * min(1.0, _RPP_DRIFT * f0 / float(np.sum(amps_j * fqs_j)))
+        for a, fq, p in zip(amps_j, fqs_j, phs_j):
             wander += a * np.sin(2 * np.pi * fq * (uu * dur) + p)
             f_inst = f_inst + a * fq * np.cos(2 * np.pi * fq * (uu * dur) + p)
         phase = phase + wander
@@ -2905,7 +3269,11 @@ class Synthesizer:
             if factor <= 0:
                 continue
             u = (t - inst.t0) / max(inst.duration_s, 1.0)
-            if inst.kind == "spasm":
+            if inst.kind == "spasm" and self.spec_version >= 3:
+                # 0.5.0 (infantile-spasm-i/-ii): a 0.3-0.5 s EMG burst about 0.6 s after the wave begins
+                shape = (smoothstep((t - (inst.t0 + 0.40)) / 0.10)
+                         * (1.0 - smoothstep((t - (inst.t0 + 0.80)) / 0.15)))
+            elif inst.kind == "spasm":
                 # a brief symmetric phasic contraction peaking with the slow wave
                 shape = smoothstep(u / 0.2) * (1.0 - smoothstep((u - 0.5) / 0.3))
             else:
@@ -3865,6 +4233,10 @@ class Synthesizer:
         if float(self.slow_side.max()) > 0:
             slow_extra = self._stream_signal(self.st_pdr_slow, i0, n)
             x += slow_extra * (self.slow_side[:, None] * 0.55)
+            if self.st_polydelta is not None:
+                # added outside the side's attenuation (divided back out below): the slowing is not attenuated
+                x += (self._stream_signal(self.st_polydelta, i0, n)
+                      * (POLYDELTA_W * min(1.0, float(self.slow_side.max())) / self.gain_asym)[:, None])
 
         # --- amplitude, asymmetry, envelopes ------------------------------
         x *= self.amp_rms
