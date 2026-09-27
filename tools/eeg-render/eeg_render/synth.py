@@ -646,7 +646,7 @@ class SeizureInstance:
 # spatial profile presets ---------------------------------------------------
 
 def _profile(channels: Sequence[str], weights: Dict[str, float], default: float) -> np.ndarray:
-    return np.array([weights.get(ch, default) for ch in channels], float)
+    return np.array([mt.table_value(weights, ch, default) for ch in channels], float)
 
 
 _POSTERIOR = {
@@ -1422,10 +1422,10 @@ class Synthesizer:
         kr = substream(self.seed, "kcomplex-shape")
         self._kc_a = np.exp(kr.normal(0.0, 0.25, self._kc_t.size))
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
-        self._sp_field = np.array([self._SPINDLE_FIELD_V3.get(e, 0.2) for e in self.electrodes])
+        self._sp_field = np.array([mt.table_value(self._SPINDLE_FIELD_V3, e, 0.2) for e in self.electrodes])
         self._sp_lag = -self._SPINDLE_LAG_RAD_PER_UNIT * pos[:, 1]
-        self._vx_field = np.array([self._VERTEX_FIELD.get(e, 0.05) for e in self.electrodes])
-        self._kc_field = np.array([self._KCOMPLEX_FIELD.get(e, 0.05) for e in self.electrodes])
+        self._vx_field = np.array([mt.table_value(self._VERTEX_FIELD, e, 0.05) for e in self.electrodes])
+        self._kc_field = np.array([mt.table_value(self._KCOMPLEX_FIELD, e, 0.05) for e in self.electrodes])
 
     def stage_at(self, t: np.ndarray) -> np.ndarray:
         """Sleep stage label per sample (spec_version 3, non-neonatal); '' otherwise."""
@@ -1742,11 +1742,11 @@ class Synthesizer:
         if self.spec_version >= 3:
             # F3-C3/Fp1-F3 varies four-fold between patients: one per-record scale on the frontal row
             scale = float(substream(self.seed, "blink-field").uniform(0.6, 1.4))
-            return np.array([self._BLINK_FIELD_V3.get(e, 0.02) * (scale if e in ("F3", "F4", "Fz") else 1.0)
+            return np.array([mt.table_value(self._BLINK_FIELD_V3, e, 0.02) * (scale if e in ("F3", "F4", "Fz") else 1.0)
                              for e in self.electrodes])
         table = self._BLINK_FIELD_V2 if self.spec_version >= 2 else _BLINK_FIELD
         default = 0.02 if self.spec_version >= 2 else 0.04
-        return np.array([table.get(e, default) for e in self.electrodes])
+        return np.array([mt.table_value(table, e, default) for e in self.electrodes])
 
     def _blink_profile(self, t: np.ndarray, times: np.ndarray, idx: Optional[np.ndarray] = None) -> np.ndarray:
         """Unit-peak blink deflections at ``times`` (positive = cornea-positive at Fp).
@@ -2616,14 +2616,14 @@ class Synthesizer:
         fast_on = (0.5 * inst.wave_fast_uv * jitter
                    * np.sin(2 * np.pi * f_wave * d + rng.uniform(0, 2 * np.pi))
                    * np.exp(-0.5 * ((d - 0.5 * dur) / (0.28 * dur)) ** 2))
-        field = np.array([self._SPASM_FIELD.get(e, 0.0) for e in self.electrodes])
+        field = np.array([mt.table_value(self._SPASM_FIELD, e, 0.0) for e in self.electrodes])
         rows = np.outer(field, slow + fast_on)
         if inst.fast_uv > 0 and inst.decrement_s > 0:
             start = inst.t0 + 0.55 * dur
             w = smoothstep((t - start) / 0.3) * (1.0 - smoothstep((t - (start + inst.decrement_s)) / 0.5))
             f_hz = rng.uniform(16.0, 22.0)
             fast = 0.5 * inst.fast_uv * w * np.sin(2 * np.pi * f_hz * d + rng.uniform(0, 2 * np.pi))
-            gen = np.array([0.7 + 0.3 * self._SPASM_FIELD.get(e, 0.0) for e in self.electrodes])
+            gen = np.array([0.7 + 0.3 * mt.table_value(self._SPASM_FIELD, e, 0.0) for e in self.electrodes])
             rows += np.outer(gen, fast)
         return rows
 
@@ -2648,7 +2648,7 @@ class Synthesizer:
         r3 = substream(self.seed, "spasm-v3", inst.index, inst.ordinal)
         dur = max(inst.duration_s, 0.3)
         jitter = float(np.clip(_lognorm(rng, 1, 0.2)[0], 0.75, 1.3))
-        field = np.array([self._SPASM_FIELD_V3.get(e, 0.0) for e in self.electrodes])
+        field = np.array([mt.table_value(self._SPASM_FIELD_V3, e, 0.0) for e in self.electrodes])
         pairs = [(self._idx[a], self._idx[b]) for a, b in mt.montage_pairs("longitudinal_bipolar", self.scalp)
                  if b is not None and a in self._idx and b in self._idx]
         max_diff = max((abs(field[a] - field[b]) for a, b in pairs), default=1.0) or 1.0
@@ -2814,6 +2814,15 @@ class Synthesizer:
             "F3": 1.0, "F4": 1.0, "Fz": 0.95, "Fp1": 0.55, "Fp2": 0.55, "C3": 0.45, "C4": 0.45, "Cz": 0.45,
             "P3": 0.40, "P4": 0.40, "Pz": 0.35, "F7": 0.35, "F8": 0.35, "T3": 0.30, "T4": 0.30,
             "T5": 0.20, "T6": 0.20, "O1": 0.10, "O2": 0.10},
+        # 0.5.0 phase D (montage family): SeLECTS centrotemporal field.  Negative maximum spread over C and T
+        # (learningeeg BECTS-centrotemporal-spikes-4-bipolar: reversal at C4 in F4-C4/C4-P4 AND at T4 in F8-T4/T4-T6,
+        # also in T2-T4), with the horizontal-dipole frontal positivity (negative weights at Fp/F: surface-positive).
+        "left_centrotemporal": {
+            "C3": 1.0, "T3": 0.85, "P3": 0.35, "T5": 0.35, "F3": 0.20, "F7": 0.25, "Cz": 0.30, "T1": 0.55,
+            "Fp1": -0.20, "Fz": -0.10, "A1": 0.35},
+        "right_centrotemporal": {
+            "C4": 1.0, "T4": 0.85, "P4": 0.35, "T6": 0.35, "F4": 0.20, "F8": 0.25, "Cz": 0.30, "T2": 0.55,
+            "Fp2": -0.20, "Fz": -0.10, "A2": 0.35},
     }
     #: ACNS 2021 "abundant" is >= 1 per 10 s: from that rate up no inter-discharge gap may exceed 10 s.
     _SED_ABUNDANT_PER_H = 360.0
@@ -2825,7 +2834,7 @@ class Synthesizer:
         if focus in self._idx:
             return self._gen_weights(focus, self._SED_FALLOFF)
         tab = self._SED_FIELDS[focus]
-        return np.array([tab.get(e, 0.0) for e in self.electrodes])
+        return np.array([mt.table_value(tab, e, 0.0) for e in self.electrodes])
 
     #: v3 sporadic schedule block (s): counts, gaps and per-discharge draws are keyed by block, so the schedule does
     #: not depend on the synthesis horizon (a page renders with t0 + window + 60 s, the key with the whole record)
@@ -2878,12 +2887,15 @@ class Synthesizer:
         self._sed = None
         self._sed_norm = {}
         self._sed_poly: List = []
+        # 0.5.0 phase D: per-discharge focus for multi-focus events (None = the event's single ``focus``)
+        self._sed_focus: List = []
         evs = [(i, e) for i, e in enumerate(self.spec["events"]) if e["type"] == "sporadic_discharges"]
         if not evs:
             return
         v3 = self.spec_version >= 3
         rows = []
         polys: List = []
+        foci_l: List = []
         for i, e in evs:
             rate_h = float(e.get("rate_per_h", 0.0) or 0.0)
             amp = float(e.get("amplitude_uv", 0.0) or 0.0)
@@ -2894,7 +2906,15 @@ class Synthesizer:
             b = float(e["end_min"]) * 60.0 if e.get("end_min") is not None else self.duration_s + 60.0
             if v3:
                 ns = int(e.get("n_spikes") or 5)
-                for brng, times in self._sed_schedule_v3(i, rate_h, a, b):
+                # 0.5.0 phase D (montage family): state-dependent rate.  Discharges are scheduled at the highest
+                # stage rate and thinned by rate(stage at t) / max with a separate substream, so a record without
+                # the state keys draws exactly what it did before, and the per-discharge draws below do not depend
+                # on which discharges survive.  Gating needs the v3 hypnogram (not neonates).
+                gated = self._sed_gated(e)
+                table = sv3.stage_rate_table(rate_h, e.get("sleep_activation"), e.get("state_rates")) if gated else {}
+                r_max = max([rate_h] + list(table.values())) if gated else rate_h
+                foci = self._sed_foci(e)
+                for k_blk, (brng, times) in enumerate(self._sed_schedule_v3(i, r_max, a, b)):
                     m = times.size
                     if m == 0:
                         continue
@@ -2905,8 +2925,22 @@ class Synthesizer:
                     pp = ([self._polyspike_params(brng, ns) for _ in range(m)] if morph == "polyspike"
                           else [None] * m)
                     keep = (times >= a) & (times < b)
+                    if gated:
+                        u = substream(self.seed, "sporadic-state", i, k_blk).uniform(size=m)
+                        keep &= u < sv3.rate_at(times, self._hypno, table, rate_h) / max(r_max, 1e-9)
+                    if foci is None:
+                        fsel = [None] * m
+                    elif e.get("synchrony") == "bisynchronous":
+                        fsel = [tuple(foci)] * m
+                    else:
+                        names = [f for f, _ in foci]
+                        pr = np.asarray([w for _, w in foci], float)
+                        pick = substream(self.seed, "sporadic-foci", i, k_blk).choice(len(names), size=m,
+                                                                                      p=pr / pr.sum())
+                        fsel = [names[j] for j in pick]
                     rows.append(np.column_stack([times, np.full(m, i, float), width, amps])[keep])
                     polys.extend(p for p, kk in zip(pp, keep) if kk)
+                    foci_l.extend(f for f, kk in zip(fsel, keep) if kk)
                 if morph == "polyspike":
                     # amplitude_uv is the peak-to-peak of one spike (review B5-04), not of the whole complex
                     self._sed_norm[i] = _PS_UNIT_PTP
@@ -2923,6 +2957,7 @@ class Synthesizer:
                 amps = amp * _lognorm(rng, m, 0.25)
                 rows.append(np.column_stack([times, np.full(m, i, float), width, amps]))
                 polys.extend([None] * m)
+                foci_l.extend([None] * m)
             grid = np.linspace(-0.3, 1.0, 2600)
             k = self._sed_kernel(grid, morph, 1.0, bool(e.get("aftergoing_slow", True)))
             self._sed_norm[i] = float(np.ptp(k))
@@ -2931,6 +2966,40 @@ class Synthesizer:
             order = np.argsort(allev[:, 0], kind="stable") if v3 else np.argsort(allev[:, 0])
             self._sed = allev[order]
             self._sed_poly = [polys[j] for j in order]
+            self._sed_focus = [foci_l[j] for j in order]
+
+    def _sed_gated(self, e: Dict) -> bool:
+        """0.5.0 phase D: does this sporadic event's rate follow the sleep stage (v3 hypnogram + a state key)."""
+        return (self.spec_version >= 3 and bool(self._hypno)
+                and (e.get("sleep_activation") is not None or bool(e.get("state_rates"))))
+
+    def _sed_foci(self, e: Dict) -> "List[Tuple[str, float]] | None":
+        """0.5.0 phase D: ``foci`` of a v3 sporadic event as (focus, weight) pairs, or None for one focus.
+
+        ``synchrony: independent`` (default) gives each discharge ONE focus, drawn with probability proportional
+        to ``focus_weights`` (bilateral independent / multifocal); ``bisynchronous`` fires every focus together,
+        each at its weight / the largest weight x the discharge amplitude (``focus_weights`` = the asymmetry)."""
+        foci = e.get("foci") if self.spec_version >= 3 else None
+        if not foci:
+            return None
+        wts = list(e.get("focus_weights") or [1.0] * len(foci))
+        out = [(str(f), float(w)) for f, w in zip(foci, wts) if self._sed_focus_ok(str(f)) and float(w) > 0]
+        return out or None
+
+    def stage_rate(self, t: np.ndarray, base: float, sleep_activation: "float | None" = None,
+                   state_rates: "Dict[str, float] | None" = None) -> np.ndarray:
+        """0.5.0 phase D state-gating hook: the rate a state-dependent event runs at, per time.
+
+        ``base`` is the waking rate (any unit); NREM stages multiply it by ``sleep_activation`` per
+        ``state_v3.NREM_ACTIVATION`` and ``state_rates`` overrides named stages.  Crossfaded across stage
+        boundaries (20 s).  Without a v3 hypnogram (spec_version < 3 or neonate) it is ``base`` everywhere."""
+        table = sv3.stage_rate_table(base, sleep_activation, state_rates)
+        return sv3.rate_at(t, self._hypno, table, base)
+
+    def stage_intervals(self, stages: Sequence[str] = sv3.NREM_STAGES) -> List[Tuple[float, float]]:
+        """0.5.0 phase D state-gating hook: (start, end) runs of ``stages`` in the record's hypnogram (merged).
+        Empty without a v3 hypnogram.  For continuous NREM patterns (ESES / DEE-SWAS) to live in."""
+        return sv3.stage_intervals(self._hypno, stages)
 
     def sporadic_events(self) -> List[Dict]:
         """Realized discharges (for the answer key): dicts with t0, event index, width, amplitude."""
@@ -2938,11 +3007,22 @@ class Synthesizer:
             return []
         out = []
         poly = getattr(self, "_sed_poly", None) or [None] * len(self._sed)
-        for (t0, i, w, amp), pp in zip(self._sed, poly):
+        fsel = getattr(self, "_sed_focus", None) or [None] * len(self._sed)
+        for (t0, i, w, amp), pp, fc in zip(self._sed, poly, fsel):
             e = self.spec["events"][int(i)]
             row = {"t0": float(t0), "index": int(i), "width": float(w), "amplitude_uv": float(amp),
                    "focus": str(e["focus"]), "morphology": str(e.get("morphology") or "spike"),
                    "aftergoing_slow": bool(e.get("aftergoing_slow", True))}
+            # 0.5.0 phase D: the focus that actually fired, and the sleep stage it fired in (state-gated events)
+            if isinstance(fc, tuple):
+                row["focus"] = "+".join(f for f, _ in fc)
+                row["foci"] = [f for f, _ in fc]
+                row["synchrony"] = "bisynchronous"
+            elif fc is not None:
+                row["focus"] = fc
+                row["synchrony"] = "independent"
+            if self._sed_gated(e):
+                row["stage"] = str(self.stage_at(np.array([float(t0)]))[0])
             if pp is not None:
                 # 0.5.0: the key spans every spike and the after-going wave
                 row["n_spikes"] = int(len(pp[0]))
@@ -2957,6 +3037,7 @@ class Synthesizer:
         if ev is None or t.size == 0:
             return rows
         poly = getattr(self, "_sed_poly", None) or [None] * len(ev)
+        fsel = getattr(self, "_sed_focus", None) or [None] * len(ev)
         live = (ev[:, 0] > t[0] - 1.2) & (ev[:, 0] < t[-1] + 0.4)
         for j in np.flatnonzero(live):
             t0, i, width, amp = ev[j]
@@ -2975,7 +3056,11 @@ class Synthesizer:
             k *= amp / max(self._sed_norm.get(int(i), 1.0), 1e-6)
             # a wider field than the pinned LPD one: first neighbours ~1/3, C3-like ~1/2 (Craig, P5: "no field to
             # the other electrodes"); the phase reversal at the focus survives on a bipolar chain
-            w = self._sed_field(str(e["focus"]))
+            fc = fsel[j]
+            if isinstance(fc, tuple):          # 0.5.0 phase D bisynchronous: every focus at its weight
+                w = sum(wt * self._sed_field(f) for f, wt in fc) / max(wt for _, wt in fc)
+            else:
+                w = self._sed_field(str(e["focus"]) if fc is None else fc)
             rows += np.outer(w, k)
         return rows
 
@@ -3278,7 +3363,7 @@ class Synthesizer:
                     continue
                 part += np.outer(fields[bu["side"]], vv3.burst_wave(kind, bu, t))
             if kind == "lambda" and gaze.any():
-                lat = np.array([{"F7": 1.0, "F8": -1.0, "Fp1": 0.35, "Fp2": -0.35, "T3": 0.25, "T4": -0.25}.get(e, 0.0)
+                lat = np.array([mt.table_value({"F7": 1.0, "F8": -1.0, "Fp1": 0.35, "Fp2": -0.35, "T3": 0.25, "T4": -0.25}, e, 0.0)
                                 for e in self.electrodes])
                 part += np.outer(lat, 30.0 * gaze)
             for ba, bb in run["blocks"]:
@@ -3320,7 +3405,7 @@ class Synthesizer:
             else:
                 wave = np.sin(phase) * edge * amp
             field_map = self._AUTHORED_FIELDS[kind]
-            field = np.array([field_map.get(e, 0.0) for e in self.electrodes])
+            field = np.array([mt.table_value(field_map, e, 0.0) for e in self.electrodes])
             if run["side"] in ("left", "right"):
                 want = -1 if run["side"] == "left" else 1
                 field *= np.array([1.0 if np.sign(mt.POSITIONS.get(e, (0.0, 0.0))[0]) == want else 0.12
@@ -3536,7 +3621,12 @@ class Synthesizer:
         tests/test_display_calibration.py (calibrate_display.py).
         """
         # background voltage is read away from the frontopolar derivations, where blinks live
-        pairs = [p for p in mt.montage_pairs(self.spec.get("montage", "longitudinal_bipolar"), self.electrodes)
+        cal_montage = self.spec.get("montage", "longitudinal_bipolar")
+        if cal_montage in mt.VIEWER_MONTAGES:
+            # 0.5.0 viewer montages re-display one recording, as the viewer does: calibrate on the double banana so
+            # switching montage never rescales the record
+            cal_montage = "longitudinal_bipolar"
+        pairs = [p for p in mt.montage_pairs(cal_montage, self.electrodes)
                  if p[1] and not any(str(e).upper().startswith("FP") for e in p)]
         if not pairs:
             return
@@ -4227,6 +4317,10 @@ class Synthesizer:
                 out[i] = self._GAZE_FIELD_L[e]
             elif e in right and right[e] in self._GAZE_FIELD_L:
                 out[i] = -self._GAZE_FIELD_L[right[e]]
+            elif e in mt.SUBTEMPORAL_PROXY:
+                # 0.5.0 T1/T2: the mean of the two scalp neighbours (T1 from F7/T3; T2 the negated mirror)
+                a, b = mt.SUBTEMPORAL_PROXY[e]
+                out[i] = 0.5 * (out[self._idx[a]] + out[self._idx[b]])
         return out
 
     def _gaze_schedule(self, k: int, ev: Dict, kind: str) -> List[Tuple[float, float, float, float]]:
@@ -4363,7 +4457,7 @@ class Synthesizer:
                 m = (d >= 0) & (d < dur)
                 if m.any():
                     sig[m] += amp * np.sin(np.pi * d[m] / dur) ** 2 * np.cos(2 * np.pi * f * (d[m] - dur / 2))
-            field = np.array([self._GLOSSO_FIELD.get(e, 0.1) for e in self.electrodes])
+            field = np.array([mt.table_value(self._GLOSSO_FIELD, e, 0.1) for e in self.electrodes])
             return field[:, None] * (sig * self.GLOSSO_UV * gain)[None, :]
 
         if kind == "movement":
@@ -4628,7 +4722,7 @@ class Synthesizer:
             wmap = {"Fp1": 1.0, "Fp2": 1.0, "F7": 0.45, "F8": 0.45,
                     "F3": 0.5, "F4": 0.5, "Fz": 0.45, "T3": 0.15, "T4": 0.15}
             for i, e in enumerate(self.electrodes):
-                rows[i] = prof * wmap.get(e, 0.04)
+                rows[i] = prof * mt.table_value(wmap, e, 0.04)
             return rows
 
         return None
@@ -5076,7 +5170,10 @@ class Synthesizer:
         avg = x[[self._idx[c] for c in self.scalp], :].mean(axis=0)
         for a, b in pairs:
             ia = self._idx[a]
-            if b is not None:
+            if isinstance(b, tuple):
+                # 0.5.0 viewer montages: mean of several electrodes (linked ears, Laplacian, neonatal average)
+                rows.append(x[ia] - x[[self._idx[c] for c in b]].mean(axis=0))
+            elif b is not None:
                 rows.append(x[ia] - x[self._idx[b]])
             elif montage == "average":
                 rows.append(x[ia] - avg)

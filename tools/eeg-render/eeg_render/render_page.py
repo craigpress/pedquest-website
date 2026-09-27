@@ -222,7 +222,13 @@ def render_eeg_page(
         px_per_mm = plot_w_px / (win * PAPER_MM_PER_S)
         uv_per_px = sens / px_per_mm
         n_rows = len(labels)
-        breaks = chain_breaks(pairs)
+        # 0.5.0 viewer montages carry their own chain grouping (a ring or a referential row has no electrode
+        # continuity to read breaks from); the ECG row, when shown, starts its own group as before
+        breaks = mt.montage_breaks(spec["montage"], synth.scalp)
+        if breaks is None:
+            breaks = chain_breaks(pairs)
+        elif st.get("show_ecg_channel"):
+            breaks = breaks + [n_rows - 1]
         n_slots = n_rows + CHAIN_GAP_ROWS * len(breaks)
         row_px = plot_h_px / (n_slots + 1.7)
         row_uv = row_px * uv_per_px
@@ -317,7 +323,7 @@ def _page_header(fig, spec: Dict, st: Dict, note: str, rx, ry, rw, rh, sens) -> 
     fig.text(rx + LEFT * rw, y, title, fontsize=11.5, color=PAGE_INK,
              va="center", ha="left", weight="bold")
     bits = [
-        f"{spec['montage'].replace('_', ' ')}",
+        mt.montage_display_name(spec["montage"]),
         f"{sens:g} uV/mm",
         f"{PAPER_MM_PER_S:g} mm/s",
         f"LFF {f['lf_hz'] or '-'} Hz",

@@ -181,9 +181,10 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             a1 = sd["end_s"]
         if a1 < 0.0 or a0 > duration_s:
             continue
+        extra = {k: sd[k] for k in ("stage", "synchrony", "foci") if k in sd}   # 0.5.0 phase D (state / foci)
         rows.append(_row("sporadic_discharge", a0, a1, fs, duration_s,
                          focus=sd["focus"], morphology=sd["morphology"], aftergoing_slow=sd["aftergoing_slow"],
-                         amplitude_uv=round(sd["amplitude_uv"], 1), spec_event_index=sd["index"]))
+                         amplitude_uv=round(sd["amplitude_uv"], 1), spec_event_index=sd["index"], **extra))
     # P7 batch 5: pediatric normal variants, each run keyed as a normal (non-epileptiform) finding
     for vr in (synth.variant_runs() if hasattr(synth, "variant_runs") else []):
         if vr["t1"] < 0.0 or vr["t0"] > duration_s:
@@ -340,8 +341,13 @@ def acns_prevalence(count: int, duration_s: float) -> str:
     return "rare"
 
 
-def sporadic_summary(rows: List[Dict], duration_s: float) -> List[Dict]:
-    """Per sporadic_discharges event: realized count, rates and the ACNS prevalence category."""
+def sporadic_summary(rows: List[Dict], duration_s: float,
+                     stage_seconds: Optional[Dict[str, float]] = None) -> List[Dict]:
+    """Per sporadic_discharges event: realized count, rates and the ACNS prevalence category.
+
+    0.5.0 phase D: a multi-focus event also reports its count per focus, and a state-gated event (rows carrying
+    ``stage``) its count and rate per hour in each sleep stage (``stage_seconds``: seconds of the record per stage).
+    """
     out: Dict[int, Dict] = {}
     for r in rows:
         if r["kind"] != "sporadic_discharge":
@@ -349,17 +355,37 @@ def sporadic_summary(rows: List[Dict], duration_s: float) -> List[Dict]:
         i = int(r["spec_event_index"])
         s = out.setdefault(i, {"spec_event_index": i, "focus": r["focus"], "morphology": r["morphology"], "count": 0})
         s["count"] += 1
+        if "synchrony" in r:
+            s["synchrony"] = r["synchrony"]
+            fc = s.setdefault("count_by_focus", {})
+            fc[r["focus"]] = fc.get(r["focus"], 0) + 1
+        if "stage" in r:
+            sc = s.setdefault("count_by_stage", {})
+            sc[r["stage"]] = sc.get(r["stage"], 0) + 1
     for s in out.values():
         s["per_hour"] = round(s["count"] / max(duration_s / 3600.0, 1e-9), 2)
         s["per_minute"] = round(s["count"] / max(duration_s / 60.0, 1e-9), 3)
         s["acns_prevalence"] = acns_prevalence(s["count"], duration_s)
+        if "count_by_stage" in s and stage_seconds:
+            s["per_hour_by_stage"] = {st: round(s["count_by_stage"].get(st, 0) / (sec / 3600.0), 2)
+                                      for st, sec in stage_seconds.items() if sec > 0}
     return [out[k] for k in sorted(out)]
+
+
+def _stage_seconds(synth, duration_s: float) -> Dict[str, float]:
+    """Seconds of the record in each hypnogram stage (0.5.0; empty without a v3 hypnogram)."""
+    out: Dict[str, float] = {}
+    for a, b, st in (getattr(synth, "_hypno", None) or []):
+        a, b = max(float(a), 0.0), min(float(b), float(duration_s))
+        if b > a:
+            out[st] = out.get(st, 0.0) + (b - a)
+    return out
 
 
 def _summary(synth, duration_s: float) -> Dict:
     rows = realized_events(synth, duration_s)
     out = {"seizure_burden": seizure_burden(rows, duration_s, synth.age)}
-    sp = sporadic_summary(rows, duration_s)
+    sp = sporadic_summary(rows, duration_s, _stage_seconds(synth, duration_s))
     if sp:
         out["sporadic_discharges"] = sp
     return out

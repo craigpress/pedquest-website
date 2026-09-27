@@ -197,3 +197,48 @@ def packets(t: np.ndarray, times: np.ndarray, dur: np.ndarray, hz: np.ndarray, a
         c[m] += e * np.cos(phase)
         s[m] += e * np.sin(phase)
     return env, c, s
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# 0.5.0 phase D (montage family): state-dependent event rates.  A shared hook for anything whose rate depends on the
+# sleep stage - sporadic interictal discharges now; the generalized family's ESES / DEE-SWAS gating can use the same
+# three functions.  Stage labels are the hypnogram's: W, N1, N2, N3, R.
+# ---------------------------------------------------------------------------------------------------------------
+
+#: how much of an authored NREM activation factor each stage gets (0 = wake rate, 1 = full factor).  Interictal
+#: discharges are activated by drowsiness and all NREM stages and return towards the waking rate in REM (SeLECTS:
+#: ILAE 2022 syndrome definition, "activated in drowsiness and sleep"; ESES/DEE-SWAS: NREM-activated, REM-fragmented).
+#: The per-stage split is AUTHORED (N1 partial, N2 = N3 full, REM near wake) pending a cited stage-by-stage norm.
+NREM_ACTIVATION = {"W": 0.0, "N1": 0.6, "N2": 1.0, "N3": 1.0, "R": 0.1}
+NREM_STAGES = ("N1", "N2", "N3")
+
+
+def stage_rate_table(base: float, sleep_activation: "float | None" = None,
+                     state_rates: "Dict[str, float] | None" = None) -> Dict[str, float]:
+    """Rate per stage: ``base x (1 + (activation - 1) x NREM_ACTIVATION[stage])``, then any explicit
+    ``state_rates`` entry overrides its stage.  Units are whatever ``base`` is (per hour for discharges)."""
+    k = 1.0 if sleep_activation is None else float(sleep_activation)
+    out = {st: float(base) * (1.0 + (k - 1.0) * w) for st, w in NREM_ACTIVATION.items()}
+    for st, r in (state_rates or {}).items():
+        out[str(st)] = float(r)
+    return out
+
+
+def rate_at(t: np.ndarray, hypno: Sequence[Interval], table: Dict[str, float], default: float) -> np.ndarray:
+    """Per-time rate from the hypnogram, raised-cosine crossfaded across stage boundaries (``weight``)."""
+    if not hypno:
+        return np.full(np.shape(t), float(default))
+    return weight(np.asarray(t, float), hypno, table, default=float(default))
+
+
+def stage_intervals(hypno: Sequence[Interval], stages: Sequence[str] = NREM_STAGES) -> List[Tuple[float, float]]:
+    """(start, end) runs of the given stages, adjacent runs merged: the NREM windows a continuous pattern lives in."""
+    out: List[Tuple[float, float]] = []
+    for a, b, st in hypno:
+        if st not in stages or b <= a:
+            continue
+        if out and abs(out[-1][1] - a) < 1e-9:
+            out[-1] = (out[-1][0], b)
+        else:
+            out.append((a, b))
+    return out

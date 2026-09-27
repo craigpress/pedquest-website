@@ -38,7 +38,29 @@ POSITIONS: Dict[str, Tuple[float, float]] = {
     "O2": (0.31, -0.95),
     "A1": (-1.15, 0.10),
     "A2": (1.15, 0.10),
+    # 0.5.0 (spec_version 3, montage family): Silverman subtemporal electrodes, one third of the way from the
+    # external auditory meatus to the lateral canthus and 1 cm up, i.e. below the F7-T3 line.  In this flattened
+    # projection that is just outside the rim between F7 and T3, towards the ear.  Present only in the
+    # ``standard_19_t1t2`` channel set, so the 19-electrode arrays (and every v1/v2 page) are unchanged.
+    "T1": (-1.06, 0.33),
+    "T2": (1.06, 0.33),
 }
+
+#: Subtemporal electrodes take the mean of their two scalp neighbours from any per-electrode table that does not
+#: list them (background and artifact fields), so a T1 row is not a hole in the chain.  Focal generators use the
+#: real position above and are unaffected.
+SUBTEMPORAL_PROXY: Dict[str, Tuple[str, str]] = {"T1": ("F7", "T3"), "T2": ("F8", "T4")}
+
+
+def table_value(table: Dict[str, float], electrode: str, default: float) -> float:
+    """``table[electrode]``, else the subtemporal proxy mean, else ``default`` (0.5.0)."""
+    v = table.get(electrode)
+    if v is not None:
+        return v
+    px = SUBTEMPORAL_PROXY.get(electrode)
+    if px is not None and (px[0] in table or px[1] in table):
+        return 0.5 * (table.get(px[0], default) + table.get(px[1], default))
+    return default
 
 STANDARD_19: List[str] = [
     "Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8",
@@ -52,10 +74,15 @@ NEONATAL_9: List[str] = ["Fp1", "Fp2", "T3", "C3", "Cz", "C4", "T4", "O1", "O2"]
 
 REFERENCE_ELECTRODES: List[str] = ["A1", "A2"]
 
+#: 0.5.0 (spec_version 3): the 10-20 array plus the T1/T2 subtemporal pair, for the "longitudinal with T1/T2"
+#: montage (learningeeg montages/normal-bipolar-t1t2).  Appended after O2 so the 19 keep their order.
+STANDARD_19_T1T2: List[str] = STANDARD_19 + ["T1", "T2"]
+
 CHANNEL_SETS: Dict[str, List[str]] = {
     "standard_19": STANDARD_19,
     "neonatal_9": NEONATAL_9,
     "neonatal_reduced": NEONATAL_9,
+    "standard_19_t1t2": STANDARD_19_T1T2,
 }
 
 
@@ -159,12 +186,178 @@ def trend_chains(channels: Sequence[str]) -> Dict[str, List[Tuple[str, str]]]:
     }
 
 
+# --------------------------------------------------------------------------
+# 0.5.0 (spec_version 3, montage family): the browser viewer's montage set
+# --------------------------------------------------------------------------
+# Mirrors ``src/lib/eeg/montage.ts`` (the site's EDF viewer) id for id, chain for chain and label for label, so a
+# page rendered here and the same recording opened in the viewer agree.  Naming follows ACNS Guideline 3
+# (LB-18.3, TB-18.3, R-18.3); circumferential = hatband = the outer temporal ring; grapefruit = outer ring + inner
+# parasagittal ring + midline; Laplacian is the Hjorth nearest-neighbour form with equal weights.
+#
+# A derivation is ``(electrode, reference)`` where the reference is an electrode name or a TUPLE of electrode
+# names whose mean is subtracted (linked ears, Laplacian, neonatal average).  ``average`` keeps its v1/v2
+# ``(electrode, None)`` form.  The legacy names (longitudinal_bipolar, referential, average, neonatal_reduced)
+# are untouched; every name below is opt-in and only accepted at spec_version 3.
+
+_V_DOUBLE_BANANA = [["Fp1", "F7", "T3", "T5", "O1"], ["Fp2", "F8", "T4", "T6", "O2"],
+                    ["Fp1", "F3", "C3", "P3", "O1"], ["Fp2", "F4", "C4", "P4", "O2"], ["Fz", "Cz", "Pz"]]
+_V_TRANSVERSE = [["F7", "Fp1", "Fp2", "F8"], ["F7", "F3", "Fz", "F4", "F8"], ["T3", "C3", "Cz", "C4", "T4"],
+                 ["T5", "P3", "Pz", "P4", "T6"], ["T5", "O1", "O2", "T6"]]
+_V_OUTER_RING = ["Fp1", "F7", "T3", "T5", "O1", "O2", "T6", "T4", "F8", "Fp2", "Fp1"]
+_V_INNER_RING = ["Fp1", "F3", "C3", "P3", "O1", "O2", "P4", "C4", "F4", "Fp2", "Fp1"]
+_V_T1T2 = [["Fp1", "F7", "T1", "T3", "T5", "O1"], ["Fp2", "F8", "T2", "T4", "T6", "O2"],
+           ["Fp1", "F3", "C3", "P3", "O1"], ["Fp2", "F4", "C4", "P4", "O2"], ["Fz", "Cz", "Pz"]]
+_V_NEONATAL = [["Fp1", "C3", "O1"], ["Fp2", "C4", "O2"], ["Fp1", "T3", "O1"], ["Fp2", "T4", "O2"],
+               ["T3", "C3", "Cz", "C4", "T4"]]
+_V_REFERENTIAL_ORDER = [["Fp1", "F7", "T3", "T5", "O1"], ["Fp2", "F8", "T4", "T6", "O2"], ["F3", "C3", "P3"],
+                        ["F4", "C4", "P4"], ["Fz", "Cz", "Pz"]]
+_V_NEONATAL_ELECTRODES = [["Fp1", "T3", "C3", "O1"], ["Fp2", "T4", "C4", "O2"], ["Cz"]]
+#: Hjorth nearest neighbours on the 10-20 grid (edge electrodes have fewer, so their estimate is one-sided)
+LAPLACIAN_NEIGHBOURS: Dict[str, List[str]] = {
+    "Fp1": ["Fp2", "F3", "F7"], "Fp2": ["Fp1", "F4", "F8"],
+    "F7": ["Fp1", "F3", "T3"], "F8": ["Fp2", "F4", "T4"],
+    "F3": ["Fp1", "F7", "Fz", "C3"], "F4": ["Fp2", "F8", "Fz", "C4"],
+    "Fz": ["F3", "F4", "Cz"],
+    "T3": ["F7", "C3", "T5"], "T4": ["F8", "C4", "T6"],
+    "C3": ["F3", "T3", "P3", "Cz"], "C4": ["F4", "T4", "P4", "Cz"],
+    "Cz": ["Fz", "C3", "C4", "Pz"],
+    "T5": ["T3", "P3", "O1"], "T6": ["T4", "P4", "O2"],
+    "P3": ["C3", "T5", "Pz", "O1"], "P4": ["C4", "T6", "Pz", "O2"],
+    "Pz": ["P3", "P4", "Cz"],
+    "O1": ["T5", "P3", "O2"], "O2": ["T6", "P4", "O1"],
+}
+
+#: id -> (viewer label, electrodes required).  Order and labels as in VIEWER_MONTAGES (montage.ts).
+VIEWER_MONTAGES: Dict[str, Tuple[str, Tuple[str, ...]]] = {
+    "transverse_bipolar": ("Transverse bipolar (TB-18.3)", ()),
+    "circumferential": ("Circumferential (hatband)", ()),
+    "grapefruit": ("Grapefruit (concentric rings)", ()),
+    "t1t2_bipolar": ("Longitudinal with T1/T2", ("T1", "T2")),
+    "ipsilateral_ear": ("Ipsilateral ear (R-18.3)", ("A1", "A2")),
+    "contralateral_ear": ("Contralateral ear", ("A1", "A2")),
+    "cz_reference": ("Cz reference", ("Cz",)),
+    "neonatal_average": ("Neonatal, average reference", ()),
+    "laplacian": ("Laplacian (source)", ()),
+}
+#: montage names only spec_version 3 accepts
+V3_MONTAGES: List[str] = list(VIEWER_MONTAGES)
+#: aliases the viewer's synonyms resolve to (normalised in spec.normalize)
+MONTAGE_ALIASES: Dict[str, str] = {"hatband": "circumferential", "transverse": "transverse_bipolar",
+                                   "longitudinal_t1t2": "t1t2_bipolar", "hjorth": "laplacian"}
+
+Derivation = Tuple[str, "str | Tuple[str, ...] | None"]
+
+
+def _chains(chains: Sequence[Sequence[str]], present) -> List[List[Derivation]]:
+    out = []
+    for chain in chains:
+        rows = [(a, b) for a, b in zip(chain[:-1], chain[1:]) if a in present and b in present]
+        if rows:
+            out.append(rows)
+    return out
+
+
+def _side_num(e: str) -> "bool | None":
+    """Viewer ``isLeft``: odd trailing number = left, even = right, none = midline."""
+    digits = "".join(ch for ch in e if ch.isdigit())
+    return None if not digits else int(digits) % 2 == 1
+
+
+def _referential(order, channels: Sequence[str], ref_for) -> List[List[Derivation]]:
+    present = set(channels)
+    used, out = set(), []
+    for chain in order:
+        rows = []
+        for e in chain:
+            if e not in present:
+                continue
+            used.add(e)
+            r = ref_for(e)
+            if r is not False:
+                rows.append((e, r))
+        if rows:
+            out.append(rows)
+    extra = []
+    for e in channels:
+        if e in used or e in REFERENCE_ELECTRODES:
+            continue
+        r = ref_for(e)
+        if r is not False:
+            extra.append((e, r))
+    if extra:
+        out.append(extra)
+    return out
+
+
+def viewer_montage_chains(montage: str, channels: Sequence[str]) -> List[List[Derivation]]:
+    """Derivations of a viewer montage grouped by chain (a gap is drawn between chains).
+
+    Falls back like the viewer: a montage whose electrodes are missing becomes ``average``.
+    """
+    present = set(channels) | set(REFERENCE_ELECTRODES)
+    scalp = [e for e in channels if e not in REFERENCE_ELECTRODES]
+    need = VIEWER_MONTAGES[montage][1]
+    if any(e not in present for e in need):
+        avg = tuple(scalp)
+        return _referential(_V_REFERENTIAL_ORDER, scalp, lambda e: avg)
+    if montage == "transverse_bipolar":
+        return _chains(_V_TRANSVERSE, present)
+    if montage == "circumferential":
+        return _chains([_V_OUTER_RING], present)
+    if montage == "grapefruit":
+        return _chains([_V_OUTER_RING, _V_INNER_RING, ["Fz", "Cz", "Pz"]], present)
+    if montage == "t1t2_bipolar":
+        return _chains(_V_T1T2, present)
+    if montage in ("ipsilateral_ear", "contralateral_ear"):
+        ipsi = montage == "ipsilateral_ear"
+
+        def ear(e):
+            left = _side_num(e)
+            if left is None:
+                return ("A1", "A2")                     # midline: linked ears ("-A12")
+            return "A1" if left == ipsi else "A2"
+        return _referential(_V_REFERENTIAL_ORDER, scalp, ear)
+    if montage == "cz_reference":
+        return _referential(_V_REFERENTIAL_ORDER, scalp, lambda e: False if e == "Cz" else "Cz")
+    if montage == "neonatal_average":
+        members = tuple(e for chain in _V_NEONATAL_ELECTRODES for e in chain if e in present)
+        return _referential(_V_NEONATAL_ELECTRODES, scalp, lambda e: members if e in members else False)
+    if montage == "laplacian":
+        def lap(e):
+            nb = tuple(n for n in LAPLACIAN_NEIGHBOURS.get(e, []) if n in present)
+            return nb if len(nb) >= 2 else False
+        return _referential(_V_REFERENTIAL_ORDER, scalp, lap)
+    raise ValueError(f"unknown montage {montage!r}")
+
+
+def montage_breaks(montage: str, channels: Sequence[str]) -> "List[int] | None":
+    """Row indices starting a new chain for a viewer montage; None for the legacy montages."""
+    if montage not in VIEWER_MONTAGES:
+        return None
+    out, n = [], 0
+    for rows in viewer_montage_chains(montage, channels):
+        if n:
+            out.append(n)
+        n += len(rows)
+    return out
+
+
+def montage_display_name(montage: str) -> str:
+    """Footer name: the viewer label for a viewer montage, else the legacy underscore-free id."""
+    if montage in VIEWER_MONTAGES:
+        return VIEWER_MONTAGES[montage][0]
+    return montage.replace("_", " ")
+
+
 def montage_pairs(montage: str, channels: Sequence[str]) -> List[Tuple[str, str | None]]:
     """Derivation list for an ``eeg_page`` montage.
 
     ``referential`` and ``average`` return ``(electrode, None)`` pairs; the
-    renderer subtracts the appropriate reference itself.
+    renderer subtracts the appropriate reference itself.  Viewer montages (0.5.0) return
+    ``(electrode, reference)`` with the reference an electrode or a tuple of electrodes (mean).
     """
+    if montage in VIEWER_MONTAGES:
+        return [p for rows in viewer_montage_chains(montage, channels) for p in rows]
     present = set(channels)
     if montage == "longitudinal_bipolar":
         base = LONGITUDINAL_BIPOLAR if "T5" in present else NEONATAL_BIPOLAR
@@ -179,6 +372,13 @@ def montage_pairs(montage: str, channels: Sequence[str]) -> List[Tuple[str, str 
 
 def montage_label(pair: Tuple[str, str | None], montage: str) -> str:
     a, b = pair
+    if isinstance(b, tuple):
+        # 0.5.0 viewer suffixes: linked ears "-A12", Laplacian "-Lp", neonatal average "-Av"
+        if montage == "laplacian":
+            return f"{a}-Lp"
+        if set(b) == {"A1", "A2"}:
+            return f"{a}-A12"
+        return f"{a}-Av"
     if b is not None:
         return f"{a}-{b}"
     if montage == "average":

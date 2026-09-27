@@ -66,6 +66,12 @@ RPP_PATTERNS = [
 ]
 AEEG_PATTERNS = ["CNV", "DNV", "BS", "CLV", "FT"]
 MONTAGES = ["longitudinal_bipolar", "referential", "average", "neonatal_reduced"]
+#: 0.5.0 (spec_version 3 only, montage family): the site viewer's montages (src/lib/eeg/montage.ts), same ids and
+#: labels, plus the viewer's synonyms (hatband, transverse, longitudinal_t1t2, hjorth) which spec.normalize resolves.
+#: t1t2_bipolar needs the ``standard_19_t1t2`` channel set, which normalize selects when channels is left default.
+V3_MONTAGES = ["transverse_bipolar", "circumferential", "grapefruit", "t1t2_bipolar", "ipsilateral_ear",
+               "contralateral_ear", "cz_reference", "neonatal_average", "laplacian",
+               "hatband", "transverse", "longitudinal_t1t2", "hjorth"]
 DATASETS = ["chb-mit", "helsinki-neonatal", "physionet-neonatal-eeg"]
 
 _num = {"type": "number"}
@@ -145,6 +151,21 @@ _EVENT = {
         # 0.5.0 (spec_version 3): spikes per polyspike (each discharge draws n-1..n+1, clipped to 3-8, at
         # 55-80 ms intervals).  v3 also accepts focus "generalized_frontocentral" (myoclonic / JME field).
         "n_spikes": {"type": "integer", "minimum": 3, "maximum": 8},
+        # 0.5.0 phase D (spec_version 3, montage family): state-dependent sporadic discharges.  ``rate_per_h`` is
+        # the WAKING rate; ``sleep_activation`` multiplies it in NREM (N1 x0.6 of the excess, N2/N3 full, REM x0.1,
+        # state_v3.NREM_ACTIVATION); ``state_rates`` sets a stage's rate per hour outright (W/N1/N2/N3/R).  Needs
+        # the v3 hypnogram, so it is ignored for neonates.  ``foci`` places several foci in one event:
+        # ``synchrony: independent`` (default) = each discharge fires ONE focus drawn by ``focus_weights``
+        # (bilateral independent / multifocal); ``bisynchronous`` = all foci together, weights as the asymmetry.
+        "sleep_activation": {"type": "number", "minimum": 0, "maximum": 100},
+        "state_rates": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {st: {"type": "number", "minimum": 0, "maximum": 3600} for st in ("W", "N1", "N2", "N3", "R")},
+        },
+        "foci": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 8},
+        "focus_weights": {"type": "array", "items": {"type": "number", "minimum": 0}, "minItems": 1, "maxItems": 8},
+        "synchrony": {"enum": ["independent", "bisynchronous"]},
         # P7 batch 4: the time-locked clinical correlate of an ictal run, keyed on the seizure row
         # (ACNS ECSz needs one; "none" = electrographic-only).  Non-EEG: it never changes the signal.
         "clinical_correlate": {"enum": ["none", "subtle", "focal_clonic", "focal_tonic", "generalized_tonic_clonic",
@@ -503,8 +524,9 @@ _COMMON = {
     "spec_version": {"type": "integer", "minimum": 1, "maximum": 3},
     "age_group": {"enum": AGE_GROUPS},
     "sample_rate": {"type": "integer", "minimum": 100, "maximum": 1024},
-    "channels": {"enum": list({"standard_19", "neonatal_9", "neonatal_reduced"})},
-    "montage": {"enum": MONTAGES},
+    # standard_19_t1t2 (0.5.0, spec_version 3): the 10-20 array plus the T1/T2 subtemporal pair
+    "channels": {"enum": list({"standard_19", "neonatal_9", "neonatal_reduced", "standard_19_t1t2"})},
+    "montage": {"enum": MONTAGES + V3_MONTAGES},
     "background": _BACKGROUND,
     "sedation": _SEDATION,
     # Evidence supports modeling complete blockade as removal of generated
@@ -602,7 +624,7 @@ _AEEG_SPEC = {
 # electrode-set name, so the aeeg schema accepts either shape for that key.
 _AEEG_SPEC["properties"]["channels"] = {
     "oneOf": [
-        {"enum": ["standard_19", "neonatal_9", "neonatal_reduced"]},
+        {"enum": ["standard_19", "neonatal_9", "neonatal_reduced", "standard_19_t1t2"]},
         {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 4},
     ]
 }
