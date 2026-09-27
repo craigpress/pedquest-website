@@ -8,9 +8,11 @@ import {
   adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, h2, inp, meta, mini,
 } from "@/lib/admin-ui";
 import {
-  AGE_BANDS, ARTIFACT_KINDS, BACKGROUND_TYPES, CHANNEL_SETS, DURATION_MAX_MINUTES,
-  DURATION_MIN_MINUTES, EVENT_TYPE_LABELS, MONTAGES, REGIONS, SAMPLE_RATES, SEDATION_AGENTS,
-  SPREADS, defaultAnnotation, defaultEvent, defaultGuidedScenario, randomSeed,
+  ACNS_PATTERNS, ACNS_PLUS, ACNS_PREVALENCE, AGE_BANDS, ARTIFACT_KINDS, BACKGROUND_TYPES, CHANNEL_SETS,
+  DISCHARGE_FOCI, DISCHARGE_MORPHOLOGIES, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, DURATION_SEIZURE_TYPES,
+  EVENT_TYPE_LABELS, GENERALIZED_SEIZURE_TYPES, MONTAGES, MYOCLONIC_TYPES, ONSET_PATTERNS, PROVOCATIONS, REGIONS,
+  SAMPLE_RATES, SEDATION_AGENTS, SPEC_VERSIONS, SPREADS, STIMULI, WORKER_MAX_SPEC_VERSION, defaultAnnotation,
+  defaultEvent, defaultGuidedScenario, randomSeed, requiredSpecVersion,
 } from "@/lib/lab/spec";
 import {
   LAB_ARTIFACT_LABELS, LAB_FORMATS, LAB_MMX_PRESETS, LAB_PERSYST_PANELS, LAB_REVIEW_STATUS_LABELS,
@@ -467,6 +469,17 @@ export default function AdminEegLabPage() {
                 options={SAMPLE_RATES.map((r) => ({ id: String(r), label: `${r} Hz` }))}
                 onChange={(v) => setGuided((g) => ({ ...g, sampleRate: Number(v) }))}
               />
+              <Pick
+                label="Renderer defaults" value={String(Math.max(guided.specVersion ?? 1, requiredSpecVersion(guided)))}
+                disabled={busyAny}
+                options={SPEC_VERSIONS
+                  .filter((v) => v.id >= requiredSpecVersion(guided))
+                  .map((v) => ({ id: String(v.id), label: v.label }))}
+                hint={requiredSpecVersion(guided) === 3
+                  ? `v3 is required by the choices below${WORKER_MAX_SPEC_VERSION < 3 ? "; the render worker needs eeg-render 0.5.0 first" : ""}`
+                  : "spec_version: which defaults every key you leave out gets"}
+                onChange={(v) => setGuided((g) => ({ ...g, specVersion: Number(v) as GuidedScenario["specVersion"] }))}
+              />
             </div>
 
             <h2 style={{ ...h2, marginTop: 22 }}>Background</h2>
@@ -565,6 +578,9 @@ export default function AdminEegLabPage() {
                     <div className="lab-grid3" style={{ marginTop: 12 }}>
                       <Num label="Postictal attenuation s" value={event.postictalAttenuationS} min={0} disabled={busyAny}
                         onChange={(v) => patchEvent(event.id, { postictalAttenuationS: v })} />
+                      <Pick label="Onset pattern" value={event.onsetPattern ?? ""} options={ONSET_PATTERNS} disabled={busyAny}
+                        hint="How the focal run starts; any choice sets spec_version 3"
+                        onChange={(v) => patchEvent(event.id, { onsetPattern: v })} />
                     </div>
                   </>
                 )}
@@ -663,8 +679,93 @@ export default function AdminEegLabPage() {
                   <div className="lab-grid2">
                     <Num label="At min" value={event.atMin} min={0} max={durationMin} disabled={busyAny}
                       onChange={(v) => patchEvent(event.id, { atMin: v })} />
-                    <Pick label="To" value={event.to} options={asOptions(["sleep", "wake", "arousal"])} disabled={busyAny}
+                    <Pick label="To" value={event.to} options={asOptions(["sleep", "wake", "arousal", "rem"])} disabled={busyAny}
                       onChange={(v) => patchEvent(event.id, { to: v })} />
+                  </div>
+                )}
+
+                {event.type === "rhythmic_pattern" && (
+                  <>
+                    <div className="lab-grid4">
+                      <Pick label="Pattern" value={event.pattern} options={ACNS_PATTERNS} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, {
+                          pattern: v,
+                          onsetRegion: ACNS_PATTERNS.find((p) => p.id === v)?.region ?? event.onsetRegion,
+                        })} />
+                      <Pick label="Region" value={event.onsetRegion} options={asOptions(REGIONS)} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { onsetRegion: v })} />
+                      <Num label="Onset min" value={event.onsetMin} min={0} max={durationMin} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { onsetMin: v })} />
+                      <Num label="Duration min" value={event.durationMin} min={0.5} step={0.5} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { durationMin: v })} />
+                    </div>
+                    <div className="lab-grid4" style={{ marginTop: 12 }}>
+                      <Num label="Frequency Hz" value={event.frequencyHz} min={0.2} max={30} step={0.1} disabled={busyAny}
+                        hint="ACNS criterion A: PDs averaging > 2.5 Hz for 10 s are a seizure"
+                        onChange={(v) => patchEvent(event.id, { frequencyHz: v })} />
+                      <Num label="Amplitude µV" value={event.amplitudeUv} min={1} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { amplitudeUv: v })} />
+                      <Pick label="Plus modifier" value={event.plus}
+                        options={ACNS_PLUS.map((p) => ({ id: p, label: p || "None" }))} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { plus: v })} />
+                      <Pick label="Prevalence" value={event.prevalence}
+                        options={ACNS_PREVALENCE.map((p) => ({ id: p, label: p ? labelize(p) : "Renderer default" }))} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { prevalence: v })} />
+                    </div>
+                    <label style={{ ...meta, display: "flex", gap: 8, alignItems: "center", marginTop: 12 }}>
+                      <input type="checkbox" checked={event.evolving} disabled={busyAny}
+                        onChange={(e) => patchEvent(event.id, { evolving: e.target.checked })} />
+                      Evolving (ACNS criterion B: a run lasting 10 s or more is keyed as a seizure)
+                    </label>
+                  </>
+                )}
+
+                {event.type === "generalized_seizure" && (
+                  <div className="lab-grid4">
+                    <Pick label="Seizure type" value={event.seizureType} options={GENERALIZED_SEIZURE_TYPES} disabled={busyAny}
+                      onChange={(v) => patchEvent(event.id, { seizureType: v })} />
+                    <Num label="Onset min" value={event.onsetMin} min={0} max={durationMin} disabled={busyAny}
+                      onChange={(v) => patchEvent(event.id, { onsetMin: v })} />
+                    <Pick label="Provoked by" value={event.provocation} options={asOptions(PROVOCATIONS)} disabled={busyAny}
+                      hint="Keyed only; it does not change the signal"
+                      onChange={(v) => patchEvent(event.id, { provocation: v })} />
+                    {DURATION_SEIZURE_TYPES.includes(event.seizureType) && (
+                      <Num label="Duration s" value={event.durationS} min={0.5} step={0.5} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { durationS: v })} />
+                    )}
+                    {MYOCLONIC_TYPES.includes(event.seizureType) && (
+                      <Num label="Jerks" value={event.count} min={1} max={400} disabled={busyAny}
+                        onChange={(v) => patchEvent(event.id, { count: v })} />
+                    )}
+                  </div>
+                )}
+
+                {event.type === "sporadic_discharges" && (
+                  <div className="lab-grid4">
+                    <Pick label="Focus" value={event.focus} options={DISCHARGE_FOCI.map((f) => ({ id: f, label: f }))} disabled={busyAny}
+                      onChange={(v) => patchEvent(event.id, { focus: v })} />
+                    <Num label="Per hour (awake)" value={event.ratePerH} min={0} max={3600} disabled={busyAny}
+                      hint="ACNS: abundant ≥ 360/h, frequent ≥ 60/h, occasional ≥ 1/h"
+                      onChange={(v) => patchEvent(event.id, { ratePerH: v })} />
+                    <Pick label="Morphology" value={event.morphology} options={asOptions(DISCHARGE_MORPHOLOGIES)} disabled={busyAny}
+                      onChange={(v) => patchEvent(event.id, { morphology: v })} />
+                    <Num label="Sleep activation ×" value={event.sleepActivation} min={0} max={100} step={0.5} disabled={busyAny}
+                      hint="1 = none; above 1 activates in NREM (v3)"
+                      onChange={(v) => patchEvent(event.id, { sleepActivation: v })} />
+                    <label style={{ ...meta, display: "flex", gap: 8, alignItems: "center", marginTop: 22 }}>
+                      <input type="checkbox" checked={event.aftergoingSlow} disabled={busyAny}
+                        onChange={(e) => patchEvent(event.id, { aftergoingSlow: e.target.checked })} />
+                      After-going slow wave
+                    </label>
+                  </div>
+                )}
+
+                {event.type === "stimulation" && (
+                  <div className="lab-grid2">
+                    <Num label="At min" value={event.atMin} min={0} max={durationMin} disabled={busyAny}
+                      onChange={(v) => patchEvent(event.id, { atMin: v })} />
+                    <Pick label="Stimulus" value={event.stimulus} options={asOptions(STIMULI)} disabled={busyAny}
+                      onChange={(v) => patchEvent(event.id, { stimulus: v })} />
                   </div>
                 )}
               </div>

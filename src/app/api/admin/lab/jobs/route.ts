@@ -8,8 +8,9 @@ import {
 } from "@/lib/lab/jobs";
 import {
   buildSpecFromGuided, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, durationSecondsFromSpec,
-  normalizeSpecInput, randomSeed, validateLabSpec,
+  normalizeSpecInput, randomSeed,
 } from "@/lib/lab/spec";
+import { validateLabSpecStrict } from "@/lib/lab/spec-server";
 import {
   LAB_MMX_PRESETS, LAB_PERSYST_PANELS, SYNTHETIC_STAMP,
   type GuidedScenario, type LabFormat, type LabMode,
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
   }
 
   const durationS = durationSecondsFromSpec(block, durationMin);
-  const validation = validateLabSpec(block, {
+  const validation = validateLabSpecStrict(block, {
     runPersyst, durationS, requestedDurationMin: durationMin,
   });
 

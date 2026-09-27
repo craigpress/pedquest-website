@@ -12,6 +12,15 @@
 import {
   PERSYST_BASELINE_MIN_S,
   type GuidedEvent,
+  type LabAcnsPattern,
+  type LabAcnsPlus,
+  type LabAcnsPrevalence,
+  type LabDischargeMorphology,
+  type LabGeneralizedSeizureType,
+  type LabOnsetPattern,
+  type LabProvocation,
+  type LabSpecVersion,
+  type LabStimulus,
   type GuidedScenario,
   type LabArtifactKind,
   type LabAgeBand,
@@ -34,17 +43,45 @@ export const AGE_BANDS: { id: LabAgeBand; label: string }[] = [
   { id: "adult", label: "Adult" },
 ];
 
-export const CHANNEL_SETS: { id: LabChannelSet; label: string; hint: string }[] = [
+export const CHANNEL_SETS: { id: LabChannelSet; label: string; hint: string; v3?: true }[] = [
   { id: "standard_19", label: "Standard 19 (10-20)", hint: "19 scalp electrodes" },
   { id: "neonatal_9", label: "Neonatal reduced (9)", hint: "9-electrode neonatal array" },
+  { id: "standard_19_t1t2", label: "Standard 19 + T1/T2 (v3)", hint: "10-20 plus the subtemporal pair", v3: true },
 ];
 
-export const MONTAGES: { id: LabMontage; label: string }[] = [
+/** `v3`: renderer 0.5.0 only — the renderer rejects it below spec_version 3. Ids match src/lib/eeg/montage.ts. */
+export const MONTAGES: { id: LabMontage; label: string; v3?: true }[] = [
   { id: "longitudinal_bipolar", label: "Longitudinal bipolar" },
   { id: "referential", label: "Referential" },
   { id: "average", label: "Average reference" },
   { id: "neonatal_reduced", label: "Neonatal reduced" },
+  { id: "transverse_bipolar", label: "Transverse bipolar (v3)", v3: true },
+  { id: "circumferential", label: "Circumferential / hatband (v3)", v3: true },
+  { id: "grapefruit", label: "Grapefruit (v3)", v3: true },
+  { id: "t1t2_bipolar", label: "Longitudinal with T1/T2 (v3)", v3: true },
+  { id: "ipsilateral_ear", label: "Ipsilateral ear (v3)", v3: true },
+  { id: "contralateral_ear", label: "Contralateral ear (v3)", v3: true },
+  { id: "cz_reference", label: "Cz reference (v3)", v3: true },
+  { id: "neonatal_average", label: "Neonatal average (v3)", v3: true },
+  { id: "laplacian", label: "Laplacian (v3)", v3: true },
 ];
+
+/** The viewer's montage synonyms the renderer resolves (spec.normalize); valid in pasted specs, v3 only. */
+const V3_MONTAGE_ALIASES = ["hatband", "transverse", "longitudinal_t1t2", "hjorth"];
+const V3_MONTAGE_IDS: string[] = [...MONTAGES.filter((m) => m.v3).map((m) => m.id), ...V3_MONTAGE_ALIASES];
+
+export const SPEC_VERSIONS: { id: LabSpecVersion; label: string }[] = [
+  { id: 1, label: "v1 — 0.3.x defaults (bank)" },
+  { id: 2, label: "v2 — 0.4 defaults" },
+  { id: 3, label: "v3 — 0.5.0 (ACNS, generalized, sleep staging)" },
+];
+
+/**
+ * Highest spec_version the deployed render worker's eeg-render accepts. Raise
+ * to 3 once renderer 0.5.0 is deployed to the moltbot workers; until then a v3
+ * spec is accepted here but warned, because the worker's own validate rejects it.
+ */
+export const WORKER_MAX_SPEC_VERSION: LabSpecVersion = 2;
 
 export const BACKGROUND_TYPES: { id: LabBackgroundType; label: string }[] = [
   { id: "continuous", label: "Continuous" },
@@ -54,23 +91,85 @@ export const BACKGROUND_TYPES: { id: LabBackgroundType; label: string }[] = [
   { id: "suppressed", label: "Suppressed" },
   { id: "low_voltage", label: "Low voltage" },
   { id: "trace_alternant", label: "Tracé alternant" },
+  { id: "hypsarrhythmia", label: "Hypsarrhythmia" },
 ];
 
 export const REGIONS: LabRegion[] = [
   "left_temporal", "right_temporal", "left_frontal", "right_frontal",
   "left_central", "right_central", "left_occipital", "right_occipital",
   "left_hemisphere", "right_hemisphere", "generalized", "midline",
+  "left_mesial_temporal", "right_mesial_temporal", "left_parietal", "right_parietal",
 ];
+/** Onset regions renderer 0.5.0 added; below spec_version 3 they get no region-specific onset. */
+const V3_REGIONS: LabRegion[] = ["left_mesial_temporal", "right_mesial_temporal", "left_parietal", "right_parietal"];
 
 export const SPREADS: LabSpread[] = ["none", "hemispheric", "generalized", "contralateral"];
 
 export const ARTIFACT_KINDS: LabArtifactKind[] = [
   "emg_chewing", "patting", "chest_pt", "ventilator", "ecmo_pump",
   "electrode_pop", "sixty_hz", "ecg", "movement", "sweat", "eye_blink",
+  "lateral_eye", "slow_roving_eye", "rem_eye_movements", "pulse", "glossokinetic",
+];
+
+/** `normal_variant` kinds (renderer AUTHORED_VARIANTS); `artifact` must not use them. */
+const AUTHORED_VARIANTS = [
+  "mu", "lambda", "wicket", "fourteen_and_six", "rmtd", "sreda",
+  "frontal_arousal_rhythm", "photic_driving", "hyperventilation_buildup",
 ];
 
 export const SEDATION_AGENTS: LabSedationAgent[] = [
-  "propofol", "midazolam", "pentobarbital", "dexmedetomidine", "ketamine",
+  "propofol", "midazolam", "pentobarbital", "dexmedetomidine", "ketamine", "remifentanil",
+];
+
+export const ONSET_PATTERNS: { id: LabOnsetPattern | ""; label: string }[] = [
+  { id: "", label: "Renderer default" },
+  { id: "auto", label: "By region (v3)" },
+  { id: "lvfa", label: "Low-voltage fast (v3)" },
+  { id: "rhythmic_theta", label: "Rhythmic theta, mesial temporal (v3)" },
+  { id: "electrodecrement", label: "Electrodecrement, frontal (v3)" },
+  { id: "rhythmic_spikes", label: "Rhythmic spikes (v3)" },
+];
+
+export const ACNS_PATTERNS: { id: LabAcnsPattern; label: string; periodic: boolean; region: LabRegion }[] = [
+  { id: "LPDs", label: "LPDs (lateralized periodic discharges)", periodic: true, region: "left_hemisphere" },
+  { id: "GPDs", label: "GPDs (generalized periodic discharges)", periodic: true, region: "generalized" },
+  { id: "BIPDs", label: "BIPDs (bilateral independent PDs)", periodic: true, region: "generalized" },
+  { id: "LRDA", label: "LRDA (lateralized rhythmic delta)", periodic: false, region: "left_temporal" },
+  { id: "GRDA", label: "GRDA (generalized rhythmic delta)", periodic: false, region: "generalized" },
+  { id: "BIRDs", label: "BIRDs (brief potentially ictal rhythmic discharges)", periodic: false, region: "left_temporal" },
+  { id: "EDB", label: "Extreme delta brush", periodic: false, region: "generalized" },
+  { id: "triphasic", label: "Triphasic GPDs", periodic: true, region: "generalized" },
+  { id: "SIRPIDs", label: "SIRPIDs (stimulus-induced)", periodic: false, region: "generalized" },
+];
+export const ACNS_PLUS: LabAcnsPlus[] = ["", "+F", "+R", "+S", "+FR", "+FS"];
+export const ACNS_PREVALENCE: LabAcnsPrevalence[] = ["", "continuous", "abundant", "frequent", "occasional", "rare"];
+
+export const GENERALIZED_SEIZURE_TYPES: { id: LabGeneralizedSeizureType; label: string }[] = [
+  { id: "typical_absence", label: "Typical absence (3 Hz spike-wave)" },
+  { id: "atypical_absence", label: "Atypical absence (slow spike-wave)" },
+  { id: "myoclonic", label: "Myoclonic" },
+  { id: "myoclonic_atonic", label: "Myoclonic-atonic" },
+  { id: "myoclonic_tonic", label: "Myoclonic-tonic" },
+  { id: "tonic", label: "Tonic (paroxysmal fast)" },
+  { id: "atonic", label: "Atonic" },
+  { id: "gtc", label: "Generalized tonic-clonic" },
+  { id: "eyelid_myoclonia", label: "Eyelid myoclonia" },
+  { id: "photoparoxysmal", label: "Photoparoxysmal response" },
+];
+const GENERALIZED_DISCHARGE_PATTERNS = ["spike_wave", "polyspike_wave", "slow_spike_wave", "gpfa", "eses"];
+/** generalized_seizure types whose length is `duration_s`; myoclonic types are trains of `count` jerks. */
+export const DURATION_SEIZURE_TYPES: LabGeneralizedSeizureType[] = ["typical_absence", "atypical_absence", "tonic", "atonic"];
+export const MYOCLONIC_TYPES: LabGeneralizedSeizureType[] = ["myoclonic", "myoclonic_atonic", "myoclonic_tonic"];
+
+export const PROVOCATIONS: LabProvocation[] = ["none", "hyperventilation", "photic", "eye_closure", "sleep", "awakening"];
+export const DISCHARGE_MORPHOLOGIES: LabDischargeMorphology[] = ["spike", "sharp_wave", "polyspike"];
+export const DISCHARGE_FOCI = [
+  "Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3", "Cz", "C4", "T4",
+  "T5", "P3", "Pz", "P4", "T6", "O1", "O2",
+];
+export const STIMULI: LabStimulus[] = [
+  "auditory", "light_tactile", "patient_care", "noxious", "suction", "sternal_rub",
+  "nailbed_pressure", "nostril_tickle", "trapezius_squeeze", "other",
 ];
 
 export const EVENT_TYPE_LABELS: Record<GuidedEvent["type"], string> = {
@@ -80,6 +179,10 @@ export const EVENT_TYPE_LABELS: Record<GuidedEvent["type"], string> = {
   attenuation_transient: "Attenuation transient",
   artifact: "Artifact",
   state_change: "State change",
+  rhythmic_pattern: "ACNS pattern (v3)",
+  generalized_seizure: "Generalized seizure (v3)",
+  sporadic_discharges: "Sporadic discharges",
+  stimulation: "Stimulation",
 };
 
 /** Every event type the renderer accepts — wider than the Guided form offers,
@@ -87,8 +190,15 @@ export const EVENT_TYPE_LABELS: Record<GuidedEvent["type"], string> = {
 const ALL_EVENT_TYPES = [
   "seizure", "seizure_cluster", "status_epilepticus", "sedation_change",
   "attenuation_transient", "temperature_change", "stimulation", "artifact",
-  "state_change", "rhythmic_pattern",
+  "state_change", "rhythmic_pattern", "normal_variant", "spasm", "spasm_cluster",
+  "tonic_seizure", "brd", "sporadic_discharges", "generalized_seizure", "generalized_discharges",
 ];
+/** Event types the renderer refuses below spec_version 3 (spec.py raises SpecError). */
+const V3_EVENT_TYPES = ["generalized_seizure", "generalized_discharges"];
+/** Event types with no start time: they cover the whole record unless start_min / end_min narrow them. */
+const UNTIMED_EVENT_TYPES = ["temperature_change", "sporadic_discharges", "generalized_discharges"];
+/** rhythmic_pattern keys accepted but not synthesized below spec_version 3 (spec.rpp_warnings). */
+const ACNS_V3_KEYS = ["sharpness", "stimulus_induced", "prevalence", "duration_category", "lag", "predominance"];
 
 /**
  * The renderer's qeeg_panel schema floors duration_min at 30 and caps it at
@@ -174,7 +284,31 @@ export function defaultEvent(type: GuidedEvent["type"], durationMin: number): Gu
       };
     case "state_change":
       return { id: newId(), type, atMin: mid, to: "sleep" };
+    case "rhythmic_pattern":
+      return {
+        id: newId(), type, onsetMin: mid, durationMin: 20, pattern: "LPDs", onsetRegion: "left_hemisphere",
+        frequencyHz: 1.5, amplitudeUv: 80, plus: "", prevalence: "", evolving: false,
+      };
+    case "generalized_seizure":
+      return { id: newId(), type, onsetMin: mid, seizureType: "typical_absence", provocation: "none", durationS: 10, count: 1 };
+    case "sporadic_discharges":
+      return { id: newId(), type, focus: "T3", ratePerH: 60, morphology: "spike", aftergoingSlow: true, sleepActivation: 1 };
+    case "stimulation":
+      return { id: newId(), type, atMin: mid, stimulus: "noxious" };
   }
+}
+
+/** Lowest spec_version the Guided scenario's choices need (the renderer rejects or ignores them below it). */
+export function requiredSpecVersion(g: GuidedScenario): LabSpecVersion {
+  const v3 =
+    MONTAGES.some((m) => m.v3 && m.id === g.montage)
+    || g.channels === "standard_19_t1t2"
+    || g.events.some((e) =>
+      e.type === "rhythmic_pattern" || e.type === "generalized_seizure"
+      || (e.type === "seizure" && !!e.onsetPattern)
+      || (e.type === "sporadic_discharges" && e.sleepActivation !== 1)
+      || ((e.type === "seizure" || e.type === "seizure_cluster") && V3_REGIONS.includes(e.onsetRegion)));
+  return v3 ? 3 : 1;
 }
 
 export function defaultAnnotation(durationMin: number) {
@@ -205,6 +339,7 @@ function eventBlock(event: GuidedEvent): Json {
         ...(event.postictalAttenuationS > 0
           ? { postictal_attenuation_s: event.postictalAttenuationS }
           : {}),
+        ...(event.onsetPattern ? { onset_pattern: event.onsetPattern } : {}),
       };
     case "seizure_cluster":
       return {
@@ -252,6 +387,43 @@ function eventBlock(event: GuidedEvent): Json {
       };
     case "state_change":
       return { type: "state_change", at_min: event.atMin, to: event.to };
+    case "rhythmic_pattern": {
+      const def = ACNS_PATTERNS.find((p) => p.id === event.pattern);
+      return {
+        type: "rhythmic_pattern",
+        onset_min: event.onsetMin,
+        duration_min: event.durationMin,
+        pattern: event.pattern,
+        onset_region: event.onsetRegion,
+        periodic: def?.periodic ?? false,
+        frequency_hz: event.frequencyHz,
+        amplitude_uv: event.amplitudeUv,
+        ...(event.plus ? { plus_modifier: event.plus } : {}),
+        ...(event.prevalence ? { prevalence: event.prevalence } : {}),
+        // the renderer reads evolution from the modifier ("evolving"), ACNS criterion B
+        ...(event.evolving ? { modifier: "evolving" } : {}),
+      };
+    }
+    case "generalized_seizure":
+      return {
+        type: "generalized_seizure",
+        onset_min: event.onsetMin,
+        seizure_type: event.seizureType,
+        provocation: event.provocation,
+        ...(DURATION_SEIZURE_TYPES.includes(event.seizureType) ? { duration_s: event.durationS } : {}),
+        ...(MYOCLONIC_TYPES.includes(event.seizureType) ? { count: Math.max(1, Math.trunc(event.count)) } : {}),
+      };
+    case "sporadic_discharges":
+      return {
+        type: "sporadic_discharges",
+        focus: event.focus,
+        rate_per_h: event.ratePerH,
+        morphology: event.morphology,
+        aftergoing_slow: event.aftergoingSlow,
+        ...(event.sleepActivation !== 1 ? { sleep_activation: event.sleepActivation } : {}),
+      };
+    case "stimulation":
+      return { type: "stimulation", at_min: event.atMin, stimulus: event.stimulus };
   }
 }
 
@@ -275,7 +447,10 @@ export function buildSpecFromGuided(g: GuidedScenario): Json {
     .filter((a) => a.label.trim().length > 0)
     .map((a) => ({ at_min: a.atMin, label: a.label.trim() }));
 
+  // Omitted = the renderer's version 1 (what every guided recording used before spec_version was offered).
+  const specVersion = Math.max(g.specVersion ?? 1, requiredSpecVersion(g));
   const spec: Json = {
+    ...(g.specVersion !== undefined || specVersion > 1 ? { spec_version: specVersion } : {}),
     seed: Math.trunc(g.seed),
     age_group: g.ageBand,
     sample_rate: Math.trunc(g.sampleRate),
@@ -338,6 +513,53 @@ export interface ValidateOptions {
   requestedDurationMin?: number;
 }
 
+/** (+F, +R, +S) from an ACNS plus string — rpp_v3.parse_plus. */
+function parsePlus(plus: unknown): [boolean, boolean, boolean] {
+  const p = String(plus ?? "").toLowerCase().replaceAll(" ", "");
+  const f = p.includes("+f") || p.includes("fast");
+  const r = p.includes("+r") || p.replace("+f", "f").includes("fr") || p.includes("rhythm");
+  const s = p.includes("+s") || p.replace("+f", "f").includes("fs") || p.includes("sharp");
+  return [f, r, s];
+}
+
+/** ACNS 2021 consistency of a rhythmic_pattern — the advisories spec.rpp_warnings prints, as editor warnings. */
+function validateAcns(
+  raw: Json, where: string, version: number, events: unknown[], warnings: string[],
+  ignoredBelowV3: (what: string) => void,
+): void {
+  const pat = String(raw.pattern ?? "").toUpperCase();
+  const modifier = String(raw.modifier ?? "").toLowerCase();
+  const [, hasR, hasS] = parsePlus(raw.plus_modifier);
+  const triphasic = pat === "TRIPHASIC" || modifier.includes("triphasic");
+  const periodic = raw.periodic === true || (raw.periodic === undefined && pat === "TRIPHASIC");
+  if (version < 3) {
+    const used = ACNS_V3_KEYS.filter((k) => raw[k] !== undefined && raw[k] !== null && raw[k] !== false && raw[k] !== "");
+    if (hasR) used.push("+R");
+    if (modifier.includes("evolv")) used.push("evolving");
+    if (triphasic) used.push("triphasic");
+    if (["BIRDS", "SIRPIDS", "EDB"].includes(pat)) used.push(String(raw.pattern));
+    if (used.length) ignoredBelowV3(`${where}: ${used.join(", ")}`);
+    return;
+  }
+  if (typeof raw.sharpness === "string" && !["spiky", "sharp", "sharply_contoured", "blunt"].includes(raw.sharpness)) {
+    warnings.push(`${where}.sharpness "${raw.sharpness}" is not an ACNS category (spiky, sharp, sharply_contoured, blunt).`);
+  }
+  if (hasR && !periodic) warnings.push(`${where}: +R applies to PDs only (ACNS 2021); ignored on RDA.`);
+  if (hasS && periodic) warnings.push(`${where}: +S applies to RDA only (ACNS 2021); on PDs it renders as sharpness "spiky".`);
+  if (triphasic && raw.periodic === false) warnings.push(`${where}: triphasic morphology applies to PDs, not RDA; ignored.`);
+  if (pat === "BIRDS") {
+    const f = num(raw.frequency_hz);
+    const d = num(raw.run_duration_s);
+    if (f !== null && f <= 4) warnings.push(`${where}: BIRDs are > 4 Hz (ACNS 2021); the run is raised to 4.3 Hz.`);
+    if (d !== null && d >= 10) warnings.push(`${where}: BIRDs last < 10 s; run_duration_s is capped at 9.5 s.`);
+  }
+  const stimulusInduced = raw.stimulus_induced === true || pat === "SIRPIDS"
+    || modifier.includes("stimulus") || modifier.split("-")[0].trim() === "si";
+  if (stimulusInduced && !events.some((e) => isObj(e) && e.type === "stimulation")) {
+    warnings.push(`${where}: stimulus-induced without a stimulation event, so no runs are scheduled.`);
+  }
+}
+
 /**
  * Deterministic checks over a normalized image block. Errors block the enqueue;
  * warnings ride along on the job so the editor sees them next to the result.
@@ -365,6 +587,25 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
     errors.push("spec.seed must be an integer — the export would not be reproducible.");
   }
 
+  // spec_version picks the renderer's defaults for every omitted key; 3 unlocks the 0.5.0 feature set.
+  let version = 1;
+  if (spec.spec_version !== undefined) {
+    const v = num(spec.spec_version);
+    if (v === null || !Number.isInteger(v) || v < 1 || v > 3) {
+      errors.push("spec.spec_version must be 1, 2 or 3.");
+    } else {
+      version = v;
+      if (v > WORKER_MAX_SPEC_VERSION) {
+        warnings.push(
+          `spec_version ${v} needs eeg-render 0.5.0 on the render worker; the deployed worker accepts up to ` +
+          `${WORKER_MAX_SPEC_VERSION} and will reject this job until the renderer is deployed.`,
+        );
+      }
+    }
+  }
+  const needsV3 = (what: string) => errors.push(`${what} needs spec_version 3 (set "spec_version": 3).`);
+  const ignoredBelowV3 = (what: string) => warnings.push(`${what} is accepted but not synthesized below spec_version 3.`);
+
   const ageGroup = spec.age_group;
   if (typeof ageGroup !== "string" || !AGE_BANDS.some((a) => a.id === ageGroup)) {
     errors.push(`spec.age_group must be one of ${AGE_BANDS.map((a) => a.id).join(", ")}.`);
@@ -377,12 +618,16 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
 
   const channels = spec.channels;
   if (channels !== undefined
-      && !["standard_19", "neonatal_9", "neonatal_reduced"].includes(String(channels))) {
+      && !["standard_19", "neonatal_9", "neonatal_reduced", "standard_19_t1t2"].includes(String(channels))) {
     errors.push(`spec.channels "${String(channels)}" is not a known channel set.`);
+  } else if (channels === "standard_19_t1t2" && version < 3) {
+    needsV3("channels standard_19_t1t2");
   }
   const montage = spec.montage;
-  if (montage !== undefined && !MONTAGES.some((m) => m.id === montage)) {
+  if (montage !== undefined && !MONTAGES.some((m) => m.id === montage) && !V3_MONTAGE_ALIASES.includes(String(montage))) {
     errors.push(`spec.montage "${String(montage)}" is not a known montage.`);
+  } else if (V3_MONTAGE_IDS.includes(String(montage)) && version < 3) {
+    needsV3(`montage ${String(montage)}`);
   }
 
   // duration
@@ -426,6 +671,11 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
     if (isObj(bg.asymmetry) && !["left", "right"].includes(String(bg.asymmetry.side))) {
       errors.push("background.asymmetry.side must be left or right.");
     }
+    if (version < 3) {
+      for (const key of ["sleep_staging", "sleep_architecture", "coma_pattern"]) {
+        if (bg[key] !== undefined) ignoredBelowV3(`background.${key}`);
+      }
+    }
   }
 
   // events
@@ -444,9 +694,10 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
       errors.push(`${where}.type "${type}" is not a known event type.`);
       return;
     }
+    if (V3_EVENT_TYPES.includes(type) && version < 3) needsV3(`${where}.type ${type}`);
     const at = num(raw.onset_min) ?? num(raw.at_min) ?? num(raw.start_min);
     if (at === null) {
-      errors.push(`${where} has no onset_min / at_min / start_min.`);
+      if (!UNTIMED_EVENT_TYPES.includes(type)) errors.push(`${where} has no onset_min / at_min / start_min.`);
     } else if (at < 0) {
       errors.push(`${where} starts before the recording does.`);
     } else if (durationS > 0 && at * 60 >= durationS) {
@@ -460,6 +711,11 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
     if (raw.spread !== undefined && !SPREADS.includes(raw.spread as LabSpread)) {
       errors.push(`${where}.spread "${String(raw.spread)}" is not a known spread.`);
     }
+    if (version < 3 && V3_REGIONS.includes(region as LabRegion)) {
+      warnings.push(`${where}.onset_region ${String(region)} gets its region-specific onset only at spec_version 3.`);
+    }
+    const onsetPattern = raw.onset_pattern ?? (isObj(raw.seizure) ? raw.seizure.onset_pattern : undefined);
+    if (onsetPattern !== undefined && version < 3) ignoredBelowV3(`${where}.onset_pattern`);
 
     if (type === "seizure_cluster") {
       const start = num(raw.start_min);
@@ -475,9 +731,37 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
 
     if (type === "artifact") {
       if (!ARTIFACT_KINDS.includes(raw.kind as LabArtifactKind)) {
-        errors.push(`${where}.kind "${String(raw.kind)}" is not a known artifact.`);
+        errors.push(
+          AUTHORED_VARIANTS.includes(String(raw.kind))
+            ? `${where}.kind "${String(raw.kind)}" is a normal variant — use type normal_variant.`
+            : `${where}.kind "${String(raw.kind)}" is not a known artifact.`,
+        );
       }
     }
+
+    if (type === "normal_variant" && !AUTHORED_VARIANTS.includes(String(raw.kind))) {
+      errors.push(`${where}.kind "${String(raw.kind)}" is not an authored normal variant (${AUTHORED_VARIANTS.join(", ")}).`);
+    }
+
+    if (type === "generalized_seizure" && raw.seizure_type !== undefined
+        && !GENERALIZED_SEIZURE_TYPES.some((t) => t.id === raw.seizure_type)) {
+      errors.push(`${where}.seizure_type "${String(raw.seizure_type)}" is not a known generalized seizure type.`);
+    }
+    if (type === "generalized_discharges" && raw.pattern !== undefined
+        && !GENERALIZED_DISCHARGE_PATTERNS.includes(String(raw.pattern))) {
+      errors.push(`${where}.pattern must be one of ${GENERALIZED_DISCHARGE_PATTERNS.join(", ")}.`);
+    }
+
+    if (type === "sporadic_discharges") {
+      if (Array.isArray(raw.foci) && Array.isArray(raw.focus_weights) && raw.foci.length !== raw.focus_weights.length) {
+        errors.push(`${where}.focus_weights must match foci in length.`);
+      }
+      if (version < 3 && ["sleep_activation", "state_rates", "foci"].some((k) => raw[k] !== undefined)) {
+        ignoredBelowV3(`${where}: sleep_activation / state_rates / foci`);
+      }
+    }
+
+    if (type === "rhythmic_pattern") validateAcns(raw, where, version, events, warnings, ignoredBelowV3);
 
     if (type === "sedation_change") {
       if (!SEDATION_AGENTS.includes(raw.agent as LabSedationAgent)) {
@@ -507,8 +791,8 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
       }
     }
 
-    if (type === "state_change" && !["sleep", "wake", "arousal"].includes(String(raw.to))) {
-      errors.push(`${where}.to must be sleep, wake or arousal.`);
+    if (type === "state_change" && raw.to !== undefined && !["sleep", "wake", "arousal", "rem"].includes(String(raw.to))) {
+      errors.push(`${where}.to must be sleep, wake, arousal or rem.`);
     }
   });
 
