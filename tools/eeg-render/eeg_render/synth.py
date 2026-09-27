@@ -1477,12 +1477,15 @@ class Synthesizer:
                 fx, fy = rng.normal(0.0, 0.6, 2)
                 field = np.clip(1.0 + fx * pos[:, 0] + fy * pos[:, 1], 0.2, 1.8)
                 field[[self._idx[e] for e in mt.REFERENCE_ELECTRODES]] *= 0.3
+                # drawn unconditionally: drawing it only when the wave touches the window made the draw sequence - and
+                # every later sharp wave of the burst - depend on the window cut (final-merge window-independence test)
+                gain = 5.0 * float(rng.uniform(0.7, 1.3))
                 d = t - c0
                 mm = (d > -0.3) & (d < 0.5)
                 if mm.any():
                     dd = d[mm]
                     w = sgn * (np.exp(-0.5 * (dd / wd) ** 2) - 0.35 * np.exp(-0.5 * ((dd - 2.6 * wd) / (2.2 * wd)) ** 2))
-                    rows[:, mm] += 5.0 * float(rng.uniform(0.7, 1.3)) * field[:, None] * w[None, :]
+                    rows[:, mm] += gain * field[:, None] * w[None, :]
         return rows * self._SED_BURST_SCALE_V3
 
     #: 0.5.0 per-electrode spindle field (central maximum; temporal chains carry lower-voltage spindles, Craig on
@@ -2153,7 +2156,9 @@ class Synthesizer:
                 # the authored ratio is honoured on what reads as burst: the scheduled burst plus about 0.9 s of
                 # edges, slow tails and sub-threshold interburst margins (0.5 s-epoch SR trend, 5 uV page reading)
                 burst = float(np.clip(1.1 * _lognorm(rng, 1, 0.3)[0], 0.5, 3.0))
-                ibi = max(0.5, 2.05 * min(sf, 0.95) / max(1.0 - sf, 0.05) * float(_lognorm(rng, 1, 0.4)[0]) * 0.92)
+                # IBI sigma 0.4 -> 0.5 (final merge: realized CV 0.37 against the > 0.4 irregularity bar); mean kept by
+                # 0.92 -> 0.88 (lognormal mean exp(s^2/2): 1.083 -> 1.133)
+                ibi = max(0.5, 2.05 * min(sf, 0.95) / max(1.0 - sf, 0.05) * float(_lognorm(rng, 1, 0.5)[0]) * 0.88)
                 starts.append(t)
                 ends.append(t + burst)
                 t += burst + ibi
