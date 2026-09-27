@@ -38,7 +38,7 @@ export default function RawPane({
   auxSensitivityUvPerMm: number;
   annotations: ViewerAnnotation[];
   /** instructor overlay: [onset, offset, label] */
-  answerSpans: { onsetS: number; offsetS: number; label: string }[];
+  answerSpans: { onsetS: number; offsetS: number; label: string; color?: string }[];
   cursorT: number | null;
   /** re-reads the CSS tokens when it changes */
   theme: "dark" | "light";
@@ -184,13 +184,17 @@ export default function RawPane({
     });
 
     // answer-key spans (instructor overlay) behind the traces
+    let keyRow = 0;
     for (const a of answerSpans) {
       const x0 = Math.max(GUTTER, xOf(a.onsetS)), x1 = Math.min(size.w, xOf(a.offsetS));
       if (x1 <= GUTTER || x0 >= size.w) continue;
-      ctx.fillStyle = "rgba(229,72,77,0.10)"; ctx.fillRect(x0, AXIS_H, x1 - x0, size.h - AXIS_H);
+      // overlapping rows (a seizure inside a sleep stage, an artifact over a pattern) stack their labels
+      const labelY = size.h - 18 - 13 * (keyRow++ % 4);
+      const c = a.color ?? "#e5484d";
+      ctx.fillStyle = c + "1a"; ctx.fillRect(x0, AXIS_H, x1 - x0, size.h - AXIS_H);
       // bottom-left of the span, clear of the file-annotation labels at the top
-      ctx.fillStyle = "#e5484d"; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
-      ctx.fillText(`KEY · ${a.label}`, x0 + 4, size.h - 18);
+      ctx.fillStyle = c; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+      ctx.fillText(`KEY · ${a.label}`, x0 + 4, labelY);
     }
 
     // user annotations

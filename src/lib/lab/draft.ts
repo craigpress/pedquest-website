@@ -12,7 +12,8 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chat, extractJson, providerModel, selectProvider } from "@/lib/qbank/provider";
-import { normalizeSpecInput, validateLabSpec, DURATION_MIN_MINUTES, DURATION_MAX_MINUTES } from "./spec";
+import { normalizeSpecInput, DURATION_MIN_MINUTES, DURATION_MAX_MINUTES } from "./spec";
+import { validateLabSpecStrict } from "./spec-server";
 import { SYNTHETIC_STAMP, type LabValidation } from "./types";
 
 export const LAB_PROMPT_VERSION = "lab-spec-1";
@@ -135,7 +136,7 @@ export async function draftSpecFromProse(input: {
   let block = normalizeSpecInput(extractJson(first.text));
   if (!block) throw new Error("The model returned JSON that is not a spec block.");
 
-  let validation = validateLabSpec(block, {
+  let validation = validateLabSpecStrict(block, {
     runPersyst: input.runPersyst,
     durationS: input.durationMin * 60,
   });
@@ -157,7 +158,7 @@ export async function draftSpecFromProse(input: {
     });
     const retry = normalizeSpecInput(extractJson(second.text));
     if (retry) {
-      const retryValidation = validateLabSpec(retry, {
+      const retryValidation = validateLabSpecStrict(retry, {
         runPersyst: input.runPersyst,
         durationS: input.durationMin * 60,
       });
@@ -255,7 +256,7 @@ export async function reviseSpecFromFeedback(input: {
   if (!block) throw new Error("The model returned JSON that is not a spec block.");
 
   const validateOpts = { runPersyst: input.runPersyst, durationS: input.durationMin * 60 };
-  let validation = validateLabSpec(block, validateOpts);
+  let validation = validateLabSpecStrict(block, validateOpts);
   let repaired = false;
 
   if (!validation.ok) {
@@ -268,7 +269,7 @@ export async function reviseSpecFromFeedback(input: {
     });
     const retry = normalizeSpecInput(extractJson(second.text));
     if (retry) {
-      const retryValidation = validateLabSpec(retry, validateOpts);
+      const retryValidation = validateLabSpecStrict(retry, validateOpts);
       if (retryValidation.errors.length < validation.errors.length) {
         block = retry;
         validation = retryValidation;

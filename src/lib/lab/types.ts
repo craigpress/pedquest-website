@@ -284,30 +284,55 @@ export interface LabEnqueueResponse {
 // The shape the Guided form produces. spec.ts turns it into an image block.
 
 export type LabAgeBand = "neonate" | "infant" | "child" | "adolescent" | "adult";
-export type LabChannelSet = "standard_19" | "neonatal_9";
-export type LabMontage = "longitudinal_bipolar" | "referential" | "average" | "neonatal_reduced";
+export type LabChannelSet = "standard_19" | "neonatal_9" | "standard_19_t1t2";
+export type LabMontage =
+  | "longitudinal_bipolar" | "referential" | "average" | "neonatal_reduced"
+  // renderer 0.5.0 (spec_version 3): the viewer's montages drawn on rendered pages
+  | "transverse_bipolar" | "circumferential" | "grapefruit" | "t1t2_bipolar" | "ipsilateral_ear"
+  | "contralateral_ear" | "cz_reference" | "neonatal_average" | "laplacian";
+
+/** Which renderer defaults an omitted key gets: 1 = 0.3.x, 2 = 0.4.x, 3 = 0.5.0. */
+export type LabSpecVersion = 1 | 2 | 3;
 
 export type LabBackgroundType =
   | "continuous" | "discontinuous" | "burst_suppression" | "suppressed"
-  | "low_voltage" | "excessively_discontinuous" | "trace_alternant";
+  | "low_voltage" | "excessively_discontinuous" | "trace_alternant" | "hypsarrhythmia";
 
 export type LabRegion =
   | "left_temporal" | "right_temporal" | "left_frontal" | "right_frontal"
   | "left_central" | "right_central" | "left_occipital" | "right_occipital"
-  | "left_hemisphere" | "right_hemisphere" | "generalized" | "midline";
+  | "left_hemisphere" | "right_hemisphere" | "generalized" | "midline"
+  // renderer 0.5.0 onset regions (mesial temporal = F7/F8 maximum; parietal = P3/P4)
+  | "left_mesial_temporal" | "right_mesial_temporal" | "left_parietal" | "right_parietal";
 
 export type LabSpread = "none" | "hemispheric" | "generalized" | "contralateral";
 
 export type LabArtifactKind =
   | "emg_chewing" | "patting" | "chest_pt" | "ventilator" | "ecmo_pump"
-  | "electrode_pop" | "sixty_hz" | "ecg" | "movement" | "sweat" | "eye_blink";
+  | "electrode_pop" | "sixty_hz" | "ecg" | "movement" | "sweat" | "eye_blink"
+  | "lateral_eye" | "slow_roving_eye" | "rem_eye_movements" | "pulse" | "glossokinetic";
 
 export type LabSedationAgent =
-  | "propofol" | "midazolam" | "pentobarbital" | "dexmedetomidine" | "ketamine";
+  | "propofol" | "midazolam" | "pentobarbital" | "dexmedetomidine" | "ketamine" | "remifentanil";
 
-export type LabEventType =
-  | "seizure" | "seizure_cluster" | "sedation_change"
-  | "attenuation_transient" | "artifact" | "state_change";
+export type LabEventType = GuidedEvent["type"];
+
+/** Focal seizure onset patterns (renderer 0.5.0; `auto` picks by onset region). */
+export type LabOnsetPattern = "auto" | "lvfa" | "rhythmic_theta" | "electrodecrement" | "rhythmic_spikes";
+
+/** ACNS 2021 rhythmic / periodic patterns offered in the Guided form. */
+export type LabAcnsPattern = "LPDs" | "GPDs" | "BIPDs" | "LRDA" | "GRDA" | "BIRDs" | "EDB" | "triphasic" | "SIRPIDs";
+export type LabAcnsPlus = "" | "+F" | "+R" | "+S" | "+FR" | "+FS";
+export type LabAcnsPrevalence = "" | "continuous" | "abundant" | "frequent" | "occasional" | "rare";
+
+export type LabGeneralizedSeizureType =
+  | "typical_absence" | "atypical_absence" | "myoclonic" | "myoclonic_atonic" | "myoclonic_tonic"
+  | "tonic" | "atonic" | "gtc" | "eyelid_myoclonia" | "photoparoxysmal";
+export type LabProvocation = "none" | "hyperventilation" | "photic" | "eye_closure" | "sleep" | "awakening";
+export type LabDischargeMorphology = "spike" | "sharp_wave" | "polyspike";
+export type LabStimulus =
+  | "auditory" | "light_tactile" | "patient_care" | "noxious" | "suction" | "sternal_rub"
+  | "nailbed_pressure" | "nostril_tickle" | "trapezius_squeeze" | "other";
 
 export interface LabEvolution {
   startHz: number;
@@ -326,6 +351,8 @@ export type GuidedEvent =
       spread: LabSpread;
       postictalAttenuationS: number;
       evolution: LabEvolution;
+      /** "" = the renderer's default; any other value needs spec_version 3 */
+      onsetPattern?: LabOnsetPattern | "";
     }
   | {
       id: string;
@@ -375,7 +402,47 @@ export type GuidedEvent =
       id: string;
       type: "state_change";
       atMin: number;
-      to: "sleep" | "wake" | "arousal";
+      to: "sleep" | "wake" | "arousal" | "rem";
+    }
+  | {
+      id: string;
+      type: "rhythmic_pattern";
+      onsetMin: number;
+      durationMin: number;
+      pattern: LabAcnsPattern;
+      onsetRegion: LabRegion;
+      frequencyHz: number;
+      amplitudeUv: number;
+      plus: LabAcnsPlus;
+      prevalence: LabAcnsPrevalence;
+      evolving: boolean;
+    }
+  | {
+      id: string;
+      type: "generalized_seizure";
+      onsetMin: number;
+      seizureType: LabGeneralizedSeizureType;
+      provocation: LabProvocation;
+      /** absence / tonic / atonic run length; the other types take the renderer's phase defaults */
+      durationS: number;
+      /** myoclonic types: jerks in the train */
+      count: number;
+    }
+  | {
+      id: string;
+      type: "sporadic_discharges";
+      focus: string;
+      ratePerH: number;
+      morphology: LabDischargeMorphology;
+      aftergoingSlow: boolean;
+      /** NREM multiplier on the waking rate; 1 = no sleep activation (values above 1 need spec_version 3) */
+      sleepActivation: number;
+    }
+  | {
+      id: string;
+      type: "stimulation";
+      atMin: number;
+      stimulus: LabStimulus;
     };
 
 export interface GuidedAnnotation {
@@ -385,6 +452,8 @@ export interface GuidedAnnotation {
 }
 
 export interface GuidedScenario {
+  /** renderer defaults; undefined = omit (the renderer's version 1). Raised automatically to what the events need. */
+  specVersion?: LabSpecVersion;
   ageBand: LabAgeBand;
   channels: LabChannelSet;
   montage: LabMontage;

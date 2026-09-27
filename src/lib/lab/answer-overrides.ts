@@ -1,5 +1,6 @@
 import { isAnnotationRegion, normaliseChannelLabel } from "@/lib/eeg/annotations";
 import type { KeyEvent } from "@/lib/lab/scoring";
+import { pickDetail } from "@/lib/lab/key-kinds";
 import { hasRole, type Role } from "@/lib/roles";
 
 export type AnswerOverrideAction = "add" | "update" | "remove" | "reset";
@@ -58,6 +59,10 @@ export function parseKeyEvent(raw: unknown, id: string): KeyEvent | null {
     : [];
   const kind = typeof o.kind === "string" && /^[a-z][a-z0-9_]{0,63}$/i.test(o.kind) ? o.kind : "event";
   const label = typeof o.label === "string" ? o.label.trim().slice(0, 160) : kind;
+  // an edited rendered row keeps its descriptors (the ACNS classification decides whether it is ictal)
+  const detail = typeof o.detail === "object" && o.detail !== null && !Array.isArray(o.detail)
+    ? pickDetail(o.detail as Record<string, unknown>)
+    : null;
   return {
     id,
     kind,
@@ -66,6 +71,7 @@ export function parseKeyEvent(raw: unknown, id: string): KeyEvent | null {
     region: isAnnotationRegion(o.region) ? o.region : null,
     channels: [...new Set(channels)],
     label,
+    ...(detail && Object.keys(detail).length ? { detail } : {}),
   };
 }
 
