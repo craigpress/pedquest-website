@@ -501,7 +501,9 @@ _PS_RISE, _PS_FALL = 0.007, 0.010          # s, negative spike limbs (surface si
 # and the after-going wave measured 0.41x the spike train): a smaller, broader trough (0.20-0.35 x 22 ms, drawn in
 # generalized_v3.polyspike_draw) and a slow wave at least as large as the spikes after the 1-Hz display high-pass
 _PS_TROUGH_LAG, _PS_TROUGH_SIGMA = 0.032, 0.022
-_PS_WAVE_LAG, _PS_WAVE_SIGMA, _PS_WAVE_GAIN = 0.160, 0.100, 2.2
+# Independent generalized re-review (2026-09-26): at 2.2 the wave was 1.45-2.11x the spike train and the spikes read as
+# a ripple on it; eeg0094_db1 and myoclonic-jerk-examples/p1 show spikes as tall as or taller than the wave -> 1.05.
+_PS_WAVE_LAG, _PS_WAVE_SIGMA, _PS_WAVE_GAIN = 0.160, 0.100, 1.05
 
 
 def _polyspike_kernel(d: np.ndarray, lags: np.ndarray, gains: np.ndarray, troughs: np.ndarray,
@@ -3238,6 +3240,16 @@ class Synthesizer:
     def _sed_focus_ok(self, focus: str) -> bool:
         return focus in self._idx or (self.spec_version >= 3 and focus in self._SED_FIELDS)
 
+    def _sed_bipolar_share(self, focus: str) -> float:
+        """Largest longitudinal-bipolar weight difference of a table field over its largest weight (1 for an electrode
+        focus, whose amplitude stays referential)."""
+        if focus in self._idx or focus not in self._SED_FIELDS:
+            return 1.0
+        w = self._sed_field(focus)
+        d = [abs(w[self._idx[a]] - w[self._idx[b]]) for a, b in mt.montage_pairs("longitudinal_bipolar", self.scalp)
+             if b is not None and a in self._idx and b in self._idx]
+        return max(max(d) / max(float(np.max(np.abs(w))), 1e-9), 0.2)
+
     def _sed_field(self, focus: str) -> np.ndarray:
         if focus in self._idx:
             return self._gen_weights(focus, self._SED_FALLOFF)
@@ -3346,8 +3358,10 @@ class Synthesizer:
                     polys.extend(p for p, kk in zip(pp, keep) if kk)
                     foci_l.extend(f for f, kk in zip(fsel, keep) if kk)
                 if morph == "polyspike":
-                    # amplitude_uv is the peak-to-peak of one spike (review B5-04), not of the whole complex
-                    self._sed_norm[i] = _PS_UNIT_PTP
+                    # amplitude_uv is the peak-to-peak of one spike (review B5-04), not of the whole complex; for a
+                    # table field (generalized_frontocentral) it is the spike on the largest longitudinal-bipolar
+                    # derivation (independent re-review: 150 uV authored drew a 49-89 uV spike train on F3-C3)
+                    self._sed_norm[i] = _PS_UNIT_PTP * self._sed_bipolar_share(str(e["focus"]))
                     continue
             else:
                 rng = substream(self.seed, "sporadic", i)
@@ -3750,7 +3764,20 @@ class Synthesizer:
             k = np.arange(int(np.floor((run["t1"] - run["t0"]) * run["frequency_hz"])) + 1)
             f = run["t0"] + k / run["frequency_hz"]
             out.append(f[(f >= t0) & (f < t1) & (f < run["t1"])])
-        return np.concatenate(out) if out else np.zeros(0)
+        # independent generalized re-review: the photoparoxysmal response's own trains (generalized_v3 ``photic``), so
+        # the Photic marker row shows on a PPR page
+        for p0, p1, fl, _amp in (self._gen.photic if getattr(self, "_gen", None) is not None else ()):
+            if p1 < t0 or p0 > t1:
+                continue
+            f = p0 + np.arange(int(np.floor((p1 - p0) * fl)) + 1) / fl
+            out.append(f[(f >= t0) & (f < t1) & (f < p1)])
+        return np.sort(np.concatenate(out)) if out else np.zeros(0)
+
+    def emg_channel(self, t: np.ndarray) -> Optional[np.ndarray]:
+        """Polygraphic EMG row for the page (generalized_v3.GeneralizedV3.emg_channel), or None."""
+        if getattr(self, "_gen", None) is None or t.size == 0:
+            return None
+        return self._gen.emg_channel(t, int(round(float(t[0]) * self.fs)))
 
     def authored_variant_runs(self) -> List[Dict]:
         out = []

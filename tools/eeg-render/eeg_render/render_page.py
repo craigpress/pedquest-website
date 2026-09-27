@@ -200,6 +200,13 @@ def render_eeg_page(
         sig = np.vstack([sig, np.zeros((1, t.size))])
         labels = labels + ["Photic"]
         pairs = list(pairs) + [("A1", "A1")]       # its own row group (like the ECG row)
+    # independent generalized re-review: atonic / myoclonic-atonic / myoclonic-tonic / tonic seizures carry a
+    # polygraphic EMG row, so the loss (or gain) of tone can be read (spec_version 3 generalized records only)
+    emg = synth.emg_channel(t) if hasattr(synth, "emg_channel") else None
+    if emg is not None and st.get("show_emg_channel", True):
+        sig = np.vstack([sig, emg[None, :]])
+        labels = labels + ["EMG"]
+        pairs = list(pairs) + [("A2", "A2")]
 
     own_fig = fig is None
     rc = dict(S.apply_rc(S.LIGHT))

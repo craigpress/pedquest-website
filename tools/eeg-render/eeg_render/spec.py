@@ -1085,7 +1085,8 @@ GENERALIZED_DISCHARGE_DEFAULTS = {
     "spike_wave": {"rate_per_h": 30.0, "frequency_hz": 3.5, "amplitude_uv": 200.0, "burst_s": 1.2},
     "polyspike_wave": {"rate_per_h": 20.0, "frequency_hz": 4.5, "amplitude_uv": 220.0, "burst_s": 1.5},
     "slow_spike_wave": {"rate_per_h": 40.0, "frequency_hz": 2.0, "amplitude_uv": 200.0, "burst_s": 6.0},
-    "gpfa": {"rate_per_h": 60.0, "frequency_hz": 15.0, "amplitude_uv": 100.0, "burst_s": 3.0},
+    # independent re-review 2026-09-26: 20 Hz / 150 uV (15 Hz / 100 uV read as a spindle and drowned in N3 delta)
+    "gpfa": {"rate_per_h": 60.0, "frequency_hz": 20.0, "amplitude_uv": 150.0, "burst_s": 3.0},
     "eses": {"frequency_hz": 2.0, "amplitude_uv": 200.0, "swi_pct": 90.0, "wake_swi_pct": 10.0},
 }
 

@@ -554,6 +554,8 @@ _STYLE = {
         "show_ecg_channel": {"type": "boolean"},
         # phase D (spec_version 3): draw the photic stimulus marker channel when a photic train is on the page
         "show_photic_channel": {"type": "boolean"},
+        # spec_version 3: draw the polygraphic EMG row on atonic / myoclonic-atonic / myoclonic-tonic / tonic records
+        "show_emg_channel": {"type": "boolean"},
         "chain_order": {"type": "string"},
         "single_channel": {"type": "string"},
         "layout": {"enum": ["side_by_side_single_vs_multichannel"]},

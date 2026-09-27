@@ -82,6 +82,27 @@ _ESES_FIELD = {"C3": 1.0, "C4": 1.0, "Cz": 0.95, "T3": 0.70, "T4": 0.70, "P3": 0
 _FC_FIELD = {"F3": 1.0, "F4": 1.0, "Fz": 0.95, "Fp1": 0.55, "Fp2": 0.55, "C3": 0.45, "C4": 0.45, "Cz": 0.45,
              "P3": 0.40, "P4": 0.40, "Pz": 0.35, "F7": 0.35, "F8": 0.35, "T3": 0.30, "T4": 0.30,
              "T5": 0.20, "T6": 0.20, "O1": 0.10, "O2": 0.10}
+#: eyelid myoclonia (independent re-review; PMC8610539 Fig 1 E/F, Jeavons syndrome: polyspikes largest bioccipitally
+#: right after each eye closure; PMC12593124 Fig 2: generalized PSW after closure).  Occipital maximum falling steeply
+#: to the parietal and posterior temporal rows, so P3-O1 / T5-O1 carry the largest share of the longitudinal chain
+#: (a gentle O 1.0 / P 0.9 gradient cancels there); frontal rows keep a share (the discharge stays generalized).
+_POST_FIELD = {"O1": 1.0, "O2": 1.0, "P3": 0.50, "P4": 0.50, "Pz": 0.50, "T5": 0.50, "T6": 0.50, "C3": 0.32,
+               "C4": 0.32, "Cz": 0.32, "T3": 0.25, "T4": 0.25, "F3": 0.22, "F4": 0.22, "Fz": 0.22, "F7": 0.16,
+               "F8": 0.16, "Fp1": 0.12, "Fp2": 0.12}
+#: atonic seizure (independent re-review: on the Fp->O slow-wave gradient the complex peaked at Fp1-F7 / P3-O1 and read
+#: as the blink 7 s later; ILAE: generalized (poly)spike-and-slow-wave, vertex / frontocentral maximum).  Vertex maximum:
+#: phase reversals around C3 / Cz / C4 in the parasagittal and midline chains, the frontal-pole and
+#: temporal links (where a blink is largest) small.
+_VTX_FIELD = {"Cz": 1.0, "C3": 0.80, "C4": 0.80, "Fz": 0.60, "Pz": 0.50, "F3": 0.42, "F4": 0.42, "P3": 0.32,
+              "P4": 0.32, "T3": 0.30, "T4": 0.30, "F7": 0.22, "F8": 0.22, "Fp1": 0.15, "Fp2": 0.15, "T5": 0.18,
+              "T6": 0.18, "O1": 0.10, "O2": 0.10}
+#: LGS generalized paroxysmal fast activity in sleep (independent re-review; tonic-seizure-ii onset, ILAE LGS):
+#: bifrontal maximum falling monotonically backwards, weighted for the chain.  In phase across the head, the fast
+#: activity reaches the bipolar chain only through this gradient (the Fp->O slow-wave gradient put its largest link at
+#: P3-O1).
+_GPFA_FIELD = {"F3": 1.0, "F4": 1.0, "Fz": 1.0, "Fp1": 0.60, "Fp2": 0.60, "F7": 0.60, "F8": 0.60, "C3": 0.55,
+               "C4": 0.55, "Cz": 0.60, "T3": 0.35, "T4": 0.35, "P3": 0.30, "P4": 0.30, "Pz": 0.30, "T5": 0.20,
+               "T6": 0.20, "O1": 0.10, "O2": 0.10}
 _PHOTIC_FIELD = {"O1": 1.0, "O2": 1.0, "P3": 0.45, "P4": 0.45, "Pz": 0.40, "T5": 0.40, "T6": 0.40}
 #: broad scalp EMG of a convulsive seizure (atlas-gtc-at-20uv: every derivation saturated with muscle)
 _EMG_FIELD = {"T3": 1.0, "T4": 1.0, "F7": 0.95, "F8": 0.95, "T5": 0.75, "T6": 0.75, "Fp1": 0.85, "Fp2": 0.85,
@@ -95,8 +116,9 @@ def fields(electrodes: Sequence[str], name: str = "gen", side: str = "both") -> 
     for e in electrodes:
         x, y = _pos(e)
         ref = e not in mt.POSITIONS or e in mt.REFERENCE_ELECTRODES
-        if name in ("eses", "fc"):
-            tab = _ESES_FIELD if name == "eses" else _FC_FIELD
+        if name in ("eses", "fc", "post", "vtx", "gpfa"):
+            tab = {"eses": _ESES_FIELD, "fc": _FC_FIELD, "post": _POST_FIELD, "vtx": _VTX_FIELD,
+                   "gpfa": _GPFA_FIELD}[name]
             v = 0.6 * tab.get("T3", 0.3) if ref else tab.get(e, 0.3)
             s = w = v
         else:
@@ -127,26 +149,42 @@ def _g(tau: np.ndarray, rise: float, fall: float) -> np.ndarray:
     return np.exp(-0.5 * (tau / np.where(tau < 0.0, rise, fall)) ** 2)
 
 
+def _dome(tau: np.ndarray, c: float, s: float, p: float = 3.0) -> np.ndarray:
+    """Flat-topped dome (generalized Gaussian of order ``p``): half maximum at |tau - c| = 1.115 s for p = 3."""
+    return np.exp(-0.5 * np.abs((tau - c) / s) ** p)
+
+
 def k_sw(tau: np.ndarray, period: float, width: float = 1.0, double: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """3-Hz spike-and-wave: spike (rise 10 / fall 18 ms), optional second spike 48 ms later (spike/polyspike and
-    waves, absence-seizure-at-20uV), a positive transient, then the dominant surface-negative slow wave."""
+    waves, absence-seizure-at-20uV), a small positive transient, then the dominant surface-negative slow wave.
+
+    Independent re-review (generalized-independent.md): the old Gaussian wave (centre 0.45 x period capped at 0.22 s,
+    sigma 0.18 x period capped at 90 ms) was 35-42 % of the cycle at half maximum, so the page read spike-dominated.  In
+    atlas-absence-seizure/p1 and Commons Spike-waves.png the negative dome is the largest deflection and fills ~70 %
+    of the cycle, rising straight out of the spike.  The wave is now a flat-topped dome centred at 0.55 x period with
+    its half maximum over ~0.6 x period (no caps), gain 1.4."""
     sp = _g(tau, 0.010 * width, 0.018 * width)
     tl = 0.045 * width
     if double:
         sp = sp + 0.8 * _g(tau - 0.048 * width, 0.008 * width, 0.014 * width)
         tl += 0.048 * width
-    sp = sp - 0.35 * np.exp(-0.5 * ((tau - tl) / 0.020) ** 2)
-    c = min(max(0.45 * period, 0.12), 0.22)
-    s = min(max(0.18 * period, 0.045), 0.09)
-    return sp, 1.15 * np.exp(-0.5 * ((tau - c) / s) ** 2)
+    sp = sp - 0.25 * np.exp(-0.5 * ((tau - tl) / 0.020) ** 2)
+    return sp, 1.6 * _dome(tau, 0.55 * period, 0.29 * period)
 
 
 def k_ssw(tau: np.ndarray, period: float, wave_gain: float = 1.3) -> Tuple[np.ndarray, np.ndarray]:
-    """Slow spike-and-wave (LGS, atypical absence): a sharp wave (FWHM ~95 ms) and a long slow wave."""
-    sp = _g(tau, 0.030, 0.050) - 0.30 * np.exp(-0.5 * ((tau - 0.11) / 0.035) ** 2)
-    c = min(max(0.5 * period, 0.20), 0.40)
-    s = min(max(0.2 * period, 0.08), 0.14)
-    return sp, wave_gain * np.exp(-0.5 * ((tau - c) / s) ** 2)
+    """Slow spike-and-wave (LGS, atypical absence, atonic): a sharp wave (FWHM ~95 ms) running straight into one long
+    slow wave, one sharp-then-slow unit per cycle (different-LGS-background-at-10uV).
+
+    Independent re-review: the 0.30 positive trough 110 ms after the sharp wave and a slow wave centred 0.20-0.40 s
+    later split every cycle into two humps, so an authored 2-Hz run displayed a 4.1-4.25 Hz peak.  The trough is gone
+    and a flat-topped slow wave starts on the sharp wave's falling limb (centre 0.34 x period, 0.17 s at 2 Hz; half
+    maximum over ~0.38 x period): one negative excursion per cycle, then the return, so the fundamental carries >10x
+    the power of the second harmonic (the proposed centre 0.23 s / sigma 0.12 s still left 2 and 4 Hz about equal)."""
+    sp = _g(tau, 0.030, 0.050)
+    c = min(max(0.34 * period, 0.14), 0.30)
+    s = min(max(0.17 * period, 0.06), 0.13)
+    return sp, wave_gain * (1.2 / 1.3) * _dome(tau, c, s)
 
 
 def k_psw(tau: np.ndarray, period: float, lags, gains, troughs, wave_gain: float = 2.2) -> Tuple[np.ndarray, np.ndarray]:
@@ -161,11 +199,13 @@ def k_psw(tau: np.ndarray, period: float, lags, gains, troughs, wave_gain: float
     return sp, wave_gain * np.exp(-0.5 * ((tau - float(lags[-1]) - wl) / s) ** 2)
 
 
-def polyspike_draw(rng: np.random.Generator, n_spikes: int, lo: int = 3, hi: int = 8):
+def polyspike_draw(rng: np.random.Generator, n_spikes: int, lo: int = 3, hi: int = 8,
+                   isi: Tuple[float, float, float] = (0.072, 0.045, 0.130)):
     """Irregular polyspike (epileptiform-v3.md change 1): n-1..n+1 spikes, lognormal ISIs (CV ~0.35, median 72 ms,
-    clipped 45-130 ms), spikes FWHM ~20 ms, unsorted heights uniform(0.5, 1.2) (first spike 1.0), troughs 0.2-0.35."""
+    clipped 45-130 ms; ``isi`` = (median, lo, hi)), spikes FWHM ~20 ms, unsorted heights uniform(0.5, 1.2) (first spike
+    1.0), troughs 0.2-0.35."""
     n = int(np.clip(n_spikes + int(rng.integers(-1, 2)), lo, hi))
-    isi = np.clip(0.072 * np.exp(rng.normal(0.0, 0.40, n - 1)), 0.045, 0.130)
+    isi = np.clip(isi[0] * np.exp(rng.normal(0.0, 0.40, n - 1)), isi[1], isi[2])
     lags = np.concatenate([[0.0], np.cumsum(isi)])
     gains = np.concatenate([[1.0], rng.uniform(0.5, 1.2, n - 1)])
     troughs = rng.uniform(0.20, 0.35, n)
@@ -184,6 +224,12 @@ class GeneralizedV3:
 
     #: sample offset of the private EMG realizations (far past any record and the postictal-delta offset)
     EMG_OFFSET = 3_000_000_000
+    #: independent re-review (atonic, myoclonic-atonic): the loss of tone fell from a ~4-uV scalp muscle floor and was
+    #: invisible, so these seizure types put a polygraphic EMG row on the page (PMC12593124 Fig 2 carries EMG rows;
+    #: negative motor phenomena are read on deltoid / neck polygraphy).  Resting tone ~15 uV RMS.
+    EMG_ROW_TYPES = ("atonic", "myoclonic_atonic", "myoclonic_tonic", "tonic")
+    EMG_ROW_REST_UV = 15.0
+    EMG_ROW_OFFSET = 3_500_000_000
 
     def __init__(self, syn) -> None:
         self.syn = syn
@@ -210,6 +256,8 @@ class GeneralizedV3:
         self.eye: List[tuple] = []           # (kind, t0, t1, amp, freq)
         self.photic: List[tuple] = []        # (t0, t1, flash hz, amp)
         self.key_rows: List[dict] = []
+        self.emg_row = any(ev["type"] == "generalized_seizure" and ev.get("seizure_type") in self.EMG_ROW_TYPES
+                           for ev in syn.spec["events"])
         for i, ev in enumerate(syn.spec["events"]):
             if ev["type"] == "generalized_seizure":
                 getattr(self, "_sz_" + ev["seizure_type"])(i, ev, substream(syn.seed, "gen-v3", i))
@@ -282,7 +330,8 @@ class GeneralizedV3:
 
     def _train(self, i: int, rng, t0: float, t1: float, f0: float, f1: float, amp: float, kind: str, *,
                salt0: int, jitter_f: float = 0.04, ramp_s: float = 0.0, ps_n: int = 0, p_double: float = 0.0,
-               asym_amt: float = 0.08, **kw) -> int:
+               asym_amt: float = 0.08, amp_sd: float = 0.10, ps_range: Tuple[int, int] = (2, 4),
+               ps_isi: Tuple[float, float, float] = (0.072, 0.045, 0.130), **kw) -> int:
         """Complexes from t0 to t1 with a log-frequency glide f0 -> f1, per-cycle rate jitter and an amplitude ramp."""
         t, k = t0, 0
         dur = max(t1 - t0, 1e-6)
@@ -290,10 +339,10 @@ class GeneralizedV3:
             u = (t - t0) / dur
             f = self._glide(f0, f1, u) * float(np.exp(rng.normal(0.0, jitter_f)))
             period = 1.0 / f
-            a = amp * float(np.exp(rng.normal(0.0, 0.10)))
+            a = amp * float(np.exp(rng.normal(0.0, amp_sd)))
             if ramp_s > 0:
                 a *= float(np.clip(min(t - t0, t1 - t) / ramp_s, 0.25, 1.0))
-            ps = polyspike_draw(rng, ps_n, lo=2, hi=4) if ps_n else None
+            ps = polyspike_draw(rng, ps_n, lo=ps_range[0], hi=ps_range[1], isi=ps_isi) if ps_n else None
             self._add_cx(t, kind, a, period, salt0 + k, double=bool(rng.uniform() < p_double), ps=ps,
                          asym=float(rng.uniform(-asym_amt, asym_amt)), **kw)
             t += period
@@ -308,8 +357,12 @@ class GeneralizedV3:
         t0 = float(ev["onset_min"]) * 60.0
         t1 = t0 + float(ev["duration_s"])
         f = float(ev["frequency_hz"])
+        # independent re-review: the references repeat nearly the same complex cycle after cycle, so a seizure is
+        # either spike-and-wave or spike/polyspike-and-wave throughout (drawn once), with less per-electrode and
+        # per-cycle amplitude scatter (0.05, was 0.12 / 0.10)
+        dbl = 1.0 if rng.uniform() < 0.25 else 0.0
         n = self._train(i, rng, t0, t1, 1.15 * f, 0.85 * f, float(ev["amplitude_uv"]), "sw", salt0=i * 1_000_003,
-                        p_double=0.25, jitter_f=0.035, side=str(ev.get("side") or "both"))
+                        p_double=dbl, jitter_f=0.035, amp_sd=0.05, jitter=0.05, side=str(ev.get("side") or "both"))
         # first complex at 0.7 (onset within one cycle), last at 0.8
         first = len(self.cx) - n
         self.cx[first]["amp"] *= 0.7
@@ -382,10 +435,14 @@ class GeneralizedV3:
             return max(end, a0 + dur)
         self._jerks(i, ev, rng, "myoclonic_tonic", after)
 
-    def _add_gpfa(self, i, rng, t0, t1, f0, f1, a0, a1, ramp=0.15, side="both"):
+    def _add_gpfa(self, i, rng, t0, t1, f0, f1, a0, a1, ramp=0.15, side="both", am=0.35, df_sd=0.6, dphi=0.7,
+                  field="gen"):
+        """``am`` per-electrode amplitude modulation depth, ``df_sd`` / ``dphi`` per-electrode frequency (Hz) and phase
+        (rad) scatter; the draw count does not depend on them."""
         self.gpfa.append(dict(t0=float(t0), t1=float(t1), f0=float(f0), f1=float(f1), a0=float(a0), a1=float(a1),
-                              ramp=float(ramp), side=side, dphi=rng.uniform(-0.7, 0.7, self.n_e),
-                              df=rng.normal(0.0, 0.6, self.n_e), am_f=rng.uniform(0.6, 1.6, self.n_e),
+                              ramp=float(ramp), side=side, field=field, am=float(am),
+                              dphi=rng.uniform(-dphi, dphi, self.n_e),
+                              df=rng.normal(0.0, df_sd, self.n_e), am_f=rng.uniform(0.6, 1.6, self.n_e),
                               am_p=rng.uniform(0, 2 * np.pi, self.n_e), psi=float(rng.uniform(0, 2 * np.pi)),
                               lead=float(rng.uniform(0.004, 0.012))))
 
@@ -407,7 +464,7 @@ class GeneralizedV3:
         """Atonic seizure: a generalized sharp/spike-and-slow-wave with abrupt loss of EMG tone."""
         t0 = float(ev["onset_min"]) * 60.0
         dur = float(ev["duration_s"])
-        self._add_cx(t0, "ssw", float(ev["amplitude_uv"]), 0.7, i * 1_000_003, wave_gain=1.6,
+        self._add_cx(t0, "ssw", float(ev["amplitude_uv"]), 0.7, i * 1_000_003, wave_gain=1.6, field="vtx", jitter=0.05,
                      asym=float(rng.uniform(-0.08, 0.08)))
         self.emg_loss.append((t0 + 0.05, t0 + dur, 0.92))
         self.bg.append((t0 + 0.3, t0 + dur, 0.35, 0.2, 0.4))
@@ -456,7 +513,7 @@ class GeneralizedV3:
         self.eye.append(("flutter", t0 + 0.1, t0 + 0.1 + min(2.0, dur), 0.35 * float(ev.get("eye_uv", 150.0)),
                          float(rng.uniform(5.0, 6.0))))
         n = self._train(i, rng, t0 + lat, t0 + lat + dur, 1.05 * f, 0.9 * f, float(ev["amplitude_uv"]), "psw",
-                        salt0=i * 1_000_003, jitter_f=0.10, ps_n=3, wave_gain=2.0, field="fc")
+                        salt0=i * 1_000_003, jitter_f=0.10, ps_n=3, wave_gain=2.0, field="post")
         self._row("generalized_seizure", i, t0, t0 + lat + dur, seizure_type="eyelid_myoclonia",
                   closure_s=round(t0, 3), discharge_onset_s=round(t0 + lat, 3), n_complexes=n)
 
@@ -499,6 +556,10 @@ class GeneralizedV3:
         f = float(ev.get("frequency_hz") or f_def)
         med = float(ev.get("burst_s") or burst)
         rate_h = float(ev["rate_per_h"])
+        # independent re-review (JME, 4-6-Hz-spike-and-waves-with-JME): every chain carries the polyspike-and-wave
+        # (generalized field; the frontocentral table left the temporal chains at 0.09-0.14 of Fz-Cz), and at >= 4 Hz a
+        # complex has 1-2 spikes 35-60 ms apart (2-4 spikes at ~72 ms filled the 213-ms cycle and read as a fast rhythm)
+        jme = ((2, (1, 2), (0.045, 0.035, 0.060)) if f >= 4.0 else (3, (2, 4), (0.072, 0.045, 0.130)))
         L = self._BLOCK_S
         for blk in range(int(np.ceil((b - a) / L))):
             rng = substream(self.syn.seed, "gen-v3-dis", i, blk)
@@ -512,10 +573,11 @@ class GeneralizedV3:
                     continue
                 n = self._train(i, rng, t0, t0 + d, fb * 1.05, fb * 0.95, ab, kind,
                                 salt0=(i * 1009 + blk) * 100_003 + k * 97,
-                                jitter_f=0.12 if kind == "ssw" else 0.05, ps_n=3 if kind == "psw" else 0,
+                                jitter_f=0.12 if kind == "ssw" else 0.05, ps_n=jme[0] if kind == "psw" else 0,
+                                ps_range=jme[1], ps_isi=jme[2],
                                 ramp_s=0.8 if kind == "ssw" else 0.0, asym_amt=0.15 if kind == "ssw" else 0.08,
                                 side=side, wave_gain=2.0 if kind == "psw" else 1.3,
-                                field="fc" if kind == "psw" else "gen")
+                                field="gen")
                 self._row("generalized_discharge", i, t0 - 0.03, t0 + d, pattern=pat, frequency_hz=round(fb, 3),
                           amplitude_uv=round(ab, 1), n_complexes=n)
 
@@ -567,23 +629,38 @@ class GeneralizedV3:
                 k += 1
 
     def _gpfa_sleep(self, i, ev, a, b, amp, side):
-        """LGS generalized paroxysmal fast activity in NREM sleep: 1-10 s (median 3 s) bursts of 10-25 Hz, frontally
+        """LGS generalized paroxysmal fast activity in NREM sleep: 1-6 s (median 3 s) bursts of 15-25 Hz, frontally
         predominant, abrupt onset, no EMG; ``rate_per_h`` applies inside the merged N2/N3 windows only
-        (``Synthesizer.stage_intervals``), none awake or in REM."""
+        (``Synthesizer.stage_intervals``), none awake or in REM.
+
+        Independent re-review: 12-19 Hz with per-electrode waxing-waning read as a sleep spindle, and in N3 the bursts
+        were only 1.5x the delta.  Now ~20 Hz (15-25), monomorphic and in phase across electrodes (no amplitude
+        modulation or frequency scatter, phase scatter 0.05 rad, bifrontal field), 0.05-s onset, the background
+        attenuated under the burst (tonic-seizure-ii onset, ILAE LGS: abrupt, monomorphic, with attenuation)."""
         rate_h = float(ev["rate_per_h"])
-        f = float(ev.get("frequency_hz") or 15.0)
+        f = float(ev.get("frequency_hz") or 20.0)
         med = float(ev.get("burst_s") or 3.0)
         for x0, x1, _grp in self._stage_groups(a, b, (("N2", "N3"),)):
-            rng = substream(self.syn.seed, "gen-v3-gpfa", i, int(round(x0 * 10)))
-            m = int(np.floor(rate_h * (x1 - x0) / 3600.0 + rng.uniform()))
-            for t0 in np.sort(rng.uniform(x0, x1, m)):
-                d = float(np.clip(med * np.exp(rng.normal(0.0, 0.45)), 1.0, 10.0))
-                if t0 + d > x1:
-                    continue
-                fb = float(np.clip(f * np.exp(rng.normal(0.0, 0.15)), 10.0, 25.0))
+            # a Poisson walk forward from the window start (the gaps from one stream, each burst from its own keyed
+            # stream), so a page synthesizer whose horizon cuts the window sees the same bursts as the whole record
+            key = int(round(x0 * 10))
+            walk = substream(self.syn.seed, "gen-v3-gpfa", i, key)
+            t0, last, k = x0, -np.inf, 0
+            while True:
+                t0 += float(walk.exponential(3600.0 / rate_h))
+                if t0 >= x1:
+                    break
+                rng = substream(self.syn.seed, "gen-v3-gpfa-burst", i, key, k)
+                k += 1
+                d = float(np.clip(med * np.exp(rng.normal(0.0, 0.45)), 1.0, 6.0))
+                if t0 + d > x1 or t0 < last + 1.0:
+                    continue            # overlapping bursts beat against each other (waxing-waning): one at a time
+                last = t0 + d
+                fb = float(np.clip(f * np.exp(rng.normal(0.0, 0.15)), 15.0, 25.0))
                 ab = amp * float(np.exp(rng.normal(0.0, 0.15)))
-                self._add_gpfa(i, rng, t0, t0 + d, fb * 1.08, fb * 0.92, 0.6 * ab, ab, ramp=0.12, side=side)
-                self.bg.append((t0, t0 + d, 0.5, 0.1, 0.3))
+                self._add_gpfa(i, rng, t0, t0 + d, fb * 1.05, fb * 0.95, 0.9 * ab, ab, ramp=0.05, side=side,
+                               am=0.0, df_sd=0.0, dphi=0.05, field="gpfa")
+                self.bg.append((t0, t0 + d, 0.75, 0.05, 0.3))
                 self._row("generalized_discharge", i, t0, t0 + d, pattern="gpfa", stage=self._stage_label(t0 + 0.5 * d),
                           frequency_hz=round(fb, 2), amplitude_uv=round(ab, 1))
 
@@ -606,13 +683,14 @@ class GeneralizedV3:
             fi = f0 * np.power(r, u)
         env = (g["a0"] + (g["a1"] - g["a0"]) * u)
         env = env * np.clip(tt / g["ramp"], 0.0, 1.0) * (1.0 - np.clip((tt - dur) / 0.4, 0.0, 1.0))
-        _, wf = self._field("gen", g["side"])
+        _, wf = self._field(g["field"], g["side"])
         lag = g["lead"] * self.front
         P = (ph[None, :] - 2 * np.pi * fi[None, :] * lag[:, None] + g["dphi"][:, None]
              + 2 * np.pi * g["df"][:, None] * tt[None, :])
-        am = 1.0 + 0.35 * np.sin(2 * np.pi * g["am_f"][:, None] * tt[None, :] + g["am_p"][:, None])
+        am = 1.0 + g["am"] * np.sin(2 * np.pi * g["am_f"][:, None] * tt[None, :] + g["am_p"][:, None])
         wave = (np.sin(P) + 0.25 * np.sin(2 * P + g["psi"])) * am
-        key = ("gpfa", g["side"], round(g["lead"], 5))
+        key = (("gpfa", g["side"], round(g["lead"], 5)) if g["field"] == "gen"
+               else ("gpfa", g["field"], g["side"], round(g["lead"], 5), tuple(np.round(g["dphi"], 5))))
         nv = self._norm.get(key)
         if nv is None:
             # unit template, 1 s at 15 Hz with this segment's phase offsets: median best-derivation p-p
@@ -638,6 +716,19 @@ class GeneralizedV3:
         noise = self.syn._oa(self.syn.st_muscle, i0 + self.EMG_OFFSET, n, self.n_e)
         # independent realizations of unit RMS; a bipolar pair of them runs about 6 x sqrt(2) RMS peak-to-peak in 1 s
         return noise * self.emg_field[:, None] * (gain / (6.0 * math.sqrt(2.0)))[None, :]
+
+    def emg_channel(self, t: np.ndarray, i0: int) -> Optional[np.ndarray]:
+        """Polygraphic EMG row (uV) for records with an atonic / myoclonic-atonic / myoclonic-tonic / tonic seizure:
+        resting tone x ``emg_factor`` (the atonic silent period) plus the scheduled EMG bursts and tonic EMG; a pure
+        function of absolute time (``i0`` = sample index of ``t[0]``)."""
+        if not self.emg_row or t.size == 0:
+            return None
+        rms = self.EMG_ROW_REST_UV * self.emg_factor(t)
+        for e0, e1, p2p, rise, fall, _kind in self.emg:
+            if e1 + fall * 3 < t[0] or e0 > t[-1]:
+                continue
+            rms = np.maximum(rms, self._shape(t, e0, e1, rise, fall) * p2p / 6.0)
+        return self.syn._oa(self.syn.st_muscle, i0 + self.EMG_ROW_OFFSET, t.size, 1)[0] * rms
 
     def _eye_rows(self, t: np.ndarray) -> Optional[np.ndarray]:
         if not self.eye:

@@ -120,11 +120,18 @@ def test_typical_absence_matches_the_atlas_absence():
 
 
 def test_typical_absence_spike_and_wave_morphology():
-    """Spike 20-70 ms (IFCN) followed by a slow wave at least as large; about a quarter of the complexes carry a second
-    spike (absence-seizure-at-20uV: "spike/polyspike and waves")."""
+    """Spike 20-70 ms (IFCN) followed by a slow wave at least as large; about a quarter of the seizures carry a second
+    spike (absence-seizure-at-20uV: "spike/polyspike and waves"), drawn once per seizure (independent re-review: the
+    references repeat the same complex cycle after cycle)."""
+    doubles = []
+    for seed in range(926300, 926320):
+        s = Synthesizer(_spec(seed, "child", CHILD, [gs("typical_absence", duration_s=4.0)]), 200.0)
+        d = {c["double"] for c in s._gen.cx}
+        assert len(d) == 1
+        doubles.append(d.pop())
+    assert 0.1 <= np.mean(doubles) <= 0.45, np.mean(doubles)
     syn = Synthesizer(_spec(926201, "child", CHILD, [gs("typical_absence", duration_s=8.0)]), 400.0)
     cx = [c for c in syn._gen.cx if c["kind"] == "sw"]
-    assert 0.1 <= np.mean([c["double"] for c in cx]) <= 0.45
     fs = syn.fs
     wave_over_spike = []
     for c in cx[3:9]:
@@ -205,7 +212,10 @@ def test_atonic_slow_wave_and_loss_of_tone():
     td, sd, nd = _display(syn, t0 - 4.0, t0 + 2.0)
     fs = syn.fs
     on, pre = (td > t0 - 0.1) & (td < t0 + 0.9), td < t0 - 0.5
-    rat = np.median([np.ptp(sd[nd.index(ch)][on]) / np.median(_p2p(sd[nd.index(ch)][pre], fs)) for ch in CHAINS])
+    # vertex / frontocentral field (independent re-review): the parasagittal and midline chains carry it, the temporal
+    # chains little
+    para = ["Fp1-F3", "F3-C3", "C3-P3", "P3-O1", "Fp2-F4", "F4-C4", "C4-P4", "P4-O2", "Fz-Cz", "Cz-Pz"]
+    rat = np.median([np.ptp(sd[nd.index(ch)][on]) / np.median(_p2p(sd[nd.index(ch)][pre], fs)) for ch in para])
     assert rat >= 3.0, rat
     assert _emg(syn, td, sd, nd, (td > t0 + 0.2) & (td < t0 + 1.1), pre) <= 0.4
 
@@ -486,3 +496,236 @@ def test_generalized_features_are_window_and_horizon_independent(case):
     tt = (int(round(a * syn.fs)) + np.arange(4 * syn.fs)) / syn.fs
     i0 = int(round(a * syn.fs))
     assert np.allclose(syn._gen.rows(tt, i0), page._gen.rows(tt, i0), atol=1e-6)
+
+
+# ------------------------------------------------------------------ independent re-review fixes (r050-fix-generalized)
+# research/eeg-atlas/feature-review-20260926/generalized-independent.md; measurements re-run with its scripts in
+# renders/phaseB/fix-generalized/ (indep.py, fixcheck.py) and written up in generalized-fix.md.
+
+def _ref_isolated(syn, t0, t1, pad=1.0):
+    """Only the generalized cerebral rows, unfiltered, ear-referenced (the reviewer's "F3-ear isolated" trace)."""
+    i0 = int(round((t0 - pad) * syn.fs))
+    t = (i0 + np.arange(int(round((t1 - t0 + pad) * syn.fs)))) / syn.fs
+    pairs = mt.montage_pairs("referential", syn.scalp)
+    sig = syn.derive(syn._gen.rows(t, i0, extras=False) * syn._ch_gain[:, None], pairs, "referential")
+    keep = t >= t0
+    return t[keep], sig[:, keep], [a for a, _ in pairs]
+
+
+def _fwhm_s(y, i, fs):
+    h = abs(y[i]) / 2.0
+    a = b = i
+    while a > 0 and abs(y[a]) > h and np.sign(y[a]) == np.sign(y[i]):
+        a -= 1
+    while b < y.size - 1 and abs(y[b]) > h and np.sign(y[b]) == np.sign(y[i]):
+        b += 1
+    return (b - a) / fs
+
+
+def test_absence_slow_wave_is_a_broad_dome_joined_to_the_spike():
+    """atlas-absence-seizure/p1 (digitized: the negative dome ~0.24 s of a 0.34-s cycle, ~70 %) and Wikimedia Commons
+    Spike-waves.png: the dome is the largest deflection and fills most of the cycle.  The old k_sw wave measured 35-42 %
+    of the cycle at half maximum (F3-ear).  Accept 55-85 % and a wave at least 0.8x the spike (F3-ear)."""
+    for seed in (26092601, 926201):
+        syn = Synthesizer(_spec(seed, "child", CHILD, [gs("typical_absence", duration_s=8.0)]), 400.0)
+        fs = syn.fs
+        frac, ratio = [], []
+        for c in syn._gen.cx[3:10]:
+            t, s, names = _ref_isolated(syn, c["t"] - 0.1, c["t"] + c["period"])
+            y = s[names.index("F3")]
+            isp = int(np.argmin(np.where(t < c["t"] + 0.06, y, np.inf)))
+            iw = int(np.argmin(np.where(t > c["t"] + 0.08, y, np.inf)))
+            frac.append(_fwhm_s(y, iw, fs) / c["period"])
+            ratio.append(abs(y[iw]) / abs(y[isp]))
+        assert 0.55 <= np.median(frac) <= 0.85, (seed, frac)
+        assert np.median(ratio) >= 0.8, (seed, ratio)
+
+
+def test_slow_spike_wave_reads_at_its_authored_rate():
+    """different-LGS-background-at-10uV and ILAE (LGS / atypical absence): slow spike-and-wave at 1.5-2.5 Hz, one
+    sharp-then-slow unit per cycle.  With the old k_ssw trough the sharp wave and the slow wave split into two humps and
+    an authored 2-Hz atypical absence displayed a 4.1-4.25 Hz peak (Fz-Cz); LGS runs read 3.6-5.0 Hz in 17 of 24."""
+    from eeg_render.generalized_v3 import k_ssw
+    t_ = np.arange(0.0, 0.5, 1.0 / 256)
+    x = sum(sum(k_ssw(t_ + k * 0.5, 0.5)) for k in (-2, -1, 0, 1))
+    X = np.abs(np.fft.rfft(np.tile(x - x.mean(), 8))) ** 2
+    f = np.fft.rfftfreq(t_.size * 8, 1.0 / 256)
+    assert X[np.argmin(abs(f - 2.0))] >= 5.0 * X[np.argmin(abs(f - 4.0))]
+    for seed in (26092602, 926202):
+        syn = Synthesizer(_spec(seed, "child", LGS_BG, [gs("atypical_absence", duration_s=11.0)]), 400.0)
+        t, s, names = _display(syn, 123.0, 128.0)
+        y = s[names.index("Fz-Cz")]
+        fq, p = sps.welch(y - y.mean(), syn.fs, nperseg=4 * syn.fs, nfft=8 * syn.fs)
+        band = (fq >= 1.0) & (fq <= 30.0)
+        assert 1.5 <= fq[band][np.argmax(p[band])] <= 2.5, seed
+    syn = Synthesizer(_spec(26092613, "child", LGS_BG, [gd("slow_spike_wave", rate_per_h=200)]), 600.0)
+    ok = []
+    for r in [r for r in _row(syn, "generalized_discharge") if 30 < r["t0"] < 560 and r["t1"] - r["t0"] >= 4.0][:8]:
+        t, s, names = _display(syn, r["t0"] + 1.0, r["t1"] - 1.0)
+        fq, p = sps.welch(s[names.index("Fz-Cz")], syn.fs, nperseg=min(t.size, 4 * syn.fs), nfft=8 * syn.fs)
+        band = (fq >= 1.0) & (fq <= 5.0)
+        ok.append(1.5 <= fq[band][np.argmax(p[band])] <= 2.6)
+    assert np.mean(ok) >= 0.8, ok
+
+
+def test_jme_polyspike_wave_involves_every_chain():
+    """4-6-Hz-spike-and-waves-with-JME: every chain carries the 4-6 Hz (poly)spike-and-wave, temporal chains included,
+    1-2 spikes per complex.  The frontocentral table left C3-P3 / F7-T3 / T3-T5 / T5-O1 at 0.09-0.14 of Fz-Cz and a
+    chain-median of 2.4x; 2-4 spikes at ~72 ms filled the 213-ms cycle."""
+    syn = Synthesizer(_spec(26092612, "adolescent", CHILD, [gd("polyspike_wave", rate_per_h=120)], dur=30), 1800.0)
+    fs = syn.fs
+    rows = [r for r in _row(syn, "generalized_discharge") if r["t0"] > 60]
+    med = []
+    prev = -np.inf
+    for r in rows:
+        clean = r["t0"] - prev >= 9.0          # the background window must be free of the previous burst
+        prev = r["t1"]
+        if not clean:
+            continue
+        td, sd, nd = _display(syn, r["t0"] - 8.0, r["t1"] + 0.3)
+        on, pre = (td >= r["t0"]) & (td < r["t1"]), td < r["t0"] - 0.5
+        med.append(np.median([np.ptp(sd[nd.index(c)][on]) / np.median(_p2p(sd[nd.index(c)][pre], fs))
+                              for c in CHAINS]))
+        if len(med) == 10:
+            break
+    assert np.median(med) >= 3.0, med
+    ns = [len(c["ps"][0]) for c in syn._gen.cx if c["kind"] == "psw"]
+    isi = np.concatenate([np.diff(c["ps"][0]) for c in syn._gen.cx if c["kind"] == "psw"])
+    assert set(ns) <= {1, 2} and 0.035 - 1e-9 <= isi.min() and isi.max() <= 0.060 + 1e-9
+
+
+def test_sporadic_polyspike_spikes_proportionate_and_conspicuous():
+    """eeg0094_db1 and myoclonic-jerk-examples/p1: the spikes stand as tall as or taller than the after-going wave, and
+    the complex stands well above the page's background.  At _PS_WAVE_GAIN 2.2 the wave was 1.45-2.11x the spike train
+    (F3-ear) and the complex 1.1-4.8x the 1-s background p-p.  Accept wave/spike 0.7-1.4 and complex >= 3x the 1-s
+    background (F3-C3, blink-free background)."""
+    bg = dict(CHILD, blink_rate_per_min=0)
+    syn = Synthesizer(_spec(517604, "child", bg, [{"type": "sporadic_discharges", "focus": "generalized_frontocentral",
+                                                   "rate_per_h": 120, "amplitude_uv": 150.0,
+                                                   "morphology": "polyspike", "n_spikes": 5}]), 900.0)
+    fs = syn.fs
+    ratio, consp = [], []
+    pairs = mt.montage_pairs("referential", syn.scalp)
+    for j in [j for j, r in enumerate(syn._sed) if 60.0 < r[0] < 800.0][:8]:
+        t0 = float(syn._sed[j, 0])
+        lags = syn._sed_poly[j][0]
+        tt = np.arange(int(round((t0 - 0.1) * fs)), int(round((t0 + 1.0) * fs))) / fs
+        y = syn.derive(syn._sed_rows(tt), pairs, "referential")[[a for a, _ in pairs].index("F3")]
+        train = (tt >= t0 - 0.02) & (tt <= t0 + lags[-1] + 0.02)
+        ratio.append(np.min(y[tt > t0 + lags[-1] + 0.04]) / np.min(y[train]))
+        td, sd, nd = _display(syn, t0 - 10.0, t0 + 1.0)
+        yd = sd[nd.index("F3-C3")]
+        m = (td > t0 - 0.05) & (td < t0 + lags[-1] + 0.5)
+        pre = (td < t0 - 1.0) & (td > t0 - 9.0)
+        consp.append(np.ptp(yd[m]) / np.median(_p2p(yd[pre], fs)))
+    assert 0.7 <= np.median(ratio) <= 1.4, ratio
+    assert np.median(consp) >= 3.0, consp
+
+
+def test_atonic_is_not_a_blink_and_its_loss_of_tone_is_readable():
+    """ILAE: atonic = generalized (poly)spike-and-slow-wave, vertex / frontocentral, with an EMG silent period read on a
+    polygraphic EMG channel (PMC12593124 Fig 2 carries EMG rows).  Before: the complex peaked at Fp1-F7 (1.00) like the
+    blink 7 s later, and the EMG fell 0.11x from a 3.7-4.7 uV scalp floor with no EMG channel on the page."""
+    for seed in (26092607, 926207):
+        syn = Synthesizer(_spec(seed, "child", CHILD, [gs("atonic", at=2.0 + 5 / 60)]), 400.0)
+        c = syn._gen.cx[0]
+        t, s, names = _isolated(syn, c["t"] - 0.05, c["t"] + 0.9)
+        pp = {ch: np.ptp(s[names.index(ch)]) for ch in CHAINS}
+        vtx = max(pp["Fz-Cz"], pp["Cz-Pz"], pp["C3-P3"], pp["C4-P4"], pp["F3-C3"], pp["F4-C4"])
+        assert max(pp["Fp1-F7"], pp["Fp2-F8"]) <= 0.35 * vtx, (seed, pp)
+        assert max(pp.values()) == vtx, (seed, pp)
+        e0, e1, _ = syn._gen.emg_loss[0]
+        tt = np.arange(int((e0 - 4) * syn.fs), int((e1 + 1) * syn.fs)) / syn.fs
+        y = syn.emg_channel(tt)
+        rest = np.sqrt(np.mean(y[(tt > e0 - 3) & (tt < e0 - 0.5)] ** 2))
+        drop = np.sqrt(np.mean(y[(tt > e0 + 0.1) & (tt < e1 - 0.05)] ** 2))
+        assert 10.0 <= rest <= 20.0 and drop <= 0.2 * rest, (rest, drop)
+    none = Synthesizer(_spec(1, "child", CHILD, [gs("typical_absence")]), 300.0)
+    assert none.emg_channel(np.arange(0, 256) / 256.0 + 120.0) is None
+
+
+def test_gpfa_is_not_a_spindle_and_shows_in_n3():
+    """tonic-seizure-ii onset and ILAE LGS: generalized paroxysmal fast activity is abrupt, monomorphic, ~15-25 Hz and
+    in phase across the head, with the background attenuated.  Before: 12-19 Hz with per-electrode waxing-waning (read
+    as a spindle in N2; homologous chains dephased) and 1.5x the N3 delta.  Accept: peak 15-25 Hz, F3-C3/F4-C4
+    correlation >= 0.8, 12-28 Hz envelope CV <= 0.2, onset 10->90 % <= 150 ms, bursts 1-6 s one at a time; in N3 the
+    15-25 Hz RMS >= 5x and the <3-Hz delta <= 0.7x the preceding 5 s (medians over bursts)."""
+    syn = Synthesizer(_spec(926214, "child", LGS_BG, SLEEP + [gd("gpfa")], dur=60), 3600.0)
+    fs = syn.fs
+    rows = _row(syn, "generalized_discharge")
+    assert rows and all(1.0 <= r["t1"] - r["t0"] <= 6.0 and 15.0 <= r["frequency_hz"] <= 25.0 for r in rows)
+    spans = sorted((r["t0"], r["t1"]) for r in rows)
+    assert all(b[0] >= a[1] for a, b in zip(spans, spans[1:]))
+    clean = [r for r in rows if r["t1"] - r["t0"] >= 2.0
+             and not any(o["t1"] > r["t0"] - 6.0 and o["t0"] < r["t0"] for o in rows)]
+    n3 = [r for r in clean if r["stage"] == "N3"][:5]
+    assert n3
+    for r in clean[:5] + n3:
+        ti, si, ni = _isolated(syn, r["t0"] + 0.3, r["t1"] - 0.1)
+        a, b = si[ni.index("F3-C3")], si[ni.index("F4-C4")]
+        assert np.corrcoef(a, b)[0, 1] >= 0.8
+        env = np.abs(sps.hilbert(sps.sosfiltfilt(sps.butter(4, [12, 28], "bandpass", fs=fs, output="sos"), a)))
+        env = np.convolve(env, np.ones(fs // 10) / (fs // 10), "same")[fs // 5:-fs // 5]
+        assert np.std(env) / np.mean(env) <= 0.2
+        fq, p = sps.welch(a, fs, nperseg=min(a.size, fs), nfft=4 * fs)
+        assert 15.0 <= fq[np.argmax(p)] <= 25.0
+        ti, si, ni = _isolated(syn, r["t0"] - 0.3, r["t0"] + 0.7)
+        e = np.abs(si[ni.index("F3-C3")])
+        w = int(0.05 * fs)
+        e = np.array([e[max(0, k - w):k + 1].max() for k in range(e.size)])
+        lvl = np.median(e[ti > r["t0"] + 0.3])
+        assert ti[np.argmax(e > 0.9 * lvl)] - ti[np.argmax(e > 0.1 * lvl)] <= 0.15
+    fast, delta = [], []
+    for r in n3:
+        td, sd, nd = _display(syn, r["t0"] - 5.0, r["t1"])
+        y = sd[nd.index("F3-C3")]
+        on, pre = (td > r["t0"] + 0.3), td < r["t0"] - 0.2
+        fast.append(_band_rms(y[on], fs, 15, 25) / _band_rms(y[pre], fs, 15, 25))
+        delta.append(_band_rms(y[on], fs, 0.5, 3.0) / _band_rms(y[pre], fs, 0.5, 3.0))
+    assert np.median(fast) >= 5.0 and min(fast) >= 3.0, fast
+    assert np.median(delta) <= 0.7, delta
+
+
+def test_photoparoxysmal_page_carries_the_photic_marker():
+    """eegatlas-online eeg0066 and PMC8610539 Fig 1B show the flash train on its own marker channel; before, the PPR
+    page had no Photic row because Synthesizer.photic_flashes read only the authored photic_driving variants."""
+    syn = Synthesizer(_spec(26092610, "adolescent", CHILD, [gs("photoparoxysmal", at=2.0 + 2 / 60)]), 400.0)
+    r = _row(syn)[0]
+    fl = syn.photic_flashes(r["stimulus_onset_s"] - 2.0, r["stimulus_offset_s"] + 2.0)
+    n = (r["stimulus_offset_s"] - r["stimulus_onset_s"]) * r["stimulus_frequency_hz"]
+    assert abs(fl.size - n) <= 1 and abs(fl[0] - r["stimulus_onset_s"]) < 1e-6 and fl[-1] < r["stimulus_offset_s"]
+    assert abs(1.0 / np.median(np.diff(fl)) - r["stimulus_frequency_hz"]) < 1e-6
+
+
+def test_eyelid_myoclonia_polyspikes_are_bioccipital():
+    """PMC8610539 Fig 1 E/F (Jeavons syndrome): the polyspikes after each eye closure are largest bioccipitally;
+    PMC12593124 Fig 2: generalized PSW after closure.  Before: frontocentral (F3-C3 / Fz-Cz 0.88-1.00, T5-O1 0.12-0.22).
+    Accept: the largest posterior link (P-O, T5/T6-O) >= 1.5x the largest frontal one (Fp-F, F-C, Fz-Cz)."""
+    for seed in (26092609, 926209):
+        syn = Synthesizer(_spec(seed, "child", CHILD, [gs("eyelid_myoclonia", at=2.0 + 4 / 60)]), 400.0)
+        r = _row(syn)[0]
+        t, s, names = _isolated(syn, r["discharge_onset_s"], r["discharge_onset_s"] + 1.5)
+        pp = {ch: np.ptp(s[names.index(ch)]) for ch in CHAINS}
+        post = max(pp[c] for c in ("P3-O1", "P4-O2", "T5-O1", "T6-O2"))
+        front = max(pp[c] for c in ("Fp1-F3", "Fp2-F4", "F3-C3", "F4-C4", "Fz-Cz"))
+        assert post >= 1.5 * front, (seed, pp)
+
+
+@pytest.mark.parametrize("case", ["gpfa", "atonic_emg"])
+def test_fixed_generalized_features_are_window_independent(case):
+    ev, a = {"gpfa": (SLEEP + [gd("gpfa", rate_per_h=400)], 1100.0),
+             "atonic_emg": ([gs("atonic", at=2.0)], 118.0)}[case]
+    spec = _spec(926231, "child", LGS_BG, ev, dur=30)
+    syn = Synthesizer(spec, 1800.0)
+    t1, x1 = syn.segment(a - 5.0, a + 10.0)
+    t2, x2 = syn.segment(a, a + 4.0)
+    i = int(round(5.0 * syn.fs))
+    assert np.allclose(x1[:, i:i + x2.shape[1]], x2, atol=1e-6)
+    page = Synthesizer(copy.deepcopy(spec), a + 70.0)
+    tt = (int(round(a * syn.fs)) + np.arange(4 * syn.fs)) / syn.fs
+    i0 = int(round(a * syn.fs))
+    assert np.allclose(syn._gen.rows(tt, i0), page._gen.rows(tt, i0), atol=1e-6)
+    if case == "atonic_emg":
+        long = syn.emg_channel((int(round((a - 5.0) * syn.fs)) + np.arange(15 * syn.fs)) / syn.fs)
+        short = page.emg_channel(tt)
+        assert np.allclose(long[i:i + short.size], short, atol=1e-6)
