@@ -129,20 +129,36 @@ image:
       amplitude_uv: 90
       slow_fraction: 0.65
       reactivity: present
+    # each generalized seizure is drawn as simultaneous left + right hemispheric runs: at spec_version 3 the
+    # 'generalized' onset field cancels on the bipolar trend chains and the flames/aEEG arches barely showed
     events:
       - type: seizure
         onset_min: 32.0
         duration_s: 90
-        onset_region: generalized
+        onset_region: left_hemisphere
         evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 115, amplitude_end_uv: 295 }
-        spread: generalized
+        spread: none
+        postictal_attenuation_s: 45
+      - type: seizure
+        onset_min: 32.0
+        duration_s: 90
+        onset_region: right_hemisphere
+        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 115, amplitude_end_uv: 295 }
+        spread: none
         postictal_attenuation_s: 45
       - type: seizure
         onset_min: 84.0
         duration_s: 90
-        onset_region: generalized
+        onset_region: left_hemisphere
         evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 115, amplitude_end_uv: 295 }
-        spread: generalized
+        spread: none
+        postictal_attenuation_s: 45
+      - type: seizure
+        onset_min: 84.0
+        duration_s: 90
+        onset_region: right_hemisphere
+        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 115, amplitude_end_uv: 295 }
+        spread: none
         postictal_attenuation_s: 45
     annotations: []
     panels:

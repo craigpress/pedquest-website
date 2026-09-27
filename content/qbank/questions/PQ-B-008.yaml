@@ -134,10 +134,18 @@ image:
       slow_fraction: 0.75
       reactivity: present
     events:
+      # generalized status drawn as simultaneous left + right hemispheric runs (the v3 generalized onset field
+      # cancels on the bipolar trend chains, so the saturated trends the explanation describes did not appear)
       - type: status_epilepticus
         onset_min: 10
         duration_min: 220
-        onset_region: generalized
+        onset_region: left_hemisphere
+        spread: none
+      - type: status_epilepticus
+        onset_min: 10
+        duration_min: 220
+        onset_region: right_hemisphere
+        spread: none
     panels:
       - seizure_probability
       - rhythmicity_L

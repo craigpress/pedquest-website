@@ -117,9 +117,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
-    spec_version: 2
-    # kept at spec_version 2 (0.4.4 pixels): at v3 the generalized-onset cluster cancels in the bipolar trend
-    # chains and its per-cycle jitter removes the rhythmicity signature, so the bands the question asks about vanish
+    spec_version: 3
     seed: 8100007
     age_group: child
     sample_rate: 256
@@ -128,18 +126,123 @@ image:
     background:
       type: continuous
       dominant_hz: 4.0
-      amplitude_uv: 55
+      amplitude_uv: 90
       slow_fraction: 0.7
       reactivity: present
     events:
-      - type: seizure_cluster
-        start_min: 20
-        end_min: 350
-        interval_min: 12
-        seizure:
-          duration_s: 170
-          onset_region: generalized
-          evolution: { start_hz: 3.0, end_hz: 1.4, amplitude_start_uv: 70, amplitude_end_uv: 180 }
+      # the spec_version 2 cluster schedule written out as simultaneous left + right hemispheric runs: v3 randomizes seizure_cluster runs and its generalized onset field cancels on bipolar trends
+      - {type: seizure, onset_min: 19.90, duration_s: 141, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 19.90, duration_s: 141, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 32.13, duration_s: 152, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 32.13, duration_s: 152, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 44.06, duration_s: 177, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 44.06, duration_s: 177, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 55.91, duration_s: 152, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 55.91, duration_s: 152, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 67.75, duration_s: 189, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 67.75, duration_s: 189, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 80.00, duration_s: 130, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 80.00, duration_s: 130, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 92.03, duration_s: 178, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 92.03, duration_s: 178, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 104.43, duration_s: 194, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 104.43, duration_s: 194, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 115.68, duration_s: 178, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 115.68, duration_s: 178, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 128.24, duration_s: 211, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 128.24, duration_s: 211, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 140.07, duration_s: 177, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 140.07, duration_s: 177, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 152.11, duration_s: 170, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 152.11, duration_s: 170, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 164.16, duration_s: 188, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 164.16, duration_s: 188, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 175.87, duration_s: 142, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 175.87, duration_s: 142, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 188.12, duration_s: 164, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 188.12, duration_s: 164, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 200.24, duration_s: 205, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 200.24, duration_s: 205, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 212.22, duration_s: 141, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 212.22, duration_s: 141, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 224.94, duration_s: 145, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 224.94, duration_s: 145, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 236.44, duration_s: 188, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 236.44, duration_s: 188, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 247.60, duration_s: 147, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 247.60, duration_s: 147, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 259.72, duration_s: 177, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 259.72, duration_s: 177, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 272.07, duration_s: 182, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 272.07, duration_s: 182, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 283.64, duration_s: 150, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 283.64, duration_s: 150, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 295.94, duration_s: 178, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 295.94, duration_s: 178, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 307.61, duration_s: 185, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 307.61, duration_s: 185, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 320.11, duration_s: 171, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 320.11, duration_s: 171, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 332.29, duration_s: 164, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 332.29, duration_s: 164, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 343.39, duration_s: 153, onset_region: left_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
+      - {type: seizure, onset_min: 343.39, duration_s: 153, onset_region: right_hemisphere, spread: none,
+         evolution: {start_hz: 3, end_hz: 1.4, amplitude_start_uv: 115, amplitude_end_uv: 295}}
     annotations:
       - { at_min: 30, label: "Levetiracetam 60 mg/kg" }
     panels:

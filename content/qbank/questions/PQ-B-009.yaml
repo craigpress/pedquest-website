@@ -130,20 +130,28 @@ image:
     background:
       type: continuous
       dominant_hz: 4.0
-      amplitude_uv: 90
+      amplitude_uv: 55
       slow_fraction: 0.7
       reactivity: present
     events:
+      # generalized status drawn as simultaneous left + right hemispheric runs (the v3 generalized onset field
+      # cancels on the bipolar trend chains, so the saturated trends the explanation describes did not appear)
       - type: status_epilepticus
         onset_min: 15
         duration_min: 520
-        onset_region: generalized
+        onset_region: left_hemisphere
+        spread: none
+      - type: status_epilepticus
+        onset_min: 15
+        duration_min: 520
+        onset_region: right_hemisphere
+        spread: none
       - type: sedation_change
         at_min: 540
         direction: increase
         agent: midazolam
-        # v3 drug burst suppression keeps a residual floor relative to the background: at 90 uV it sat above
-        # the 5-uV SR threshold, so the SR never reached the target; the drug also lowers the amplitude
+        # midazolam lowers the voltage as well as adding suppression: without amplitude_pct the v3 residual
+        # interburst floor kept the SR near 19 % against the 35 % target
         effect: { suppression_ratio_target_pct: 35, beta_boost: false, ramp_min: 20, amplitude_pct: 40 }
     annotations:
       - { at_min: 60, label: "Levetiracetam load" }
@@ -161,8 +169,6 @@ image:
       - suppression_ratio_L
       - suppression_ratio_R
     time_axis: elapsed
-    style:
-      aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
 
 metadata:
   author: Writer B (claude-opus)

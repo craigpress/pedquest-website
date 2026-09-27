@@ -23,12 +23,12 @@ stem:
     paralytic are running at the time of the window shown. A head computed tomogram
     obtained on the second day shows an acute right middle cerebral artery territory
     infarct. The bedside nurse reports that the seizure-probability trend has been
-    elevated since cannulation.
+    frequently elevated since cannulation.
   image_caption: >-
     Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT 0-20 Hz L and
     R; relative asymmetry spectrogram; asymmetry index; suppression ratio L and R), elapsed time
     (hours:minutes); circuit running is annotated from minute 0. Lower: 15-second raw page from
-    minute 180.5, longitudinal bipolar, 7 microvolts per millimetre, 1-70 Hz.
+    minute 180.5, longitudinal bipolar, 10 microvolts per millimetre, 1-70 Hz.
   lead_in: >-
     Locate the electrographic seizure on the trend panel, distinguishing it from the
     circuit artifact.
@@ -48,8 +48,8 @@ explanation: >-
   180 minutes. What the image shows: from minute 0 a narrow, unvarying horizontal stripe
   runs across both rhythmicity spectrograms and both FFT panels at a fixed frequency, does
   not change over 6 hours, is present bilaterally and does not deflect the asymmetry
-  index. That is the circuit pump artifact, and it is what has been holding the
-  seizure-probability trend elevated since cannulation. At about 180 minutes a separate band
+  index. That is the circuit pump artifact, and it is what has been repeatedly
+  driving the seizure-probability trend up since cannulation. At about 180 minutes a separate band
   appears only on the right, starting near 3.5 Hz and slowing to about 1.5 Hz over roughly
   100 seconds, with a rightward deflection of the asymmetry index and a brief post-ictal
   rise in the right suppression ratio; the raw page at minute 180.5 confirms evolving

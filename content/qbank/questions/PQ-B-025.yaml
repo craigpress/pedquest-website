@@ -139,19 +139,28 @@ image:
       background:
         type: continuous
         dominant_hz: 4.0
-        amplitude_uv: 90
+        amplitude_uv: 50
         slow_fraction: 0.7
         reactivity: present
+        blink_rate_per_min: 0   # obtunded after status and lorazepam (v3 blinks are 250 uV)
       events:
+        # generalized status drawn as simultaneous left + right hemispheric runs (the v3 generalized onset field
+        # cancels on the bipolar trend chains, so the saturated trends the explanation describes did not appear)
         - type: status_epilepticus
           onset_min: 15
           duration_min: 45
-          onset_region: generalized
+          onset_region: left_hemisphere
+          spread: none
+        - type: status_epilepticus
+          onset_min: 15
+          duration_min: 45
+          onset_region: right_hemisphere
+          spread: none
         - type: attenuation_transient
           at_min: 60
           duration_min: 55
           side: both
-          depth_pct: 65
+          depth_pct: 50   # 65 took the v3 background under the 5-uV SR threshold; the item shows SR near baseline
       annotations:
         - { at_min: 60, label: "Levetiracetam load; lorazepam 0.1 mg/kg" }
       panels:
@@ -167,8 +176,6 @@ image:
         - suppression_ratio_L
         - suppression_ratio_R
       time_axis: elapsed
-      style:
-        aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
     eeg_page:
       at_min: 80.0
       window_s: 15

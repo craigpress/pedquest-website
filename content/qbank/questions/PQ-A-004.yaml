@@ -129,7 +129,7 @@ image:
       reactivity: absent
       asymmetry:
         side: right
-        attenuation_pct: 55
+        attenuation_pct: 30   # a -35 % relative index (stem) is a ~30 % amplitude attenuation; 55 % read -65 %
         slowing_hz: 0     # v3 draws slowing as right polymorphic delta (red 1-3 Hz band); item needs uniform blue
     events:
       - type: stimulation

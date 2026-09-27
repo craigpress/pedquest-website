@@ -24,7 +24,7 @@ stem:
     documented in the consult note.
   image_caption: >-
     Fifteen-second raw EEG page from the second hour of monitoring, longitudinal bipolar
-    montage, 19 scalp electrodes, 7 microvolts per millimetre, filters 1 to 70 Hz with a
+    montage, 19 scalp electrodes, 10 microvolts per millimetre, filters 1 to 70 Hz with a
     60 Hz notch. Time of day is suppressed and no annotations fall within the displayed
     window.
   lead_in: >-

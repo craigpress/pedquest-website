@@ -158,7 +158,7 @@ image:
       background:
         type: continuous
         dominant_hz: 2.5
-        amplitude_uv: 90
+        amplitude_uv: 30
         slow_fraction: 0.85
         reactivity: absent
       events:
@@ -184,8 +184,6 @@ image:
       - suppression_ratio_L
       - suppression_ratio_R
       time_axis: elapsed
-      style:
-        aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
     eeg_page:
       at_min: 1199.8333333333333
       window_s: 30
