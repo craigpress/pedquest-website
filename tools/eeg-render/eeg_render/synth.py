@@ -826,6 +826,10 @@ class Synthesizer:
 
         self.st_broad = self._mk("broad", bg_shape(f, self.alpha), near_uniform, common=0.45)
         self.st_delta = self._mk("delta", band_shape(f, 1.6, 1.5, order=1.0), near_uniform, common=0.55)
+        # 0.5.0 slow-wave sleep: high-voltage 0.5-2 Hz waves with a frontal maximum, gated by N3 (normal-variants
+        # re-review: 0-1 % of N3 had >= 75 uV 0.5-2 Hz waves against the > 20 % AASM scoring needs)
+        self.st_sws = (self._mk("sws", band_shape(f, 1.0, 1.2, order=1.0), _profile(ch, _ANTERIOR, 0.3), common=0.35)
+                       if self.spec_version >= 3 else None)
         # 0.4.0 (Craig, P5 C13): a focal posterior field for the dominant rhythm keeps it
         # occipito-parietal instead of leaking into central and frontal derivations
         post_pdr = np.power(post, 2.2) if self.bg.get("pdr_field") == "focal" else post
@@ -1227,7 +1231,10 @@ class Synthesizer:
     #: drug spindle packet weight (background-RMS units at the field maximum, per unit spindle level)
     _DRUG_SPINDLE_W = 3.5
     #: residual interburst floor (fraction of the background) under drug-induced burst suppression
-    _SED_IBI_FLOOR_V3 = 0.01
+    #: re-review 2026-09-26: 0.01 of 40 uV was a 0.4 uV dead line.  A drug-induced suppression keeps low-voltage
+    #: irregular residual activity (0.025 of a 40 uV background, about 1 uV RMS) plus ECG: visibly not flat, still under the
+    #: 3 uV epoch criterion the suppression-ratio trend uses
+    _SED_IBI_FLOOR_V3 = 0.025
 
     def _sed_profile_v3(self, agent: str, q: float, out: Dict[str, float]) -> Dict[str, float]:
         """A drug REPLACES the awake background instead of adding to it (sedation.md systematic item 1).
@@ -1371,6 +1378,8 @@ class Synthesizer:
     _VERTEX_UV = {"infant": 170.0, "child": 200.0, "adolescent": 140.0, "adult": 90.0}
     _KCOMPLEX_UV = {"infant": 300.0, "child": 350.0, "adolescent": 250.0, "adult": 160.0}
 
+    #: N3 slow-wave weight (background-RMS units) by age: children carry the highest-voltage slow-wave sleep
+    _SWS_W_V3 = {"infant": 0.65, "child": 0.7, "adolescent": 0.55, "adult": 0.4}
     _THETA_W_V3 = {"infant": 0.9, "child": 0.65, "adolescent": 0.45, "adult": 0.30}
 
     def _build_state_v3(self, spec: Dict, dur: float) -> None:
@@ -3819,6 +3828,53 @@ class Synthesizer:
                               * (1.0 - smoothstep((t - (inst.t1 - ramp)) / ramp)))
         return gate
 
+    #: 0.5.0 (neonatal re-review: temporal 30-70 Hz at 3-4x central on nearly every neonatal page; the ACNS 2013 sleep
+    #: figures carry no EMG): neonatal tonic muscle by behavioural state
+    _NEO_EMG_V3 = {"awake": 0.6, "active_sleep": 0.15, "indeterminate": 0.25, "quiet_sleep": 0.05}
+
+    def _neo_emg_v3(self, t: np.ndarray):
+        if self.spec_version < 3:
+            return 1.0
+        return self._state_lookup(t, self._NEO_EMG_V3, np.full(t.shape, 0.15))
+
+    def _postictal_diffuse(self, inst) -> bool:
+        return (inst.onset_region == "generalized" or inst.spread in ("generalized", "bilateral")
+                or inst.kind == "status_epilepticus" and inst.spread not in (None, "none"))
+
+    def _postictal_field(self, inst) -> np.ndarray:
+        """0..1 per electrode: the onset zone (plus a spread region at half weight)."""
+        key = ("pif", inst.onset_region, inst.spread)
+        cache = self.__dict__.setdefault("_pif_cache", {})
+        if key not in cache:
+            w = np.zeros(self.n_elec)
+            for focus, ga, _ in mt.region_generators(inst.onset_region, self.electrodes):
+                w = np.maximum(w, ga * self._gen_weights(focus, mt.generator_falloff(inst.onset_region)))
+            if inst.spread not in (None, "none", "generalized", "bilateral"):
+                for focus, ga, _ in mt.region_generators(inst.spread, self.electrodes):
+                    w = np.maximum(w, 0.5 * ga * self._gen_weights(focus, mt.generator_falloff(inst.spread)))
+            cache[key] = w / max(float(w.max()), 1e-9)
+        return cache[key]
+
+    def postictal_rows_v3(self, t: np.ndarray) -> np.ndarray:
+        """0.5.0 (re-review: a 62 % head-wide attenuation after every focal run switched off the opposite PDR):
+        focal postictal attenuation weighted by the seizure's own field."""
+        rows = np.ones((self.n_elec, t.size))
+        if t.size == 0 or self.spec_version < 3:
+            return rows
+        lo, hi = float(t[0]), float(t[-1])
+        for inst in self.seizures:
+            if inst.postictal_s <= 0 or self._postictal_diffuse(inst):
+                continue
+            if inst.t1 > hi or inst.t1 + inst.postictal_s * 3.0 < lo:
+                continue
+            d = t - inst.t1
+            m = (d >= 0) & (d < inst.postictal_s * 3)
+            if not m.any():
+                continue
+            fld = self._postictal_field(inst)
+            rows[:, m] *= 1.0 - 0.62 * fld[:, None] * np.exp(-d[m] / max(inst.postictal_s / 1.6, 1.0))[None, :]
+        return np.clip(rows, 0.05, 1.0)
+
     def postictal_envelope(self, t: np.ndarray) -> np.ndarray:
         env = np.ones_like(t)
         if t.size == 0:
@@ -3827,6 +3883,8 @@ class Synthesizer:
         for inst in self.seizures:
             if inst.postictal_s <= 0:
                 continue
+            if self.spec_version >= 3 and not self._postictal_diffuse(inst):
+                continue                      # focal: postictal_rows_v3 attenuates the onset field instead
             # Skip on the event's own support -- [t1, t1 + 3*postictal_s) -- before
             # allocating anything.  A long cluster can hold thousands of instances
             # and the old code built two full-length arrays for every one of them.
@@ -4741,6 +4799,8 @@ class Synthesizer:
             x += (self._stream_signal(self.st_theta, i0, n)
                   * (self._CAPE_SPECTRUM[1] * (0.30 + 0.25 * sleep) * sed_theta * cape_b)[None, :])
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
+        if v3state and self.st_sws is not None:
+            x += self._stream_signal(self.st_sws, i0, n) * (self._SWS_W_V3.get(self.age, 1.2) * sv3.weight(t, self._hypno, {"N3": 1.0, "N2": 0.12}))[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
         x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
         x += self._stream_signal(self.st_sed_gamma, i0, n) * sed_gamma[None, :]
@@ -4799,7 +4859,7 @@ class Synthesizer:
                  * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
                  * dec
                  # an infant's temporalis floor is a fraction of a child's
-                 * (0.45 if self.age == "infant" else 1.0))
+                 * (0.45 if self.age == "infant" else self._neo_emg_v3(t) if self.age == "neonate" else 1.0))
         muscle_term = self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
         if self._breach_gain is None:
             x += muscle_term
@@ -4904,6 +4964,8 @@ class Synthesizer:
         # and its graphoelements; the ictal block below is added after.
         env = env * dec
         x *= burst_rows * env[None, :]
+        if self.spec_version >= 3 and self.seizures:
+            x *= self.postictal_rows_v3(t)
         # Head-wide envelope including the burst gate, for the blinks below.
         env = env * self.burst_envelope(t)
 
@@ -4995,7 +5057,11 @@ class Synthesizer:
         if self.age == "neonate":
             x += self.graphoelement_rows(t) * self._ch_gain[:, None]
         ecg_uv = float(self.bg.get("baseline_ecg_uv", 0.0))
-        if ecg_uv > 0:
+        if self._sed_driven_bs():
+            # 0.5.0 (re-review): ECG shows through a drug-induced suppression.  At least 5 uV, drawn with the
+            # front-to-back gradient so it survives the longitudinal chains (the default weights cancel there)
+            x += self._ecg(t, amplitude=max(ecg_uv, 5.0), gradient=True)
+        elif ecg_uv > 0:
             x += self._ecg(t, amplitude=ecg_uv)
         x += self._artifact_block(t, i0)
 

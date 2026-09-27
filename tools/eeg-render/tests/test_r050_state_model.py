@@ -132,3 +132,16 @@ def test_pdr_has_an_anterior_posterior_gradient_on_bipolar(S):
     rms = {n: float(np.sqrt((sps.sosfiltfilt(ab, d[names.index(n)]) ** 2).mean())) for n in ("C3-P3", "P3-O1", "T5-O1")}
     assert 0.3 <= rms["C3-P3"] / rms["P3-O1"] <= 0.65, rms
     assert rms["T5-O1"] > rms["C3-P3"], rms
+
+
+def test_n3_is_slow_wave_sleep_and_n2_is_not(S):
+    """AASM: N3 when >= 20 % of the epoch holds 0.5-2 Hz waves >= 75 uV at a frontal derivation (re-review: 0-1 %)."""
+    lp = sps.butter(3, [0.5, 2.0], "bandpass", fs=S.fs, output="sos")
+    frac = {}
+    for st in ("N2", "N3"):
+        a, b = next((a, b) for a, b, s_ in S._hypno if s_ == st and b - a > 180 and a > 0)
+        _, x = S.segment(a + 30, a + 150)
+        y = sps.sosfiltfilt(lp, x[S._idx["F4"]] - (x[S._idx["A1"]] + x[S._idx["A2"]]) / 2)
+        w = np.array([np.ptp(y[k:k + 2 * S.fs]) for k in range(0, y.size - 2 * S.fs, S.fs)])
+        frac[st] = float(np.mean(w >= 75.0))
+    assert frac["N3"] >= 0.3 and frac["N2"] < 0.2, frac

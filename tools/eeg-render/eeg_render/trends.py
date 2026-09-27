@@ -256,7 +256,10 @@ def compute_trends(
     spec = spec or synth.spec
     _style = spec.get("style") or {}
     if sr_threshold_uv is None:
-        sr_threshold_uv = float(_style.get("suppression_threshold_uv", SR_THRESHOLD_UV))
+        # 0.5.0 (spec_version 3): the burst-suppression-ratio convention (Rampil; BIS BSR) is +-5 uV.  With 3 uV a
+        # realistic interburst - about 1 uV of residual activity plus ECG showing through - read as not suppressed.
+        default_uv = 5.0 if int(spec.get("spec_version") or 1) >= 3 else SR_THRESHOLD_UV
+        sr_threshold_uv = float(_style.get("suppression_threshold_uv", default_uv))
     sr_min_s = float(_style.get("suppression_min_duration_s", SR_MIN_SUPPRESSION_S))
     envelope_statistic = str(_style.get("envelope_statistic", "median"))
     fs = synth.fs
