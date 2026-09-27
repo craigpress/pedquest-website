@@ -866,7 +866,8 @@ def _acns_rpp_warnings(ev: Dict[str, Any], version: int, events: List[Dict[str, 
     pat = str(ev.get("pattern") or "").upper()
     mod = str(ev.get("modifier") or "").lower()
     has_f, has_r, has_s = parse_plus(ev.get("plus_modifier"))
-    used = [k for k in ("sharpness", "stimulus_induced", "prevalence", "duration_category", "lag", "predominance")
+    used = [k for k in ("sharpness", "stimulus_induced", "prevalence", "duration_category", "lag", "predominance",
+                        "polarity")
             if ev.get(k) not in (None, False, "")]
     used += [w for w, hit in (("+R", has_r), ("evolving", "evolv" in mod), ("triphasic", is_triphasic(ev)),
                              ("BIRDs", pat == "BIRDS"), ("SIRPIDs", pat == "SIRPIDS"), ("EDB", pat == "EDB")) if hit]
@@ -883,6 +884,8 @@ def _acns_rpp_warnings(ev: Dict[str, Any], version: int, events: List[Dict[str, 
         out.append("+S applies to RDA only (ACNS 2021); on PDs it renders as sharpness 'spiky'")
     if is_triphasic(ev) and not ev.get("periodic"):
         out.append("triphasic morphology applies to PDs/SW, not RDA; ignored")
+    if ev.get("polarity") not in (None, "") and not ev.get("periodic"):
+        out.append("polarity applies to periodic discharges, not RDA; ignored")
     if pat == "BIRDS":
         if float(ev.get("frequency_hz") or 0) <= 4.0:
             out.append("BIRDs are > 4 Hz (ACNS 2021); the run is raised to 4.3 Hz")
