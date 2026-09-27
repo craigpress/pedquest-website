@@ -55,7 +55,7 @@ def test_spindles_are_scheduled_not_clockwork(S):
     gaps = np.diff(S._sp_t)
     gaps = gaps[gaps < 60]
     assert gaps.std() / gaps.mean() > 0.5            # Poisson-like, not a 3.7-s clock
-    assert 0.5 <= S._sp["dur"].min() and S._sp["dur"].max() <= 2.0
+    assert 0.5 <= S._sp["dur"].min() and S._sp["dur"].max() <= 2.6      # phase D: child spindles up to 2.6 s
     assert S._vx_t.size > 0 and S._kc_t.size > 0
 
 

@@ -35,11 +35,15 @@ FIELDS_LEFT: Dict[str, Dict[str, float]] = {
     "wicket": {"Fp1": 0.08, "F7": 0.45, "F3": 0.15, "Fz": 0.04, "T3": 1.0, "C3": 0.30, "Cz": 0.05, "T5": 0.50,
                "P3": 0.15, "Pz": 0.04, "O1": 0.10},
     # occipital positive (lambda-waves-at-10uV-2): O max, T5/P3 shoulders
-    "lambda": {"Fp1": 0.02, "F7": 0.02, "F3": 0.03, "Fz": 0.02, "T3": 0.10, "C3": 0.08, "Cz": 0.04, "T5": 0.60,
+    # phase D (re-review: T3-T5 / T4-T6 at or above T5-O1 because T5 0.60 against T3 0.10): a steeper occipital
+    # field, so the lambda is largest in P3-O1 / T5-O1 and small in the mid-temporal link
+    "lambda": {"Fp1": 0.02, "F7": 0.02, "F3": 0.03, "Fz": 0.02, "T3": 0.05, "C3": 0.08, "Cz": 0.04, "T5": 0.32,
                "P3": 0.40, "Pz": 0.20, "O1": 1.0},
     # broad posterior (14-and-6 at 10 uV, 6-Hz positive spikes 4): posterior temporal max, parietal and occipital
-    "fourteen_and_six": {"Fp1": 0.03, "F7": 0.08, "F3": 0.08, "Fz": 0.05, "T3": 0.40, "C3": 0.30, "Cz": 0.15,
-                         "T5": 1.0, "P3": 0.60, "Pz": 0.25, "O1": 0.60},
+    # phase D (re-review: invisible on bipolar, T5-O1 0.4x background): P3 = O1 = 0.60 cancelled P3-O1 and left
+    # T5-O1 0.4; posterior temporal maximum with a steeper fall to O1 / P3 / T3
+    "fourteen_and_six": {"Fp1": 0.03, "F7": 0.08, "F3": 0.08, "Fz": 0.05, "T3": 0.30, "C3": 0.20, "Cz": 0.10,
+                         "T5": 1.0, "P3": 0.45, "Pz": 0.20, "O1": 0.45},
     # mid-temporal theta (RMTD_1, RMTD-on-the-right): smooth, T3 max
     "rmtd": {"Fp1": 0.20, "F7": 0.60, "F3": 0.25, "Fz": 0.06, "T3": 1.0, "C3": 0.30, "Cz": 0.06, "T5": 0.70,
              "P3": 0.30, "Pz": 0.06, "O1": 0.25},
@@ -50,8 +54,10 @@ FIELDS_LEFT: Dict[str, Dict[str, float]] = {
     "frontal_arousal_rhythm": {"Fp1": 0.80, "F7": 0.50, "F3": 1.0, "Fz": 0.50, "T3": 0.20, "C3": 0.40,
                                "Cz": 0.25, "T5": 0.10, "P3": 0.15, "Pz": 0.08, "O1": 0.05},
     # photic driving: occipital, some parietal / posterior temporal
-    "photic_driving": {"Fp1": 0.02, "F7": 0.03, "F3": 0.04, "Fz": 0.02, "T3": 0.10, "C3": 0.08, "Cz": 0.03,
-                       "T5": 0.55, "P3": 0.45, "Pz": 0.20, "O1": 1.0},
+    # phase D (re-review: T3-T5 / C3-P3 at or above P3-O1 / T5-O1, so the maximum did not read occipital): the
+    # occipital maximum stands alone (learningeeg photic-driving: P3-O1, T5-O1, P4-O2, T6-O2)
+    "photic_driving": {"Fp1": 0.02, "F7": 0.03, "F3": 0.04, "Fz": 0.02, "T3": 0.06, "C3": 0.06, "Cz": 0.03,
+                       "T5": 0.30, "P3": 0.25, "Pz": 0.15, "O1": 1.0},
     # HV buildup (hv-slowing): diffuse, frontal maximum, temporal chains included
     "hyperventilation_buildup": {"Fp1": 0.80, "F7": 0.80, "F3": 1.0, "Fz": 0.50, "T3": 0.70, "C3": 0.85,
                                  "Cz": 0.45, "T5": 0.60, "P3": 0.65, "Pz": 0.32, "O1": 0.60},
@@ -155,7 +161,10 @@ def authored_schedule(seed: int, index: int, run: Dict) -> List[Dict]:
             if f < 10.0:
                 hz = float(rng.uniform(6.0, 7.0))
             else:
-                hz = 14.0 + float(rng.uniform(-0.5, 0.5)) if rng.random() < 0.7 else float(rng.uniform(6.0, 7.0))
+                six = not rng.random() < 0.7
+                if len(out) >= 1 and not any(b["hz"] < 10.0 for b in out):
+                    six = True     # phase D (re-review: the 6-Hz arm never fired): the second burst is the 6-Hz arm
+                hz = float(rng.uniform(6.0, 7.0)) if six else 14.0 + float(rng.uniform(-0.5, 0.5))
             sd = side if side in ("left", "right") else ("left", "right", "both")[int(rng.integers(0, 3))]
             for s2 in (("left", "right") if sd == "both" else (sd,)):
                 out.append({"t0": t, "t1": min(t + d, b), "hz": hz, "amp": amp * float(np.exp(rng.normal(0, 0.2))),
@@ -176,7 +185,8 @@ def authored_schedule(seed: int, index: int, run: Dict) -> List[Dict]:
     elif kind == "photic_driving":
         rng = substream(seed, "v3-authored", index, kind)
         for sd in ("left", "right"):
-            g = (1.0 if side in ("both", sd) else 0.12) * float(np.exp(rng.normal(0, 0.15)))
+            # phase D (re-review: left 71 / right 39 uV, a > 50 % asymmetry read as abnormal): side gain within +-10 %
+            g = (1.0 if side in ("both", sd) else 0.12) * float(np.clip(np.exp(rng.normal(0, 0.15)), 0.9, 1.1))
             out.append({"t0": a, "t1": b, "hz": f, "amp": amp * g, "side": sd, "ph0": 0.0,
                         "jit": rng.normal(0.0, 0.004, int(np.ceil((b - a) * f)) + 2).tolist()})
     elif kind == "sreda":

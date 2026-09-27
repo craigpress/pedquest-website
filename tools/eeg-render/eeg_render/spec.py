@@ -532,6 +532,8 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     # NR through 31-33 w, R from 34-35 w); older records default to reactive as before
     if version >= 2 and age == "neonate" and bg.get("pma_weeks") is not None and float(bg["pma_weeks"]) < 34.0:
         bg.setdefault("reactivity", "absent")
+    if version >= 3 and bg.get("coma_pattern"):
+        bg.setdefault("reactivity", "absent")      # phase D: spindle / alpha coma are unreactive by definition
     bg.setdefault("reactivity", "present")
     bg.setdefault("delta_brushes", "riding" if (version >= 2 and age == "neonate") else bool(ad["delta_brushes"]))
     if version >= 2:
@@ -972,7 +974,11 @@ AUTHORED_VARIANT_DEFAULTS_V3 = {
     "mu": {"amplitude_uv": 60.0},
     # SREDA is conspicuous against an adult PDR (Westmoreland & Klass), about twice the background
     "sreda": {"amplitude_uv": 90.0},
-    "frontal_arousal_rhythm": {"frequency_hz": 8.0},
+    # phase D (normal-variants re-review V110-04: 0.4x background on T5-O1, invisible on the bipolar page): about 2.5x,
+    # so the burst reads on the longitudinal chain as in learningeeg 14-and-6 at 10 uV (3.3x the 0.5.0 default)
+    "fourteen_and_six": {"amplitude_uv": 150.0},
+    # phase D (re-review V110-08: 4.9x background, too dominant for a subtle arousal pattern): about 2x in F3-C3
+    "frontal_arousal_rhythm": {"frequency_hz": 8.0, "amplitude_uv": 26.0},
 }
 
 

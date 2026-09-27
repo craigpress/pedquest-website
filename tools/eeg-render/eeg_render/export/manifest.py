@@ -204,6 +204,8 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
                                           "source_context"),
                          clinical_classification=("pending_craig_review" if kind == "frontal_arousal_rhythm" else None),
                          spec_event_index=vr["spec_event_index"]))
+        if kind == "photic_driving" and int(synth.spec_version) >= 3:
+            rows[-1]["stimulus_marker"] = "photic channel, one tick per flash"   # phase D
 
     for ev in getattr(synth, "artifacts", []):
         if (synth.spec.get("neuromuscular_blockade") == "complete"
@@ -286,7 +288,21 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
         if b < 0.0 or a > duration_s:
             continue
         rows.append(_row("cape_cycle", a, b, fs, duration_s, depth=round(float(depth), 3)))
-    if not getattr(synth, "_state_intervals", None) and any(e.get("type") == "state_change" for e in synth.spec.get("events", [])):
+    hyp = getattr(synth, "_hypno", None)
+    if hyp and any(e.get("type") == "state_change" for e in synth.spec.get("events", [])):
+        # phase D (key vs visible, B2-07 / B5-07): at spec_version 3 the awake/sleep rows follow the drawn hypnogram,
+        # which starts at the keyed state change (the ramp breakpoints put "sleep" 90 s late)
+        merged: List[List] = []
+        for a, b, st in hyp:
+            lab = "awake" if st == "W" else "sleep"
+            if merged and merged[-1][2] == lab:
+                merged[-1][1] = b
+            else:
+                merged.append([a, b, lab])
+        for a, b, lab in merged:
+            if b > 0.0 and a < duration_s:
+                rows.append(_row("state", max(a, 0.0), b, fs, duration_s, label=lab))
+    elif not getattr(synth, "_state_intervals", None) and any(e.get("type") == "state_change" for e in synth.spec.get("events", [])):
         bp = list(zip(synth._state_t, synth._state_v))
         for k, (t0, v) in enumerate(bp):
             t1 = bp[k + 1][0] if k + 1 < len(bp) else duration_s
@@ -294,11 +310,22 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
                 continue
             rows.append(_row("state", t0, t1, fs, duration_s, label="sleep" if v >= 0.5 else "awake"))
 
+    # phase D (sleep family): spec_version 3 keys the drawn sleep stages with the transients realized in each
+    # (spindles, vertex waves, K-complexes, slow waves, sawtooth trains, rapid eye movements) and the arousals
+    for r in (synth.sleep_stage_summary(duration_s) if hasattr(synth, "sleep_stage_summary") else []):
+        extra = {k: v for k, v in r.items() if k not in ("kind", "t0", "t1")}
+        rows.append(_row(r["kind"], r["t0"], r["t1"], fs, duration_s, **extra))
+
     # P7 batch 1: the behavioral-state timeline is part of the key when a state cycle is scheduled
     for t0, t1, label in getattr(synth, "_state_intervals", []) or []:
         if t1 < 0.0 or t0 > duration_s:
             continue
         rows.append(_row("state", t0, t1, fs, duration_s, label=label))
+    # phase D: the high-voltage-slow opening of each term quiet-sleep epoch (the rest is tracé alternant)
+    for t0, t1 in getattr(synth, "_hvs", []) or []:
+        if t1 < 0.0 or t0 > duration_s:
+            continue
+        rows.append(_row("state_detail", t0, t1, fs, duration_s, label="quiet_sleep_high_voltage_slow"))
 
     for ann in synth.spec.get("annotations") or []:
         at = float(ann["at_min"]) * 60.0
