@@ -3610,13 +3610,18 @@ class Synthesizer:
         # also in T2-T4), with the horizontal-dipole frontal positivity (negative weights at Fp/F: surface-positive).
         # r050-fix-acns (acns-independent.md: Cz reversed on 60/60 discharges, not in the LE BECTS figure): the
         # midline is flat from Cz back (Fz 0 / Cz 0.10 / Pz 0.10), so Fz-Cz and Cz-Pz carry no reversal; the ear takes
-        # EAR_PICKUP of T3/T4 as for every other source
+        # EAR_PICKUP of T3/T4 as for every other source.
+        # r7 (Craig: SeLECTS/BECTS spikes are the classic horizontal dipole): the frontal positive pole was one
+        # electrode at 0.20 of the negative maximum; it is now a frontal field, Fp -0.40 with Fz -0.15 and F3/F4 and
+        # F7/F8 lowered, so a referential page shows the opposite (downward) deflection over Fp/Fz/F while C/T point
+        # up.  Fz-Cz carries the frontal positivity against a flat Cz-Pz, so still no reversal at Cz; F3-C3 grows
+        # from 0.80 to 0.90 of the spike and no reversal appears at F3 (Fp1-F3 and F3-C3 share a sign)
         "left_centrotemporal": {
-            "C3": 1.0, "T3": 0.85, "P3": 0.35, "T5": 0.35, "F3": 0.20, "F7": 0.25, "Cz": 0.10, "Pz": 0.10, "T1": 0.55,
-            "Fp1": -0.20, "Fz": 0.0, "A1": 0.25},
+            "C3": 1.0, "T3": 0.85, "P3": 0.35, "T5": 0.35, "F3": 0.10, "F7": 0.15, "Cz": 0.10, "Pz": 0.10, "T1": 0.55,
+            "Fp1": -0.40, "Fz": -0.15, "A1": 0.25},
         "right_centrotemporal": {
-            "C4": 1.0, "T4": 0.85, "P4": 0.35, "T6": 0.35, "F4": 0.20, "F8": 0.25, "Cz": 0.10, "Pz": 0.10, "T2": 0.55,
-            "Fp2": -0.20, "Fz": 0.0, "A2": 0.25},
+            "C4": 1.0, "T4": 0.85, "P4": 0.35, "T6": 0.35, "F4": 0.10, "F8": 0.15, "Cz": 0.10, "Pz": 0.10, "T2": 0.55,
+            "Fp2": -0.40, "Fz": -0.15, "A2": 0.25},
     }
     #: ACNS 2021 "abundant" is >= 1 per 10 s: from that rate up no inter-discharge gap may exceed 10 s.
     _SED_ABUNDANT_PER_H = 360.0
@@ -4360,6 +4365,11 @@ class Synthesizer:
                     delays = np.array([a + (d - 1.0) / 6.0 * (b - a) for d, (a, b) in zip(delays, span)])
                 gens += [(g, smoothstep((t - inst.t0 - d) / 3.0)) for g, d in zip(extra, delays)]
             onset_keep = (1.0 - 0.55 * s) if late is None else 1.0
+            # r7 (spec_version 3): periodic discharges render their resolved polarity (default surface-negative at the
+            # source; the kernel is surface-positive); a dipole adds the positive pole from the static onset field
+            pol = (rpp3.resolve_polarity(self.spec["events"][inst.index], 3)
+                   if v3 and inst.kind == "rhythmic_pattern" and inst.morph == "periodic" else None)
+            onset = np.zeros_like(out) if pol == "dipole" else out
             for gi, ((focus, ga, gph), join) in enumerate(gens):
                 w = self._gen_weights(focus, onset_fall) * onset_scale
                 wv = (self._wave(phase, psi, gph, inst.morph, inst.plus_fast,
@@ -4368,7 +4378,12 @@ class Synthesizer:
                       * amp * ga * onset_keep * join)
                 if clon is not None:
                     wv = wv * clon
-                out += w[:, None] * wv[None, :]
+                if pol is not None:
+                    wv = rpp3.apply_polarity(pol, wv)
+                onset += w[:, None] * wv[None, :]
+            if pol == "dipole":
+                wsum = sum(self._gen_weights(g[0], onset_fall) * onset_scale * g[1] for g, _ in gens)
+                out += rpp3.add_dipole_pole(self, inst.onset_region, wsum, onset)
             if spread is not None and phase_d is not None:
                 spread_scale = self._field_scale(spread)
                 spread_fall = mt.generator_falloff(spread)

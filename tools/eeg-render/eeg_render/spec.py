@@ -45,6 +45,20 @@ AGE_DEFAULTS: Dict[str, Dict[str, Any]] = {
               "type": "continuous", "delta_brushes": False, "baseline_ecg_uv": 2.0},
 }
 
+#: r7, spec_version 3 (Craig: awake child pages read low-voltage against the learningeeg 5-year-old figures):
+#: the default awake voltage of a CONTINUOUS child background, as the display amplitude a reader measures
+#: (median 1-s p2p on longitudinal bipolar, blink-free derivations; self-calibrated in the synthesizer).  Normal
+#: awake child EEG runs 80-100 uV on the bipolar page; 90 is the nominal.  Only an unauthored amplitude changes;
+#: suppressed / low-voltage / burst-suppression / coma backgrounds keep AGE_DEFAULTS (their preset scale is off
+#: under the display reference, so 90 would put them on screen at a normal voltage).
+CHILD_AMPLITUDE_UV_V3 = 90.0
+#: ... and the event defaults that were tuned as absolute voltages against the 40-45 uV child background (sporadic
+#: discharges 80 uV, the authored normal variants, POSTS) keep their ratio to it: on a record whose background is the
+#: r7 default they are scaled by CHILD_AMPLITUDE_UV_V3 / AGE_DEFAULTS child (2x).  Authored amplitudes are never
+#: touched.  Not scaled: seizures (the v3 ictal floor is already relative to the background), PSWY and hypnagogic
+#: hypersynchrony (relative defaults), generalized discharges (200-300 uV stay >= 2x a 90-uV page) and blinks
+#: (non-cerebral; the rendered blink stays 4x the F3-C3 background, inside the 3-10x reference range).
+
 #: how each background type maps onto the unified burst/interburst engine.
 #: ``suppression_fraction`` is the fraction of time spent below the burst
 #: envelope; ``ibi_floor`` is the residual envelope during the interburst.
@@ -517,6 +531,11 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bg.setdefault("type", _aeeg_pattern_background(pat))
         bg.setdefault("amplitude_uv", AEEG_PATTERN_AMPLITUDE_UV.get(pat, 75.0))
     bg.setdefault("type", ad["type"])
+    ev_amp_scale = 1.0
+    if (version >= 3 and age == "child" and "amplitude_uv" not in bg and bg["type"] == "continuous"
+            and not bg.get("coma_pattern")):
+        bg["amplitude_uv"] = CHILD_AMPLITUDE_UV_V3
+        ev_amp_scale = CHILD_AMPLITUDE_UV_V3 / AGE_DEFAULTS["child"]["amplitude_uv"]
     if bg["type"] == "hypsarrhythmia":
         for k in ("dominant_hz", "amplitude_uv", "slow_fraction"):
             bg.setdefault(k, HYPSARRHYTHMIA_DEFAULTS[k])
@@ -529,7 +548,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
             ms.setdefault(k, v)
         bg["multifocal_spikes"] = {k: float(v) for k, v in ms.items()}
     else:
-        _normalize_variants(bg, version, float(bg.get("amplitude_uv", ad["amplitude_uv"])))
+        _normalize_variants(bg, version, float(bg.get("amplitude_uv", ad["amplitude_uv"])), ev_amp_scale)
         ms = bg.get("multifocal_spikes")
         bg["multifocal_spikes"] = ({"rate_per_s": float(ms.get("rate_per_s", 0.0)),
                                     "amplitude_uv": float(ms.get("amplitude_uv", 150.0))}
@@ -724,7 +743,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     s["background"] = bg
 
     # ---- events ------------------------------------------------------
-    s["events"] = [_normalize_event(e, version) for e in (s.get("events") or [])]
+    s["events"] = [_normalize_event(e, version, ev_amp_scale) for e in (s.get("events") or [])]
     if s.get("neuromuscular_blockade") == "complete":
         # Existing chewing/movement events retain PQW-109's contract: blockade
         # removes their modeled EMG while preserving non-muscle components.
@@ -1067,8 +1086,10 @@ AUTHORED_VARIANT_DEFAULTS_V3 = {
 HH_DEFAULT_PER_BG_V3 = 4.5
 
 
-def _normalize_variants(bg: Dict[str, Any], version: int = 1, bg_amp: float = 0.0) -> None:
-    """Fill each authored variant with its defaults; an absent key stays absent (bank hashes)."""
+def _normalize_variants(bg: Dict[str, Any], version: int = 1, bg_amp: float = 0.0, amp_scale: float = 1.0) -> None:
+    """Fill each authored variant with its defaults; an absent key stays absent (bank hashes).
+
+    ``amp_scale`` (r7): CHILD_AMPLITUDE_UV_V3 / the child AGE_DEFAULTS amplitude on an r7-default child background."""
     v = bg.get("variants")
     if not isinstance(v, dict):
         return
@@ -1077,6 +1098,8 @@ def _normalize_variants(bg: Dict[str, Any], version: int = 1, bg_amp: float = 0.
         cfg = dict(cfg or {})
         if version >= 3 and name == "hypnagogic_hypersynchrony":
             cfg.setdefault("amplitude_uv", max(VARIANT_DEFAULTS[name]["amplitude_uv"], HH_DEFAULT_PER_BG_V3 * bg_amp))
+        if amp_scale != 1.0 and VARIANT_DEFAULTS[name].get("amplitude_uv"):
+            cfg.setdefault("amplitude_uv", VARIANT_DEFAULTS[name]["amplitude_uv"] * amp_scale)
         for k, d in VARIANT_DEFAULTS[name].items():
             cfg.setdefault(k, d)
         cfg.setdefault("enabled", True)
@@ -1141,7 +1164,7 @@ def _normalize_generalized(e: Dict[str, Any]) -> Dict[str, Any]:
     return e
 
 
-def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
+def _normalize_event(ev: Dict[str, Any], version: int = 1, amp_scale: float = 1.0) -> Dict[str, Any]:
     e = dict(ev)
     kind = e["type"]
     if kind == "normal_variant" and e.get("kind") not in AUTHORED_VARIANTS:
@@ -1155,6 +1178,8 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
                 raise SpecError("sporadic_discharges focus_weights must match foci in length")
             e.setdefault("focus", str(e["foci"][0]))
             e.setdefault("synchrony", "independent")
+        if amp_scale != 1.0:
+            e.setdefault("amplitude_uv", SPORADIC_DEFAULTS["amplitude_uv"] * amp_scale)
         for k, v in SPORADIC_DEFAULTS.items():
             e.setdefault(k, v)
         return e
@@ -1169,8 +1194,8 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e.setdefault("side", "both")
         if version >= 3:
             # 0.5.0 (normal-variants.md): mu read against the background, FAR 7-10 Hz not 6.5
-            e.setdefault("amplitude_uv", AUTHORED_VARIANT_DEFAULTS_V3.get(e["kind"], {}).get("amplitude_uv",
-                                                                                          defaults["amplitude_uv"]))
+            e.setdefault("amplitude_uv", amp_scale * AUTHORED_VARIANT_DEFAULTS_V3.get(e["kind"], {}).get(
+                "amplitude_uv", defaults["amplitude_uv"]))
             e.setdefault("frequency_hz", AUTHORED_VARIANT_DEFAULTS_V3.get(e["kind"], {}).get("frequency_hz",
                                                                                           defaults["frequency_hz"]))
         for key, value in defaults.items():

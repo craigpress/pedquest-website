@@ -89,6 +89,7 @@ CASES = {
     "lpd_v3": (_rpp("LPDs", 1.0, 100, "left_temporal", True, sharpness="sharp"), {}),
     "bipd": (_rpp("BIPDs", 1.0, 100, "left_temporal", True), {}),
     "lpd_neg": (_rpp("LPDs", 1.0, 100, "left_temporal", True, polarity="surface_negative"), {}),
+    "lpd_pos": (_rpp("LPDs", 1.0, 100, "left_temporal", True, polarity="surface_positive"), {}),
     "spiky": (_rpp("LPDs", 1.0, 100, "left_temporal", True, sharpness="spiky"), {}),
     "spiky2": (_rpp("LPDs", 1.0, 100, "left_temporal", True, sharpness="spiky"), dict(seed=518101)),
     "sharp": (_rpp("LPDs", 1.0, 100, "left_temporal", True, sharpness="sharp"), {}),
@@ -327,11 +328,11 @@ def test_bipds_plural_is_an_acns_main_term():
 # ------------------------------------------------------------------------------------------ 7. LPD polarity
 
 def test_lpd_polarity_key():
-    """acns-independent.md: the default dominant phase is surface-positive at T3 (13/13; learningeeg lpds-clean and
-    lpds-quiz-clean look the same), the ACNS 2021 Fig 26 schematic is surface-negative.  Craig's call: a per-event
-    ``polarity``; the default stays surface-positive.  Referential T3 peaks: default > 0, surface_negative < 0 in
-    every discharge; the key reports it; RDA warns."""
-    for key, sign in (("lpd", 1), ("lpd_v3", 1), ("lpd_neg", -1)):
+    """acns-independent.md: the ACNS 2021 Fig 26 schematic is surface-negative; a per-event ``polarity``.  r7 (Craig:
+    "on referential the polarity is usually upward deflections with the maximum amplitude at the source"): the default
+    is now surface-negative, surface_positive stays available.  Referential T3 peaks: default and surface_negative
+    < 0, surface_positive > 0 in every discharge; the key reports it; RDA warns."""
+    for key, sign in (("lpd", -1), ("lpd_v3", -1), ("lpd_neg", -1), ("lpd_pos", 1)):
         s = _case(key)[0]
         z = s.rhythmic_patterns[0]
         pat, _, _, names = _pattern(key, z.t0 + 2.0, z.t0 + 22.0, ref=True)

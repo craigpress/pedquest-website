@@ -152,8 +152,9 @@ def wants_v3(ev: Dict) -> bool:
     return bool(pat in ("BIRDS", "EDB", "SIRPIDS", "TRIPHASIC") or ev.get("stimulus_induced")
                 or "evolv" in mod or "fluctuat" in mod or "triphasic" in mod or isinstance(ev.get("evolution"), dict)
                 or f or r or (s and ev.get("periodic")) or sharpness_key(ev.get("sharpness"))
-                or ev.get("lag") not in (None, "none") or ev.get("prevalence") or ev.get("duration_category")
-                or (ev.get("polarity") == "surface_negative" and ev.get("periodic")))
+                or ev.get("lag") not in (None, "none") or ev.get("prevalence") or ev.get("duration_category"))
+    # r7: polarity no longer selects this path; both paths render it (resolve_polarity), so an authored polarity equal
+    # to the default draws the same record as an omitted one
 
 
 def main_term(ev: Dict) -> str:
@@ -168,6 +169,65 @@ def main_term(ev: Dict) -> str:
         return "BIPDs" if ev.get("periodic") else "BIRDA"
     loc = "G" if region == "generalized" else ("L" if region != "midline" else "G")
     return f"{loc}PDs" if ev.get("periodic") else f"{loc}RDA"
+
+
+# ----------------------------------------------------------------- polarity --
+# r7 (Craig; ACNS 2021 polarity = the dominant, highest-voltage phase, judged on a referential montage): "on
+# referential the polarity is usually upward deflections with the maximum amplitude at the source" - surface-negative
+# on the negative-up page - "though you can have some that have a dipole or phase reverse" (SeLECTS).  The kernels
+# are surface-positive, so the default flips them.  Triphasic morphology is defined by its dominant POSITIVE phase 2
+# and keeps it.  A dipole is tangential: the negative maximum at the source and a positive pole at a distinct
+# electrode, DIPOLE_RATIO of the source's peak, so a referential page shows opposite deflections at the two poles.
+
+#: positive pole of a dipole PD: frontopolar for a temporal / central / parietal / occipital / hemispheric source,
+#: occipital for a frontal source, parietal midline for a generalized (frontally predominant) field
+DIPOLE_POLE = {"left": ("Fp1", "O1"), "right": ("Fp2", "O2")}
+DIPOLE_RATIO = 0.6
+
+
+def default_polarity(ev: Dict) -> str:
+    return "surface_positive" if is_triphasic(ev) else "surface_negative"
+
+
+def resolve_polarity(ev: Dict, version: int) -> Optional[str]:
+    """Polarity a periodic rhythmic_pattern renders with at ``version`` (None: RDA, or below spec_version 3)."""
+    if version < 3 or not ev.get("periodic"):
+        return None
+    return str(ev.get("polarity") or default_polarity(ev))
+
+
+def dipole_pole(region: str, electrodes) -> Optional[str]:
+    side = "left" if region.startswith("left") else ("right" if region.startswith("right") else None)
+    if side is None:
+        pole = "Pz"
+    else:
+        pole = DIPOLE_POLE[side][1 if region.endswith("_frontal") else 0]
+    return pole if pole in electrodes else None
+
+
+def dipole_fields(syn, region: str, wsum: np.ndarray) -> Optional[Tuple[int, np.ndarray]]:
+    """(source electrode index, positive-pole field peaking at 1) of a dipole run; a pure function of the region."""
+    pole = dipole_pole(region, syn.electrodes)
+    if pole is None:
+        return None
+    w = mt.monopole_weights(pole, syn.electrodes, falloff=mt.DEFAULT_FALLOFF, leak=0.0)
+    field = np.array([w[e] for e in syn.electrodes])
+    src = int(np.argmax(np.abs(wsum) * (field < 0.2)))
+    return src, field
+
+
+def apply_polarity(polarity: Optional[str], wv: np.ndarray) -> np.ndarray:
+    """Sign of the surface-positive discharge kernel for ``polarity``."""
+    return -wv if polarity in ("surface_negative", "dipole") else wv
+
+
+def add_dipole_pole(syn, region: str, wsum: np.ndarray, onset: np.ndarray) -> np.ndarray:
+    """The positive pole of a dipole run: -DIPOLE_RATIO x the source electrode's own (negative-dominant) trace."""
+    df = dipole_fields(syn, region, wsum)
+    if df is None:
+        return onset
+    src, field = df
+    return onset + field[:, None] * (-DIPOLE_RATIO * onset[src])[None, :]
 
 
 # ------------------------------------------------------------------ kernels --
@@ -334,9 +394,9 @@ def schedule(syn, ev: Dict, i: int) -> List:
     if has_r:
         fr = float(np.clip(f0 * 1.43 if f0 * 1.43 <= 2.4 else f0 * 0.62, 1.0, 2.4))
         plus_r = {"hz": fr, "rel": 1.2}
-    # r050-fix-acns (acns-independent.md, LPD polarity: Craig's open call): the discharge kernels are surface-positive
-    # at the focus (learningeeg lpds-clean, lpds-quiz-clean); "surface_negative" flips them (ACNS 2021 Fig 26)
-    polarity = str(ev.get("polarity") or "surface_positive") if periodic else None
+    # r050-fix-acns: the discharge kernels are surface-positive at the focus; r7 (Craig): the default is
+    # surface-negative at the source (triphasic keeps its positive phase 2), "dipole" adds a positive pole
+    polarity = resolve_polarity(ev, 3)
     if ev.get("polarity") and not periodic:
         advisories.append("polarity applies to periodic discharges, not RDA; ignored")
     region = ev["onset_region"]
@@ -520,6 +580,11 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
     if inst.spread not in (None, "none"):
         spread = syn._spread_region(inst)
     layers = [(gens, scale, fall, 0.0, None)]
+    polarity = cfg.get("polarity") if inst.morph == "periodic" else None
+    dipole = polarity == "dipole"
+    onset = np.zeros_like(out) if dipole else out
+    # the source electrode comes from the static onset field, never from which generators the window reaches
+    wsum = sum(syn._gen_weights(f_, fall) * scale * ga_ for f_, ga_, _ in gens) if dipole else None
     if spread is not None:
         layers.append((mt.region_generators(spread, syn.electrodes),
                        np.asarray(field_scale(syn, "none") if spread == "generalized" else syn._field_scale(spread)),
@@ -539,9 +604,7 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
             salt = base + (500_003 if sp else 0)
             gsalt = salt + 7919 * (gi + 1)
             if inst.morph == "periodic":
-                wv = discharge_train(phase, f_inst, cfg["shape"], cfg["width"], salt)
-                if cfg.get("polarity") == "surface_negative":
-                    wv = -wv
+                wv = apply_polarity(polarity, discharge_train(phase, f_inst, cfg["shape"], cfg["width"], salt))
                 unit = _PERIODIC_PTP
             else:
                 wv = syn._wave(phase, psi, 0.0, inst.morph, 0.0, f_inst, salt, y, gsalt, True, inst.plus_sharp)
@@ -570,7 +633,12 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
                 g = g * smoothstep((u - 0.35) / 0.30)
             elif spread is not None:
                 g = g * (1.0 - 0.55 * smoothstep((u - 0.35) / 0.30))
-            out += w[:, None] * (wv * g)[None, :]
+            if sp is None:
+                onset += w[:, None] * (wv * g)[None, :]
+            else:
+                out += w[:, None] * (wv * g)[None, :]
+    if dipole:
+        out += add_dipole_pole(syn, region, wsum, onset)
     return out
 
 
@@ -616,7 +684,9 @@ def classify(inst, ev: Optional[Dict] = None) -> Dict:
         a = {"main_term": main_term(ev), "stimulus_induced": False, "plus": ("+S" if s else None),
              "evolution": "static", "min_hz": round(float(inst.start_hz), 3), "max_hz": round(float(inst.end_hz), 3),
              "periodic": bool(ev.get("periodic")), "triphasic": False, "lag_ms": None, "sharpness": None,
-             "predominance": inst.predominance or None}
+             "predominance": inst.predominance or None,
+             # r7: the dominant phase as rendered (classify is called for spec_version 3 records only)
+             "polarity": resolve_polarity(ev, 3)}
     dur = float(inst.duration_s)
     steps = inst.rpp.get("steps") if inst.rpp else None
     if steps:
@@ -649,6 +719,12 @@ def classify(inst, ev: Optional[Dict] = None) -> Dict:
         cls, basis = "RPP_interictal", None
     a["acns_classification"] = cls
     a["classification_basis"] = basis
+    # r7: ACNS 2021 polarity category of the rendered dominant phase (referential montage)
+    pol = a.get("polarity")
+    a["polarity_acns"] = {"surface_negative": "negative", "surface_positive": "positive",
+                          "dipole": "dipole"}.get(pol) if pol else None
+    if pol == "dipole":
+        a["dipole_positive_pole"] = dipole_pole(inst.onset_region, mt.POSITIONS)
     if a.get("stimulus_induced"):
         a["acns_label"] = "SI-" + (("ESz" if cls == "electrographic_seizure" else a["main_term"])
                                    + (a["plus"] or ""))

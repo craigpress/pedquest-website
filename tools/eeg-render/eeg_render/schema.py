@@ -258,10 +258,13 @@ _EVENT = {
         # minor modifier: anterior-posterior / posterior-anterior lag across the chain (triphasic GPDs default
         # anterior_posterior, 120 ms)
         "lag": {"enum": ["none", "anterior_posterior", "posterior_anterior"]},
-        # r050-fix-acns (spec_version 3): sign of a periodic discharge's dominant phase at the focus.  Omitted =
-        # the renderer default, surface-positive (learningeeg lpds-clean / lpds-quiz-clean); "surface_negative" is
-        # the conventional ACNS 2021 Fig 26 schematic.  PDs only (RDA ignores it with a warning).
-        "polarity": {"enum": ["surface_negative", "surface_positive"]},
+        # r050-fix-acns (spec_version 3): sign of a periodic discharge's dominant phase at the focus (ACNS 2021 minor
+        # modifier, judged on a referential montage).  r7 (Craig): omitted = surface_negative, maximal at the source
+        # (upward on the negative-up page); triphasic morphology keeps its positive phase 2 (surface_positive).
+        # "dipole" = tangential: negative at the source with a positive pole at a distinct electrode (frontal for a
+        # temporal / central / posterior source, occipital for a frontal one, Pz for generalized).  PDs only (RDA
+        # ignores it with a warning).
+        "polarity": {"enum": ["surface_negative", "surface_positive", "dipole"]},
         "lag_ms": {"type": "number", "minimum": 0, "maximum": 400},
         # generalized RPP field: frontal (v3 default), occipital (OIRDA-like) or none (the flat GENERALIZED_FIELD)
         "predominance": {"enum": ["frontal", "occipital", "none"]},
