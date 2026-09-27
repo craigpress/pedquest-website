@@ -330,7 +330,8 @@ def _ratio_axis(st: Dict, key: str, series, spec: Optional[Dict] = None,
 
 
 def _paired_panel(ax, t_min, left, right, theme: S.Theme, lo: float, hi: float,
-                  fmt: str = "{:.3g}", left_label: str = "L", right_label: str = "R") -> None:
+                  fmt: str = "{:.3g}", left_label: str = "L", right_label: str = "R",
+                  follow: bool = False) -> None:
     """Two traces on one axis: left blue, right red, with an inline legend.
 
     The legend is drawn in the panel rather than in the row label because the
@@ -344,6 +345,25 @@ def _paired_panel(ax, t_min, left, right, theme: S.Theme, lo: float, hi: float,
     ax.yaxis.set_major_locator(FixedLocator([lo, mid, hi]))
     ax.set_yticklabels([fmt.format(lo), fmt.format(mid), fmt.format(hi)], fontsize=8.8)
     ax.grid(axis="y", color=theme.grid, linewidth=0.4, alpha=0.5)
+    if follow:
+        # 0.5.0 phase D (spec_version 3; seizures-icu-v3 PQ-G-002: "R" sat at the top and "L" at the bottom while the
+        # L trace was the upper one): each label sits at the height of its own trace over the last 10 % of the panel
+        def _end(v):
+            v = np.asarray(v, float)
+            tail = v[int(0.9 * v.size):]
+            tail = tail[np.isfinite(tail)]
+            y = float(np.median(tail)) if tail.size else mid
+            return (np.clip(y, lo, hi) - lo) / max(hi - lo, 1e-12)
+        yl, yr = _end(left), _end(right)
+        if abs(yl - yr) < 0.16:                       # keep the two labels apart, order preserved
+            c, up = 0.5 * (yl + yr), (1.0 if yr >= yl else -1.0)
+            yr, yl = c + 0.08 * up, c - 0.08 * up
+        yl, yr = float(np.clip(yl, 0.07, 0.93)), float(np.clip(yr, 0.07, 0.93))
+        ax.text(0.995, yr, right_label, transform=ax.transAxes, ha="right", va="center",
+                fontsize=8.5, color=theme.asym_right, fontweight="bold")
+        ax.text(0.995, yl, left_label, transform=ax.transAxes, ha="right", va="center",
+                fontsize=8.5, color=theme.asym_left, fontweight="bold")
+        return
     ax.text(0.995, 0.93, right_label, transform=ax.transAxes, ha="right", va="top",
             fontsize=8.5, color=theme.asym_right, fontweight="bold")
     ax.text(0.995, 0.07, left_label, transform=ax.transAxes, ha="right", va="bottom",
@@ -495,7 +515,8 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
     elif name in ("alpha_delta_ratio", "theta_delta_ratio"):
         series = tr.adr if name == "alpha_delta_ratio" else tr.tdr
         lo, hi = _ratio_axis(st, f"{name}_axis", [series["left"], series["right"]], spec, t_min)
-        _paired_panel(ax, t_min, series["left"], series["right"], theme, lo, hi)
+        _paired_panel(ax, t_min, series["left"], series["right"], theme, lo, hi,
+                      follow=int(spec.get("spec_version") or 1) >= 3)
 
     elif name.endswith(("_lateral", "_parasagittal")) and name.startswith(
             ("alpha_delta_ratio", "theta_delta_ratio")):
@@ -506,7 +527,7 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
         if left is None or right is None:
             return
         lo, hi = _ratio_axis(st, f"{base}_axis", [left, right], spec, t_min)
-        _paired_panel(ax, t_min, left, right, theme, lo, hi)
+        _paired_panel(ax, t_min, left, right, theme, lo, hi, follow=int(spec.get("spec_version") or 1) >= 3)
 
     elif name in ("suppression_ratio", "suppression_ratio_global"):
         rng = st.get("suppression_ratio_axis_pct") or [0, 100]
@@ -522,7 +543,8 @@ def _draw_panel(ax, name: str, tr: Trends, theme: S.Theme, duration_min: float,
             _line_panel(ax, t_min, np.clip(mean, lo, hi), theme.sr, theme, lo, hi,
                         [lo, mid, hi], [f"{lo:g}", f"{mid:g}", f"{hi:g}"])
         else:
-            _paired_panel(ax, t_min, tr.sr["left"], tr.sr["right"], theme, lo, hi, fmt="{:g}")
+            _paired_panel(ax, t_min, tr.sr["left"], tr.sr["right"], theme, lo, hi, fmt="{:g}",
+                          follow=int(spec.get("spec_version") or 1) >= 3)
 
     elif name in ("theta_delta_ratio_L", "theta_delta_ratio_R"):
         lo, hi = _ratio_axis(st, "theta_delta_ratio_axis", [tr.tdr["left"], tr.tdr["right"]], spec, t_min)

@@ -407,6 +407,10 @@ REGION_FOCI: Dict[str, List[str]] = {
     "right_hemisphere": ["F8", "T4", "C4", "P4", "T6", "F4", "O2", "Fp2"],
     "generalized": list(STANDARD_19),
     "midline": ["Fz", "Cz", "Pz"],
+    "left_mesial_temporal": ["F7", "T3", "Fp1"],
+    "right_mesial_temporal": ["F8", "T4", "Fp2"],
+    "left_parietal": ["P3", "C3", "T5"],
+    "right_parietal": ["P4", "C4", "T6"],
 }
 
 #: An ictal generator is modelled as a set of monopolar sources, each
@@ -445,6 +449,20 @@ REGION_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
                         ("T5", 0.58, 0.09), ("T6", 0.58, 0.08), ("O1", 0.52, 0.10),
                         ("O2", 0.52, 0.10)],
     "midline":         [("Cz", 1.00, 0.00), ("Fz", 0.55, 0.06), ("Pz", 0.50, 0.09)],
+    # 0.5.0 phase D: mesial temporal onset reads anterior temporal on the scalp (learningeeg atlas-l-temporal-focal-
+    # seizure: rhythmic theta maximal at F7/T1 with T3; the posterior temporal chain joins later)
+    "left_mesial_temporal":  [("F7", 1.00, 0.00), ("T3", 0.70, 0.06), ("Fp1", 0.30, -0.05)],
+    "right_mesial_temporal": [("F8", 1.00, 0.00), ("T4", 0.70, 0.06), ("Fp2", 0.30, -0.05)],
+    "left_parietal":   [("P3", 1.00, 0.00), ("C3", 0.30, -0.06), ("T5", 0.30, 0.07)],
+    "right_parietal":  [("P4", 1.00, 0.00), ("C4", 0.30, -0.06), ("T6", 0.30, 0.07)],
+}
+
+#: 0.5.0 phase D (spec_version 3 ictal runs only): a sharper occipital source.  The v2 set put O1 1.0, T5 0.50 and
+#: P3 0.45 almost in phase, so P3-O1 largely cancelled and the run read maximal in C3-P3 (phase D review: C3-P3
+#: 2.3-3.8x against P3-O1 below it); learningeeg o1-onset-seizure-bipolar has the rhythm in P3-O1 and T5-O1.
+REGION_GENERATORS_V3: Dict[str, List[Tuple[str, float, float]]] = {
+    "left_occipital":  [("O1", 1.00, 0.00), ("T5", 0.25, 0.06), ("P3", 0.15, -0.04)],
+    "right_occipital": [("O2", 1.00, 0.00), ("T6", 0.25, 0.06), ("P4", 0.15, -0.04)],
 }
 
 #: spec_version 3 (0.5.0, feature review seizures-icu B4-01..04): generators a focal ictal run RECRUITS over its
@@ -458,8 +476,13 @@ FOCAL_RECRUIT_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
     "right_frontal":   [("F8", 0.40, 0.16), ("C4", 0.30, 0.12), ("Fz", 0.30, 0.04)],
     "left_central":    [("P3", 0.40, 0.18), ("Cz", 0.30, 0.05), ("T3", 0.30, 0.12)],
     "right_central":   [("P4", 0.40, 0.18), ("Cz", 0.30, 0.05), ("T4", 0.30, 0.12)],
-    "left_occipital":  [("T5", 0.40, 0.18), ("P3", 0.35, 0.12), ("Pz", 0.25, 0.05)],
-    "right_occipital": [("T6", 0.40, 0.18), ("P4", 0.35, 0.12), ("Pz", 0.25, 0.05)],
+    # (phase D: P3/Pz lowered from 0.35/0.25, which put an occipital run's maximum in C3-P3 / Cz-Pz by 10 s)
+    "left_occipital":  [("T5", 0.40, 0.18), ("P3", 0.20, 0.12), ("Pz", 0.10, 0.05)],
+    "right_occipital": [("T6", 0.40, 0.18), ("P4", 0.20, 0.12), ("Pz", 0.10, 0.05)],
+    "left_mesial_temporal":  [("T3", 0.45, 0.10), ("T5", 0.35, 0.22), ("C3", 0.20, 0.05)],
+    "right_mesial_temporal": [("T4", 0.45, 0.10), ("T6", 0.35, 0.22), ("C4", 0.20, 0.05)],
+    "left_parietal":   [("O1", 0.35, 0.16), ("C3", 0.30, 0.10), ("Pz", 0.30, 0.04)],
+    "right_parietal":  [("O2", 0.35, 0.16), ("C4", 0.30, 0.10), ("Pz", 0.30, 0.04)],
 }
 
 #: Intended scalp topography of a *generalized* discharge, peak 1.0.
@@ -478,10 +501,11 @@ GENERALIZED_FIELD: Dict[str, float] = {
 }
 
 
-def region_generators(region: str, channels: Sequence[str]) -> List[Tuple[str, float, float]]:
-    """Generators for ``region``, dropping foci the electrode array lacks."""
+def region_generators(region: str, channels: Sequence[str], v3: bool = False) -> List[Tuple[str, float, float]]:
+    """Generators for ``region``, dropping foci the electrode array lacks (``v3``: the 0.5.0 ictal overrides)."""
     present = set(channels)
-    gens = [g for g in REGION_GENERATORS[region] if g[0] in present]
+    table = REGION_GENERATORS_V3 if (v3 and region in REGION_GENERATORS_V3) else REGION_GENERATORS
+    gens = [g for g in table[region] if g[0] in present]
     if gens:
         return gens
     # reduced arrays (e.g. neonatal) may lack every listed focus - fall back to
@@ -542,6 +566,10 @@ CONTRALATERAL: Dict[str, str] = {
     "right_hemisphere": "left_hemisphere",
     "generalized": "generalized",
     "midline": "midline",
+    "left_mesial_temporal": "right_mesial_temporal",
+    "right_mesial_temporal": "left_mesial_temporal",
+    "left_parietal": "right_parietal",
+    "right_parietal": "left_parietal",
 }
 
 HEMISPHERE_OF_REGION: Dict[str, str] = {
@@ -550,6 +578,8 @@ HEMISPHERE_OF_REGION: Dict[str, str] = {
     "right_temporal": "right", "right_frontal": "right", "right_central": "right",
     "right_occipital": "right", "right_hemisphere": "right",
     "generalized": "both", "midline": "both",
+    "left_mesial_temporal": "left", "right_mesial_temporal": "right",
+    "left_parietal": "left", "right_parietal": "right",
 }
 
 

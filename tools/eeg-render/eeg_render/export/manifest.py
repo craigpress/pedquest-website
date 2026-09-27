@@ -165,6 +165,22 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             spec_event_index=int(inst.index),
             cluster_ordinal=int(inst.ordinal),
         ))
+        if synth.spec_version >= 3:
+            # 0.5.0 phase D: how the run was drawn, so the key names the onset pattern, the motor phases and the
+            # spasm variant the page shows
+            if inst.onset_pattern:
+                rows[-1]["onset_pattern"] = inst.onset_pattern
+            if inst.correlate:
+                rows[-1]["clinical_correlate"] = inst.correlate
+            if inst.kind == "spasm":
+                rows[-1]["spasm_side"] = inst.side
+                rows[-1]["tonic_s"] = round(float(inst.tonic_s), 3)
+            if synth._is_gtc(inst):
+                t_b, t_c = synth._gtc_times(inst)
+                rows[-1]["tonic_phase_s"] = [round(t_b, 3), round(t_c, 3)]
+                rows[-1]["clonic_phase_s"] = [round(t_c, 3), round(float(inst.t1), 3)]
+            if synth._v3_emg_kind(inst) == "neo_clonic":
+                rows[-1]["neonatal_seizure_type"] = "focal_clonic"
         # EEG Atlas P5: ACNS advisories travel with the key, never change the signal
         if inst.kind == "brd":
             rows[-1]["acns_advisory"] = ("brief rhythmic discharge: evolving rhythmic activity shorter than "

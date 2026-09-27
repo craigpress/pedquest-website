@@ -74,7 +74,9 @@ def test_cluster_runs_vary_and_recruit():
     runs = Synthesizer(spec, 3600.0).seizures
     d = np.array([z.duration_s for z in runs])
     gaps = np.diff([z.t0 for z in runs])
-    assert d.std() / d.mean() > 0.2                  # v2: about 0.1
+    # phase D: the draw is mean-preserving and clipped to 0.6-1.6x (seizures-icu-v3 item 2), which narrows the
+    # spread; this seed measures CV 0.19 (range 36-81 s) against v2's 0.1
+    assert d.std() / d.mean() > 0.15                 # v2: about 0.1
     assert gaps.std() / gaps.mean() > 0.05           # v2: 0.04
     assert len({round(z.start_hz, 2) for z in runs}) > len(runs) // 2
 

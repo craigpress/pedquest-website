@@ -56,6 +56,9 @@ SR_EPOCH_S = 0.5
 SR_MIN_SUPPRESSION_S = 2.0
 AEEG_PP_WIN_S = 0.5
 AEEG_DISPLAY_WIN_S = 60.0     # span whose amplitude min/max become the margins
+#: 0.5.0 phase D (spec_version 3; seizures-icu-v3 B2-03): every 60-s window held a whole 40-s CAPE cycle, so the
+#: margins were constant and the trend could not show the cycling.  Standard aEEG margins come from 15-s epochs.
+AEEG_DISPLAY_WIN_S_V3 = 15.0
 
 SIDES = ("left", "right")
 #: LL/LP/RP/RL - see montage.TREND_REGIONS_19
@@ -260,6 +263,7 @@ def compute_trends(
         # realistic interburst - about 1 uV of residual activity plus ECG showing through - read as not suppressed.
         default_uv = 5.0 if int(spec.get("spec_version") or 1) >= 3 else SR_THRESHOLD_UV
         sr_threshold_uv = float(_style.get("suppression_threshold_uv", default_uv))
+    aeeg_win_s = AEEG_DISPLAY_WIN_S_V3 if int(spec.get("spec_version") or 1) >= 3 else AEEG_DISPLAY_WIN_S
     sr_min_s = float(_style.get("suppression_min_duration_s", SR_MIN_SUPPRESSION_S))
     envelope_statistic = str(_style.get("envelope_statistic", "median"))
     fs = synth.fs
@@ -422,7 +426,7 @@ def compute_trends(
             one = synth.derive(x, [(a, bq)])[0]
             filt = apply_fir(one, aeeg_taps)
             pp = _pp_envelope(filt, fs, AEEG_PP_WIN_S)
-            aeeg_win_n = max(short_n, int(round(AEEG_DISPLAY_WIN_S * fs)))
+            aeeg_win_n = max(short_n, int(round(aeeg_win_s * fs)))
             aw = _epoch_windows(pp[None, :], np.clip(centre_idx - aeeg_win_n // 2, 0,
                                                      pp.size - aeeg_win_n), aeeg_win_n)[0]
             out.aeeg_lo[side][col0:col1] = np.percentile(aw, 1, axis=-1)
