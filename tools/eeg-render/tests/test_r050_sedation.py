@@ -256,7 +256,11 @@ def pento():
     S, S0 = _pair("pentobarbital", SPECS["pentobarbital"])
     n, d = _disp(S, 0.01, HORIZON)
     fs = S.fs
-    env = np.convolve(np.max(np.abs(d), axis=0), np.ones(fs // 2) / (fs // 2), "same")
+    # r3 (artifacts-sedation-r3 S109-06): the interburst now carries ~2 uV RMS residual and a 5-10 uV ECG in the
+    # posterior chains (R2/R3, learningeeg burst-suppression), so the largest chain is no longer a suppression detector:
+    # the 80th percentile over the 18 chains ignores a few ECG-carrying chains (measured: interburst 2.5 uV median,
+    # bursts >= 12.9 uV at p10, pre-drug background >= 9.1 uV at p5)
+    env = np.convolve(np.percentile(np.abs(d), 80, axis=0), np.ones(fs // 2) / (fs // 2), "same")
     return S, S0, n, d, env < 5.0
 
 
@@ -277,7 +281,13 @@ def test_barbiturate_bursts_are_short_high_voltage_slow_and_sharp(pento):
     burst = seg[:, bm]
     burst = burst[:, : (burst.shape[1] // fs) * fs]
     pre = d[:, 60 * fs: 240 * fs]
-    assert _p2p(burst, fs) > 1.7 * _p2p(pre, fs)
+    # r3 (artifacts-sedation-r3 S109-06): bursts had grown to 2.5 rows (max-chain median 184 uV) overrunning 2-3 rows;
+    # the learningeeg burst-suppression figure shows bursts of about 0.5-1.5 spacing, still above the pre-drug background
+    assert _p2p(burst, fs) > 1.2 * _p2p(pre, fs)
+    tt = np.arange(d.shape[1]) / fs + 0.01
+    peak = [np.ptp(d[:, (tt >= a) & (tt < b + 0.3)], axis=1).max() for a, b in zip(S._burst_start, S._burst_end)
+            if a > 720 and b < HORIZON - 10]
+    assert 1.0 <= np.median(peak) / 73.2 <= 1.8, np.median(peak) / 73.2
     rel = lambda x, a, b: _bp(x, fs, a, b).sum() / _bp(x, fs, 1, 30).sum()
     assert rel(burst, 8, 13) < 0.05 and rel(burst, 1, 8) > 0.85
     supp_rms = float(np.sqrt(np.mean(seg[:, sup[lo:]] ** 2)))

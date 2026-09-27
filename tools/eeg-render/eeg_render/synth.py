@@ -577,6 +577,20 @@ def _lognorm(rng: np.random.Generator, n: int, sigma: float) -> np.ndarray:
     return np.exp(rng.standard_normal(n) * sigma)
 
 
+class _ColumnRng:
+    """Generator stand-in whose k-th draw call uses its own substream ``(seed, *tags, k)``, so an array drawn per event
+    stays prefix-stable when an earlier call drew a different number of events."""
+
+    def __init__(self, seed: int, *tags: object) -> None:
+        self._seed, self._tags, self._k = seed, tags, 0
+
+    def __getattr__(self, name: str):
+        def call(*a, **kw):
+            self._k += 1
+            return getattr(substream(self._seed, *self._tags, self._k), name)(*a, **kw)
+        return call
+
+
 # --------------------------------------------------------------------------
 # spectral shapes
 # --------------------------------------------------------------------------
@@ -1291,7 +1305,16 @@ class Synthesizer:
     #: re-review 2026-09-26: 0.01 of 40 uV was a 0.4 uV dead line.  A drug-induced suppression keeps low-voltage
     #: irregular residual activity (0.025 of a 40 uV background, about 1 uV RMS) plus ECG: visibly not flat, still under the
     #: 3 uV epoch criterion the suppression-ratio trend uses
-    _SED_IBI_FLOOR_V3 = 0.025
+    #: r3 (artifacts-sedation-r3 S109-06): 0.025 was still 0.8 uV RMS bipolar, a ruler line at 7 uV/mm.  The learningeeg
+    #: burst-suppression figure shows a visibly non-flat interburst and R2/R3 a burst:interburst contrast of about
+    #: 10-20:1, so the residual is about 2 uV RMS on the display (floor x the 0.6-scaled burst content)
+    _SED_IBI_FLOOR_V3 = 0.12
+    #: r3: barbiturate burst content scale.  2.5 x the stream drew bursts of 2.5 rows (bipolar max-chain median 184 uV)
+    #: overrunning 2-3 neighbouring rows; the reference bursts are about 0.5-1.5 spacing
+    _SED_BURST_SCALE_V3 = 0.6
+    #: r3: ECG through a drug-induced suppression.  5 uV (gradient field) gave a 3.2-3.7 uV QRS in P3-O1, 0.5 mm at
+    #: 7 uV/mm; the burst_suppression type's V3_BS_ECG_UV (10 uV) gives the 5-10 uV QRS the reviewers see in R2/R3
+    _SED_BS_ECG_UV = 10.0
 
     def _sed_profile_v3(self, agent: str, q: float, out: Dict[str, float]) -> Dict[str, float]:
         """A drug REPLACES the awake background instead of adding to it (sedation.md systematic item 1).
@@ -1427,7 +1450,7 @@ class Synthesizer:
                     dd = d[mm]
                     w = sgn * (np.exp(-0.5 * (dd / wd) ** 2) - 0.35 * np.exp(-0.5 * ((dd - 2.6 * wd) / (2.2 * wd)) ** 2))
                     rows[:, mm] += 5.0 * float(rng.uniform(0.7, 1.3)) * field[:, None] * w[None, :]
-        return rows
+        return rows * self._SED_BURST_SCALE_V3
 
     #: 0.5.0 per-electrode spindle field (central maximum; temporal chains carry lower-voltage spindles, Craig on
     #: PQ-G-002: "lower voltage, but not absent") and a small anterior-to-posterior phase lag (traveling spindle)
@@ -2012,7 +2035,8 @@ class Synthesizer:
         rows = np.zeros((self.n_elec, t.size))
         if self._blink_t.size == 0 or t.size == 0:
             return rows
-        idx = np.nonzero((self._blink_t > t[0] - 0.6) & (self._blink_t < t[-1] + 0.6))[0]
+        reach = self._BLINK_REACH_V3 if self.spec_version >= 3 else 0.6
+        idx = np.nonzero((self._blink_t > t[0] - reach) & (self._blink_t < t[-1] + 0.6))[0]
         if idx.size == 0:
             return rows
         prof = self._blink_profile(t, self._blink_t[idx], idx) * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * wake
@@ -2033,6 +2057,14 @@ class Synthesizer:
     #: larger than Fp1-F3 and F7-T3 is 0.14-0.36 of Fp1-F7, so F7/F8 carry less field than F3/F4 (v2 had them equal).
     _BLINK_FIELD_V3 = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.15, "F8": 0.15, "F3": 0.35, "F4": 0.35,
                        "Fz": 0.35, "T3": 0.02, "T4": 0.02, "C3": 0.12, "C4": 0.12, "Cz": 0.10}
+
+    #: r3 blink contour (spec_version 3): rise and fall sigma factors, the lid-return lobe (depth as a fraction of the
+    #: peak, centre and sigma in s after the peak) and how far a blink reaches past its time (s), which sets the window
+    #: margin so a blink just outside a requested window still contributes its lobe
+    _BLINK_RISE_V3R = 1.0
+    _BLINK_FALL_V3R = 0.90
+    _BLINK_LOBE_V3R = (0.22, 0.40, 0.12)
+    _BLINK_REACH_V3 = 1.0
 
     def _blink_field(self) -> np.ndarray:
         if self.spec_version >= 3:
@@ -2063,6 +2095,19 @@ class Synthesizer:
                 d = t - tt - 0.10
                 m = (d > -0.20) & (d < 0.30)
                 dd = d[m]
+                if self.spec_version >= 3:
+                    # r3 (artifacts-sedation-r3, blink contour 10/16 in the reference IQR): the narrower blink lost LFF
+                    # undershoot area, so +200/+300/+400 ms read -0.27/-0.14/-0.07 against the reference medians
+                    # -0.34/-0.26/-0.18 (artifacts.md 1c).  A slow lid-return lobe after the peak restores the late
+                    # undershoot, and a slightly quicker fall keeps +20/+60 ms in the IQR.  Peak-normalised
+                    # shape only: the lobe is < 0.1 % at the peak, and the amplitude draws are untouched.
+                    sr, sf = sr * self._BLINK_RISE_V3R, sf * self._BLINK_FALL_V3R
+                    m = (d > -0.20) & (d < self._BLINK_REACH_V3 - 0.10)
+                    dd = d[m]
+                    lobe = self._BLINK_LOBE_V3R
+                    prof[m] += a * (np.where(dd < 0.30, np.exp(-0.5 * (dd / np.where(dd < 0, sr, sf)) ** 2), 0.0)
+                                    - lobe[0] * np.exp(-0.5 * ((dd - lobe[1]) / lobe[2]) ** 2))
+                    continue
                 prof[m] += a * np.exp(-0.5 * (dd / np.where(dd < 0, sr, sf)) ** 2)
             return prof
         sharp = self.spec_version >= 2
@@ -2160,6 +2205,12 @@ class Synthesizer:
                 m = times.size
                 rng = substream(self.seed, "graphoelement-v3", name)
                 mean_s, dur_sd = 1.0, 0.22
+            if self.spec_version >= 3:
+                # r3 (artifacts-sedation-r3 S109-04): one sequential stream made event j's duration, carrier, side and
+                # amplitude depend on how many events the horizon admitted (a page synthesized to t0 + 75 s and the
+                # key built to the whole record disagreed).  Each column now has its own stream, so event j draws the
+                # same values at every horizon (the event times are already prefix-stable).
+                rng = _ColumnRng(self.seed, "graphoelement-v3-col", name)
             dur = np.clip(mean_s * _lognorm(rng, m, dur_sd), 0.3, 60.0) if dur_sd > 0 else np.full(m, mean_s)
             if name == "delta_brush" and self.spec_version >= 3:
                 dur = np.clip(dur, 0.7, 1.6)
@@ -2181,31 +2232,58 @@ class Synthesizer:
         times drawn inside the scheduled bursts, at the authored per-minute rate overall.  At 30-34 w, when most
         delta waves of a burst carry fast activity (ACNS 2013 Fig. 2a; LE-33wED), at least half of a burst's
         ~1.8-s delta waves are brushed.  A continuous stretch (the scheduler's merged 30-s pseudo-bursts) keeps the plain rate."""
-        rng = substream(self.seed, "brush-times-v3")
-        segs = [(max(float(a), -60.0), min(float(b), span)) for a, b in zip(self._burst_start, self._burst_end)
-                if b > -60.0 and a < span]
-        long_t = sum(b - a for a, b in segs if b - a >= 29.9)
-        short_t = sum(b - a for a, b in segs if b - a < 29.9)
-        frac = short_t / max(span + 60.0 - long_t, 1e-6)
+        # r3 (artifacts-sedation-r3 S109-04: the key listed three 150-180 uV brushes the page did not show): the
+        # schedule must not depend on the synthesis horizon.  (1) The burst-time share ``frac`` that lifts the per-burst
+        # rate is measured over the trailing 10 min of the schedule, not the whole span.  (2) Each burst draws from its
+        # own substream keyed by its onset, and a continuous stretch (whose merged end moves with the horizon) draws per
+        # fixed 30-s cell, so a count never depends on where the synthesis stops.
+        starts = np.asarray(self._burst_start, dtype=float)
+        ends = np.asarray(self._burst_end, dtype=float)
         dense = 30.0 <= self._pma_eff() <= 34.0
-        out: List[float] = []
-        for a, b in segs:
+        cand: List[float] = []
+        for a0, b0 in zip(starts, ends):
+            a, b = max(float(a0), -60.0), float(b0)
+            if b <= -60.0 or a >= span:
+                continue
+            if b - a >= 29.9:
+                hi_t = min(b, span) - 1.8
+                for cell in range(int(math.floor(a / 30.0)), int(math.floor(min(b, span) / 30.0)) + 1):
+                    c0 = cell * 30.0
+                    lam = rate / 60.0 * 30.0 * self._brush_state_w(c0 + 15.0)
+                    rng = substream(self.seed, "brush-times-v3r", "cell", cell)
+                    tt = rng.uniform(c0, c0 + 30.0, int(rng.poisson(lam)))
+                    cand.extend(float(x) for x in tt if a + 0.8 <= x <= hi_t)
+                continue
+            w0 = max(a - 600.0, -60.0)
+            lo_i = int(np.searchsorted(ends, w0, side="right"))
+            hi_i = int(np.searchsorted(starts, a, side="right"))
+            short_t = long_t = 0.0
+            for x0, x1 in zip(starts[lo_i:hi_i], ends[lo_i:hi_i]):
+                seg = min(float(x1), b) - max(float(x0), w0)
+                if seg <= 0:
+                    continue
+                if x1 - max(x0, -60.0) >= 29.9:
+                    long_t += seg
+                else:
+                    short_t += seg
+            frac = short_t / max(b - w0 - long_t, 1e-6)
             L = b - a
-            lam = rate / 60.0 * L
-            if L < 29.9:
-                lam /= max(frac, 0.2)
-                if dense:
-                    lam = max(lam, 0.5 * L / 1.8)
+            lam = rate / 60.0 * L / max(frac, 0.2)
+            if dense:
+                lam = max(lam, 0.5 * L / 1.8)
             lam *= self._brush_state_w(0.5 * (a + b))
-            n = int(rng.poisson(lam))
             lo, hi = a + 0.8, b - 1.8      # clear of the burst edge ramps
+            rng = substream(self.seed, "brush-times-v3r", "burst", round(float(a0), 3))
+            n = int(rng.poisson(lam))
             if n == 0 or hi <= lo:
                 continue
-            last = -1e9
-            for tt in np.sort(rng.uniform(lo, hi, n)):
-                if tt - last >= 1.6:
-                    out.append(float(tt))
-                    last = tt
+            cand.extend(float(x) for x in rng.uniform(lo, hi, n))
+        out: List[float] = []
+        last = -1e9
+        for tt in sorted(cand):
+            if tt - last >= 1.6:
+                out.append(tt)
+                last = tt
         return np.asarray(out)
 
     def _brush_state_w(self, tt: float) -> float:
@@ -2360,7 +2438,10 @@ class Synthesizer:
             pairs = mt.montage_pairs("longitudinal_bipolar", self.scalp)
             cache[key] = max((abs(w[self._idx[a]] - w[self._idx[b]]) for a, b in pairs if b is not None), default=1.0)
         A = amp / max(cache[key], 0.2)
-        ratio = (0.20 if 33.5 <= pma <= 35.5 else 0.15) * rj
+        # r3: with the horizon-independent schedule the displayed fast/delta measured 0.23-0.29 (median 0.26 over five C33
+        # seeds), under the 0.3-0.4 this docstring targets (ACNS Fig. 2a, LE-33wED: fast about 1/3-1/2 of the delta), so
+        # the fast peak is 0.18 (0.24 at 33.5-35.5 w)
+        ratio = (0.24 if 33.5 <= pma <= 35.5 else 0.18) * rj
         d = t - t0
         u = d / max(dur, 1e-3)
         inside = (u > 0) & (u < 1)
@@ -5133,9 +5214,13 @@ class Synthesizer:
                      "Fz": 0.75, "Cz": 0.5, "Pz": 0.25, "A1": 0.7, "A2": 0.7}
     GAZE_UV = 75.0          # gaze-position scale at F7: saccade steps of 75-150 uV
     ROVING_UV = 55.0        # RMS of the slow roving drift at F7
-    GLOSSO_UV = 200.0
+    #: r3 (artifacts-sedation-r3 A110-11): 200 drew parasagittal 1.18 rows and temporal 1.4-1.65 rows, about 1.5x the
+    #: Tongue-Artifact figure (parasagittal 0.5-0.8 spacing, temporal about 1)
+    GLOSSO_UV = 140.0
     CHEW_EMG_UV = 70.0      # phase D: 120 drew 4-6 rows at medium and 11 at high (C16)
-    ECG_ART_UV = 45.0
+    #: r3 (artifacts-sedation-r3 A110-04): at 45 the P3-O1 spike (29 uV) sat level with the 9-Hz PDR in its own 130-ms
+    #: window (1.07x); in ECG-artifact-on-an-uncalibrated-screen the P3-O1/T5-O1 spikes stand 1.5-2x above it
+    ECG_ART_UV = 65.0
     PULSE_UV = 35.0
     SWEAT_UV = 80.0
     VENT_UV = 120.0
@@ -5351,12 +5436,27 @@ class Synthesizer:
                     continue
                 dd = d[m]
                 fall = 0.35 * dur
-                shape = self._rc(dd / onset) * (1.0 - self._rc((dd - (dur - fall)) / (fall + 0.3)))
-                sway = 1.0 + wig * np.sin(2 * np.pi * 1.5 * dd[None, :] / dur + wph[:, None])
-                rows[:, m] += (amp * gain) * w[:, None] * shape[None, :] * sway
+                if _region == "global":
+                    # r3 (artifacts-sedation-r3 A110-08: the global transient was a smooth 2-3 phase ~2.5 Hz oscillation
+                    # synchronous in all 18 chains with little EMG, readable as a generalized sharp-and-slow burst): a
+                    # whole-head movement is ONE slow excursion whose onset reaches each electrode 30-80 ms apart (cable
+                    # and electrode inertia) and whose return differs per lead, with scalp EMG throughout (shaking-head-
+                    # artifact).  Extra draws come from their own substream, so the event timetable is unchanged.
+                    g = substream(self.seed, "move-global", k, round(float(s0), 4))
+                    lag = g.uniform(0.03, 0.08, ne)[:, None]
+                    dfall = fall * g.uniform(0.7, 1.4, ne)[:, None]
+                    de = dd[None, :] - lag
+                    shape2 = self._rc(de / onset) * (1.0 - self._rc((de - (dur - dfall)) / (dfall + 0.3)))
+                    rows[:, m] += (amp * gain) * w[:, None] * shape2
+                else:
+                    shape = self._rc(dd / onset) * (1.0 - self._rc((dd - (dur - fall)) / (fall + 0.3)))
+                    sway = 1.0 + wig * np.sin(2 * np.pi * 1.5 * dd[None, :] / dur + wph[:, None])
+                    rows[:, m] += (amp * gain) * w[:, None] * shape[None, :] * sway
                 if emg_rows is not None:
                     burst = np.where(dd < dur, np.sin(np.pi * np.clip(dd / dur, 0, 1)) ** 0.5, 0.0)
                     reg = 0.3 + 0.7 * np.clip(np.abs(w), 0.0, 1.0)      # the moving region's muscles
+                    if _region == "global":
+                        reg = np.ones(ne) * 1.6                         # every scalp muscle, clearly visible
                     rows[:, m] += emg_rows[:, m] * reg[:, None] * (burst * emg_uv * gain)[None, :]
             return rows
 
@@ -5408,10 +5508,14 @@ class Synthesizer:
             target = (chans or ["T5"])[0]
             rate = float(ev.get("rate_per_h", 2880.0)) / 3600.0
             tau = float(ev.get("decay_s", 0.2))
+            # r3 (artifacts-sedation-r3 A110-07: T3-T5 signs +, +, -, - within one event): an electrode pops the same way
+            # every time (the contact potential discharges in one direction), so the sign is drawn once per event
+            pop_sign = float(substream(self.seed, "pop-sign", k).choice([-1.0, 1.0]))
 
             def draw(rng, tt):
-                item = (tt, float(rng.uniform(35.0, 110.0)) * float(rng.choice([-1.0, 1.0])))
-                return item, tt + float(rng.exponential(1.0 / max(rate, 1e-6))) + 0.05
+                amp = float(rng.uniform(35.0, 110.0))
+                rng.choice([-1.0, 1.0])         # the old per-pop sign draw, kept so times and amplitudes do not move
+                return (tt, amp * pop_sign), tt + float(rng.exponential(1.0 / max(rate, 1e-6))) + 0.05
             prof = np.zeros(n)
             for p0, amp in self._event_schedule(k, "pop", a0, a1, draw):
                 d = t - p0
@@ -5572,7 +5676,7 @@ class Synthesizer:
             a0, a1 = self._event_window(ev)
             k = max(1, int(rate * (a1 - a0)))
             times = np.sort(rng.uniform(a0, a1, k))
-            times = times[(times > t[0] - 0.5) & (times < t[-1] + 0.5)]
+            times = times[(times > t[0] - (self._BLINK_REACH_V3 if self.spec_version >= 3 else 0.5)) & (times < t[-1] + 0.5)]
             if self.spec_version >= 2:
                 # same blink as the spontaneous ones (shape, field, 160 uV default)
                 prof = self._blink_profile(t, np.asarray(times)) * float(self.bg.get("blink_amplitude_uv", BLINK_UV)) * gain
@@ -6077,12 +6181,17 @@ class Synthesizer:
             x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)) * eyes)
         # Neonatal graphoelements (microvolts; burst-bound ones gated inside).
         if self.age == "neonate":
-            x += self.graphoelement_rows(t) * self._ch_gain[:, None]
+            ge = self.graphoelement_rows(t) * self._ch_gain[:, None]
+            if self.spec_version >= 3:
+                # r3: a drug's amplitude change (neonatal midazolam, Jennekens 2012) lowers the graphoelements with the
+                # rest of the background; they were added after it at full voltage and diluted the attenuation
+                ge = ge * amp_w[None, :]
+            x += ge
         ecg_uv = float(self.bg.get("baseline_ecg_uv", 0.0))
         if self._sed_driven_bs():
             # 0.5.0 (re-review): ECG shows through a drug-induced suppression.  At least 5 uV, drawn with the
             # front-to-back gradient so it survives the longitudinal chains (the default weights cancel there)
-            x += self._ecg(t, amplitude=max(ecg_uv, 5.0), gradient=True)
+            x += self._ecg(t, amplitude=max(ecg_uv, self._SED_BS_ECG_UV), gradient=True)
         elif ecg_uv > 0:
             x += self._ecg(t, amplitude=ecg_uv)
         x += self._artifact_block(t, i0)

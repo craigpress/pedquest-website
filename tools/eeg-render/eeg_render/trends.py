@@ -263,6 +263,7 @@ def compute_trends(
         # realistic interburst - about 1 uV of residual activity plus ECG showing through - read as not suppressed.
         default_uv = 5.0 if int(spec.get("spec_version") or 1) >= 3 else SR_THRESHOLD_UV
         sr_threshold_uv = float(_style.get("suppression_threshold_uv", default_uv))
+    sr_v3 = int(spec.get("spec_version") or 1) >= 3
     aeeg_win_s = AEEG_DISPLAY_WIN_S_V3 if int(spec.get("spec_version") or 1) >= 3 else AEEG_DISPLAY_WIN_S
     sr_min_s = float(_style.get("suppression_min_duration_s", SR_MIN_SUPPRESSION_S))
     envelope_statistic = str(_style.get("envelope_statistic", "median"))
@@ -438,8 +439,14 @@ def compute_trends(
                 blocks = np.lib.stride_tricks.sliding_window_view(
                     srf, sr_epoch_n, axis=-1)[:, sr_local, :]
                 pp_ep = blocks.max(axis=-1) - blocks.min(axis=-1)      # (n_ch, n_ep)
-                pooled_pp = pp_ep.mean(axis=0)
-                sr_flags[side].append((pooled_pp < sr_threshold_uv).astype(float))
+                if sr_v3:
+                    # r3 (artifacts-sedation-r3 S109-06): the +-5 uV convention is an amplitude, so an epoch is
+                    # suppressed when its peak-to-peak is under 2 x 5 uV, and the chains are pooled by the median so the
+                    # ECG showing through a few posterior chains (5-10 uV QRS) cannot un-suppress the epoch
+                    flags_ep = np.median(pp_ep, axis=0) < 2.0 * sr_threshold_uv
+                else:
+                    flags_ep = pp_ep.mean(axis=0) < sr_threshold_uv
+                sr_flags[side].append(flags_ep.astype(float))
                 env_sig = sps.sosfiltfilt(sos_env, sig, axis=-1)
                 env_blocks = np.lib.stride_tricks.sliding_window_view(
                     env_sig, sr_epoch_n, axis=-1)[:, sr_local, :]
