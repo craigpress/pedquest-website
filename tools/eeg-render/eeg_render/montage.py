@@ -463,6 +463,10 @@ REGION_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
 REGION_GENERATORS_V3: Dict[str, List[Tuple[str, float, float]]] = {
     "left_occipital":  [("O1", 1.00, 0.00), ("T5", 0.25, 0.06), ("P3", 0.15, -0.04)],
     "right_occipital": [("O2", 1.00, 0.00), ("T6", 0.25, 0.06), ("P4", 0.15, -0.04)],
+    # phase B fix-focal (focal-independent: T3 at 0.70 of F7 made T3-T5 equal to F7-T3 from the first second): the
+    # anterior temporal maximum with the phase reversal at F7 (learningeeg atlas-l-temporal-focal-seizure)
+    "left_mesial_temporal":  [("F7", 1.00, 0.00), ("T3", 0.45, 0.06), ("Fp1", 0.35, -0.05)],
+    "right_mesial_temporal": [("F8", 1.00, 0.00), ("T4", 0.45, 0.06), ("Fp2", 0.35, -0.05)],
 }
 
 #: spec_version 3 (0.5.0, feature review seizures-icu B4-01..04): generators a focal ictal run RECRUITS over its
@@ -479,8 +483,9 @@ FOCAL_RECRUIT_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
     # (phase D: P3/Pz lowered from 0.35/0.25, which put an occipital run's maximum in C3-P3 / Cz-Pz by 10 s)
     "left_occipital":  [("T5", 0.40, 0.18), ("P3", 0.20, 0.12), ("Pz", 0.10, 0.05)],
     "right_occipital": [("T6", 0.40, 0.18), ("P4", 0.20, 0.12), ("Pz", 0.10, 0.05)],
-    "left_mesial_temporal":  [("T3", 0.45, 0.10), ("T5", 0.35, 0.22), ("C3", 0.20, 0.05)],
-    "right_mesial_temporal": [("T4", 0.45, 0.10), ("T6", 0.35, 0.22), ("C4", 0.20, 0.05)],
+    # (phase B fix-focal: 0.45 / 0.35 put the maximum in T3-T5 from 5 s; synth._MESIAL_RECRUIT_S also delays them)
+    "left_mesial_temporal":  [("T3", 0.20, 0.10), ("T5", 0.25, 0.22), ("C3", 0.15, 0.05)],
+    "right_mesial_temporal": [("T4", 0.20, 0.10), ("T6", 0.25, 0.22), ("C4", 0.15, 0.05)],
     "left_parietal":   [("O1", 0.35, 0.16), ("C3", 0.30, 0.10), ("Pz", 0.30, 0.04)],
     "right_parietal":  [("O2", 0.35, 0.16), ("C4", 0.30, 0.10), ("Pz", 0.30, 0.04)],
 }

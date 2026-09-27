@@ -177,7 +177,10 @@ def test_occipital_onset_is_posterior_rhythmic_spikes():
     post = max(p[names.index("P3-O1")], p[names.index("T5-O1")])
     assert post >= 1.2 * p[names.index("C3-P3")], dict(zip(names, p.round()))
     j = names.index("T5-O1")
-    assert 7.0 <= _peak_hz(I[j]) <= 14.0
+    # phase B fix-focal: the first ~2 s are now 15-25 Hz low-voltage fast activity (LO p1; test_r050_fix_focal), so the
+    # alpha-theta rhythm is read after it (LO p2: 16 -> 13 Hz and slower)
+    _, _, I3, _, _ = _pair("occipital", 3.0, 7.0)
+    assert 7.0 <= _peak_hz(I3[j]) <= 14.0
     # surface-negative spikes at the focus, read referentially at O1 (the ictal field itself, before the chain):
     # negative peaks at least 1.8x the positive ones, where the same run with a plain lvfa onset is symmetric
     syn = S("occipital")
@@ -252,9 +255,11 @@ def _spasm_window(case, w0, w1):
 
 def test_spasm_emg_burst_is_striking_in_the_temporal_chains():
     """S1/S2: the EMG burst is the most striking high-frequency event.  epileptiform-v3: >30 Hz rose only 1.2-2x
-    because the decrement multiplied the burst; target at least 4x the pre-spasm level in the temporal chains."""
+    because the decrement multiplied the burst; target at least 4x the pre-spasm level in the temporal chains.
+    Phase B fix-focal: the burst starts 1.2-1.5 s after the slow-wave trough (S1, Craig's figure), not 0.4 s into it."""
     syn, z, pre, names = _spasm_window("spasm", -2.5, -0.3)
-    _, _, burst, _ = _spasm_window("spasm", 0.42, 0.42 + z.tonic_s)
+    on = syn._spasm_emg_onset(z) - z.t0
+    _, _, burst, _ = _spasm_window("spasm", on + 0.02, on + z.tonic_s)
     r = np.std(_hp(burst), axis=1) / np.std(_hp(pre), axis=1)
     for ch in ("F7-T3", "T3-T5", "F8-T4", "T4-T6"):
         assert r[names.index(ch)] >= 4.0, (ch, r[names.index(ch)])

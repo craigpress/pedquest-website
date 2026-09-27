@@ -1992,7 +1992,9 @@ class Synthesizer:
             # 0.5.0: per-blink amplitude and time course, drawn once per record (a window never re-draws them)
             shp = substream(self.seed, "blink-shape")
             k = self._blink_t.size
-            self._blink_amp = _lognorm(shp, k, 0.3) if k else np.empty(0)
+            # phase B fix-focal: sigma 0.3 reached 2x the median (5-6.7 rows, 522-718 uV p2p in Fp1-F7); sigma 0.2 inside
+            # 0.65-1.45 keeps the reference spread (0.9-4.3 spacings around a 1.9 median) without the tail
+            self._blink_amp = np.clip(_lognorm(shp, k, 0.2), 0.65, 1.45) if k else np.empty(0)
             self._blink_sr = 0.040 * shp.uniform(0.85, 1.2, k)
             # phase D (artifacts-v3 blinks): the fall jitter U(0.8, 1.6) had mean 1.2, so the typical fall sigma was 60 ms
             # and the +40 ms point sat at 0.66 (reference 0.43, IQR 0.40-0.48).  Mean-1 jitter, one blink in ten slow
@@ -2802,8 +2804,14 @@ class Synthesizer:
                 elif z.kind == "spasm" and modes.get(z.index) != "absolute" and bg_pp > 0:
                     # 0.5.0 (feature review SPASM): the slow wave is the largest deflection on the page, also on a
                     # hypsarrhythmic background (infantile-spasm-ii: it towers over the 300-uV chaos)
-                    z.amp_start = max(z.amp_start, 2.0 * bg_pp)
-                    z.amp_end = max(z.amp_end, 2.0 * bg_pp)
+                    # phase B fix-focal (focal-independent: on hypsarrhythmia the wave was only 1.0-1.3x the chaos in
+                    # the lateral chains): 3.5x the background there (lateral 1.3-1.9x, midline 2.8-3.4x); the riding fast
+                    # activity scales with the wave
+                    k = self._SPASM_HYPS_X if self.bg["type"] == "hypsarrhythmia" else 2.0
+                    a0 = z.amp_start
+                    z.amp_start = max(z.amp_start, k * bg_pp)
+                    z.amp_end = max(z.amp_end, k * bg_pp)
+                    z.wave_fast_uv *= z.amp_start / max(a0, 1e-9)
         self.seizures = out
         self.ictal = [z for z in out if z.kind != "rhythmic_pattern"]
         self.rhythmic_patterns = [z for z in out if z.kind == "rhythmic_pattern"]
@@ -2817,6 +2825,9 @@ class Synthesizer:
                 self._decrements.append((start, start + z.decrement_s, z.decrement_depth))
             elif z.kind == "tonic_seizure":
                 self._decrements.append((z.t0 - z.decrement_s, z.t0 + 0.4, z.decrement_depth))
+
+    #: phase B fix-focal: spasm slow wave on a hypsarrhythmic background, in units of the background peak-to-peak
+    _SPASM_HYPS_X = 3.5
 
     #: phase D: "+S" weight of the rhythmic-spike onset (central / parietal / occipital) relative to the run RMS
     _RHYTHMIC_SPIKE_SHARP = 1.6
@@ -3039,7 +3050,7 @@ class Synthesizer:
 
         ``amplitude_start_uv`` is the slow wave's peak-to-peak on the largest longitudinal-bipolar derivation.
         The fast activity riding the wave (``wave_fast_uv``) and the decrement (``fast_uv``) has a per-electrode
-        amplitude field**2 and an independent phase and frequency per electrode, so it survives the bipolar
+        amplitude field (the decrement's 0.4 + 0.6 field) and an independent phase and frequency per electrode, so it survives the bipolar
         subtraction (a common-mode 0.7-1.0 field cancelled).  The wave spreads front to back over 20-40 ms.
         """
         rng = substream(self.seed, "spasm", inst.index, inst.ordinal)
@@ -3068,15 +3079,21 @@ class Synthesizer:
                 + 0.42 * np.exp(-0.5 * ((d - 0.12 * dur) / (0.10 * dur)) ** 2)
                 + 0.50 * np.exp(-0.5 * ((d - 0.85 * dur) / (0.16 * dur)) ** 2))
         rows = field[:, None] * wave * (inst.amp_start / 1.5 / max_diff * jitter)
-        f2 = (field ** 2) * fast_side
         n_e = self.n_elec
-        f_wave = float(r3.uniform(17.0, 24.0))
+        f_wave = float(r3.uniform(17.0, 20.0))      # 17-19 Hz peak in Craig's figure (was 17-24)
         fw = f_wave + r3.normal(0.0, 1.2, n_e)
         ph = r3.uniform(0.0, 2 * np.pi, n_e)
         dd = t - inst.t0
         env_w = np.exp(-0.5 * ((dd - 0.5 * dur) / (0.30 * dur)) ** 2)
-        rows += (0.5 * inst.wave_fast_uv * jitter * f2[:, None]
-                 * np.sin(2 * np.pi * fw[:, None] * dd[None, :] + ph[:, None]) * env_w[None, :])
+        # phase B fix-focal (infantile-spasm-craig-20260926: the overriding fast activity is 0.4-0.75x the slow wave in
+        # F3-C3, C3-P3, P3-O1 and Cz-Pz): sqrt(field), not field**2, so P3-O1 carries it too (field**2 left it at 0.1x)
+        # and a second, beating component from its own substream (a lone sine read as a spindle-like train)
+        rb = substream(self.seed, "spasm-wave-fast", inst.index, inst.ordinal)
+        fwb = fw + rb.uniform(2.0, 4.0, n_e)
+        phb = rb.uniform(0.0, 2 * np.pi, n_e)
+        rows += (0.5 * inst.wave_fast_uv * jitter * (np.sqrt(field) * fast_side)[:, None] * env_w[None, :]
+                 * (0.75 * np.sin(2 * np.pi * fw[:, None] * dd[None, :] + ph[:, None])
+                    + 0.4 * np.sin(2 * np.pi * fwb[:, None] * dd[None, :] + phb[:, None])))
         if inst.fast_uv > 0 and inst.decrement_s > 0:
             start = inst.t0 + 0.55 * dur
             w = smoothstep((t - start) / 0.3) * (1.0 - smoothstep((t - (start + inst.decrement_s)) / 0.5))
@@ -3936,6 +3953,11 @@ class Synthesizer:
             if extra:
                 # 0.5.0 (feature review B4-01, learningeeg L1): the rest of the chain joins over the first ~10 s
                 delays = substream(self.seed, "szfield", inst.index, inst.ordinal).uniform(1.0, 7.0, len(extra))
+                if inst.onset_region.endswith("mesial_temporal"):
+                    # phase B fix-focal (focal-independent: from 5 s the maximum was T3-T5, reading mid-temporal;
+                    # learningeeg L1 keeps it at F7/T1/T3): mid temporal joins after 8-20 s, posterior after 30-40 s
+                    span = [self._MESIAL_RECRUIT_S.get(g[0], (8.0, 20.0)) for g in extra]
+                    delays = np.array([a + (d - 1.0) / 6.0 * (b - a) for d, (a, b) in zip(delays, span)])
                 gens += [(g, smoothstep((t - inst.t0 - d) / 3.0)) for g, d in zip(extra, delays)]
             onset_keep = (1.0 - 0.55 * s) if late is None else 1.0
             for gi, ((focus, ga, gph), join) in enumerate(gens):
@@ -3964,6 +3986,9 @@ class Synthesizer:
         return out
 
     # ---------------- phase D: generalized tonic-clonic phases and v3 ictal EMG ----------------
+
+    #: phase B fix-focal: when a mesial temporal run's recruited generators join (seconds after onset, per electrode)
+    _MESIAL_RECRUIT_S = {"T5": (30.0, 40.0), "T6": (30.0, 40.0)}
 
     #: phase D: v3 tonic-seizure fast activity gain so the authored voltage is what the bipolar chain shows
     _TONIC_BIPOLAR_GAIN = 2.2
@@ -4004,6 +4029,30 @@ class Synthesizer:
             return None
         _, clonic, pulse = self._gtc_pulse(inst, t)
         return 1.0 - clonic * (1.0 - (0.25 + 0.75 * pulse))
+
+    #: phase B fix-focal: background left under a bilateral tonic-clonic seizure, bilateral onset to offset
+    _GTC_BG_KEEP = 0.12
+
+    def gtc_bg_envelope(self, t: np.ndarray) -> np.ndarray:
+        """Background factor through the bilateral phase of a v3 GTC run (1 elsewhere), from absolute time.
+
+        focal-independent FBTC: the posterior alpha ran on in the clonic pauses at 76-85 % of its pre-ictal RMS and
+        normal blinks kept occurring; learningeeg atlas-r-temporal-to-bilateral-tcs p3-p5: whole-head tonic EMG, then
+        clonic bursts with near-flat pauses.  The background (and the blinks, which ride ``env``) falls to 12 % over
+        3 s from the bilateral onset and returns over 1 s at the offset, where the postictal attenuation takes over."""
+        out = np.ones_like(t)
+        if t.size == 0:
+            return out
+        lo, hi = float(t[0]), float(t[-1])
+        for inst in self.ictal:
+            if not self._is_gtc(inst) or inst.t1 + 1.0 < lo:
+                continue
+            t_b, _ = self._gtc_times(inst)
+            if t_b > hi:
+                continue
+            w = smoothstep((t - t_b) / 3.0) * (1.0 - smoothstep((t - inst.t1) / 1.0))
+            out *= 1.0 - (1.0 - self._GTC_BG_KEEP) * w
+        return out
 
     def _v3_emg_kind(self, inst: SeizureInstance) -> Optional[str]:
         """Runs whose EMG is drawn by _ictal_emg_rows_v3 instead of ictal_gate."""
@@ -4048,6 +4097,15 @@ class Synthesizer:
             cache[key] = w
         return cache[key]
 
+    def _spasm_emg_onset(self, inst: SeizureInstance) -> float:
+        """Phase B fix-focal: start of a spasm's EMG burst, 1.2-1.5 s after the slow-wave trough (drawn once per spasm).
+
+        infantile-spasm-craig-20260926: the temporalis burst (T1-T3, about 38 Hz) starts 1.2-1.5 s after the trough
+        and does not overlap the wave; in infantile-spasm-ii the dense high-frequency activity also follows the wave,
+        into the decrement.  Phase D put it 0.4 s into the wave, where it read as the overriding fast activity."""
+        r = substream(self.seed, "spasm-emg", inst.index, inst.ordinal)
+        return inst.t0 + 0.45 * max(inst.duration_s, 0.3) + float(r.uniform(1.2, 1.5))
+
     def _ictal_emg_rows_v3(self, t: np.ndarray, i0: int, n: int) -> np.ndarray:
         """Phase D ictal EMG, independent per electrode (so it survives the bipolar chain), added after the
         background envelopes: an electrodecrement or a burst-suppression gate no longer damps it (epileptiform-v3
@@ -4063,11 +4121,12 @@ class Synthesizer:
                 continue
             factor = MUSCLE_FACTOR.get(inst.muscle, MUSCLE_FACTOR["modest"])
             if kind == "spasm":
-                if factor <= 0 or inst.t0 + 0.4 + inst.tonic_s + 1.0 < lo or inst.t0 > hi + 1.0:
+                on = self._spasm_emg_onset(inst)
+                if factor <= 0 or on + inst.tonic_s + 1.0 < lo or inst.t0 > hi + 1.0:
                     continue
-                # 0.3-0.5 s burst about 0.4 s into the wave (infantile-spasm-i); a tonic spasm holds tonic_s
-                shape = (smoothstep((t - (inst.t0 + 0.40)) / 0.08)
-                         * (1.0 - smoothstep((t - (inst.t0 + 0.40 + inst.tonic_s)) / 0.15)))
+                # 0.3-0.5 s burst after the wave (a tonic spasm holds tonic_s)
+                shape = (smoothstep((t - on) / 0.08)
+                         * (1.0 - smoothstep((t - (on + inst.tonic_s)) / 0.15)))
                 gain = factor / MUSCLE_FACTOR["modest"]
             elif kind == "neo_tonic":
                 # neonatal focal tonic: sustained posturing, EMG held through the run (ACNS 2013 / ILAE 2021
@@ -4342,8 +4401,13 @@ class Synthesizer:
             elif pat == "electrodecrement":
                 # frontal: low-voltage fast activity inside a regional electrodecrement
                 f_onset = float(np.clip(f_start * pr.uniform(2.5, 3.5), 15.0, 25.0))
+            elif pat == "rhythmic_spikes" and inst.onset_region.endswith(("_occipital", "_parietal")):
+                # phase B fix-focal (focal-independent; o1-onset-seizure-bipolar p1: 22-24 Hz low-voltage fast activity
+                # in P3-O1/T5-O1, p2 16 -> 13 Hz): the 7-13 Hz clip drew an 11 -> 8 Hz rhythm that read as an asymmetric
+                # posterior dominant rhythm.  Posterior onsets start at 15-25 Hz, as the electrodecrement branch does
+                f_onset = float(np.clip(f_start * pr.uniform(2.5, 3.5), 15.0, 25.0))
             elif pat == "rhythmic_spikes":
-                # central / parietal / occipital: rhythmic alpha-beta spikes (o1-onset-seizure-bipolar)
+                # central: rhythmic alpha-beta spikes
                 f_onset = float(np.clip(f_start * pr.uniform(1.4, 1.8), 7.0, 13.0))
         # steps every 2.5-5 s through the middle 70 % of the run; at least 4
         u_on, u_off = self._recruit_bounds(dur, pat)
@@ -4360,6 +4424,11 @@ class Synthesizer:
             dev = 0.55 * dev + float(rng.normal(0.0, 0.16))
             logf[k] = glide + dev
         logf[-1] = math.log(f_end * float(rng.uniform(0.65, 0.85)))    # terminal slowing
+        if pat == "rhythmic_spikes" and inst.onset_region.endswith(("_occipital", "_parietal")):
+            # phase B fix-focal: the fast onset holds (to 0.8x) through the first half of the onset before slowing
+            # (o1-onset-seizure-bipolar: p1 22-24 Hz, p2 16 -> 13 Hz); no extra draws
+            u = np.insert(u, 1, 0.5 * u_on)
+            logf = np.insert(logf, 1, math.log(0.8 * f_onset))
         f = np.clip(np.exp(logf), 0.5, 25.0)
         # cumulative phase at each breakpoint: exact integral of a geometric glide
         cum = np.zeros_like(u)
@@ -4694,6 +4763,8 @@ class Synthesizer:
     #: the private delta realizations (far past any record, so they never coincide with the background's)
     _PI_DELTA_GAIN = 2.5
     _PI_DELTA_OFFSET = 2_000_000_000
+    #: phase B fix-focal: on a burst-suppression background the gain is at most this multiple of the interburst floor
+    _PI_DELTA_BS_X = 7.5
 
     def _postictal_delta_rows(self, t: np.ndarray, i0: int, n: int) -> np.ndarray:
         """Focal polymorphic delta over the onset zone after an ictal run (spec_version 3).
@@ -4723,7 +4794,12 @@ class Synthesizer:
             fall = mt.generator_falloff(inst.onset_region)
             for gi, (focus, ga, _) in enumerate(gens):
                 out += self._gen_weights(focus, fall)[:, None] * (ga * src[gi] * shape)[None, :]
-        return out * (self._PI_DELTA_GAIN * self.amp_rms)
+        gain = self._PI_DELTA_GAIN
+        if self.bg["type"] == "burst_suppression" and getattr(self, "_ibi_floor0", None) is not None:
+            # phase B fix-focal (focal-independent: on burst suppression the postictal delta was 8-18x the interburst
+            # for 10 s, as large as the seizure): scaled to the interburst floor, about 2.5x its peak-to-peak
+            gain = min(gain, self._PI_DELTA_BS_X * float(self._ibi_floor0))
+        return out * (gain * self.amp_rms)
 
     # ---------------- overlap-add noise ----------------
 
@@ -5826,6 +5902,9 @@ class Synthesizer:
         # Electrodecrements (spasms, tonic seizures) attenuate the background
         # and its graphoelements; the ictal block below is added after.
         env = env * dec
+        if self.spec_version >= 3 and self.ictal:
+            # phase B fix-focal: a bilateral tonic-clonic seizure replaces the background (PDR, blinks: env gates them)
+            env = env * self.gtc_bg_envelope(t)
         x *= burst_rows * env[None, :]
         if self.spec_version >= 3 and self.seizures:
             x *= self.postictal_rows_v3(t)
