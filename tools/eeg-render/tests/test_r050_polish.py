@@ -116,8 +116,11 @@ def blinks():
             bg = np.percentile(x0, 97.5) - np.percentile(x0, 2.5)
             fs = synth.fs
             pk = synth._blink_t + 0.10
+            # phase B fix-focal: eyes-open blinks only (artifacts-v3 measured "eyes-open" blinks).  Since phase D no blink
+            # draws behind closed lids, so without this gate the sample mixed in background peaks above 15 uV
+            open_ = synth._eye_factor(pk)[1] > 0.5
             for i, p in enumerate(pk):
-                if not (t[0] + 0.5 < p < t[-1] - 0.6):
+                if not (t[0] + 0.5 < p < t[-1] - 0.6) or not open_[i]:
                     continue
                 if (i and p - pk[i - 1] < 0.7) or (i < len(pk) - 1 and pk[i + 1] - p < 0.7):
                     continue
@@ -139,7 +142,7 @@ def test_blink_amplitude_matches_the_reference_spacing(blinks):
     """artifacts-v3 blinks: eyes-open Fp1-F3 median 0.97 rows (3.5x bg) at 160 uV; reference 15 blinks in 6
     learningeeg figures: median 1.9 channel spacings (0.9-4.3) and 3-10x background."""
     peaks, ratios, _, _ = blinks
-    assert peaks.size >= 30
+    assert peaks.size >= 15           # eyes-open blinks only (22 on these 12 pages)
     assert 1.5 <= np.median(peaks) <= 2.3, np.median(peaks)
     assert 3.0 <= np.median(ratios) <= 10.0, np.median(ratios)
 
