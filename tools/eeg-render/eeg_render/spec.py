@@ -549,6 +549,10 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bg.setdefault("blink_rate_per_min", 0.0 if unreactive else (4.0 if (age == "neonate" and bg.get("state_cycle")) else 15.0))
         if age != "neonate":
             bg.setdefault("pdr_gain", 2.5)
+        if version >= 3 and age != "neonate":
+            # phase D (artifacts-v3 blinks): 160 uV displayed an eyes-open Fp1-F3 median of 0.97 rows (3.5x bg) against a
+            # reference median of 1.9 channel spacings (0.9-4.3) and 3-10x background; 320 measures 1.83 rows, 5.3x
+            bg.setdefault("blink_amplitude_uv", 320.0)
         bg.setdefault("blink_amplitude_uv", 160.0)
         bg.setdefault("amplitude_reference", "display")
         bg.setdefault("pdr_field", "focal")

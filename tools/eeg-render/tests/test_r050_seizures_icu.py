@@ -143,7 +143,9 @@ BREACH_PAIRS = [("F3", "C3"), ("C3", "P3"), ("F7", "T3"), ("T3", "T5")]
 
 
 def _breach_measures(bg, seed):
-    s = _synth(_img("child", bg, [], seed=seed))
+    # blinks off: they are not cerebral, and at the phase D reference size (320 uV) the shared F3 blink field alone
+    # correlates F3-C3 with C3-P3 (r 0.22 without the breach), which is not the mirror this measures
+    s = _synth(_img("child", dict(bg, blink_rate_per_min=0.0), [], seed=seed))
     d = _displayed(s, 240.0, 360.0, BREACH_PAIRS)
     _, x = s.segment(240.0, 360.0)
     ref = s.derive(x, [("C3", None)])[0]

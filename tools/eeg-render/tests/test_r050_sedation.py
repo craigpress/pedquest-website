@@ -240,7 +240,8 @@ def test_ketamine_gamma_band_theta_and_alternation():
     _, p0 = sps.welch(d0, fs=fs, nperseg=4 * fs, axis=-1)
     m = (f >= 20) & (f <= 45)
     assert 25.0 <= f[m][np.argmax((p.mean(0) - p0.mean(0))[m])] <= 32.0
-    assert _bp(d, fs, 4, 8).mean() > 1.15 * _bp(d0, fs, 4, 8).mean()
+    nofp = [i for i, c in enumerate(n) if not c.startswith("Fp")]           # the twin's blinks carry theta at Fp
+    assert _bp(d[nofp], fs, 4, 8).mean() > 1.15 * _bp(d0[nofp], fs, 4, 8).mean()
 
     def env(lo, hi):
         y = sps.sosfiltfilt(sps.butter(4, [lo, hi], "bandpass", fs=fs, output="sos"), d, axis=1)

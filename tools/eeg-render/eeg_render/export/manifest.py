@@ -225,6 +225,19 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
                            if ev.get("kind") == "rem_eye_movements" else None),
         ))
 
+    # Phase D (neonatal-v3 B1-06/B1-10: the key stated the authored brush rate, 2.2/min, while 7.1/min was realized):
+    # spec_version 3 delta brushes are keyed one row each, with the state they fall in; ``summary.delta_brushes``
+    # carries the realized rate overall and by state.
+    brushes = (getattr(synth, "_ge_events", None) or {}).get("delta_brush") if synth.spec_version >= 3 else None
+    if brushes is not None and len(brushes):
+        for t0, dur, f1, side, amp, _ in brushes:
+            if t0 + dur < 0.0 or t0 > duration_s:
+                continue
+            label = str(synth.state_at(np.array([float(t0)]))[0]) or None
+            rows.append(_row("delta_brush", t0, t0 + dur, fs, duration_s,
+                             side="right" if side > 0 else "left", amplitude_uv=round(float(amp), 1),
+                             fast_hz=round(float(f1), 1), state=label))
+
     for at, dur, side, depth, ramp, delta_depth in getattr(synth, "_atten", []):
         if at + dur < 0.0 or at > duration_s:
             continue
@@ -356,12 +369,37 @@ def sporadic_summary(rows: List[Dict], duration_s: float) -> List[Dict]:
     return [out[k] for k in sorted(out)]
 
 
+def delta_brush_summary(rows: List[Dict], duration_s: float, synth=None) -> Optional[Dict]:
+    """Realized delta-brush count and rate per minute, overall and per behavioural state (phase D)."""
+    br = [r for r in rows if r["kind"] == "delta_brush"]
+    if not br:
+        return None
+    minutes = max(duration_s / 60.0, 1e-9)
+    out = {"count": len(br), "per_minute": round(len(br) / minutes, 3)}
+    ivs = getattr(synth, "_state_intervals", None) or []
+    if ivs:
+        by = {}
+        for label in sorted({lab for _, _, lab in ivs}):
+            span = sum(max(0.0, min(b, duration_s) - max(a, 0.0)) for a, b, lab in ivs if lab == label)
+            n = sum(1 for r in br if r.get("state") == label)
+            if span > 0:
+                by[label] = {"count": n, "minutes": round(span / 60.0, 2), "per_minute": round(n / (span / 60.0), 3)}
+        out["by_state"] = by
+    if synth is not None:
+        cfg = ((synth.bg.get("graphoelements") or {}).get("delta_brush") or {})
+        out["authored_rate_per_min"] = float(cfg.get("rate_per_min", 0.0))
+    return out
+
+
 def _summary(synth, duration_s: float) -> Dict:
     rows = realized_events(synth, duration_s)
     out = {"seizure_burden": seizure_burden(rows, duration_s, synth.age)}
     sp = sporadic_summary(rows, duration_s)
     if sp:
         out["sporadic_discharges"] = sp
+    db = delta_brush_summary(rows, duration_s, synth)
+    if db:
+        out["delta_brushes"] = db
     return out
 
 
