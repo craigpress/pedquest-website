@@ -44,6 +44,8 @@ RHY_FREQS = np.arange(0.5, 20.01, 0.5)
 SR_THRESHOLD_UV = 3.0
 SR_WINDOW_S = 60.0
 SR_EPOCH_S = 0.5
+#: r5 (spec_version 3): suppression flags are scored on SR_EPOCH_S / SR_SUB_V3 sub-epochs
+SR_SUB_V3 = 2
 #: Suppression has to be SUSTAINED to count.  With a hard threshold sitting
 #: close to the background level - exactly what an attenuated post-ictal
 #: record produces - ordinary fluctuation dips under it for isolated half
@@ -443,7 +445,13 @@ def compute_trends(
                     # r3 (artifacts-sedation-r3 S109-06): the +-5 uV convention is an amplitude, so an epoch is
                     # suppressed when its peak-to-peak is under 2 x 5 uV, and the chains are pooled by the median so the
                     # ECG showing through a few posterior chains (5-10 uV QRS) cannot un-suppress the epoch
-                    flags_ep = np.median(pp_ep, axis=0) < 2.0 * sr_threshold_uv
+                    # r5 (S109-06 SR 47 % against the 60 % target while the page mask read 61 %): a 0.5-s epoch that
+                    # straddles a burst edge is lost, about 0.5 s per 2.5-s interburst.  Flags are scored on 0.25-s
+                    # halves (the envelope below keeps 0.5-s epochs); the 2-s minimum run still applies
+                    half = sr_epoch_n // SR_SUB_V3
+                    sub = blocks[:, :, :half * SR_SUB_V3].reshape(blocks.shape[0], blocks.shape[1], SR_SUB_V3, half)
+                    pp_sub = (sub.max(axis=-1) - sub.min(axis=-1)).reshape(blocks.shape[0], -1)
+                    flags_ep = np.median(pp_sub, axis=0) < 2.0 * sr_threshold_uv
                 else:
                     flags_ep = pp_ep.mean(axis=0) < sr_threshold_uv
                 sr_flags[side].append(flags_ep.astype(float))
@@ -460,17 +468,20 @@ def compute_trends(
 
     # ---- suppression ratio: trailing 1 min window -----------------------
     sr_t = np.concatenate(sr_times) if sr_times else np.zeros(0)
-    win_ep = max(1, int(round(SR_WINDOW_S / SR_EPOCH_S)))
+    sub = SR_SUB_V3 if sr_v3 else 1
+    flag_ep_s = SR_EPOCH_S / sub
+    flag_t = (sr_t[:, None] + (np.arange(sub)[None, :] + 0.5 - sub / 2.0) * flag_ep_s).ravel()
+    win_ep = max(1, int(round(SR_WINDOW_S / flag_ep_s)))
     for side in SIDES:
         flags = np.concatenate(sr_flags[side]) if sr_flags[side] else np.zeros(0)
-        if flags.size == 0 or sr_t.size == 0:
+        if flags.size == 0 or flag_t.size == 0:
             continue
-        flags = flags[: sr_t.size]
-        flags = _drop_short_runs(flags, max(1, int(round(sr_min_s / SR_EPOCH_S))))
+        flags = flags[: flag_t.size]
+        flags = _drop_short_runs(flags, max(1, int(round(sr_min_s / flag_ep_s))))
         kern = np.ones(win_ep) / win_ep
         pad = np.concatenate([np.full(win_ep, flags[0]), flags])
         rolling = np.convolve(pad, kern, mode="valid")[: flags.size] * 100.0
-        out.sr[side] = np.interp(t_grid, sr_t[: flags.size], rolling)
+        out.sr[side] = np.interp(t_grid, flag_t[: flags.size], rolling)
 
         # Envelope amplitude uses its own 2–20 Hz filter, independent of SR.
         amps = np.concatenate(sr_pp[side]) if sr_pp[side] else np.zeros(0)

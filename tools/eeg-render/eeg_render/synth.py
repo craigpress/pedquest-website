@@ -715,13 +715,22 @@ _PDR_FIELD_V3 = {
 #: alpha share 0.38-0.46 vs 0.24-0.26, midline theta 0.27-0.35 vs 0.41-0.46): a child's PDR is broken up by posterior
 #: and centro-parietal theta.  Parietal maximum, falling to Cz and the occipital leads, so the midline and C-P chains
 #: carry it
+#: r5 (re-review: midline theta 0.28-0.37 and P-O alpha 0.32-0.42 against 0.41-0.46 / 0.24-0.26, pixel domain on
+#: eyes-closed pages with the rows registered correctly): weight 0.5 -> 0.8 of the PDR with the PDR itself at 0.85
+#: (``_PDR_W_WITH_THETA_B``: part of its share goes to theta, the posterior voltage stays about the same), centre
+#: 4.3 -> 5.0 Hz (the 4.3-Hz Lorentzian put a third of its power under 4 Hz, where it read as delta), and a flatter
+#: field (P3/P4 1.0 -> 0.75, O1/O2 0.55 -> 0.45, Cz 0.35 -> 0.5, Fz 0.12 -> 0.15) so Cz-Pz carries it without the
+#: parietal chains doubling their voltage.  0.95 fitted the midline too but the display calibration (wake 1-s p2p =
+#: amplitude_uv) then scaled the busier wake down so far that child N3 no longer lifted the aEEG band 1.4x (1.37)
 _POST_THETA_FIELD_B = {
-    "P3": 1.00, "P4": 1.00, "Pz": 1.00, "O1": 0.55, "O2": 0.55, "T5": 0.65, "T6": 0.65, "C3": 0.40, "C4": 0.40,
-    "Cz": 0.35, "T3": 0.30, "T4": 0.30, "F3": 0.15, "F4": 0.15, "Fz": 0.12, "F7": 0.10, "F8": 0.10,
+    "P3": 0.75, "P4": 0.75, "Pz": 1.00, "O1": 0.45, "O2": 0.45, "T5": 0.65, "T6": 0.65, "C3": 0.40, "C4": 0.40,
+    "Cz": 0.50, "T3": 0.30, "T4": 0.30, "F3": 0.15, "F4": 0.15, "Fz": 0.15, "F7": 0.10, "F8": 0.10,
     "Fp1": 0.05, "Fp2": 0.05,
 }
 #: posterior theta weight relative to the PDR weight by age (ages 3-12; none otherwise)
-_POST_THETA_W_B = {"child": 0.5}
+_POST_THETA_W_B = {"child": 0.8}   # r5: was 0.5
+#: r5: PDR weight where the posterior theta is drawn (ages with ``_POST_THETA_W_B``)
+_PDR_W_WITH_THETA_B = 0.85
 _CENTRAL = {
     "C3": 1.00, "C4": 1.00, "Cz": 1.00, "P3": 0.55, "P4": 0.55, "Pz": 0.60,
     "F3": 0.55, "F4": 0.55, "Fz": 0.60, "T3": 0.35, "T4": 0.35,
@@ -920,7 +929,7 @@ class Synthesizer:
             self.st_sed_beta = self._mk("sed_beta3", band_shape(f, 16.5, 3.0, order=1.0), 0.2 * ant + 0.8 * near_uniform,
                                         common=0.35)
             # phase B (sleep-fix, awake child): posterior / centro-parietal theta, children only (seeded by name)
-            self.st_theta_post = (self._mk("theta_post_b", band_shape(f, 4.3, 0.9, order=1.0),
+            self.st_theta_post = (self._mk("theta_post_b", band_shape(f, 5.0, 0.9, order=1.0),
                                            _profile(ch, _POST_THETA_FIELD_B, 0.1), common=0.3)
                                   if self.age in _POST_THETA_W_B else None)
             self.st_barb = self._mk("sed_barb", band_shape(f, 14.5, 2.0), 0.6 * ant + 0.4 * near_uniform, common=0.35)
@@ -1347,7 +1356,9 @@ class Synthesizer:
     _SED_BURST_SCALE_V3 = 0.6
     #: r3: ECG through a drug-induced suppression.  5 uV (gradient field) gave a 3.2-3.7 uV QRS in P3-O1, 0.5 mm at
     #: 7 uV/mm; the burst_suppression type's V3_BS_ECG_UV (10 uV) gives the 5-10 uV QRS the reviewers see in R2/R3
-    _SED_BS_ECG_UV = 10.0
+    #: r5 (r3a open item: the interburst QRS read 5-7 uV, about 1 mm at 7 uV/mm, beside a 4-5 uV residual): 13 draws
+    #: 7-9 uV in P3-O1 / T5-O1 / Cz-Pz, inside the 5-10 uV the reviewers asked for
+    _SED_BS_ECG_UV = 13.0
 
     def _sed_profile_v3(self, agent: str, q: float, out: Dict[str, float]) -> Dict[str, float]:
         """A drug REPLACES the awake background instead of adding to it (sedation.md systematic item 1).
@@ -1553,6 +1564,14 @@ class Synthesizer:
     #: phase B arousal burst (learningeeg normal-asleep arousal: an abrupt massive EMG / movement burst, the delta gone):
     #: EMG gain over the waking floor at onset, and the share of arousals that also carry a movement transient
     _AROUSAL_EMG_GAIN = (2.5, 5.0)
+    #: r5 (sleep-fix open items): the arousal EMG held 0.35 of its peak gain to the end, so the last 40 % of a 9-s
+    #: arousal still read 7-8x the sleep EMG and a 15-s arousal page was mostly muscle; learningeeg normal-asleep
+    #: arousal is an abrupt burst that settles to waking muscle.  The burst now decays to the waking floor (the arousal
+    #: already carries 0.8 of the waking EMG): late arousal 1.3-1.7x the record's waking EMG, onset 3.7-4.4x
+    _AROUSAL_EMG_FLOOR = 0.0
+    #: r5: PDR weight during an arousal by age.  The infant's waking rhythm (5.5 Hz) sits inside a theta-rich N2, so at
+    #: 0.6 it rose only 1.5x in its own band (child 3.7x); AASM: an abrupt shift to theta / alpha
+    _AROUSAL_PDR_W = {"infant": 1.2}
     _AROUSAL_MOVE_P = 0.6
     _KCOMPLEX_LAG_S_PER_Y = 0.06
 
@@ -1748,7 +1767,8 @@ class Synthesizer:
                 continue
             d = t - a
             on = np.clip(d / 0.08, 0.0, 1.0) * np.clip((w - d) / 0.5, 0.0, 1.0)
-            g = np.maximum(g, gain * on * (0.35 + 0.65 * np.exp(-np.clip(d, 0.0, None) / tau)))
+            fl = self._AROUSAL_EMG_FLOOR
+            g = np.maximum(g, gain * on * (fl + (1.0 - fl) * np.exp(-np.clip(d, 0.0, None) / tau)))
         return g
 
     def _arousal_movement_rows(self, t: np.ndarray) -> np.ndarray:
@@ -2240,8 +2260,16 @@ class Synthesizer:
     #: peak, centre and sigma in s after the peak) and how far a blink reaches past its time (s), which sets the window
     #: margin so a blink just outside a requested window still contributes its lobe
     _BLINK_RISE_V3R = 1.0
-    _BLINK_FALL_V3R = 0.90
-    _BLINK_LOBE_V3R = (0.22, 0.40, 0.12)
+    #: r5 (blink contour: +60/+80/+100 ms read 0.01/-0.29/-0.40 against the reference IQR .11/.26, -.20/.09, -.25/-.03,
+    #: artifacts.md 1c): the Gaussian fall reached zero by +80 ms, so the LFF undershoot peaked at +100 instead of
+    #: +150-200.  Inverting the single-pole 1 Hz LFF on the reference median gives a source that falls fast to 0.7 at
+    #: +40 ms and then holds a shoulder (0.36 at +80, 0.31 at +100, 0.1 at +150): a quicker Gaussian fall plus a
+    #: shoulder term (depth, centre s after the peak, sigma), a slightly earlier lid-return lobe, and a constant that
+    #: keeps the displayed peak where it was (the shoulder adds 18 % at the peak).  Amplitude draws untouched.
+    _BLINK_FALL_V3R = 0.77
+    _BLINK_LOBE_V3R = (0.12, 0.40, 0.09)
+    _BLINK_SHOULDER_V5 = (0.42, 0.068, 0.053)
+    _BLINK_NORM_V5 = 1.0 / 1.18
     _BLINK_REACH_V3 = 1.0
 
     def _blink_field(self) -> np.ndarray:
@@ -2282,9 +2310,11 @@ class Synthesizer:
                     sr, sf = sr * self._BLINK_RISE_V3R, sf * self._BLINK_FALL_V3R
                     m = (d > -0.20) & (d < self._BLINK_REACH_V3 - 0.10)
                     dd = d[m]
-                    lobe = self._BLINK_LOBE_V3R
-                    prof[m] += a * (np.where(dd < 0.30, np.exp(-0.5 * (dd / np.where(dd < 0, sr, sf)) ** 2), 0.0)
-                                    - lobe[0] * np.exp(-0.5 * ((dd - lobe[1]) / lobe[2]) ** 2))
+                    lobe, sh = self._BLINK_LOBE_V3R, self._BLINK_SHOULDER_V5
+                    prof[m] += a * self._BLINK_NORM_V5 * (
+                        np.where(dd < 0.30, np.exp(-0.5 * (dd / np.where(dd < 0, sr, sf)) ** 2), 0.0)
+                        + sh[0] * np.exp(-0.5 * ((dd - sh[1]) / sh[2]) ** 2)
+                        - lobe[0] * np.exp(-0.5 * ((dd - lobe[1]) / lobe[2]) ** 2))
                     continue
                 prof[m] += a * np.exp(-0.5 * (dd / np.where(dd < 0, sr, sf)) ** 2)
             return prof
@@ -5550,7 +5580,8 @@ class Synthesizer:
             return self._gaze_field()[:, None] * (g * self.ROVING_UV * gain)[None, :]
 
         if kind == "ecg":
-            return self._ecg(t, amplitude=self.ECG_ART_UV * gain, gradient=True)
+            return self._ecg(t, amplitude=self.ECG_ART_UV * gain * self._ecg_art_scale(), gradient=True,
+                             field=self._ECG_FIELD_ART_V5)
 
         if kind == "pulse":
             # one electrode's mechanical pulse wave filling each R-R interval, locked to the R wave with a 0.25-0.35 s
@@ -5943,8 +5974,26 @@ class Synthesizer:
 
     _ECG_FIELD_POST = {"O1": 1.0, "O2": 0.7, "Pz": 0.5, "T5": 0.55, "P3": 0.45, "T6": 0.4, "P4": 0.4, "C3": 0.15,
                        "T3": 0.15, "Cz": 0.1, "C4": 0.1, "T4": 0.1}
+    #: r5 (ECG artifact visibility, the ``ecg`` artifact only): T5 0.55 -> 0.25, P3 0.45 -> 0.25.  T5-O1 and P3-O1 carry
+    #: the PDR, so at the old weights (0.45 / 0.55 of the O1 spike) they sat level with it (1.0-1.15x the local
+    #: background) while Cz-Pz, the quietest of the chains the references show the spike in, stood 1.7x above.  The
+    #: weights now follow each chain's background: T5-O1 / P3-O1 0.75, Cz-Pz 0.40 (unchanged).  The drug-suppression
+    #: ECG keeps ``_ECG_FIELD_POST`` (its interburst has no PDR)
+    _ECG_FIELD_ART_V5 = {"O1": 1.0, "O2": 0.7, "Pz": 0.5, "T5": 0.25, "P3": 0.25, "T6": 0.4, "P4": 0.4, "C3": 0.15,
+                         "T3": 0.15, "Cz": 0.1, "C4": 0.1, "T4": 0.1}
 
-    def _ecg(self, t: np.ndarray, amplitude: float, gradient: bool = False) -> np.ndarray:
+    def _ecg_art_scale(self) -> float:
+        """r5: per-record ECG artifact scale.  The spike is authored against a 40-uV child background with the
+        default PDR; a record authored with a larger background or PDR (``pdr_gain``) buries a fixed-size spike in its
+        posterior alpha (P3-O1 and T5-O1 at or under 1x the local background at 60 uV or pdr_gain 4), while the teaching
+        figures show it 1.5-2x above the local background.  ECG artifact size varies widely between patients, so the
+        spike follows the authored posterior background (never below the default).  A record constant, so window
+        independent."""
+        amp = float(self.bg["amplitude_uv"]) * (0.6 + 0.4 * self.pdr_gain / 2.5)      # 2.5: the spec default pdr_gain
+        return float(np.clip(amp / 40.0, 1.0, 2.5))
+
+    def _ecg(self, t: np.ndarray, amplitude: float, gradient: bool = False,
+             field: Optional[Dict[str, float]] = None) -> np.ndarray:
         """Synthetic QRS train, opposite polarity over the two hemispheres.
 
         ``gradient`` (the 0.5.0 ECG artifact): a posterior-left field (``_ECG_FIELD_POST``).  The hemispheric weights
@@ -5984,7 +6033,7 @@ class Synthesizer:
             # drew the same spike in 16 chains.  A posterior-left field concentrates it in P3-O1 / T5-O1 / Cz-Pz with
             # frontal chains near zero (ECG-artifact-on-an-uncalibrated-screen, Sweat-and-electrode-pop)
             for i, e in enumerate(self.electrodes):
-                rows[i] = prof * amplitude * self._ECG_FIELD_POST.get(e, 0.0)
+                rows[i] = prof * amplitude * (field or self._ECG_FIELD_POST).get(e, 0.0)
             return rows
         for i, e in enumerate(self.electrodes):
             x, y = mt.POSITIONS.get(e, (0.0, 0.0))
@@ -6049,7 +6098,8 @@ class Synthesizer:
             aro = sv3.arousal_gate(t, self._arousals_v3)
             stage_pdr = sv3.weight(t, self._hypno, sv3.PDR)
             eye_pdr, eye_blink = self._eye_factor(t)
-            pdr_w = np.maximum(stage_pdr * eye_pdr, 0.6 * aro) * (1.0 - 0.55 * temp_slow)
+            aro_pdr = self._AROUSAL_PDR_W.get(self.age, 0.6)
+            pdr_w = np.maximum(stage_pdr * eye_pdr, aro_pdr * aro) * (1.0 - 0.55 * temp_slow)
         else:
             pdr_w = (1.0 - 0.55 * sleep) * (1.0 - 0.55 * temp_slow)
         pdr_w *= 1.0 + np.minimum(sed_alpha, 0.0)
@@ -6063,8 +6113,12 @@ class Synthesizer:
             if coma == "alpha":
                 x += self._stream_signal(self.st_sed_alpha, i0 + 9091, n) * 1.4
         if self.age != "neonate":
-            x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
-            if v3 and getattr(self, "st_theta_post", None) is not None:
+            post_theta = v3 and getattr(self, "st_theta_post", None) is not None
+            # r5: where the child's posterior theta is drawn, part of the PDR's share goes to it (the posterior voltage
+            # stays about the same: learningeeg 5-yo P-O alpha share 0.24-0.26, not an alpha comb with theta on top)
+            pdr_mix = _PDR_W_WITH_THETA_B if post_theta else 1.0
+            x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_mix * pdr_w)[None, :]
+            if post_theta:
                 x += (self._stream_signal(self.st_theta_post, i0, n)
                       * (_POST_THETA_W_B[self.age] * 0.62 * self.pdr_gain * pdr_w)[None, :])
             # 0.5.0: awake theta by age.  Digitized against learningeeg 5-year-old awake figures, a flat 0.30 gave a
