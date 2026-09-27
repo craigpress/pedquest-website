@@ -45,7 +45,10 @@ def _median_blink(version):
         k = k - int(0.05 * fs) + int(np.argmax(seg))
         base = np.median(x[max(0, k - int(0.5 * fs)):k - int(0.2 * fs)])
         w = np.array([x[k + int(round(m / 1000 * fs))] for m in MS]) - base
+        if version >= 3 and w[MS.index(0)] < 15.0:
+            continue                        # phase D: no blink behind closed lids, so nothing to normalise
         waves.append(w / w[MS.index(0)])
+    assert len(waves) >= 4, "not enough visible isolated blinks on the page"
     return np.median(np.array(waves), axis=0)
 
 

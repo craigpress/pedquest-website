@@ -116,6 +116,13 @@ EMG_FLOOR_W = 0.70
 #: record falls from 0.93-0.96 to ~0.8 with theta >= 0.1 (feature review, neonatal item 5)
 NEO_THETA_W = 0.95
 NEO_FAST_W = 0.20
+#: phase D (neonatal-v3): high-voltage 0.5-1.5 Hz delta of mature quiet sleep (background-RMS units at full weight).
+#: Trace-alternant bursts carry isolated 100+ uV slow waves over a flatter interburst (ACNS 2013 Fig. 2b; learningeeg
+#: 4-day term quiet sleep), and past term quiet sleep is continuous high-voltage slow-wave sleep (ACNS: 50-150 uV)
+NEO_SWS_W = 2.0
+NEO_SWS_THETA_W = 0.9          # burst-only
+NEO_SWS_THETA_IB_W = 0.5       # with the interburst theta floor
+NEO_SWS_FAST_W = 0.5
 
 #: Extra muscle during an ictal run, as a multiple of the tonic floor.  Applied
 #: through ``ictal_gate`` and multiplied by the same wakefulness factor, so a
@@ -876,11 +883,22 @@ class Synthesizer:
             # 0.5.0 sedation streams (seeded by name, so adding them moves no other stream).  Benzodiazepine beta is
             # diffuse (learningeeg: dominates every chain), so part anterior, part uniform, with less shared component
             # than a uniform field would need to survive the bipolar chain.
-            self.st_sed_beta = self._mk("sed_beta3", band_shape(f, 16.5, 3.0, order=1.0), 0.55 * ant + 0.45 * near_uniform,
+            # phase D (sedation-v3 S109-03): 0.55 anterior left P3-O1/P4-O2/T5-O1 clearly quieter, while the benzodiazepine
+            # beta in R1 is full size in the posterior chains too
+            self.st_sed_beta = self._mk("sed_beta3", band_shape(f, 16.5, 3.0, order=1.0), 0.2 * ant + 0.8 * near_uniform,
                                         common=0.35)
             self.st_barb = self._mk("sed_barb", band_shape(f, 14.5, 2.0), 0.6 * ant + 0.4 * near_uniform, common=0.35)
-            self.st_gamma3 = self._mk("sed_gamma3", band_shape(f, 28.5, 2.6), near_uniform, common=0.2)
-            self.st_burst = self._mk("sed_burst", band_shape(f, 2.2, 2.4, order=1.0), near_uniform, common=0.3)
+            # phase D (sedation-v3 S109-05): a Gaussian 25-32 Hz band (the super-Gaussian 2.6-Hz band drew
+            # near-sinusoidal 28-Hz packets that read as fast spindles)
+            self.st_gamma3 = self._mk("sed_gamma3", band_shape(f, 28.5, 3.2, order=1.0), near_uniform, common=0.2)
+            # phase D (sedation-v3 S109-06): the 2.2-Hz Lorentzian kept half its peak weight at DC, so every abrupt
+            # burst offset cut a slow offset and left the same 1-Hz LFF exponential tail on every chain; the burst
+            # delta now has no sub-Hz content (second-order 1 Hz high-pass on the same band)
+            # phase D (neonatal-v3): quiet-sleep slow waves, v3 neonates only (seeded by name: no other stream moves)
+            self.st_neo_sws = (self._mk("neo_sws", band_shape(f, 0.9, 0.45, order=1.0) * hp_lp_shape(f, 0.35, 60.0),
+                                        near_uniform, common=0.35) if self.age == "neonate" else None)
+            self.st_burst = self._mk("sed_burst", band_shape(f, 2.2, 2.4, order=1.0) * hp_lp_shape(f, 1.0, 60.0),
+                                     near_uniform, common=0.3)
         if self.bg["type"] == "hypsarrhythmia":
             # "no topographical distribution, no frequency or amplitude
             # gradient": the slow activity is asynchronous between regions, so
@@ -1346,19 +1364,29 @@ class Synthesizer:
             g = np.maximum(g, np.clip(np.minimum((t - a) / 0.25, (b - t) / 0.25) + 0.5, 0.0, 1.0))
         return 0.5 - 0.5 * np.cos(np.pi * g)
 
+    #: phase D (sedation-v3 S109-02): dexmedetomidine spindles are frontally predominant (R7), not the central N2 field
+    #: whose steep parietal-occipital fall drew them as large in P3-O1 / P4-O2 / T5-O1 as in F3-C3
+    _DEX_SPINDLE_FIELD = {"F3": 1.0, "F4": 1.0, "Fz": 1.0, "Fp1": 0.5, "Fp2": 0.5, "C3": 0.6, "C4": 0.6, "Cz": 0.65,
+                          "F7": 0.45, "F8": 0.45, "T3": 0.3, "T4": 0.3, "P3": 0.3, "P4": 0.3, "Pz": 0.3,
+                          "T5": 0.12, "T6": 0.12, "O1": 0.1, "O2": 0.1}
+
     def _drug_spindle_rows(self, t: np.ndarray) -> np.ndarray:
         d = self._dsp
         env, c, s = sv3.packets(t, d["t"], d["dur"], d["hz"], d["amp"], d["ph"])
         if not env.any():
             return np.zeros((self.n_elec, t.size))
         lag = self._sp_lag[:, None]
-        return self._sp_field[:, None] * (c[None, :] * np.cos(lag) - s[None, :] * np.sin(lag))
+        field = np.array([self._DEX_SPINDLE_FIELD.get(e, 0.1) for e in self.electrodes])
+        return field[:, None] * (c[None, :] * np.cos(lag) - s[None, :] * np.sin(lag))
 
     def _burst_content_rows(self, t: np.ndarray, i0: int) -> np.ndarray:
         """Barbiturate burst: high-voltage polymorphic delta/theta plus sharp transients (learningeeg burst-suppression
         pages; Purdon 2015 Fig 2F), in background-RMS units; the burst envelope applied later confines it to bursts."""
         n = t.size
         rows = self._stream_signal(self.st_burst, i0, n) * 2.5
+        # phase D (sedation-v3 S109-06: bursts were pure slow humps, relative beta 0.00): the barbiturate fast activity
+        # persists inside the bursts as fine superimposed 12-20 Hz activity (learningeeg burst-suppression pages R2/R3)
+        rows = rows + self._stream_signal(self.st_barb, i0 + 9091, n) * 0.9
         rise, fall, _, _, _ = self._burst_edge()
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes], float)
         for k in self._bursts_touching(t, rise, fall):
@@ -1367,6 +1395,7 @@ class Synthesizer:
                 continue
             rng = substream(self.seed, "sed_burst", k)
             m = int(rng.integers(2, 5))
+            m += int(substream(self.seed, "sed_burst_d", k).integers(1, 4))   # phase D: 3-7 sharp waves per burst
             for j in range(m):
                 c0 = a + (b - a) * float(rng.uniform(0.1, 0.85))
                 wd = float(rng.uniform(0.035, 0.06))
@@ -1456,7 +1485,7 @@ class Synthesizer:
         return out
 
     def _eye_factor(self, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """(PDR factor, blink factor) from the eye timeline: eyes closed 1.0 / 0.1, eyes open 0.3 / 1.0, with the PDR
+        """(PDR factor, blink factor) from the eye timeline: eyes closed 1.0 / 0.0, eyes open 0.3 / 1.0, with the PDR
         briefly back to 0.85 from 0.15 s to about 1.2 s after each eyes-open blink (Craig on B2-06)."""
         force = getattr(self, "_eye_force", None)
         if not self._eyes and not force:
@@ -1473,7 +1502,8 @@ class Synthesizer:
             m = (d > 0.15) & (d < 1.2)
             boost[m] = np.maximum(boost[m], np.sin(np.pi * (d[m] - 0.15) / 1.05) ** 2)
         pdr = closed + (1.0 - closed) * (0.3 + 0.55 * boost)
-        return pdr, 0.1 + 0.9 * (1.0 - closed)
+        # phase D (artifacts-v3 blinks): no blinks behind closed lids (0.1 gain drew 5-16 uV frontal V's, half of all blinks)
+        return pdr, 1.0 - closed
 
     def _eye_event_rows(self, t: np.ndarray) -> np.ndarray:
         """Eye closure (Fp positive, about 2x a blink, back by 300 ms) and eye opening (Fp negative, 1.5x a blink,
@@ -1481,7 +1511,10 @@ class Synthesizer:
         rows = np.zeros((self.n_elec, t.size))
         if not self._eyes:
             return rows
-        a_uv = float(self.bg.get("blink_amplitude_uv", BLINK_UV))
+        # phase D: the v3 blink default doubled (160 -> 320 uV) so a displayed blink reaches its reference size; a slow
+        # eyelid movement loses far less through the LFF than a 100-ms blink, so the eye events keep their accepted
+        # scale (opening about 2.5 rows, 1.4x the displayed blinks; reference 1.5x)
+        a_uv = 0.5 * float(self.bg.get("blink_amplitude_uv", BLINK_UV))
         prof = np.zeros(t.size)
         for (a, b, st) in self._eyes[1:]:
             d = t - a
@@ -1730,7 +1763,9 @@ class Synthesizer:
             k = self._blink_t.size
             self._blink_amp = _lognorm(shp, k, 0.3) if k else np.empty(0)
             self._blink_sr = 0.040 * shp.uniform(0.85, 1.2, k)
-            self._blink_sf = 0.050 * shp.uniform(0.8, 1.6, k)
+            # phase D (artifacts-v3 blinks): the fall jitter U(0.8, 1.6) had mean 1.2, so the typical fall sigma was 60 ms
+            # and the +40 ms point sat at 0.66 (reference 0.43, IQR 0.40-0.48).  Mean-1 jitter, one blink in ten slow
+            self._blink_sf = 0.045 * np.where(shp.random(k) < 0.1, 1.6, shp.uniform(0.8, 1.2, k))
 
     def blink_rows(self, t: np.ndarray, wake: np.ndarray) -> np.ndarray:
         """Blink deflections over ``t``; ``wake`` is the 0..1 gate."""
@@ -1921,6 +1956,7 @@ class Synthesizer:
                 lam /= max(frac, 0.2)
                 if dense:
                     lam = max(lam, 0.5 * L / 1.8)
+            lam *= self._brush_state_w(0.5 * (a + b))
             n = int(rng.poisson(lam))
             lo, hi = a + 0.8, b - 1.8      # clear of the burst edge ramps
             if n == 0 or hi <= lo:
@@ -1931,6 +1967,21 @@ class Synthesizer:
                     out.append(float(tt))
                     last = tt
         return np.asarray(out)
+
+    def _brush_state_w(self, tt: float) -> float:
+        """Phase D (neonatal-v3 B1-06: 7.3 / 6.9 / 7.2 brushes per minute in quiet sleep / active sleep / wake): delta
+        brushes by behavioural state (ACNS 2013): maximal in active sleep up to 32 w, maximal in quiet sleep from 33 w,
+        so from 33 w active sleep and wake carry 0.3 of the quiet-sleep rate; before 32 w quiet sleep carries 0.6 of the
+        active-sleep rate.  1.0 without a state cycle (or before version 3)."""
+        if self.spec_version < 3 or not self._state_intervals:
+            return 1.0
+        st = str(self.state_at(np.array([tt]))[0])
+        early = {"active_sleep": 1.0, "indeterminate": 0.8, "quiet_sleep": 0.6, "awake": 0.5}
+        late = {"active_sleep": 0.3, "indeterminate": 0.6, "quiet_sleep": 1.0, "awake": 0.3}
+        if st not in late:
+            return 1.0
+        k = float(np.clip(self._pma_eff() - 32.0, 0.0, 1.0))
+        return (1.0 - k) * early[st] + k * late[st]
 
     #: 0.4.1: spread of a tabled field onto electrodes the table does not name, in head
     #: units (adjacent 10-20 electrodes sit ~0.5 apart, so a neighbour of a 1.0 electrode
@@ -2180,6 +2231,26 @@ class Synthesizer:
         if points:
             floor = np.interp(t / 3600.0, [p[0] for p in points], [p[1] for p in points])
         return floor
+
+    def _neo_sws_w(self, t: np.ndarray) -> np.ndarray:
+        """Phase D (neonatal-v3 B1-01/B1-09): weight of the quiet-sleep slow-wave stream.  Quiet sleep 1.0,
+        indeterminate 0.25, none in active sleep or wake; grows with maturity from 36 w (trace alternant emerging) to
+        term and on to continuous slow-wave sleep by 44 w.  Zero without a state cycle."""
+        if self.spec_version < 3 or not self._state_intervals or self._calibrating:
+            return np.zeros(t.shape)
+        w = float(np.interp(self._pma_eff(), [35.0, 38.0, 40.0, 44.0], [0.0, 0.6, 1.0, 1.25])) * NEO_SWS_W
+        if w <= 0:
+            return np.zeros(t.shape)
+        return w * self._state_lookup(t, {"awake": 0.0, "active_sleep": 0.0, "indeterminate": 0.25,
+                                          "quiet_sleep": 1.0}, np.zeros(t.shape))
+
+    def _neo_burst_only_gain(self, t: np.ndarray) -> np.ndarray:
+        """(n_elec, n) factor that confines a stream to the bursts once ``burst_envelope_rows`` multiplies everything:
+        the interburst floor is divided back out, so the trace-alternant interburst stays low-voltage."""
+        rows = self.burst_envelope_rows(t)
+        floor = self._ibi_floor_at(t)[None, :]
+        e = np.clip((rows - floor) / np.maximum(1.0 - floor, 1e-6), 0.0, None)
+        return e / np.maximum(rows, 1e-6)
 
     def _neo_theta_gain(self, t: np.ndarray) -> np.ndarray:
         """(n_elec, n) factor that gives the theta stream its own interburst floor once ``burst_envelope_rows``
@@ -3928,6 +3999,15 @@ class Synthesizer:
             if wake:
                 step = max(1, len(wake) // 4)
                 windows = [(a + 2.0, min(b - 2.0, a + 62.0)) for a, b in wake[::step][:4]]
+        if self.spec_version >= 3 and self.age == "neonate" and self._state_intervals:
+            # phase D (neonatal-v3): amplitude_uv is the continuous awake / active-sleep voltage (ACNS activite moyenne,
+            # 25-50 uV), so quiet sleep's high-voltage slow waves and trace alternant are not normalised away and wake
+            # can no longer out-voltage quiet sleep (fixed windows hit 2 quiet-sleep minutes out of 4 on B1-01)
+            cont = [(max(a, 0.0), min(b, dur)) for a, b, st in self._state_intervals
+                    if st in ("awake", "active_sleep") and min(b, dur) - max(a, 0.0) >= 20.0]
+            if cont:
+                step = max(1, len(cont) // 4)
+                windows = [(a + 2.0, min(b - 2.0, a + 62.0)) for a, b in cont[::step][:4]]
         bursty = self.bg["type"] in ("discontinuous", "excessively_discontinuous", "trace_alternant",
                                      "burst_suppression", "hypsarrhythmia")
         if bursty:
@@ -4647,15 +4727,17 @@ class Synthesizer:
     #: Fp1-F3 stays small and the posterior chains are quiet (montages/clean/lateral-eye-movements, REM-Sleep-ex-3).
     _GAZE_FIELD_L = {"F7": 1.0, "T3": 0.45, "T5": 0.22, "F3": 0.20, "Fp1": 0.10, "C3": 0.10, "O1": 0.08, "P3": 0.05,
                      "A1": 0.30}
-    #: glossokinetic: bilaterally in-phase, broad, frontotemporal maximum (Tongue-Artifact, Hypoglossal-and-Chewing)
-    _GLOSSO_FIELD = {"F7": 1.0, "F8": 1.0, "T3": 0.8, "T4": 0.8, "Fp1": 0.6, "Fp2": 0.6, "F3": 0.5, "F4": 0.5,
-                     "T5": 0.4, "T6": 0.4, "C3": 0.3, "C4": 0.3, "P3": 0.2, "P4": 0.2, "O1": 0.1, "O2": 0.1,
-                     "Fz": 0.5, "Cz": 0.3, "Pz": 0.15, "A1": 0.7, "A2": 0.7}
+    #: glossokinetic: bilaterally in-phase and broad.  Phase D (artifacts-v3 A110-11): a steep front-to-back gradient
+    #: (0.25 per link along every chain) so the rolling waves survive the parasagittal and midline chains as in
+    #: Tongue-Artifact; the old table put 0.25 rows in C3-P3/P3-O1 and read as frontotemporal only
+    _GLOSSO_FIELD = {"F7": 1.0, "F8": 1.0, "T3": 0.65, "T4": 0.65, "T5": 0.3, "T6": 0.3, "Fp1": 0.8, "Fp2": 0.8,
+                     "F3": 0.75, "F4": 0.75, "C3": 0.5, "C4": 0.5, "P3": 0.25, "P4": 0.25, "O1": 0.0, "O2": 0.0,
+                     "Fz": 0.75, "Cz": 0.5, "Pz": 0.25, "A1": 0.7, "A2": 0.7}
     GAZE_UV = 75.0          # gaze-position scale at F7: saccade steps of 75-150 uV
     ROVING_UV = 55.0        # RMS of the slow roving drift at F7
-    GLOSSO_UV = 150.0
-    CHEW_EMG_UV = 120.0
-    ECG_ART_UV = 35.0
+    GLOSSO_UV = 200.0
+    CHEW_EMG_UV = 70.0      # phase D: 120 drew 4-6 rows at medium and 11 at high (C16)
+    ECG_ART_UV = 45.0
     PULSE_UV = 35.0
     SWEAT_UV = 80.0
     VENT_UV = 120.0
@@ -4799,44 +4881,72 @@ class Synthesizer:
                 slow[ms] += np.exp(-0.5 * ((d[ms] - 0.6) / 0.45) ** 2)
             temporal = _profile(self.electrodes, _TEMPORAL, 0.15)
             frontal = _profile(self.electrodes, _ANTERIOR, 0.1)
-            emg = np.clip(env, 0.0, 1.5) * self.CHEW_EMG_UV * gain
+            # phase D (artifacts-v3 C16): the temporalis burst voltage saturates, so "high" draws the medium voltage (low
+            # still scales down).  At 2.1x the 120-uV model drew 11 rows on P5 C16; Craig accepted that page at 1.6-2.2
+            # rows in the outer temporal chains (renderer 0.4.1), and chewing-artifact-2 shows several spacings
+            g = min(gain, 1.0) ** 0.5
+            emg = np.clip(env, 0.0, 1.5) * self.CHEW_EMG_UV * g
             return (base * emg[None, :] * (0.12 + 0.88 * temporal)[:, None]
-                    - (slow * 14.0 * gain)[None, :] * (0.4 * frontal + 0.6 * temporal)[:, None])
+                    - (slow * 14.0 * g)[None, :] * (0.4 * frontal + 0.6 * temporal)[:, None])
 
         if kind == "glossokinetic":
-            # irregular 1-3 Hz waves in bursts of 0.3-0.6 s, bilaterally in phase over a broad field (A110-11)
+            # near-continuous rolling runs: trains of 0.8-3.5 s (median 1.7 s) of 1.5-2.5 Hz waves, each cycle with its
+            # own length (+-20 %) and amplitude, 0.2-1 s gaps, bilaterally in phase over a broad field whose
+            # front-to-back gradient survives the parasagittal chains (Tongue-Artifact; phase D, artifacts-v3 A110-11:
+            # isolated 0.3-0.6 s waves at 0.25 rows parasagittally read as intermittent F7/F8 transients)
             def draw(rng, tt):
-                item = (tt, float(rng.uniform(0.3, 0.6)), float(rng.uniform(1.0, 3.0)),
-                        float(rng.uniform(0.6, 1.0)) * float(rng.choice([-1.0, 1.0])))
-                return item, tt + item[1] + float(np.clip(rng.exponential(0.35), 0.0, 1.5))
+                span = float(np.clip(rng.lognormal(math.log(1.7), 0.45), 0.8, 3.5))
+                f0 = float(rng.uniform(1.5, 2.5))
+                cyc, c0 = [], tt
+                while c0 < tt + span:
+                    p = float(np.clip(rng.normal(1.0, 0.2), 0.6, 1.4)) / f0
+                    cyc.append((c0, p, float(rng.uniform(0.6, 1.0))))
+                    c0 += p
+                sgn = float(rng.choice([-1.0, 1.0]))
+                return (tt, c0 - tt, np.array(cyc), sgn), c0 + float(rng.uniform(0.2, 1.0))
             sig = np.zeros(n)
-            for b0, dur, f, amp in self._event_schedule(k, "glosso", a0, a1, draw):
-                d = t - b0
-                m = (d >= 0) & (d < dur)
-                if m.any():
-                    sig[m] += amp * np.sin(np.pi * d[m] / dur) ** 2 * np.cos(2 * np.pi * f * (d[m] - dur / 2))
+            for b0, dur, cyc, sgn in self._event_schedule(k, "glosso", a0, a1, draw):
+                if b0 > t[-1] or b0 + dur < t[0]:
+                    continue
+                edge = np.clip(np.minimum(t - b0, b0 + dur - t) / 0.3, 0.0, 1.0)
+                for c0, p, a in cyc:
+                    m = (t >= c0) & (t < c0 + p)
+                    if m.any():
+                        sig[m] += sgn * a * edge[m] * np.sin(2 * np.pi * (t[m] - c0) / p)
             field = np.array([mt.table_value(self._GLOSSO_FIELD, e, 0.1) for e in self.electrodes])
             return field[:, None] * (sig * self.GLOSSO_UV * gain)[None, :]
 
         if kind == "movement":
-            # abrupt irregular transients (onset 50-150 ms, 0.5-2 s, 100-300 uV), each with its own per-electrode
-            # weights (0.4-1.0, one electrode in ten reversed) and per-electrode sway after the common abrupt onset (each
-            # lead moves on its own), plus a co-timed independent-per-electrode EMG burst
-            # RMS 8-16 uV (shaking-head-artifact, chest-PT-artifact; A110-08)
+            # abrupt irregular transients (onset 50-150 ms, 0.5-2 s, 30-110 uV), each over its own REGION (bifrontal
+            # 0.4, one side 0.4, global 0.2; weight exp(-(d/0.55)^2) from the region centre x U(0.7, 1.3), one electrode
+            # in ten reversed) with per-electrode sway after the common abrupt onset, plus a co-timed
+            # independent-per-electrode EMG burst RMS 8-16 uV.  Phase D (artifacts-v3 A110-08): 100-300 uV in every
+            # electrode drew 3.4-5.8 rows in every chain; shaking-head-artifact and chest-PT-artifact show 0.5-1.5
+            # rows, regional (bifrontal / one side), posterior chains quiet.
             ne = self.n_elec
+            pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
+            centres = {"bifrontal": [(0.0, 0.8)], "left": [(-0.9, 0.3)], "right": [(0.9, 0.3)]}
 
             def draw(rng, tt):
-                w = rng.uniform(0.4, 1.0, ne) * np.where(rng.random(ne) < 0.1, -1.0, 1.0)
+                u = float(rng.random())
+                region = "bifrontal" if u < 0.4 else ("global" if u >= 0.8 else str(rng.choice(["left", "right"])))
+                if region == "global":
+                    fld = np.full(ne, 0.6)       # jitter and sway on a uniform field still differ between leads
+                else:
+                    dmin = np.min([np.hypot(pos[:, 0] - cx, pos[:, 1] - cy) for cx, cy in centres[region]], axis=0)
+                    fld = np.exp(-(dmin / 0.55) ** 2)
+                w = fld * rng.uniform(0.7, 1.3, ne) * np.where(rng.random(ne) < 0.1, -1.0, 1.0)
                 item = (tt, float(rng.uniform(0.05, 0.15)), float(rng.uniform(0.5, 2.0)),
-                        float(rng.uniform(100.0, 300.0)) * float(rng.choice([-1.0, 1.0])), w,
-                        float(rng.uniform(0.4, 0.8)), rng.uniform(0.0, 2 * np.pi, ne), float(rng.uniform(8.0, 16.0)))
+                        float(rng.uniform(30.0, 110.0)) * float(rng.choice([-1.0, 1.0])), w,
+                        float(rng.uniform(0.4, 0.8)), rng.uniform(0.0, 2 * np.pi, ne), float(rng.uniform(8.0, 16.0)),
+                        region)
                 return item, tt + item[2] + float(np.clip(rng.lognormal(math.log(1.2), 0.6), 0.2, 5.0))
             emg_rows = None
             if not blocked:     # frontalis / temporalis: RMS 8-16 uV per electrode where the muscle is
                 musc = np.maximum(_profile(self.electrodes, _TEMPORAL, 0.15), _profile(self.electrodes, _ANTERIOR, 0.1))
                 emg_rows = (self._oa(self._art_stream("art3-move-emg", self.st_emg.shape), i0, n, ne)
                             * (0.35 + 0.65 * musc)[:, None])
-            for s0, onset, dur, amp, w, wig, wph, emg_uv in self._event_schedule(k, "move", a0, a1, draw):
+            for s0, onset, dur, amp, w, wig, wph, emg_uv, _region in self._event_schedule(k, "move", a0, a1, draw):
                 d = t - s0
                 m = (d >= 0) & (d < dur + 0.3)
                 if not m.any():
@@ -4848,7 +4958,8 @@ class Synthesizer:
                 rows[:, m] += (amp * gain) * w[:, None] * shape[None, :] * sway
                 if emg_rows is not None:
                     burst = np.where(dd < dur, np.sin(np.pi * np.clip(dd / dur, 0, 1)) ** 0.5, 0.0)
-                    rows[:, m] += emg_rows[:, m] * (burst * emg_uv * gain)[None, :]
+                    reg = 0.3 + 0.7 * np.clip(np.abs(w), 0.0, 1.0)      # the moving region's muscles
+                    rows[:, m] += emg_rows[:, m] * reg[:, None] * (burst * emg_uv * gain)[None, :]
             return rows
 
         if kind == "sweat":
@@ -5110,13 +5221,15 @@ class Synthesizer:
         idx = np.arange(math.floor(t0 / rr) - 1, math.ceil(t1 / rr) + 2, dtype=np.int64)
         return idx * rr + self._beat_jitter(idx)
 
+    _ECG_FIELD_POST = {"O1": 1.0, "O2": 0.7, "Pz": 0.5, "T5": 0.55, "P3": 0.45, "T6": 0.4, "P4": 0.4, "C3": 0.15,
+                       "T3": 0.15, "Cz": 0.1, "C4": 0.1, "T4": 0.1}
+
     def _ecg(self, t: np.ndarray, amplitude: float, gradient: bool = False) -> np.ndarray:
         """Synthetic QRS train, opposite polarity over the two hemispheres.
 
-        ``gradient`` (the 0.5.0 ECG artifact): weight ``0.5 x - 0.9 y``, a head-wide anterior-posterior plus
-        left-right gradient.  The hemispheric weights depend only on |x| and the side, so they are nearly equal along
-        each longitudinal chain and cancel there (6 uV bipolar QRS from 22 uV, feature review A110-04); a gradient
-        survives every chain, largest in T5-O1, P3-O1, Cz-Pz and C4-P4 as in the references.
+        ``gradient`` (the 0.5.0 ECG artifact): a posterior-left field (``_ECG_FIELD_POST``).  The hemispheric weights
+        depend only on |x| and the side, so they are nearly equal along each longitudinal chain and cancel there (6 uV
+        bipolar QRS from 22 uV, feature review A110-04); the posterior field survives P3-O1, T5-O1, Cz-Pz and C4-P4.
         """
         rr = 60.0 / _ECG_HR[self.age]
         idx = np.arange(math.floor(t[0] / rr) - 1, math.ceil(t[-1] / rr) + 2, dtype=np.int64)
@@ -5147,9 +5260,11 @@ class Synthesizer:
             window[m] += qrs
         rows = np.zeros((self.n_elec, t.size))
         if gradient:
+            # phase D (artifacts-v3 A110-04): a linear field makes every bipolar link equal, so the old 0.5 x - 0.9 y
+            # drew the same spike in 16 chains.  A posterior-left field concentrates it in P3-O1 / T5-O1 / Cz-Pz with
+            # frontal chains near zero (ECG-artifact-on-an-uncalibrated-screen, Sweat-and-electrode-pop)
             for i, e in enumerate(self.electrodes):
-                x, y = mt.POSITIONS.get(e, (0.0, 0.0))
-                rows[i] = prof * amplitude * (0.5 * x - 0.9 * y)
+                rows[i] = prof * amplitude * self._ECG_FIELD_POST.get(e, 0.0)
             return rows
         for i, e in enumerate(self.electrodes):
             x, y = mt.POSITIONS.get(e, (0.0, 0.0))
@@ -5232,6 +5347,17 @@ class Synthesizer:
             x += (self._stream_signal(self.st_theta, i0, n) * (NEO_THETA_W * sed_theta)[None, :]
                   * self._neo_theta_gain(t))
             x += self._stream_signal(self.st_brush, i0 + 7717, n) * NEO_FAST_W
+            w_sws = self._neo_sws_w(t)
+            if w_sws.any():
+                # the quiet-sleep bursts stay dense with theta and fast activity under the slow waves (LE-QS4d, ACNS 2b)
+                bo = self._neo_burst_only_gain(t)
+                u = w_sws / NEO_SWS_W
+                x += self._stream_signal(self.st_neo_sws, i0, n) * w_sws[None, :] * bo
+                # (theta with the trace-alternant interburst floor of _neo_theta_gain, so the interburst stays the
+                # more theta-rich part, ACNS 2013)
+                th = self._stream_signal(self.st_theta, i0 + 6113, n) * u[None, :]
+                x += th * (NEO_SWS_THETA_W * bo + NEO_SWS_THETA_IB_W * self._neo_theta_gain(t))
+                x += self._stream_signal(self.st_brush, i0 + 6211, n) * (NEO_SWS_FAST_W * u)[None, :] * bo
         else:
             x += self._stream_signal(self.st_theta, i0, n) * (0.22 * sed_theta)[None, :]
 
@@ -5242,7 +5368,9 @@ class Synthesizer:
             # (ACNS 2013: 50-150 uV delta/theta replacing TA by 46 w), the highest-voltage state of the cycle
             mature = float(np.interp(self._pma_eff(), [40.0, 44.0], [0.0, 1.0]))
             if mature > 0:
-                delta_w = delta_w + 1.6 * mature * self._state_lookup(
+                # phase D: most of it now comes from the 0.5-1.5 Hz slow-wave stream (_neo_sws_w); st_delta's 1.6-Hz band
+                # at 1.6 drew continuous 2-4 Hz activity that read as active sleep
+                delta_w = delta_w + 0.5 * mature * self._state_lookup(
                     t, {"awake": 0.0, "active_sleep": 0.0, "indeterminate": 0.3, "quiet_sleep": 1.0}, np.zeros_like(t))
         cape_b = self.cape_phase(t) if (self.spec_version >= 3 and self.bg.get("cape")) else None
         if cape_b is not None:
@@ -5270,9 +5398,11 @@ class Synthesizer:
             if gamma3.any():
                 keta = s3("keta", 0.0)
                 g = self._keta_gate(t)
-                # gamma rides its own epochs and the slow-delta takes the rest (Akeju 2016 "gamma burst")
-                x += self._stream_signal(self.st_gamma3, i0, n) * (gamma3 * (1.0 - keta * (1.0 - g) * 0.8))[None, :]
-                x += self._stream_signal(self.st_delta, i0 + 3331, n) * (0.9 * gamma3 * keta * (1.0 - g))[None, :]
+                # phase D (sedation-v3 S109-05; Purdon 2015 Fig 9C): continuous low-voltage fast activity riding the
+                # slow drift, dipping only mildly in the slow-delta epochs (Akeju 2016 "gamma burst").  Gating it 5:1
+                # drew discrete 1-1.5 s, 20-40 uV packets
+                x += self._stream_signal(self.st_gamma3, i0, n) * (0.35 * gamma3 * (1.0 - keta * (1.0 - g) * 0.5))[None, :]
+                x += self._stream_signal(self.st_delta, i0 + 3331, n) * (1.6 * gamma3 * keta * (1.0 - g))[None, :]
             if self._sed_driven_bs() and not self._calibrating:
                 # 0.5.0: a barbiturate burst is not gated awake EEG (sedation.md S109-06): past sf 0.1 the burst
                 # content becomes high-voltage polymorphic slow and sharp activity

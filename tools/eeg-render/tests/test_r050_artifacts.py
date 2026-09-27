@@ -270,16 +270,21 @@ def test_glossokinetic_is_bilateral_broad_and_irregular():
     f = np.fft.rfftfreq(L.size, 1 / synth.fs)
     pw = np.abs(np.fft.rfft(L)) ** 2
     assert pw[(f >= 1) & (f <= 3.5)].sum() > 0.6 * pw[(f >= 0.3) & (f <= 30)].sum()
+    # irregular: each wave has its own length (phase D replaced isolated single waves, whose start-to-start CV this
+    # asserted, by near-continuous runs of cycles with jittered length)
     sched = next(v for k, v in synth._art_events_v3.items() if k[1] == "glosso")
-    starts = np.diff([s[0] for s in sched])
-    assert np.std(starts) / np.mean(starts) > 0.3
+    periods = np.concatenate([s[2][:, 1] for s in sched])
+    assert np.std(periods) / np.mean(periods) > 0.15
 
 
 # ---------------- movement, sweat, ventilator, pops, mains ----------------
 
-def test_movement_is_abrupt_multichannel_transients_with_emg():
-    """shaking-head-artifact, chest-PT-artifact: abrupt high-amplitude transients in many chains at once, with
-    electrode-to-electrode differences, co-timed EMG, irregular timing; not rhythmic frontal delta (FIRDA-like)."""
+def test_movement_is_abrupt_regional_transients_with_emg():
+    """shaking-head-artifact, chest-PT-artifact: abrupt irregular transients over a region (bifrontal or one side) with
+    electrode-to-electrode differences and co-timed EMG, not rhythmic frontal delta (FIRDA-like).  Phase D
+    (artifacts-v3 A110-08): the re-read references show 0.5-1.5 rows in the involved chains with the posterior chains
+    quiet; the 0.5.0 model drew 3.4-5.8 rows in every chain (this test previously asked for >= 2 rows in >= 6 chains,
+    the overstated first-review range)."""
     spec, synth, t, art, sig0, lab = _page("movement")
     fs = synth.fs
     row = _row_uv(spec)
@@ -294,20 +299,35 @@ def test_movement_is_abrupt_multichannel_transients_with_emg():
     inside = np.zeros(t.size, bool)
     for s0, onset, dur, *_ in on:
         inside |= (t >= s0) & (t < s0 + dur)
-    counts = []
-    for s0, onset, dur, *_ in on:
-        m = (t >= s0) & (t < s0 + dur + 0.3)
-        amp = np.array([np.ptp(lo[i, m]) for i in range(lo.shape[0])])
-        counts.append(int((amp >= 1.5 * row).sum()))
-        assert amp.max() >= 2.0 * row                              # high amplitude (>= 2-3 rows in the references)
-        assert np.std(amp) / np.mean(amp) > 0.2                    # electrode-to-electrode differences
-    assert min(counts) >= 6 and np.median(counts) >= 10, counts    # many chains at once
-    hf_in = np.sqrt(np.mean(hi[:, inside] ** 2))
-    hf_out = np.sqrt(np.mean(hi[:, ~inside] ** 2))
-    assert hf_in > 5 * hf_out + 1e-9
-    # abrupt: steepest slope of each transient over 50 ms reaches a page row
+    left = ["Fp1-F7", "F7-T3", "T3-T5", "Fp1-F3", "F3-C3"]
+    right = ["Fp2-F8", "F8-T4", "T4-T6", "Fp2-F4", "F4-C4"]
+    posterior = ["P3-O1", "P4-O2", "Cz-Pz", "T5-O1", "T6-O2"]
+    regions = set()
+    for s in on:
+        m = (t >= s[0]) & (t < s[0] + s[2] + 0.3)
+        amp = {n: np.ptp(lo[i, m]) / row for n, i in lab.items()}
+        v = np.array(list(amp.values()))
+        assert 0.3 <= v.max() <= 2.0, (s[8], v.max())             # 0.5-1.5 rows in the references
+        assert np.std(v) / np.mean(v) > 0.2                        # electrode-to-electrode differences
+        regions.add(s[8])
+        if s[8] != "global":
+            assert max(amp[n] for n in posterior) < 0.3, s[8]     # posterior chains quiet
+        if s[8] == "left":
+            assert max(amp[n] for n in right) < 0.3 * max(amp[n] for n in left)
+        if s[8] == "right":
+            assert max(amp[n] for n in left) < 0.3 * max(amp[n] for n in right)
+    assert len(regions) >= 2
+    # co-timed EMG in the moving region: the three chains with the largest transient carry >= 4x the fast activity they
+    # carry outside the artifact
+    for s in on:
+        m = (t >= s[0]) & (t < s[0] + s[2])
+        top = np.argsort([np.ptp(lo[i, m]) for i in range(lo.shape[0])])[-3:]
+        hf_in = np.sqrt(np.mean(hi[top][:, m] ** 2))
+        hf_out = np.sqrt(np.mean(hi[top][:, ~inside] ** 2))
+        assert hf_in > 4 * hf_out + 1e-9, (s[8], hf_in / hf_out)
+    # abrupt: steepest slope of each transient over 50 ms reaches half a page row
     k = int(0.05 * fs)
-    assert np.max(np.abs(lo[:, k:] - lo[:, :-k])) >= row
+    assert np.max(np.abs(lo[:, k:] - lo[:, :-k])) >= 0.5 * row
 
 
 def test_sweat_is_regional_and_survives_the_lff():
