@@ -325,9 +325,11 @@ def test_plain_v3_gpds_survive_the_bipolar_chain():
     ref, _, rn = _pattern("gpd_plain", a, b, ref=True)
     fz = np.median(_sec_ptp(ref[rn.index("Fz")]))
     _, bg, _ = _pattern("gpd_plain", a, b)
-    for n in ("F3-C3", "Cz-Pz"):
+    # merge with the generalized family (its _gpd_field_scale carries frontal GPDs): F3-C3 >= 0.5x and Cz-Pz >= 0.2x
+    # referential Fz, the split test_r050_generalized.test_gpd_survives_the_bipolar_chain documents
+    for n, share in (("F3-C3", 0.3), ("Cz-Pz", 0.2)):
         v = np.median(_sec_ptp(pat[names.index(n)]))
-        assert v >= 0.3 * fz and v >= 2.5 * np.median(_sec_ptp(bg[names.index(n)])), (n, v, fz)
+        assert v >= share * fz and v >= 2.5 * np.median(_sec_ptp(bg[names.index(n)])), (n, v, fz)
     top = np.median(_sec_ptp(pat), axis=-1).max()
     assert 0.75 * 110 <= top <= 1.25 * 110, top
 

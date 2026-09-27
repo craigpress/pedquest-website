@@ -228,10 +228,9 @@ def test_tonic_seizure_fast_activity_reaches_the_parasagittal_chain():
     near-synchronous, so it cancelled in the bipolar chain (F3-C3/Fp1-F3 10-24 uV against 76 uV referential)."""
     syn = S("tonic")
     z = next(q for q in syn.seizures if q.kind == "tonic_seizure")
-    t = np.arange(z.t1 - 4.0, z.t1, 1.0 / FS)
-    pairs = [p for p in mt.montage_pairs("longitudinal_bipolar", syn.scalp) if p[1]]
-    d = syn.derive(syn._seizure_block(t), pairs)
-    names = [f"{a}-{b}" for a, b in pairs]
+    # merged with the generalized family: at v3 generalized_v3 draws the tonic fast activity outside _seizure_block,
+    # so the ictal component is measured as record minus its event-free twin over the last 4 s
+    _, _, d, names, _ = _pair("tonic", z.duration_s - 4.0, z.duration_s)
     p = np.ptp(d, axis=1)
     authored = float(z.amp_end)
     assert np.sum(p >= 0.3 * authored) >= 14 and np.median(p) >= 0.4 * authored, dict(zip(names, p.round()))

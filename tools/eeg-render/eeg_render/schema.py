@@ -151,8 +151,37 @@ _EVENT = {
                 # discharges from one focus, keyed one by one with the ACNS
                 # prevalence category (abundant / frequent / occasional / rare)
                 "sporadic_discharges",
+                # 0.5.0 (spec_version 3 only, phase D generalized family): a generalized seizure of one ILAE type
+                # (``seizure_type``) and generalized interictal patterns (``pattern``), eeg_render.generalized_v3
+                "generalized_seizure", "generalized_discharges",
             ]
         },
+        # generalized_seizure: typical_absence | atypical_absence | myoclonic | myoclonic_atonic | myoclonic_tonic |
+        # tonic | atonic | gtc | eyelid_myoclonia | photoparoxysmal (amplitude_uv = p-p on the largest bipolar link)
+        "seizure_type": {"enum": ["typical_absence", "atypical_absence", "myoclonic", "myoclonic_atonic",
+                                  "myoclonic_tonic", "tonic", "atonic", "gtc", "eyelid_myoclonia", "photoparoxysmal"]},
+        # key-only activation that provoked it (never changes the signal)
+        "provocation": {"enum": ["none", "hyperventilation", "photic", "eye_closure", "sleep", "awakening"]},
+        # photoparoxysmal: flash-train length and whether the discharge outlasts the train
+        "stimulus_s": {"type": "number", "minimum": 1, "maximum": 60},
+        "outlasting": {"type": "boolean"},
+        # generalized_seizure: scalp EMG p-p of the motor component, eyelid-closure and photic-driving voltages
+        "emg_uv": {"type": "number", "minimum": 0, "maximum": 1000},
+        "eye_uv": {"type": "number", "minimum": 0, "maximum": 500},
+        "driving_uv": {"type": "number", "minimum": 0, "maximum": 200},
+        # phase lengths (s): atonic loss of tone, tonic stiffening, GTC tonic / clonic phases, atypical-absence ramp
+        "atonic_s": {"type": "number", "minimum": 0.1, "maximum": 10},
+        "tonic_s": {"type": "number", "minimum": 0.5, "maximum": 60},
+        "clonic_s": {"type": "number", "minimum": 2, "maximum": 180},
+        "ramp_s": {"type": "number", "minimum": 0, "maximum": 10},
+        # tonic generalized_seizure: fast-activity frequency at onset and at the end (Hz)
+        "start_hz": {"type": "number", "minimum": 5, "maximum": 30},
+        "end_hz": {"type": "number", "minimum": 5, "maximum": 30},
+        # generalized_discharges eses: spike-wave index (% of the stage covered) in N2/N3 and awake
+        "swi_pct": {"type": "number", "minimum": 0, "maximum": 99},
+        "wake_swi_pct": {"type": "number", "minimum": 0, "maximum": 99},
+        # generalized_discharges: median burst / run length (s)
+        "burst_s": {"type": "number", "minimum": 0.2, "maximum": 60},
         # how much scalp muscle an ictal run recruits: none (electrographic /
         # paralysed), modest (default, the 0.3.8 behaviour), clinical
         "muscle": {"enum": MUSCLE_LEVELS},

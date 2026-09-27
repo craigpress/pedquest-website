@@ -206,6 +206,24 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
         rows.append(_row("sporadic_discharge", a0, a1, fs, duration_s,
                          focus=sd["focus"], morphology=sd["morphology"], aftergoing_slow=sd["aftergoing_slow"],
                          amplitude_uv=round(sd["amplitude_uv"], 1), spec_event_index=sd["index"], **extra))
+    # 0.5.0 phase D: generalized seizures (one row per seizure / jerk, with its ILAE type) and generalized interictal
+    # discharges (one row per burst or run, with the pattern and, for GPFA / ESES, the sleep stage)
+    gen = getattr(synth, "_gen", None)
+    if gen is not None:
+        from ..generalized_v3 import SEMIOLOGY
+        events_spec = synth.spec.get("events", [])
+        for g in gen.events():
+            if g["t1"] < 0.0 or g["t0"] > duration_s:
+                continue
+            ev = events_spec[g["spec_event_index"]]
+            detail = {k: v for k, v in g.items() if k not in ("kind", "t0", "t1")}
+            if g["kind"] == "generalized_seizure":
+                detail.update(amplitude_uv=float(ev.get("amplitude_uv", 0.0)), provocation=ev.get("provocation"),
+                              semiology=SEMIOLOGY.get(g["seizure_type"]), side=ev.get("side"),
+                              onset_region="generalized")
+            else:
+                detail.setdefault("side", ev.get("side"))
+            rows.append(_row(g["kind"], g["t0"], g["t1"], fs, duration_s, **detail))
     # P7 batch 5: pediatric normal variants, each run keyed as a normal (non-epileptiform) finding
     for vr in (synth.variant_runs() if hasattr(synth, "variant_runs") else []):
         if vr["t1"] < 0.0 or vr["t0"] > duration_s:
@@ -348,7 +366,7 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
     # P7 batch 4: clinical correlate travels with every ictal row (a non-EEG key field)
     events_spec = synth.spec.get("events", [])
     for r in rows:
-        if r["kind"] in ("seizure", "seizure_cluster", "status_epilepticus", "spasm", "spasm_cluster", "tonic_seizure"):
+        if r["kind"] in ICTAL_KINDS:
             i = r.get("spec_event_index")
             corr = str((events_spec[i] if i is not None and i < len(events_spec) else {}).get("clinical_correlate") or "none")
             r["clinical_correlate"] = corr
@@ -357,7 +375,8 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
     return rows
 
 
-ICTAL_KINDS = ("seizure", "seizure_cluster", "status_epilepticus", "spasm", "spasm_cluster", "tonic_seizure")
+ICTAL_KINDS = ("seizure", "seizure_cluster", "status_epilepticus", "spasm", "spasm_cluster", "tonic_seizure",
+               "generalized_seizure")
 
 
 def acns_prevalence(count: int, duration_s: float) -> str:

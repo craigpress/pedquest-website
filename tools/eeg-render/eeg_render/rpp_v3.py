@@ -61,7 +61,8 @@ FIELD_FRONTAL = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.76, "F3": 0.85, "Fz": 0.85, "
 #: is most readily appreciated.  DISPLAY_CAL (4.4 periodic / 2.9 rda) was measured on focal LPD/LRDA, whose field
 #: survives the chain; a generalized field loses more.  Measured delivered/requested on the max derivation with
 #: FIELD_FRONTAL (renders/phaseD/acns/measure.py): the correction below brings it back to about 1.0.
-GEN_BIPOLAR_GAIN = {"periodic": 3.4, "periodic_lag": 2.05, "rda": 4.45, "ictal": 3.0}
+# merge with the generalized family (its per-electrode GPD discharge raised the bipolar peak 1.26x): periodic 3.4 -> 2.7
+GEN_BIPOLAR_GAIN = {"periodic": 2.7, "periodic_lag": 2.05, "rda": 4.45, "ictal": 3.0}
 _FLIP = {"Fp1": "O1", "Fp2": "O2", "F7": "T5", "F8": "T6", "F3": "P3", "F4": "P4", "Fz": "Pz"}
 _FLIP.update({v: k for k, v in list(_FLIP.items())})
 FIELD_OCCIPITAL = {e: FIELD_FRONTAL[_FLIP.get(e, e)] for e in FIELD_FRONTAL}

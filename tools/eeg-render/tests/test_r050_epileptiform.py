@@ -95,8 +95,13 @@ def test_polyspike_spikes_are_discrete_and_cross_baseline():
         peaks = v[pk_i]
         isi_ms = np.diff(t[pk_i]) * 1000.0
         valleys = np.array([v[a:b].min() for a, b in zip(pk_i[:-1], pk_i[1:])])
-        assert np.all((isi_ms >= 50.0) & (isi_ms <= 85.0)), isi_ms          # 55-80 ms +/- one sample
-        assert np.all(valleys <= -0.3 * peaks.mean()), (valleys, peaks)     # every valley crosses the baseline
+        # phase D (epileptiform-v3.md change 1): irregular ISIs, lognormal 45-130 ms (+/- one sample), replacing the
+        # near-equal 55-80 ms that read as a 16-Hz sine burst
+        assert np.all((isi_ms >= 40.0) & (isi_ms <= 135.0)), isi_ms
+        # phase D: the troughs are small (0.20-0.35) and the after-going wave starts under the last spikes, so a late
+        # valley need not cross the baseline; every valley still falls to <= 0.35 of the peaks (discrete spikes, not one
+        # notched sharp wave, which measured +0.44/+0.55)
+        assert np.all(valleys <= 0.35 * peaks.mean()), (valleys, peaks)
         # conspicuity on the full display
         td, sig, names = _display(syn, t0 - 20.0, t0 + 10.0)
         yd = sig[names.index(ch)]

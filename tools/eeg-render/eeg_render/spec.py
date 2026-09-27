@@ -390,7 +390,7 @@ def _semantic_checks(kind: str, spec: Dict[str, Any]) -> List[str]:
     for i, ev in enumerate(spec.get("events", []) or []):
         t = ev.get("onset_min", ev.get("at_min", ev.get("start_min")))
         # sporadic_discharges default to the whole record (start_min / end_min optional)
-        if t is None and ev.get("type") not in ("temperature_change", "sporadic_discharges"):
+        if t is None and ev.get("type") not in ("temperature_change", "sporadic_discharges", "generalized_discharges"):
             out.append(f"image.spec.events[{i}]: needs onset_min / at_min / start_min")
         if horizon_min and t is not None and t > horizon_min:
             out.append(
@@ -1045,6 +1045,62 @@ def _normalize_variants(bg: Dict[str, Any]) -> None:
     bg["variants"] = out
 
 
+#: 0.5.0 (phase D, generalized family) defaults per generalized seizure type.  amplitude_uv is the peak-to-peak on
+#: the largest longitudinal-bipolar derivation; the references run 4-10x a 30-50 uV child background
+#: (atlas-absence-seizure, eeg0087, eeg0094, JME 4-6 Hz, atlas-tonic-seizure-i).  Durations: typical absence 5-20 s
+#: (ILAE; the atlas absence ~7-10 s), atypical absence longer and gradual, myoclonic one 0.3-0.8 s complex.
+GENERALIZED_SEIZURE_DEFAULTS = {
+    "typical_absence": {"duration_s": 10.0, "frequency_hz": 3.0, "amplitude_uv": 300.0,
+                        "provocation": "hyperventilation", "clinical_correlate": "behavioral_arrest"},
+    "atypical_absence": {"duration_s": 15.0, "frequency_hz": 2.0, "amplitude_uv": 250.0, "ramp_s": 2.5,
+                         "clinical_correlate": "behavioral_arrest"},
+    "myoclonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 250.0, "count": 1, "interval_s": 3.0},
+    "myoclonic_atonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 250.0, "count": 1, "interval_s": 3.0,
+                         "atonic_s": 0.8},
+    "myoclonic_tonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 250.0, "count": 1, "interval_s": 3.0,
+                        "tonic_s": 2.0},
+    "tonic": {"duration_s": 8.0, "amplitude_uv": 120.0, "start_hz": 20.0, "end_hz": 12.0, "decrement_s": 1.0,
+              "decrement_depth": 0.7, "emg_uv": 120.0, "provocation": "sleep"},
+    "atonic": {"duration_s": 1.2, "amplitude_uv": 250.0},
+    "gtc": {"amplitude_uv": 200.0, "tonic_s": 12.0, "clonic_s": 35.0, "postictal_attenuation_s": 60.0,
+            "emg_uv": 300.0, "clinical_correlate": "generalized_tonic_clonic"},
+    "eyelid_myoclonia": {"duration_s": 2.5, "frequency_hz": 4.0, "amplitude_uv": 250.0, "eye_uv": 150.0,
+                         "provocation": "eye_closure"},
+    "photoparoxysmal": {"stimulus_s": 10.0, "stimulus_frequency_hz": 15.0, "frequency_hz": 3.5,
+                        "amplitude_uv": 200.0, "outlasting": False, "driving_uv": 40.0, "provocation": "photic",
+                        "clinical_correlate": "none"},
+}
+#: generalized_discharges defaults per pattern (rate_per_h: gpfa per hour of N2/N3; eses uses swi_pct instead)
+GENERALIZED_DISCHARGE_DEFAULTS = {
+    "spike_wave": {"rate_per_h": 30.0, "frequency_hz": 3.5, "amplitude_uv": 200.0, "burst_s": 1.2},
+    "polyspike_wave": {"rate_per_h": 20.0, "frequency_hz": 4.5, "amplitude_uv": 220.0, "burst_s": 1.5},
+    "slow_spike_wave": {"rate_per_h": 40.0, "frequency_hz": 2.0, "amplitude_uv": 200.0, "burst_s": 6.0},
+    "gpfa": {"rate_per_h": 60.0, "frequency_hz": 15.0, "amplitude_uv": 100.0, "burst_s": 3.0},
+    "eses": {"frequency_hz": 2.0, "amplitude_uv": 200.0, "swi_pct": 90.0, "wake_swi_pct": 10.0},
+}
+
+
+def _normalize_generalized(e: Dict[str, Any]) -> Dict[str, Any]:
+    if e["type"] == "generalized_seizure":
+        st = e.setdefault("seizure_type", "typical_absence")
+        e.setdefault("onset_min", 0.0)
+        e.setdefault("side", "both")
+        for k, v in GENERALIZED_SEIZURE_DEFAULTS[st].items():
+            e.setdefault(k, v)
+        e.setdefault("provocation", "none")
+        e.setdefault("clinical_correlate", "unknown")
+        if st == "photoparoxysmal":
+            e.setdefault("duration_s", float(e["stimulus_s"]))
+        return e
+    pat = e.setdefault("pattern", "spike_wave")
+    if pat not in GENERALIZED_DISCHARGE_DEFAULTS:
+        raise SpecError(f"generalized_discharges pattern must be one of {sorted(GENERALIZED_DISCHARGE_DEFAULTS)}")
+    for k, v in GENERALIZED_DISCHARGE_DEFAULTS[pat].items():
+        e.setdefault(k, v)
+    e.setdefault("side", "both")
+    return e
+
+
 def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
     e = dict(ev)
     kind = e["type"]
@@ -1062,6 +1118,10 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         for k, v in SPORADIC_DEFAULTS.items():
             e.setdefault(k, v)
         return e
+    if kind in ("generalized_seizure", "generalized_discharges"):
+        if version < 3:
+            raise SpecError(f"{kind} needs spec_version 3")
+        return _normalize_generalized(e)
     if kind == "normal_variant":
         defaults = AUTHORED_VARIANT_DEFAULTS[e["kind"]]
         e.setdefault("at_min", 0.0)
