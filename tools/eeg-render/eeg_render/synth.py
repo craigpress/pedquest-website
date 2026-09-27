@@ -4601,9 +4601,10 @@ class Synthesizer:
             w = np.zeros(self.n_elec)
             for focus, ga, _ in mt.region_generators(inst.onset_region, self.electrodes):
                 w = np.maximum(w, ga * self._gen_weights(focus, mt.generator_falloff(inst.onset_region)))
-            if inst.spread not in (None, "none", "generalized", "bilateral"):
-                for focus, ga, _ in mt.region_generators(inst.spread, self.electrodes):
-                    w = np.maximum(w, 0.5 * ga * self._gen_weights(focus, mt.generator_falloff(inst.spread)))
+            region = self._spread_region(inst)       # resolves hemispheric / contralateral to a region name
+            if region not in (None, "generalized"):
+                for focus, ga, _ in mt.region_generators(region, self.electrodes):
+                    w = np.maximum(w, 0.5 * ga * self._gen_weights(focus, mt.generator_falloff(region)))
             cache[key] = w / max(float(w.max()), 1e-9)
         return cache[key]
 

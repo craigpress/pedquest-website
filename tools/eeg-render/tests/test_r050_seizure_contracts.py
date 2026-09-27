@@ -94,3 +94,15 @@ def test_motor_correlate_brings_muscle_and_postictal_default():
     v2 = normalize(_img("child", CHILD, [ev], version=2))["spec"]["events"][0]
     assert v3["muscle"] == "modest" and v2["muscle"] == "none"
     assert v3["postictal_attenuation_s"] > 0 and v2["postictal_attenuation_s"] == 0
+
+
+@pytest.mark.parametrize("spread", ["none", "hemispheric", "contralateral", "generalized"])
+def test_every_spread_value_renders_with_focal_postictal(spread):
+    """Regression (phase C gallery, P5 C10/C13/C14/C18): the focal postictal field looked the spread value up as a region
+    name and raised KeyError for 'hemispheric' / 'contralateral'."""
+    ev = dict(type="seizure", onset_min=5.0, duration_s=40, onset_region="left_temporal", spread=spread,
+              evolution=dict(start_hz=5.0, end_hz=2.5, amplitude_start_uv=60, amplitude_end_uv=140))
+    syn = Synthesizer(normalize(_img("child", CHILD, [ev]))["spec"], 1800.0)
+    z = syn.seizures[0]
+    _, x = syn.segment(z.t1 - 2.0, z.t1 + 20.0)
+    assert np.isfinite(x).all()
