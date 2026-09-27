@@ -45,8 +45,10 @@ FIELDS_LEFT: Dict[str, Dict[str, float]] = {
     "fourteen_and_six": {"Fp1": 0.03, "F7": 0.08, "F3": 0.08, "Fz": 0.05, "T3": 0.30, "C3": 0.20, "Cz": 0.10,
                          "T5": 1.0, "P3": 0.45, "Pz": 0.20, "O1": 0.45},
     # mid-temporal theta (RMTD_1, RMTD-on-the-right): smooth, T3 max
-    "rmtd": {"Fp1": 0.20, "F7": 0.60, "F3": 0.25, "Fz": 0.06, "T3": 1.0, "C3": 0.30, "Cz": 0.06, "T5": 0.70,
-             "P3": 0.30, "Pz": 0.06, "O1": 0.25},
+    # phase B (variants-neonatal-r3 V110-05: Fp1-F7 83 = T3-T5 85 uV, fronto-temporal-to-occipital on the page): a
+    # mid-temporal maximum with steep shoulders, so F7-T3 / T3-T5 carry it (reversing at T3) and Fp1-F7 / T5-O1 less
+    "rmtd": {"Fp1": 0.12, "F7": 0.40, "F3": 0.15, "Fz": 0.04, "T3": 1.0, "C3": 0.30, "Cz": 0.05, "T5": 0.45,
+             "P3": 0.20, "Pz": 0.05, "O1": 0.22},
     # temporo-parietal (Westmoreland & Klass description)
     "sreda": {"Fp1": 0.06, "F7": 0.20, "F3": 0.20, "Fz": 0.08, "T3": 0.55, "C3": 0.50, "Cz": 0.20, "T5": 1.0,
               "P3": 0.80, "Pz": 0.35, "O1": 0.45},
@@ -135,11 +137,16 @@ def authored_schedule(seed: int, index: int, run: Dict) -> List[Dict]:
         prm = {"mu": ((1.6, 0.5, 0.5, 4.0), (1.2, 0.5, 0.5, 3.0), (-0.5, 0.5)),
                "wicket": ((1.2, 0.5, 0.3, 3.0), (1.8, 0.6, 0.5, 5.0), (-0.8, 0.8)),
                "rmtd": ((3.5, 0.5, 1.5, 10.0), (2.5, 0.6, 1.0, 8.0), (-0.3, 0.3)),
-               "frontal_arousal_rhythm": ((2.5, 0.5, 1.0, 6.0), (1.5, 0.5, 0.5, 4.0), (-0.5, 0.5))}[kind]
+               # phase B (variants-neonatal-r3 V110-08: 1.3-2 s trains read as the spindles before them): trains of
+               # 3 s or more (White & Tharp 1974: prolonged 7-10 Hz frontal trains), starting after the arousal burst
+               "frontal_arousal_rhythm": ((4.5, 0.35, 3.0, 9.0), (1.0, 0.4, 0.4, 2.5), (-0.5, 0.5))}[kind]
         on, off, dhz = prm
         for k, sd in enumerate(("left", "right")):
             rng = substream(seed, "v3-authored", index, kind, sd)
-            iv = trains(rng, a, b, on, off, lead=(0.0, 1.5) if k == 0 else (0.5, 3.0))
+            lead = (0.0, 1.5) if k == 0 else (0.5, 3.0)
+            if kind == "frontal_arousal_rhythm":
+                lead = (1.0, 1.8) if k == 0 else (1.2, 2.4)
+            iv = trains(rng, a, b, on, off, lead=lead)
             if kind == "wicket":
                 # plus scattered single wickets between trains
                 singles = []
@@ -342,7 +349,10 @@ def hv_rows(burst: Dict, t: np.ndarray, field: np.ndarray, y: np.ndarray) -> np.
         for part, wgt in (("common", 0.8), ("own", 0.45)):
             c = burst[part]
             for fo, ph, w in zip(c["f_off"], c["ph"], c["w"]):
-                sig += wgt * w * np.sin(base_ph * (1.0 + fo / 4.0) + ph)
+                # phase B (variants-neonatal-r3 V110-10: a pure 3.2-Hz sine, 156 ms up / 156 ms down): the components
+                # spread over 0.4-1.1x the glide frequency (1.2-3.3 Hz at a 3-Hz authored buildup), so the buildup
+                # is irregular polymorphic delta of varying period and amplitude (learningeeg hv-slowing)
+                sig += wgt * w * np.sin(base_ph * float(np.exp(-0.42 + 0.62 * fo)) + ph)
         rows[e] = field[e] * burst["amp"] * env * sig / 4.2
     return rows
 
@@ -351,20 +361,21 @@ def hv_rows(burst: Dict, t: np.ndarray, field: np.ndarray, y: np.ndarray) -> np.
 def hh_schedule(seed: int, windows: Sequence[Tuple[float, float]], rate_per_min: float, amp: float,
                 arousal_starts: Sequence[float]) -> List[Dict]:
     """Hypnagogic hypersynchrony runs in the drowsy windows (and hypnopompic runs at arousals from sleep):
-    duration lognormal median 5 s (2-15 s), 3-5 Hz, crescendo over the first 1-2 s."""
+    duration lognormal median 8 s (5-15 s), 3-5 Hz, crescendo over the first 1-2 s.  Phase B (sleep-fix,
+    sleep-independent.md: runs of 2-5 s against a > 10-s paroxysmal run in learningeeg Hypnapompic-Hypersynchrony)."""
     rng = substream(seed, "v3-hh")
     out = []
     gap_med = 60.0 / max(rate_per_min, 1e-6)
     for a, b in windows:
         t = a + float(rng.uniform(0.0, min(0.5 * gap_med, max(0.0, b - a - 2.0))))
         while t < b - 2.0:
-            d = _ln(rng, 5.0, 0.5, 2.0, 15.0)
+            d = _ln(rng, 8.0, 0.35, 5.0, 15.0)
             d = min(d, b - t)
             out.append(_hh_run(rng, t, d, amp))
             t += d + _ln(rng, gap_med, 0.5, 2.0, 10 * gap_med)
     for a in arousal_starts:
         if rng.random() < 0.6:
-            out.append(_hh_run(rng, a + float(rng.uniform(0.2, 1.0)), _ln(rng, 6.0, 0.4, 3.0, 12.0), amp))
+            out.append(_hh_run(rng, a + float(rng.uniform(0.2, 1.0)), _ln(rng, 8.0, 0.35, 5.0, 15.0), amp))
     out.sort(key=lambda r: r["t0"])
     return out
 

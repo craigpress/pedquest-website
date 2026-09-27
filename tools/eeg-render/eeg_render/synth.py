@@ -690,6 +690,17 @@ _PDR_FIELD_V3 = {
     "T3": 0.12, "T4": 0.12, "C3": 0.10, "C4": 0.10, "Cz": 0.10,
     "F3": 0.04, "F4": 0.04, "Fz": 0.04, "F7": 0.04, "F8": 0.04, "Fp1": 0.03, "Fp2": 0.03,
 }
+#: phase B (variants-neonatal-r3 awake child vs learningeeg 5yo-F-posterior-slow-wave-of-youth-2 / PSW-again: P-O
+#: alpha share 0.38-0.46 vs 0.24-0.26, midline theta 0.27-0.35 vs 0.41-0.46): a child's PDR is broken up by posterior
+#: and centro-parietal theta.  Parietal maximum, falling to Cz and the occipital leads, so the midline and C-P chains
+#: carry it
+_POST_THETA_FIELD_B = {
+    "P3": 1.00, "P4": 1.00, "Pz": 1.00, "O1": 0.55, "O2": 0.55, "T5": 0.65, "T6": 0.65, "C3": 0.40, "C4": 0.40,
+    "Cz": 0.35, "T3": 0.30, "T4": 0.30, "F3": 0.15, "F4": 0.15, "Fz": 0.12, "F7": 0.10, "F8": 0.10,
+    "Fp1": 0.05, "Fp2": 0.05,
+}
+#: posterior theta weight relative to the PDR weight by age (ages 3-12; none otherwise)
+_POST_THETA_W_B = {"child": 0.5}
 _CENTRAL = {
     "C3": 1.00, "C4": 1.00, "Cz": 1.00, "P3": 0.55, "P4": 0.55, "Pz": 0.60,
     "F3": 0.55, "F4": 0.55, "Fz": 0.60, "T3": 0.35, "T4": 0.35,
@@ -887,6 +898,10 @@ class Synthesizer:
             # beta in R1 is full size in the posterior chains too
             self.st_sed_beta = self._mk("sed_beta3", band_shape(f, 16.5, 3.0, order=1.0), 0.2 * ant + 0.8 * near_uniform,
                                         common=0.35)
+            # phase B (sleep-fix, awake child): posterior / centro-parietal theta, children only (seeded by name)
+            self.st_theta_post = (self._mk("theta_post_b", band_shape(f, 4.3, 0.9, order=1.0),
+                                           _profile(ch, _POST_THETA_FIELD_B, 0.1), common=0.3)
+                                  if self.age in _POST_THETA_W_B else None)
             self.st_barb = self._mk("sed_barb", band_shape(f, 14.5, 2.0), 0.6 * ant + 0.4 * near_uniform, common=0.35)
             # phase D (sedation-v3 S109-05): a Gaussian 25-32 Hz band (the super-Gaussian 2.6-Hz band drew
             # near-sinusoidal 28-Hz packets that read as fast spindles)
@@ -1164,6 +1179,22 @@ class Synthesizer:
             f = float(np.interp(pma, [37.0, 40.0, 42.0, 44.0], [0.0, 0.35, 0.5, 0.7]))
             if f > 0:
                 self._hvs = [(a, a + f * (b - a)) for a, b, lab in self._state_intervals if lab == "quiet_sleep"]
+        # phase B (sleep-fix, sleep-independent.md: active sleep read as continuous mixed activity only): from about
+        # 36 w active sleep carries stretches of LOW-VOLTAGE IRREGULAR activity (ACNS 2013 neonatal terminology, Tsuchida
+        # 2013: LVI, clearly lower than the mixed "activite moyenne", theta-rich).  One stretch per active-sleep epoch of
+        # 4 min or more, 25-40 % of it, starting past its first 90 s (the display calibration reads those minutes)
+        self._lvi: List[Tuple[float, float]] = []
+        if self.spec_version >= 3 and self._state_intervals:
+            pma = float(bgc.get("dysmature_pma_weeks") or bgc.get("pma_weeks") or 40.0)
+            if pma >= 36.0:
+                rng = substream(self.seed, "lvi")
+                for a, b, lab in self._state_intervals:
+                    if lab != "active_sleep" or b - a < 240.0:
+                        continue
+                    s0 = a + max(90.0, float(rng.uniform(0.35, 0.5)) * (b - a))
+                    s1 = min(s0 + float(rng.uniform(0.25, 0.4)) * (b - a), b - 30.0)
+                    if s1 - s0 >= 30.0:
+                        self._lvi.append((s0, s1))
 
         # temperature --------------------------------------------------
         tt: List[float] = [0.0]
@@ -1261,6 +1292,8 @@ class Synthesizer:
         self._sed_emg = sed_emg
         if self.spec_version >= 3:
             self._build_sed_schedules_v3()
+            if self._hypno:
+                self._finish_state_v3()
 
         # attenuation transients ---------------------------------------
         self._atten = [
@@ -1432,6 +1465,13 @@ class Synthesizer:
     _SPINDLE_FIELD_FAST = {"C3": 1.0, "C4": 1.0, "Cz": 1.0, "P3": 0.9, "P4": 0.9, "Pz": 0.95, "F3": 0.65, "F4": 0.65,
                            "Fz": 0.7, "T3": 0.6, "T4": 0.6, "T5": 0.55, "T6": 0.55, "F7": 0.3, "F8": 0.3,
                            "Fp1": 0.2, "Fp2": 0.2, "O1": 0.2, "O2": 0.2}
+    #: phase B (sleep-fix, sleep-independent.md: fast group F3-C3/P3-O1 0.69-0.87): the fast group is maximal
+    #: PARIETAL, so P3-O1 / T5-O1 carry it and F3-C3 about 0.4 of that (learningeeg Spindles; De Gennaro 2003).  With the
+    #: travelling-spindle lag an in-phase F3 = C3 still leaves half of C3 in F3-C3, so C3 sits well below P3.  Child and
+    #: older; infant spindles keep the central table above
+    _SPINDLE_FIELD_FAST_B = {"P3": 1.0, "P4": 1.0, "Pz": 1.0, "C3": 0.65, "C4": 0.65, "Cz": 0.7, "F3": 0.5, "F4": 0.5,
+                             "Fz": 0.55, "T3": 0.55, "T4": 0.55, "T5": 0.7, "T6": 0.7, "F7": 0.3, "F8": 0.3,
+                             "Fp1": 0.3, "Fp2": 0.3, "O1": 0.15, "O2": 0.15}
     _SPINDLE_LAG_RAD_PER_UNIT = 1.1
     #: phase D: infant spindles are high-voltage combs over a high-voltage background (learningeeg 4-month-old asleep:
     #: 100-200 uV in F3-C3 / C3-P3), so the 2.6 background-RMS packet weight is doubled for infants
@@ -1469,7 +1509,18 @@ class Synthesizer:
     _VERTEX_UV = {"infant": 170.0, "child": 200.0, "adolescent": 140.0, "adult": 90.0}
     #: phase D: the K-complex is the largest wave of an N2 page (eegatlas-online #113: about 150 uV in the adult
     #: longitudinal chains, in every chain); the 0.5.0 values drew it vertex-wave sized
-    _KCOMPLEX_UV = {"infant": 450.0, "child": 550.0, "adolescent": 450.0, "adult": 320.0}
+    #: phase B (sleep-fix, sleep-independent.md: Fz 650-900 uV referential in children, a KC overwrote four channels at
+    #: 10 uV/mm): pediatric K-complexes about 250-400 uV at Fz referential, the adult size (eegatlas-online #113) kept
+    _KCOMPLEX_UV = {"infant": 210.0, "child": 240.0, "adolescent": 350.0, "adult": 320.0}
+    #: phase B: N2 background delta cut (delta weight units) - children and infants scored 34-72 % of N2 epochs as N3
+    #: on F4-A1 (AASM > 20 % of the epoch in >= 75 uV 0.5-2 Hz waves); N2 holds isolated slow waves, N3 the runs
+    #: phase B: K-complexes per minute of N2 by age (fewer in infancy, when they are still emerging, Ellingson 1982)
+    _KC_RATE_B = {"infant": 0.8, "child": 1.2}
+    _N2_DELTA_CUT = {"infant": 0.9, "child": 0.55, "adolescent": 0.15, "adult": 0.1}
+    #: phase B arousal burst (learningeeg normal-asleep arousal: an abrupt massive EMG / movement burst, the delta gone):
+    #: EMG gain over the waking floor at onset, and the share of arousals that also carry a movement transient
+    _AROUSAL_EMG_GAIN = (2.5, 5.0)
+    _AROUSAL_MOVE_P = 0.6
     _KCOMPLEX_LAG_S_PER_Y = 0.06
 
     #: N3 slow-wave weight (background-RMS units) by age: children carry the highest-voltage slow-wave sleep
@@ -1541,8 +1592,11 @@ class Synthesizer:
         rate = float(style.get("spindle_rate_per_min", 4.0))
         self._sp_t = sv3.schedule_transients(self.seed, "spindles", self._hypno, sv3.SPINDLE, rate, 1.5)
         vrate = 6.0 if self.age in ("infant", "child") else 3.0
-        self._vx_t = sv3.schedule_transients(self.seed, "vertex", self._hypno, sv3.VERTEX, vrate, 2.0)
-        self._kc_t = sv3.schedule_transients(self.seed, "kcomplex", self._hypno, sv3.KCOMPLEX, 1.5, 4.0)
+        # phase B (sleep-fix): the large pediatric vertex waves are an N1 feature; fewer carry on into N2
+        vtab = dict(sv3.VERTEX, N2=0.4) if self.age in ("infant", "child") else sv3.VERTEX
+        self._vx_t = sv3.schedule_transients(self.seed, "vertex", self._hypno, vtab, vrate, 2.0)
+        self._kc_t = sv3.schedule_transients(self.seed, "kcomplex", self._hypno, sv3.KCOMPLEX,
+                                             self._KC_RATE_B.get(self.age, 1.5), 4.0)
         # phase D: an arousal from N2/N3 is often heralded by a K-complex (learningeeg arousal); K-complexes are often
         # followed by a spindle (AASM; eegatlas-online K-complex #113)
         ar = substream(self.seed, "arousal-kc")
@@ -1558,7 +1612,8 @@ class Synthesizer:
         kr = substream(self.seed, "kcomplex-shape")
         self._kc_a = np.exp(kr.normal(0.0, 0.25, self._kc_t.size))
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
-        self._sp_field = np.array([mt.table_value(self._SPINDLE_FIELD_FAST, e, 0.2) for e in self.electrodes])
+        fast_tab = self._SPINDLE_FIELD_FAST if self.age == "infant" else self._SPINDLE_FIELD_FAST_B
+        self._sp_field = np.array([mt.table_value(fast_tab, e, 0.2) for e in self.electrodes])
         self._sp_field_drug = np.array([mt.table_value(self._SPINDLE_FIELD_V3, e, 0.2) for e in self.electrodes])
         self._sp_field_slow = np.array([mt.table_value(self._SPINDLE_FIELD_SLOW, e, 0.1) for e in self.electrodes])
         self._x_sign = np.sign(pos[:, 0]) * (np.abs(pos[:, 0]) > 1e-6)
@@ -1573,6 +1628,111 @@ class Synthesizer:
         self._saw_field = np.array([mt.table_value(self._SAWTOOTH_FIELD, e, 0.1) for e in self.electrodes])
         self._rem_steps = sv3.rem_saccades(self.seed, self._hypno, self._saw["t"])
         self._rem_step_t = np.array([s[0] for s in self._rem_steps])
+        # phase B (variants-neonatal-r3 awake child: dense temporal EMG on every awake page, and in drowsiness): tonic
+        # temporalis muscle comes and goes while awake / drowsy
+        self._emg_on = sv3.emg_episodes(self.seed, dur)
+
+    def _finish_state_v3(self) -> None:
+        """Phase B (sleep-fix): steps that need the sedation timelines, run once they exist.
+
+        A hypnotic REPLACES sleep architecture (sleep-independent.md: propofol 0.8 still drew N1 -> N2 -> N3 and keyed 5
+        arousals): where ``_arch_w`` < 0.5 the drawn N3 / REM become N2 and no natural arousal is scheduled.  Then each
+        arousal draws its burst (EMG gain, decay, optional movement transient), once per record."""
+        if self._sed_v3.get("loc") and max(self._sed_v3["loc"]) > 0.0 and not self.bg.get("coma_pattern"):
+            grid = np.arange(-120.0, self.duration_s + 125.0, 5.0)
+            low = self._arch_w(grid, self._sed_v3_at("loc", grid, 0.0)) < 0.5
+            drug = sv3.spans(grid, low)
+            if drug:
+                hyp = list(self._hypno)
+                for a, b in drug:
+                    cut = []
+                    for x0, x1, st in hyp:
+                        if st not in ("N3", "R") or x1 <= a or x0 >= b:
+                            cut.append((x0, x1, st))
+                            continue
+                        if x0 < a:
+                            cut.append((x0, a, st))
+                        cut.append((max(x0, a), min(x1, b), "N2"))
+                        if x1 > b:
+                            cut.append((b, x1, st))
+                    hyp = sorted(cut)
+                merged: List[Tuple[float, float, str]] = []
+                for iv in hyp:
+                    if merged and merged[-1][2] == iv[2] and abs(merged[-1][1] - iv[0]) < 1e-9:
+                        merged[-1] = (merged[-1][0], iv[1], iv[2])
+                    else:
+                        merged.append(iv)
+                self._hypno = [iv for iv in merged if iv[1] > iv[0]]
+                authored = set(self._arousals)
+                self._arousals_v3 = [(a, w) for a, w in self._arousals_v3 if (a, w) in authored
+                                     or self._arch_w(np.array([a]), self._sed_v3_at("loc", np.array([a]), 0.0))[0] >= 0.5]
+        rng = substream(self.seed, "arousal-burst")
+        pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
+        self._aro_burst = []
+        for a, w in self._arousals_v3:
+            gain = float(rng.uniform(*self._AROUSAL_EMG_GAIN))
+            tau = float(rng.uniform(0.25, 0.6)) * w
+            moves = []
+            if rng.random() < self._AROUSAL_MOVE_P:
+                # one to three abrupt slow transients in the first 2 s (0.3-1 s, 60-160 uV), bifrontal / one side /
+                # global, each electrode jittered (the artifacts family's regional movement field)
+                for _ in range(int(rng.integers(1, 4))):
+                    region = rng.choice(["bifrontal", "left", "right", "global"], p=[0.35, 0.2, 0.2, 0.25])
+                    if region == "global":
+                        fld = np.full(self.n_elec, 0.7)
+                    else:
+                        cx, cy = {"bifrontal": (0.0, 0.8), "left": (-0.9, 0.2), "right": (0.9, 0.2)}[str(region)]
+                        fld = np.exp(-((pos[:, 0] - cx) ** 2 + (pos[:, 1] - cy) ** 2) / 0.45)
+                    fld = fld * rng.uniform(0.7, 1.3, self.n_elec)
+                    moves.append((a + float(rng.uniform(0.0, 2.0)), float(rng.uniform(0.3, 1.0)),
+                                  float(rng.uniform(60.0, 160.0)) * float(rng.choice([-1.0, 1.0])), fld))
+            self._aro_burst.append((a, w, gain, tau, moves))
+
+    def _emg_hold(self, t: np.ndarray) -> np.ndarray:
+        """Phase B: 1 from 5 s before to 10 s after any seizure or generalized complex (1-s ramps), else 0.  Built once
+        per record from the scheduled events."""
+        if not (hasattr(self, "seizures") and hasattr(self, "_gen")):
+            return np.zeros(t.shape)                   # not yet scheduled (nothing to hold)
+        if getattr(self, "_emg_hold_iv", None) is None:
+            iv = [(inst.t0 - 5.0, inst.t1 + 10.0) for inst in (self.seizures or [])]
+            gen = getattr(self, "_gen", None)
+            if gen is not None:
+                iv += [(c["t"] - 5.0, c["t"] + c["span"] + 10.0) for c in gen.cx]
+            self._emg_hold_iv = np.asarray(iv, float).reshape(-1, 2)
+        h = np.zeros(t.shape)
+        for a, b in self._emg_hold_iv:
+            if b + 1.0 < t[0] or a - 1.0 > t[-1]:
+                continue
+            h = np.maximum(h, np.clip(np.minimum(t - a, b - t) + 0.5, 0.0, 1.0))
+        return h
+
+    def _arousal_emg(self, t: np.ndarray) -> np.ndarray:
+        """Phase B: EMG gain added over the waking floor during each arousal: abrupt (80 ms) onset, decaying with the
+        arousal's own time constant, off at its end."""
+        g = np.zeros(t.shape)
+        for a, w, gain, tau, _m in getattr(self, "_aro_burst", ()):
+            if a + w + 1.0 < t[0] or a - 0.2 > t[-1]:
+                continue
+            d = t - a
+            on = np.clip(d / 0.08, 0.0, 1.0) * np.clip((w - d) / 0.5, 0.0, 1.0)
+            g = np.maximum(g, gain * on * (0.35 + 0.65 * np.exp(-np.clip(d, 0.0, None) / tau)))
+        return g
+
+    def _arousal_movement_rows(self, t: np.ndarray) -> np.ndarray:
+        """Phase B: movement transients at arousal onset (microvolts): 60-ms rise, rounded slow return."""
+        rows = np.zeros((self.n_elec, t.size))
+        for a, w, _g, _tau, moves in getattr(self, "_aro_burst", ()):
+            if a + 4.0 < t[0] or a - 0.2 > t[-1]:
+                continue
+            for c0, du, amp, fld in moves:
+                d = t - c0
+                m = (d > 0) & (d < du)
+                if not m.any():
+                    continue
+                u = d[m] / du
+                wave = np.where(u < 0.12, np.sin(0.5 * np.pi * u / 0.12), np.cos(0.5 * np.pi * (u - 0.12) / 0.88) ** 1.5)
+                rows[:, m] += amp * fld[:, None] * wave[None, :]
+        return rows
 
     def sleep_stage_summary(self, duration_s: float) -> List[Dict]:
         """Phase D answer-key rows: each drawn sleep stage with the natural transients realized in it (counted only
@@ -1831,6 +1991,19 @@ class Synthesizer:
         """1 inside a quiet-sleep HVS window (10-s raised-cosine edges), 0 elsewhere."""
         g = np.zeros(np.shape(t))
         for a, b in self._hvs:
+            if b < np.min(t) - 10 or a > np.max(t) + 10:
+                continue
+            g = np.maximum(g, np.clip(np.minimum(t - a, b - t) / 10.0 + 0.5, 0.0, 1.0))
+        return 0.5 - 0.5 * np.cos(np.pi * g)
+
+    #: phase B LVI: fraction taken off the broad / theta / delta background inside a low-voltage-irregular stretch
+    #: (theta spared most, so the stretch is lower and more theta-rich than the mixed active-sleep background)
+    _LVI_CUT = (0.4, 0.2, 0.55)
+
+    def _lvi_gate(self, t: np.ndarray) -> np.ndarray:
+        """1 inside an active-sleep LVI stretch (10-s raised-cosine edges), 0 elsewhere."""
+        g = np.zeros(np.shape(t))
+        for a, b in getattr(self, "_lvi", ()):
             if b < np.min(t) - 10 or a > np.max(t) + 10:
                 continue
             g = np.maximum(g, np.clip(np.minimum(t - a, b - t) / 10.0 + 0.5, 0.0, 1.0))
@@ -3708,8 +3881,9 @@ class Synthesizer:
                 floor = self._AV_MIN_DURATION_S.get(ev["kind"], 0.0)
                 a = min(a, b - floor)
                 if ev["kind"] == "frontal_arousal_rhythm":
-                    # a subtle arousal pattern: at most about 2x the frontal background (re-review measured 4.9x)
-                    amp_uv = min(amp_uv, 0.65 * float(self.bg["amplitude_uv"]))
+                    # a subtle arousal pattern: at most about 2x the frontal background (re-review measured 4.9x);
+                    # phase B: 0.65 x amplitude_uv measured 1.3x, so the cap is 1.0 x (about 2x on F3-C3)
+                    amp_uv = min(amp_uv, 1.0 * float(self.bg["amplitude_uv"]))
             blocks = []
             if ev["kind"] == "mu" and ev.get("block_at_min") is not None:
                 ba = float(ev["block_at_min"]) * 60.0
@@ -5579,7 +5753,10 @@ class Synthesizer:
             return np.full(n, neutral) if self._calibrating else self._sed_v3_at(key, t, neutral)
 
         # --- background mixture -------------------------------------------
+        lvi = self._lvi_gate(t) if (v3 and self.age == "neonate" and getattr(self, "_lvi", None)) else None
         x = self._stream_signal(self.st_broad, i0, n) * (0.80 + 0.20 * sleep)[None, :]
+        if lvi is not None:
+            x = x * (1.0 - self._LVI_CUT[0] * lvi)[None, :]
 
         v3state = bool(self._hypno)
         if v3state:
@@ -5601,6 +5778,9 @@ class Synthesizer:
                 x += self._stream_signal(self.st_sed_alpha, i0 + 9091, n) * 1.4
         if self.age != "neonate":
             x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
+            if v3 and getattr(self, "st_theta_post", None) is not None:
+                x += (self._stream_signal(self.st_theta_post, i0, n)
+                      * (_POST_THETA_W_B[self.age] * 0.62 * self.pdr_gain * pdr_w)[None, :])
             # 0.5.0: awake theta by age.  Digitized against learningeeg 5-year-old awake figures, a flat 0.30 gave a
             # child half the reference theta share (0.17 vs 0.35 of 1-30 Hz) and a PDR that looked too pure
             theta0 = self._THETA_W_V3.get(self.age, 0.30) if self.spec_version >= 3 else 0.30
@@ -5611,7 +5791,8 @@ class Synthesizer:
             # delta (ACNS 2013), not a voltage-scaled copy of the burst.  Theta therefore takes a higher interburst
             # floor than the delta (``_neo_theta_gain``: the burst envelope is divided back out and re-applied with
             # that floor), and a small fast stream rides the bursts.
-            x += (self._stream_signal(self.st_theta, i0, n) * (NEO_THETA_W * sed_theta)[None, :]
+            x += (self._stream_signal(self.st_theta, i0, n) * (NEO_THETA_W * sed_theta
+                                                                 * (1.0 if lvi is None else 1.0 - self._LVI_CUT[1] * lvi))[None, :]
                   * self._neo_theta_gain(t))
             x += self._stream_signal(self.st_brush, i0 + 7717, n) * NEO_FAST_W
             w_sws = self._neo_sws_w(t)
@@ -5645,15 +5826,20 @@ class Synthesizer:
                 # stacked to about 170 uV (ACNS 2013 range 50-150)
                 hvs_k = np.where(self._neo_sws_w(t) > 0, 0.5, 1.3)    # per sample: no dependence on the window cut
                 delta_w = delta_w + hvs_k * (1.0 - mature) * self._hvs_gate(t)
+        if lvi is not None:
+            delta_w = delta_w * (1.0 - self._LVI_CUT[2] * lvi)
         cape_b = self.cape_phase(t) if (self.spec_version >= 3 and self.bg.get("cape")) else None
         if cape_b is not None:
             delta_w = delta_w * (1.0 - self._CAPE_SPECTRUM[0] * cape_b)
             beta_w = beta_w * (1.0 + self._CAPE_SPECTRUM[2] * cape_b)
             x += (self._stream_signal(self.st_theta, i0, n)
                   * (self._CAPE_SPECTRUM[1] * (0.30 + 0.25 * sleep) * sed_theta * cape_b)[None, :])
+        if v3state:
+            # phase B (sleep-fix): less continuous delta in N2 (children's N2 scored as N3), none held under an arousal
+            delta_w = delta_w - self._N2_DELTA_CUT.get(self.age, 0.0) * sv3.weight(t, self._hypno, {"N2": 1.0}) * (1.0 - aro)
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
         if v3state and self.st_sws is not None:
-            x += self._stream_signal(self.st_sws, i0, n) * (self._SWS_W_V3.get(self.age, 1.2) * sv3.weight(t, self._hypno, {"N3": 1.0, "N2": 0.12}))[None, :]
+            x += self._stream_signal(self.st_sws, i0, n) * (self._SWS_W_V3.get(self.age, 1.2) * sv3.weight(t, self._hypno, {"N3": 1.0, "N2": 0.12}) * (1.0 - aro))[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
         x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
         x += self._stream_signal(self.st_sed_gamma, i0, n) * sed_gamma[None, :]
@@ -5713,7 +5899,17 @@ class Synthesizer:
         # paralysed, post-anoxic - has no tonic muscle, inside bursts included.  Version 2 only.
         unreactive = self.spec_version >= 2 and self.bg.get("reactivity") == "absent"
         blocked = self.spec.get("neuromuscular_blockade") == "complete"
-        sleep_emg = (np.maximum(sv3.weight(t, self._hypno, sv3.EMG), 0.8 * aro) if v3state else (1.0 - 0.75 * sleep))
+        if v3state:
+            # phase B (sleep-fix): tonic temporalis EMG comes and goes in wake / N1 (``sv3.emg_gate``), and an arousal
+            # brings an abrupt EMG burst above the waking floor (``_arousal_emg``; learningeeg arousal)
+            wake_w = sv3.weight(t, self._hypno, {"W": 1.0, "N1": 1.0})
+            gate = sv3.emg_gate(t, self._emg_on)
+            hold = self._emg_hold(t)
+            gate = gate + (1.0 - gate) * hold          # a seizure keeps the continuous floor its EMG is read against
+            stage_emg = sv3.weight(t, self._hypno, sv3.EMG) * (1.0 + wake_w * (gate - 1.0))
+            sleep_emg = np.maximum(stage_emg, 0.8 * aro) + self._arousal_emg(t)
+        else:
+            sleep_emg = 1.0 - 0.75 * sleep
         emg_w = ((0.0 if unreactive or blocked else EMG_FLOOR_W) * sed_emg * sleep_emg * self.burst_envelope(t)
                  * (1.0 + self.ictal_gate(t))
                  * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
@@ -5729,7 +5925,9 @@ class Synthesizer:
             # 0.5.0: scheduled spindle packets in N2/N3 (2.6 background-RMS units at the field maximum); the drug
             # spindle weight (dexmedetomidine) adds to the stage rate through the same packets.  Phase D: natural sleep
             # transients need preserved architecture (``_arch_w``: none in encephalopathy or under a hypnotic)
-            arch = self._arch_w(t, sed_loc)
+            # phase B (sleep-fix, sleep-independent.md: slow waves, K-complexes and spindles kept running through an
+            # arousal): the natural transients are gated off by the arousal (AASM: an abrupt shift out of sleep)
+            arch = self._arch_w(t, sed_loc) * (1.0 - aro)
             x += self._spindle_rows_v3(t) * (2.6 * (self._SPINDLE_GAIN_V3D.get(self.age, 1.0) * arch + sed_spindle))[None, :]
             if not self._calibrating and self._dsp["t"].size:
                 # dexmedetomidine spindles in wake too: their own irregular schedule, same packet shape and field
@@ -5918,6 +6116,8 @@ class Synthesizer:
             gate = sv3.weight(t, self._hypno, sv3.BLINK) * eye_blink * env * (1.0 - self.absence_gate(t)) * eyes
             x += self.blink_rows(t, gate)
             x += self._eye_event_rows(t) * (env * (1.0 - self.absence_gate(t)) * eyes)[None, :]
+            if getattr(self, "_aro_burst", None) and not blocked:
+                x += self._arousal_movement_rows(t)        # phase B: movement at arousal onset (not cerebral)
             arch_env = (env * arch)[None, :] * self._ch_gain[:, None]
             x += self._sleep_transient_rows(t) * arch_env
             # phase D: N3 slow waves (cerebral), REM sawtooth + rapid eye movements, N1 slow eye movements (ocular)

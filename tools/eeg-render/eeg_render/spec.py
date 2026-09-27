@@ -529,7 +529,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
             ms.setdefault(k, v)
         bg["multifocal_spikes"] = {k: float(v) for k, v in ms.items()}
     else:
-        _normalize_variants(bg)
+        _normalize_variants(bg, version, float(bg.get("amplitude_uv", ad["amplitude_uv"])))
         ms = bg.get("multifocal_spikes")
         bg["multifocal_spikes"] = ({"rate_per_s": float(ms.get("rate_per_s", 0.0)),
                                     "amplitude_uv": float(ms.get("amplitude_uv", 150.0))}
@@ -1036,12 +1036,19 @@ AUTHORED_VARIANT_DEFAULTS_V3 = {
     # phase D (normal-variants re-review V110-04: 0.4x background on T5-O1, invisible on the bipolar page): about 2.5x,
     # so the burst reads on the longitudinal chain as in learningeeg 14-and-6 at 10 uV (3.3x the 0.5.0 default)
     "fourteen_and_six": {"amplitude_uv": 150.0},
-    # phase D (re-review V110-08: 4.9x background, too dominant for a subtle arousal pattern): about 2x in F3-C3
-    "frontal_arousal_rhythm": {"frequency_hz": 8.0, "amplitude_uv": 26.0},
+    # phase D (re-review V110-08: 4.9x background, too dominant for a subtle arousal pattern): about 2x in F3-C3.
+    # phase B (variants-neonatal-r3: 26 uV measured 1.3x, read as the spindles before it): about 2x, the r3 target
+    "frontal_arousal_rhythm": {"frequency_hz": 8.0, "amplitude_uv": 40.0},
 }
 
 
-def _normalize_variants(bg: Dict[str, Any]) -> None:
+#: phase B (sleep-fix, sleep-independent.md: the infant hypersynchrony run was about 2x a 60-uV background at the
+#: 200-uV default; learningeeg Hypnapompic-Hypersynchrony dominates the page): spec_version 3 default amplitude is at
+#: least this many times the background amplitude_uv
+HH_DEFAULT_PER_BG_V3 = 4.5
+
+
+def _normalize_variants(bg: Dict[str, Any], version: int = 1, bg_amp: float = 0.0) -> None:
     """Fill each authored variant with its defaults; an absent key stays absent (bank hashes)."""
     v = bg.get("variants")
     if not isinstance(v, dict):
@@ -1049,6 +1056,8 @@ def _normalize_variants(bg: Dict[str, Any]) -> None:
     out = {}
     for name, cfg in v.items():
         cfg = dict(cfg or {})
+        if version >= 3 and name == "hypnagogic_hypersynchrony":
+            cfg.setdefault("amplitude_uv", max(VARIANT_DEFAULTS[name]["amplitude_uv"], HH_DEFAULT_PER_BG_V3 * bg_amp))
         for k, d in VARIANT_DEFAULTS[name].items():
             cfg.setdefault(k, d)
         cfg.setdefault("enabled", True)
