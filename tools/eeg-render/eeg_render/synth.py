@@ -111,6 +111,9 @@ CH_GAIN_ASYM_LOG_SD = 0.12
 #: continuous depth, not a stage, so there is no REM atonia here - the model
 #: has no REM to hook onto.
 EMG_FLOOR_W = 0.70
+#: r7-fix (spec_version 3): a child background above this voltage (the child AGE_DEFAULTS amplitude the muscle floor
+#: was tuned on) does not raise the muscle floor or the ictal EMG with it.
+CHILD_EMG_REF_UV = 45.0
 #: 0.5.0 neonatal burst composition (spec_version 3; weights in background-RMS units beside the delta stream):
 #: theta 4-7 Hz and a small 8-20 Hz stream, tuned so the displayed relative delta (0.5-4 / 0.5-30 Hz) of a term
 #: record falls from 0.93-0.96 to ~0.8 with theta >= 0.1 (feature review, neonatal item 5)
@@ -850,6 +853,12 @@ class Synthesizer:
         self.stimulations = [e for e in spec["events"] if e["type"] == "stimulation"]
         # 0.4.0 ``amplitude_reference: display``: last, once everything a segment needs exists
         self.display_scale = 1.0
+        # r7-fix (spec_version 3, feature review B5-01): the muscle floor rides ``amp_rms``, so the r7 90-uV child
+        # background (and pages authored above the child default) drew the temporalis EMG 2-2.25x.  Muscle is not
+        # cerebral: hold it at its voltage on the child default background.
+        self.emg_uv_scale = 1.0
+        if self.spec_version >= 3 and self.age == "child":
+            self.emg_uv_scale = min(1.0, CHILD_EMG_REF_UV / max(float(bg["amplitude_uv"]), 1e-6))
         if self.display_ref:
             self._calibrate_display()
 
@@ -4580,7 +4589,7 @@ class Synthesizer:
                 noise = self._oa(self.st_muscle, i0 + self._EMG_V3_OFFSET, n, self.n_elec)
             out += (self._emg_field_v3(kind, inst)[:, None] * noise
                     * (EMG_FLOOR_W * self._EMG_V3_GAIN[kind] * gain * shape)[None, :])
-        return out * self.amp_rms
+        return out * (self.amp_rms * self.emg_uv_scale)
 
     @staticmethod
     def _f_of(inst: SeizureInstance) -> float:
@@ -6303,7 +6312,8 @@ class Synthesizer:
             sleep_emg = np.maximum(stage_emg, 0.8 * aro) + self._arousal_emg(t)
         else:
             sleep_emg = 1.0 - 0.75 * sleep
-        emg_w = ((0.0 if unreactive or blocked else EMG_FLOOR_W) * sed_emg * sleep_emg * self.burst_envelope(t)
+        emg_w = ((0.0 if unreactive or blocked else EMG_FLOOR_W * self.emg_uv_scale) * sed_emg * sleep_emg
+                 * self.burst_envelope(t)
                  * (1.0 + self.ictal_gate(t))
                  * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
                  * dec
