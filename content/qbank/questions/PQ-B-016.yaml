@@ -67,8 +67,8 @@ options:
 
 explanation: >-
   The correct answer is A. What the image shows: the rhythmicity spectrograms are empty
-  apart from a broadband, non-evolving, bilateral rise at the annotated patting artifact
-  at 150 minutes; the seizure-probability trend is flat except at that artifact; the FFT
+  apart from a faint, brief, non-evolving mark at the annotated patting artifact at 150
+  minutes; the seizure-probability trend is flat except for a single spike at that artifact; the FFT
   spectrograms show symmetric slow-dominant power without arches; the aEEG margins are
   continuous and stable; and the asymmetry index stays near zero. There is therefore no
   seizure and no emergent EEG risk factor in the first 6 hours. Evidence: a prospective
@@ -136,9 +136,9 @@ image:
       - type: artifact
         kind: patting
         at_min: 150
-        duration_s: 200
+        duration_s: 300
         side: all
-        intensity: medium
+        intensity: high
     annotations:
       - { at_min: 150, label: "Caregiver patting" }
     panels:

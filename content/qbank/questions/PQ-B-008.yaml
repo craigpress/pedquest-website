@@ -134,18 +134,45 @@ image:
       slow_fraction: 0.75
       reactivity: present
     events:
-      # generalized status drawn as simultaneous left + right hemispheric runs (the v3 generalized onset field
-      # cancels on the bipolar trend chains, so the saturated trends the explanation describes did not appear)
-      - type: status_epilepticus
-        onset_min: 10
-        duration_min: 220
-        onset_region: left_hemisphere
-        spread: none
-      - type: status_epilepticus
-        onset_min: 10
-        duration_min: 220
-        onset_region: right_hemisphere
-        spread: none
+      # electrographic status as the stem describes it: ictal runs filling ~75 % of each hour (9-min runs, 3-min
+      # interictal gaps, 10-226 min), each generalized run drawn as simultaneous left + right hemispheric runs
+      # (the v3 generalized onset field cancels on the bipolar trend chains)
+      - {type: status_epilepticus, onset_min: 10, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 10, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 22, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 22, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 34, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 34, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 46, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 46, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 58, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 58, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 70, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 70, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 82, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 82, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 94, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 94, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 106, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 106, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 118, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 118, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 130, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 130, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 142, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 142, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 154, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 154, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 166, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 166, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 178, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 178, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 190, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 190, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 202, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 202, duration_min: 9, onset_region: right_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 214, duration_min: 9, onset_region: left_hemisphere, spread: none}
+      - {type: status_epilepticus, onset_min: 214, duration_min: 9, onset_region: right_hemisphere, spread: none}
     panels:
       - seizure_probability
       - rhythmicity_L

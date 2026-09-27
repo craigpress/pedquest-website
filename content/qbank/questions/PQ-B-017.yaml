@@ -43,9 +43,9 @@ point_to_feature:
 explanation: >-
   The first electrographic seizure is the discrete evolving band on the left rhythmicity
   spectrogram at about 40 minutes into the recording. What the image shows: at 15 minutes,
-  time-locked to the annotated suctioning, there is a short, broadband, non-evolving rise
-  across all displayed frequencies with a matching spike in the seizure-probability trend
-  and no change in the asymmetry index; that is muscle and movement artifact. At about 40
+  time-locked to the annotated suctioning, there is only a brief, faint, broadband column on
+  the FFT panels, with no evolving band, no seizure-probability rise and no change in the
+  asymmetry index; that is muscle and movement artifact. At about 40
   minutes a narrow band appears on the left that starts near 4 Hz and slows to about 1.5
   Hz over roughly 100 seconds, with a matching arch on the left FFT panel, a leftward
   deflection of the asymmetry index, a rise of the left aEEG margins and a brief
