@@ -8,6 +8,7 @@
 // src/lib/lab/spec.ts fails the test until it is described here.
 
 import coverage from "./guide-coverage.json";
+import type { LabAgeBand } from "./types";
 
 export const GUIDE_RENDERER_VERSION: string = coverage.rendererVersion;
 export const GUIDE_UPDATED = "27 September 2026";
@@ -60,10 +61,12 @@ export interface GuideWalkthrough {
 }
 
 export interface AgeDefaultRow {
+  id: LabAgeBand;
   age: string;
-  dominantHz: string;
-  amplitude: string;
-  slowFraction: string;
+  dominantHz: number;
+  amplitudeUv: number;
+  amplitudeNote?: string;
+  slowFraction: number;
   background: string;
   blinks: string;
 }
@@ -86,15 +89,15 @@ export const GUIDE_READING_NOTES: string[] = [
 ];
 
 export const AGE_DEFAULTS_TABLE: AgeDefaultRow[] = [
-  { age: "Neonate", dominantHz: "1.5 Hz", amplitude: "60 µV (or from postmenstrual age)", slowFraction: "0.80", background: "Discontinuous", blinks: "None unless a sleep–wake cycle is on; then about 2/min, awake only" },
-  { age: "Infant", dominantHz: "5.5 Hz", amplitude: "55 µV", slowFraction: "0.55", background: "Continuous", blinks: "15/min awake" },
-  { age: "Child", dominantHz: "8 Hz", amplitude: "90 µV continuous background (45 µV for other background types)", slowFraction: "0.40", background: "Continuous", blinks: "15/min awake" },
-  { age: "Adolescent", dominantHz: "9.5 Hz", amplitude: "35 µV", slowFraction: "0.30", background: "Continuous", blinks: "15/min awake" },
-  { age: "Adult", dominantHz: "10 Hz", amplitude: "30 µV", slowFraction: "0.25", background: "Continuous", blinks: "15/min awake" },
+  { id: "neonate", age: "Neonate", dominantHz: 1.5, amplitudeUv: 60, amplitudeNote: "or set by postmenstrual age in Expert mode", slowFraction: 0.8, background: "Discontinuous", blinks: "None unless a sleep–wake cycle is on; then about 2/min, awake only" },
+  { id: "infant", age: "Infant", dominantHz: 5.5, amplitudeUv: 55, slowFraction: 0.55, background: "Continuous", blinks: "15/min awake" },
+  { id: "child", age: "Child", dominantHz: 8, amplitudeUv: 90, amplitudeNote: "continuous background; 45 µV for other background types", slowFraction: 0.4, background: "Continuous", blinks: "15/min awake" },
+  { id: "adolescent", age: "Adolescent", dominantHz: 9.5, amplitudeUv: 35, slowFraction: 0.3, background: "Continuous", blinks: "15/min awake" },
+  { id: "adult", age: "Adult", dominantHz: 10, amplitudeUv: 30, slowFraction: 0.25, background: "Continuous", blinks: "15/min awake" },
 ];
 
 export const AGE_DEFAULTS_NOTE =
-  "These are starting points for teaching, not population reference ranges. The Guided form fills its own starting values (7 Hz, 40 µV, slow fraction 0.4) that you should adjust to the age; for a normal awake child enter about 90 µV.";
+  "These are starting points for teaching, not population reference ranges. The Guided form fills the dominant frequency, amplitude and slow fraction for the age and background type you pick, and keeps following them until you type your own value. Values are for renderer defaults edition 3; at editions 1 and 2 a child background starts at 45 µV. Hypsarrhythmia starts at 1.3 Hz, 280 µV and slow fraction 0.95. Suppressed, low-voltage and burst-suppression backgrounds use the age value, which the recording scales down to a physiologic voltage.";
 
 // ── sections ───────────────────────────────────────────────────────────────
 
@@ -208,7 +211,7 @@ const recording: GuideSection = {
       names: ["rec:spec_version"],
     },
     {
-      id: "variation", name: "Variation number", formLabel: "Seed", where: "form",
+      id: "variation", name: "Variation number", formLabel: "Variation number", where: "form",
       what: "A whole number that fixes the random detail of the recording: exact timing of each discharge, each blink and each burst.",
       defaultText: "A random number is filled in when the form opens.",
       onPage: "The same number with the same settings reproduces the recording exactly. Change only this number to get a different-looking example of the same case.",
@@ -279,7 +282,7 @@ const background: GuideSection = {
       id: "bg-dominant", name: "Dominant frequency", formLabel: "Dominant Hz", where: "form",
       what: "Frequency of the main rhythm; in awake older children and adults this is the posterior dominant rhythm.",
       range: "0.3 to 20 Hz.",
-      defaultText: "By age (1.5, 5.5, 8, 9.5, 10 Hz); the form starts at 7 Hz.",
+      defaultText: "By age (1.5, 5.5, 8, 9.5, 10 Hz); the form fills it for the age you pick.",
       onPage: "The posterior rhythm frequency with eyes closed, attenuating with eyes open.",
       onTrends: "The spectrogram's awake peak.",
       names: ["bg:dominant_hz"],
@@ -288,7 +291,7 @@ const background: GuideSection = {
       id: "bg-amplitude", name: "Background amplitude", formLabel: "Amplitude µV", where: "form",
       what: "The awake background voltage a reader would measure peak-to-peak on the longitudinal bipolar page (median over one-second windows, away from blinks). The recording calibrates itself to this.",
       range: "Any positive value in µV.",
-      defaultText: "Continuous child background 90 µV when left out; otherwise by age (60, 55, 45, 35, 30 µV). The form starts at 40 µV: enter 80–100 µV for a normal awake child.",
+      defaultText: "By age and background type: 90 µV for a continuous child background (normal awake child 80–100 µV on the bipolar page); otherwise 60, 55, 45, 35 and 30 µV from neonate to adult. The form fills it for the age and type you pick until you type your own.",
       onPage: "The height of the background on the page. Individual waves vary around it; blinks and discharges are drawn relative to it.",
       onTrends: "Moves the aEEG margins and total power.",
       names: ["bg:amplitude_uv"],
@@ -308,7 +311,7 @@ const background: GuideSection = {
       id: "bg-slow", name: "Slow fraction", formLabel: "Slow fraction", where: "form",
       what: "How much slow (delta–theta) activity is mixed into the background. A mixing setting, not a measured percentage of power.",
       range: "0 to 1.",
-      defaultText: "By age (0.80 neonate to 0.25 adult); the form starts at 0.4.",
+      defaultText: "By age (0.80 neonate to 0.25 adult); the form fills it for the age you pick.",
       onPage: "Higher values give a slower, more disorganized background.",
       onTrends: "Raises delta power and lowers the alpha/delta ratio.",
       names: ["bg:slow_fraction"],
@@ -1301,7 +1304,7 @@ export const GUIDE_WALKTHROUGHS: GuideWalkthrough[] = [
     teaches: "Posterior dominant rhythm, eye state, drowsiness and N2 sleep transients.",
     steps: [
       { label: "Recording", detail: "Age band Child, Standard 19, longitudinal bipolar, 90 minutes, renderer defaults edition 3." },
-      { label: "Background", detail: "Continuous, 8 Hz, 90 µV, slow fraction 0.3, reactivity present." },
+      { label: "Background", detail: "Continuous, reactivity present; leave the frequency (8 Hz), amplitude (90 µV) and slow fraction (0.4) at the age defaults the form fills in." },
       { label: "Events", detail: "State change to Sleep at 30 minutes; State change to Wake at 80 minutes." },
     ],
     expect: [

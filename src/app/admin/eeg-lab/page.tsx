@@ -12,7 +12,7 @@ import {
   DISCHARGE_FOCI, DISCHARGE_MORPHOLOGIES, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, DURATION_SEIZURE_TYPES,
   EVENT_TYPE_LABELS, GENERALIZED_SEIZURE_TYPES, MONTAGES, MYOCLONIC_TYPES, ONSET_PATTERNS, PROVOCATIONS, REGIONS,
   SAMPLE_RATES, SEDATION_AGENTS, SPEC_VERSIONS, SPREADS, STIMULI, WORKER_MAX_SPEC_VERSION, defaultAnnotation,
-  defaultEvent, defaultGuidedScenario, randomSeed, requiredSpecVersion,
+  defaultEvent, defaultGuidedScenario, editBackgroundLevel, randomSeed, requiredSpecVersion, withBackgroundDefaults,
 } from "@/lib/lab/spec";
 import {
   LAB_ARTIFACT_LABELS, LAB_FORMATS, LAB_MMX_PRESETS, LAB_PERSYST_PANELS, LAB_REVIEW_STATUS_LABELS,
@@ -124,7 +124,13 @@ export default function AdminEegLabPage() {
   const { isEditor, loading: roleLoading } = useRole();
 
   const [mode, setMode] = useState<LabMode>("guided");
-  const [guided, setGuided] = useState<GuidedScenario>(defaultGuidedScenario);
+  const [guided, setGuidedRaw] = useState<GuidedScenario>(defaultGuidedScenario);
+  // Every guided change re-derives the background levels the author has not typed (age, type and the
+  // edition the events need all move the renderer's defaults), so the form shows what will be rendered.
+  const setGuided = useCallback(
+    (update: (g: GuidedScenario) => GuidedScenario) => setGuidedRaw((g) => withBackgroundDefaults(update(g))),
+    [],
+  );
   const [prose, setProse] = useState("");
   const [specText, setSpecText] = useState("");
 
@@ -498,17 +504,19 @@ export default function AdminEegLabPage() {
               <Num
                 label="Dominant Hz" value={guided.background.dominantHz} disabled={busyAny}
                 min={0.3} max={20} step={0.1}
-                onChange={(v) => setGuided((g) => ({ ...g, background: { ...g.background, dominantHz: v } }))}
+                onChange={(v) => setGuided((g) => editBackgroundLevel(g, "dominantHz", v))}
               />
               <Num
                 label="Amplitude µV" value={guided.background.amplitudeUv} disabled={busyAny}
                 min={1} max={300}
-                onChange={(v) => setGuided((g) => ({ ...g, background: { ...g.background, amplitudeUv: v } }))}
+                hint={guided.background.edited?.includes("amplitudeUv")
+                  ? "Your value" : "Default for age and type: what a reader measures on the bipolar page"}
+                onChange={(v) => setGuided((g) => editBackgroundLevel(g, "amplitudeUv", v))}
               />
               <Num
                 label="Slow fraction" value={guided.background.slowFraction} disabled={busyAny}
                 min={0} max={1} step={0.05} hint="Delta/theta share of power"
-                onChange={(v) => setGuided((g) => ({ ...g, background: { ...g.background, slowFraction: v } }))}
+                onChange={(v) => setGuided((g) => editBackgroundLevel(g, "slowFraction", v))}
               />
             </div>
             {guided.background.type === "burst_suppression" && (
@@ -885,13 +893,13 @@ export default function AdminEegLabPage() {
               onChange={setDurationMin}
             />
             <Num
-              label="Seed" value={seed} min={1} disabled={busyAny}
-              hint="Same spec + seed = the same recording, every time"
+              label="Variation number" value={seed} min={1} disabled={busyAny}
+              hint="Same number and settings = the same recording"
               onChange={setSeed}
             />
             <div style={{ alignSelf: "end" }}>
               <button type="button" style={mini} disabled={busyAny} onClick={() => setSeed(randomSeed())}>
-                New seed
+                New variation
               </button>
             </div>
           </div>

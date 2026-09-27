@@ -10,7 +10,8 @@ import {
   GUIDE_SECTIONS, GUIDE_WALKTHROUGHS, type GuideControl,
 } from "./guide-content";
 import {
-  ACNS_PATTERNS, ACNS_PLUS, ACNS_PREVALENCE, AGE_BANDS, ARTIFACT_KINDS, BACKGROUND_TYPES, CHANNEL_SETS,
+  ACNS_PATTERNS, ACNS_PLUS, ACNS_PREVALENCE, AGE_BACKGROUND_DEFAULTS, AGE_BANDS, backgroundDefaults, defaultGuidedScenario,
+  withBackgroundDefaults, ARTIFACT_KINDS, BACKGROUND_TYPES, CHANNEL_SETS,
   DISCHARGE_FOCI, DISCHARGE_MORPHOLOGIES, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, EVENT_TYPE_LABELS,
   GENERALIZED_SEIZURE_TYPES, MONTAGES, ONSET_PATTERNS, PROVOCATIONS, REGIONS, SAMPLE_RATES, SEDATION_AGENTS,
   SPEC_VERSIONS, SPREADS, STIMULI,
@@ -108,9 +109,36 @@ test("control ids are unique and every control says what it is, its default and 
   for (const c of controls) for (const f of ["name", "what", "defaultText", "onPage"] as const) assert.ok(c[f].trim(), `${c.id}.${f}`);
 });
 
+test("the guide's age table equals the Guided form's background defaults", () => {
+  assert.deepEqual(AGE_DEFAULTS_TABLE.map((r) => r.id), AGE_BANDS.map((a) => a.id));
+  for (const r of AGE_DEFAULTS_TABLE) {
+    // each row documents the age's own background type at the current edition (3)
+    const type = r.id === "neonate" ? "discontinuous" : "continuous";
+    const d = backgroundDefaults(r.id, type, 3);
+    assert.deepEqual([r.dominantHz, r.amplitudeUv, r.slowFraction], [d.dominantHz, d.amplitudeUv, d.slowFraction], `age table row ${r.id}`);
+    // and the form fills exactly those values when the author picks that age at edition 3
+    const base = defaultGuidedScenario();
+    const g = withBackgroundDefaults({ ...base, specVersion: 3, ageBand: r.id, background: { ...base.background, type } });
+    assert.deepEqual([g.background.dominantHz, g.background.amplitudeUv, g.background.slowFraction],
+      [r.dominantHz, r.amplitudeUv, r.slowFraction], `form defaults for ${r.id}`);
+  }
+  // the child row's note for other background types must match the age preset
+  const childNote = AGE_DEFAULTS_TABLE.find((r) => r.id === "child")?.amplitudeNote ?? "";
+  assert.ok(childNote.includes(`${AGE_BACKGROUND_DEFAULTS.child.amplitudeUv} µV`), childNote);
+  assert.equal(backgroundDefaults("child", "burst_suppression", 3).amplitudeUv, AGE_BACKGROUND_DEFAULTS.child.amplitudeUv);
+});
+
+test("an author's own background value is kept when the age changes", () => {
+  const base = defaultGuidedScenario();
+  const edited = { ...base, specVersion: 3 as const, background: { ...base.background, amplitudeUv: 60, edited: ["amplitudeUv" as const] } };
+  const g = withBackgroundDefaults({ ...edited, ageBand: "adult" });
+  assert.equal(g.background.amplitudeUv, 60);
+  assert.equal(g.background.dominantHz, AGE_BACKGROUND_DEFAULTS.adult.dominantHz);
+});
+
 test("reader-facing text avoids programming vocabulary", () => {
   const prose: string[] = [...GUIDE_INTRO, ...GUIDE_READING_NOTES, ...GUIDE_LIMITS, AGE_DEFAULTS_NOTE];
-  for (const r of AGE_DEFAULTS_TABLE) prose.push(...Object.values(r));
+  for (const r of AGE_DEFAULTS_TABLE) prose.push(r.age, r.amplitudeNote ?? "", r.background, r.blinks);
   for (const s of GUIDE_SECTIONS) {
     prose.push(s.title, s.summary, ...s.intro, ...(s.notes ?? []));
     for (const c of s.controls) {

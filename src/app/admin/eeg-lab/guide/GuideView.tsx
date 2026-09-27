@@ -9,7 +9,7 @@ import { useRole } from "@/lib/auth";
 import { adminShellWide, h1 } from "@/lib/admin-ui";
 import {
   AGE_DEFAULTS_NOTE, AGE_DEFAULTS_TABLE, GUIDE_INTRO, GUIDE_LIMITS, GUIDE_READING_NOTES, GUIDE_RENDERER_VERSION,
-  GUIDE_SECTIONS, GUIDE_UPDATED, GUIDE_WALKTHROUGHS, type GuideControl,
+  GUIDE_SECTIONS, GUIDE_UPDATED, GUIDE_WALKTHROUGHS, type AgeDefaultRow, type GuideControl,
 } from "@/lib/lab/guide-content";
 import { SYNTHETIC_STAMP } from "@/lib/lab/types";
 import styles from "./guide.module.css";
@@ -21,6 +21,10 @@ const NAV = [
   { id: "defaults", title: "Age defaults" },
   { id: "limits", title: "Limits" },
 ];
+
+function amplitudeText(r: AgeDefaultRow): string {
+  return `${r.amplitudeUv} µV${r.amplitudeNote ? ` (${r.amplitudeNote})` : ""}`;
+}
 
 function expertName(name: string): string {
   const [kind, field] = name.split(":");
@@ -161,8 +165,8 @@ export function GuideBody() {
                 <tbody>
                   {AGE_DEFAULTS_TABLE.map((r) => (
                     <tr key={r.age}>
-                      <th scope="row">{r.age}</th><td>{r.dominantHz}</td><td>{r.amplitude}</td>
-                      <td>{r.slowFraction}</td><td>{r.background}</td><td>{r.blinks}</td>
+                      <th scope="row">{r.age}</th><td>{r.dominantHz} Hz</td><td>{amplitudeText(r)}</td>
+                      <td>{r.slowFraction.toFixed(2)}</td><td>{r.background}</td><td>{r.blinks}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -173,9 +177,9 @@ export function GuideBody() {
                 <div key={r.age} className={styles.ageCard}>
                   <h3>{r.age}</h3>
                   <dl>
-                    <dt>Dominant rhythm</dt><dd>{r.dominantHz}</dd>
-                    <dt>Amplitude</dt><dd>{r.amplitude}</dd>
-                    <dt>Slow fraction</dt><dd>{r.slowFraction}</dd>
+                    <dt>Dominant rhythm</dt><dd>{r.dominantHz} Hz</dd>
+                    <dt>Amplitude</dt><dd>{amplitudeText(r)}</dd>
+                    <dt>Slow fraction</dt><dd>{r.slowFraction.toFixed(2)}</dd>
                     <dt>Background</dt><dd>{r.background}</dd>
                     <dt>Blinks</dt><dd>{r.blinks}</dd>
                   </dl>

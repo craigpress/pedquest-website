@@ -294,6 +294,8 @@ export type LabMontage =
 /** Which renderer defaults an omitted key gets: 1 = 0.3.x, 2 = 0.4.x, 3 = 0.5.0. */
 export type LabSpecVersion = 1 | 2 | 3;
 
+export type LabBackgroundLevel = "dominantHz" | "amplitudeUv" | "slowFraction";
+
 export type LabBackgroundType =
   | "continuous" | "discontinuous" | "burst_suppression" | "suppressed"
   | "low_voltage" | "excessively_discontinuous" | "trace_alternant" | "hypsarrhythmia";
@@ -468,6 +470,8 @@ export interface GuidedScenario {
     reactivity: "present" | "absent";
     burstS: number;
     ibiS: number;
+    /** Levels the author typed; the rest follow the age / type / edition defaults (spec.ts backgroundDefaults). */
+    edited?: LabBackgroundLevel[];
   };
   events: GuidedEvent[];
   annotations: GuidedAnnotation[];
