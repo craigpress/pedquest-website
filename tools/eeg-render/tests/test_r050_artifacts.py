@@ -204,7 +204,7 @@ def test_slow_roving_is_irregular_and_frontotemporal():
 
 def test_ecg_spikes_survive_bipolar_posteriorly():
     """ECG-artifact-on-an-uncalibrated-screen, Sweat-and-electrode-pop, cardioballistic-artifact-clean: one sharp spike per
-    beat, clearest in T5-O1, P3-O1, Cz-Pz and C4-P4 at about 0.3-0.8x the background (was 1-6 uV)."""
+    beat, clearest in T5-O1, P3-O1, Cz-Pz and C4-P4 at about 0.3-1.3x the background (was 1-6 uV)."""
     spec, synth, t, art, sig0, lab = _page("ecg")
     assert spec["style"].get("show_ecg_channel") is True
     beats = synth._beat_times(t[0], t[-1])
@@ -215,7 +215,10 @@ def test_ecg_spikes_survive_bipolar_posteriorly():
         amps = [np.ptp(x[int((b - 0.05 - t[0]) * fs):int((b + 0.08 - t[0]) * fs)]) for b in beats]
         assert min(amps) > 0.8 * max(amps)                   # every beat, the same spike
         r = np.median(amps) / _bg(sig0, lab, name)
-        assert 0.3 <= r <= 0.9, (name, r)
+        # r3 (artifacts-sedation-r3 A110-04): the cap was 0.9x bg95, which held P3-O1 level with the PDR (1.07x the
+        # artifact-free p2p in its own window).  In ECG-artifact-on-an-uncalibrated-screen the spikes stand 1.5-2x above
+        # the local background, i.e. about 1-1.3x the 95 % page p2p
+        assert 0.3 <= r <= 1.3, (name, r)
         assert np.median(amps) >= 12.0                       # 15-25 uV spikes, review A110-04
     # spikes are QRS-locked and sharp: the 50 ms around each R holds most of the displayed artifact
     x = art[lab["T5-O1"]]

@@ -2052,7 +2052,7 @@ class Synthesizer:
     #: r3 blink contour (spec_version 3): rise and fall sigma factors, the lid-return lobe (depth as a fraction of the
     #: peak, centre and sigma in s after the peak) and how far a blink reaches past its time (s), which sets the window
     #: margin so a blink just outside a requested window still contributes its lobe
-    _BLINK_RISE_V3R = 0.95
+    _BLINK_RISE_V3R = 1.0
     _BLINK_FALL_V3R = 0.90
     _BLINK_LOBE_V3R = (0.22, 0.40, 0.12)
     _BLINK_REACH_V3 = 1.0
@@ -2090,7 +2090,7 @@ class Synthesizer:
                     # r3 (artifacts-sedation-r3, blink contour 10/16 in the reference IQR): the narrower blink lost LFF
                     # undershoot area, so +200/+300/+400 ms read -0.27/-0.14/-0.07 against the reference medians
                     # -0.34/-0.26/-0.18 (artifacts.md 1c).  A slow lid-return lobe after the peak restores the late
-                    # undershoot, and a slightly quicker rise and fall bring -80/+20/+40 ms into the IQR.  Peak-normalised
+                    # undershoot, and a slightly quicker fall keeps +20/+60 ms in the IQR.  Peak-normalised
                     # shape only: the lobe is < 0.1 % at the peak, and the amplitude draws are untouched.
                     sr, sf = sr * self._BLINK_RISE_V3R, sf * self._BLINK_FALL_V3R
                     m = (d > -0.20) & (d < self._BLINK_REACH_V3 - 0.10)
@@ -2429,7 +2429,10 @@ class Synthesizer:
             pairs = mt.montage_pairs("longitudinal_bipolar", self.scalp)
             cache[key] = max((abs(w[self._idx[a]] - w[self._idx[b]]) for a, b in pairs if b is not None), default=1.0)
         A = amp / max(cache[key], 0.2)
-        ratio = (0.20 if 33.5 <= pma <= 35.5 else 0.15) * rj
+        # r3: with the horizon-independent schedule the displayed fast/delta measured 0.23-0.29 (median 0.26 over five C33
+        # seeds), under the 0.3-0.4 this docstring targets (ACNS Fig. 2a, LE-33wED: fast about 1/3-1/2 of the delta), so
+        # the fast peak is 0.18 (0.24 at 33.5-35.5 w)
+        ratio = (0.24 if 33.5 <= pma <= 35.5 else 0.18) * rj
         d = t - t0
         u = d / max(dur, 1e-3)
         inside = (u > 0) & (u < 1)
@@ -6037,7 +6040,12 @@ class Synthesizer:
             x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)) * eyes)
         # Neonatal graphoelements (microvolts; burst-bound ones gated inside).
         if self.age == "neonate":
-            x += self.graphoelement_rows(t) * self._ch_gain[:, None]
+            ge = self.graphoelement_rows(t) * self._ch_gain[:, None]
+            if self.spec_version >= 3:
+                # r3: a drug's amplitude change (neonatal midazolam, Jennekens 2012) lowers the graphoelements with the
+                # rest of the background; they were added after it at full voltage and diluted the attenuation
+                ge = ge * amp_w[None, :]
+            x += ge
         ecg_uv = float(self.bg.get("baseline_ecg_uv", 0.0))
         if self._sed_driven_bs():
             # 0.5.0 (re-review): ECG shows through a drug-induced suppression.  At least 5 uV, drawn with the
