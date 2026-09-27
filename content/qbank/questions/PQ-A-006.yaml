@@ -130,6 +130,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 100606
     age_group: neonate
     sample_rate: 256
@@ -147,20 +148,28 @@ image:
       amplitude_uv: 40
       slow_fraction: 0.6
       reactivity: present
+    # spec_version 3 randomizes neonatal seizure_cluster runs (count, 10-600 s lengths), which broke the stem's
+    # 'nine seizures, 40-70 s': the nine runs the 0.4.4 cluster drew are written out explicitly, and at the authored
+    # voltage (amplitude_mode absolute), since the v3 ictal floor would lift them to 2x the background
     events:
-    - type: seizure_cluster
-      start_min: 45
-      end_min: 320
-      interval_min: 34
-      seizure:
-        duration_s: 55
-        onset_region: right_frontal
-        evolution:
-          start_hz: 3.0
-          end_hz: 1.5
-          amplitude_start_uv: 30
-          amplitude_end_uv: 45
-        spread: none
+    - {type: seizure, onset_min: 45.3, duration_s: 49, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 78.1, duration_s: 41, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 114.0, duration_s: 47, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 146.6, duration_s: 54, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 179.3, duration_s: 48, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 213.5, duration_s: 56, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 249.0, duration_s: 45, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 281.4, duration_s: 56, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
+    - {type: seizure, onset_min: 316.4, duration_s: 52, onset_region: right_frontal, spread: none,
+       evolution: {start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 30, amplitude_end_uv: 45, amplitude_mode: absolute}}
     annotations: []
     style:
       show_reference_seizure_strip: true

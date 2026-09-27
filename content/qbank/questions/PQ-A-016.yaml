@@ -140,6 +140,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 101616
     age_group: neonate
     sample_rate: 256
@@ -170,6 +171,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -181,6 +183,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -192,6 +195,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -203,6 +207,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -214,6 +219,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -225,6 +231,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -236,6 +243,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -247,6 +255,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -258,6 +267,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -269,6 +279,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -280,6 +291,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -291,6 +303,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -302,6 +315,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
     - type: seizure
@@ -313,6 +327,7 @@ image:
         end_hz: 1.4
         amplitude_start_uv: 25
         amplitude_end_uv: 25
+        amplitude_mode: absolute
       spread: none
       postictal_attenuation_s: 0
 

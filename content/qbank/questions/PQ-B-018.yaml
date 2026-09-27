@@ -119,6 +119,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 8100018
     age_group: child
     sample_rate: 256
@@ -127,7 +128,7 @@ image:
     background:
       type: continuous
       dominant_hz: 4.0
-      amplitude_uv: 45
+      amplitude_uv: 90
       slow_fraction: 0.65
       reactivity: present
     events:
@@ -135,9 +136,10 @@ image:
         onset_min: 95
         duration_min: 40
         onset_region: left_occipital
+        spread: hemispheric   # the default (generalized) put the v3 run over both posterior quadrants
     at_min: 118.0
     window_s: 15
-    sensitivity_uv_mm: 7
+    sensitivity_uv_mm: 10
     filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
     highlight: null
 

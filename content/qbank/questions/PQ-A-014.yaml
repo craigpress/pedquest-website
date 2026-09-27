@@ -97,6 +97,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 101414
     age_group: child
     sample_rate: 256
@@ -104,27 +105,29 @@ image:
     montage: longitudinal_bipolar
     at_min: 143.0
     window_s: 15
-    sensitivity_uv_mm: 7
+    sensitivity_uv_mm: 10
     filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
     highlight: null
     background:
       type: continuous
       dominant_hz: 5.0
-      amplitude_uv: 45
+      amplitude_uv: 90
       slow_fraction: 0.55
       reactivity: present
     events:
+      # v3 draws kind ecg as a fixed posterior-left field (ignores channels) that lands in the seizure's own chain;
+      # the pulse artifact keeps the cardiac-locked deflection in the right temporal chain as the item intends
       - type: artifact
-        kind: ecg
+        kind: pulse
         at_min: 140.0
         duration_s: 600
         channels: [T4, T6]
-        intensity: medium
+        intensity: high
       - type: seizure
         onset_min: 143.1
         duration_s: 95
         onset_region: left_temporal
-        evolution: { start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 60, amplitude_end_uv: 160 }
+        evolution: { start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 120, amplitude_end_uv: 320 }
         spread: hemispheric
         postictal_attenuation_s: 40
     annotations:

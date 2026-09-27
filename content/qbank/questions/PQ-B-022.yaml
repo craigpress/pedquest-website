@@ -97,6 +97,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 8100022
     age_group: child
     sample_rate: 256
@@ -107,7 +108,7 @@ image:
       background:
         type: continuous
         dominant_hz: 3.5
-        amplitude_uv: 45
+        amplitude_uv: 90
         slow_fraction: 0.7
         asymmetry:
           side: right
@@ -128,8 +129,8 @@ image:
         evolution:
           start_hz: 3.5
           end_hz: 1.5
-          amplitude_start_uv: 50
-          amplitude_end_uv: 145
+          amplitude_start_uv: 100
+          amplitude_end_uv: 290
         spread: none
         postictal_attenuation_s: 60
       - type: artifact
@@ -157,7 +158,7 @@ image:
     eeg_page:
       at_min: 180.5
       window_s: 15
-      sensitivity_uv_mm: 7
+      sensitivity_uv_mm: 10
       montage: longitudinal_bipolar
       filters:
         lf_hz: 1

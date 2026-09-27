@@ -122,6 +122,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 101515
     age_group: child
     sample_rate: 256
@@ -130,24 +131,88 @@ image:
     background:
       type: continuous
       dominant_hz: 5.0
-      amplitude_uv: 50
+      amplitude_uv: 90
       slow_fraction: 0.6
       reactivity: present
       asymmetry:
         side: left
         attenuation_pct: 20
         slowing_hz: 1.0
+    # spec_version 3 jitters every seizure_cluster run (onset +-10 % of the interval, length, frequency, voltage);
+    # the item is '36 nearly identical events at a fixed 20-minute interval', so the runs are written out
     events:
-      - type: seizure_cluster
-        start_min: 15
-        end_min: 715
-        interval_min: 20
-        seizure:
-          duration_s: 80
-          onset_region: left_frontal
-          evolution: { start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 55, amplitude_end_uv: 140 }
-          spread: hemispheric
-          postictal_attenuation_s: 40
+      - {type: seizure, onset_min: 15, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 35, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 55, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 75, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 95, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 115, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 135, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 155, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 175, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 195, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 215, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 235, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 255, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 275, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 295, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 315, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 335, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 355, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 375, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 395, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 415, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 435, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 455, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 475, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 495, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 515, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 535, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 555, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 575, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 595, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 615, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 635, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 655, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 675, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 695, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
+      - {type: seizure, onset_min: 715, duration_s: 80, onset_region: left_frontal, spread: hemispheric, postictal_attenuation_s: 40,
+         evolution: {start_hz: 5.0, end_hz: 2.0, amplitude_start_uv: 99, amplitude_end_uv: 252}}
     annotations: []
     panels:
       - seizure_probability
@@ -161,6 +226,7 @@ image:
       - aeeg_R
     time_axis: elapsed
     style:
+      aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
       spectrogram_hz_range: [0, 20]
       rhythmicity_hz_range: [1, 25]
 

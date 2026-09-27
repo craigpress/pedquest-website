@@ -117,6 +117,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 101212
     age_group: child
     sample_rate: 256
@@ -125,7 +126,7 @@ image:
     background:
       type: continuous
       dominant_hz: 4.0
-      amplitude_uv: 55
+      amplitude_uv: 90
       slow_fraction: 0.65
       reactivity: present
     events:
@@ -133,14 +134,14 @@ image:
         onset_min: 32.0
         duration_s: 90
         onset_region: generalized
-        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 70, amplitude_end_uv: 180 }
+        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 115, amplitude_end_uv: 295 }
         spread: generalized
         postictal_attenuation_s: 45
       - type: seizure
         onset_min: 84.0
         duration_s: 90
         onset_region: generalized
-        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 70, amplitude_end_uv: 180 }
+        evolution: { start_hz: 3.0, end_hz: 1.5, amplitude_start_uv: 115, amplitude_end_uv: 295 }
         spread: generalized
         postictal_attenuation_s: 45
     annotations: []
@@ -153,6 +154,8 @@ image:
       - envelope_R
     time_axis: elapsed
     style:
+      envelope_axis_uv: [0, 200]
+      aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
       spectrogram_hz_range: [0, 20]
       colorbar: black_blue_red_white
       aeeg_axis: semilog

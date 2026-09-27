@@ -121,6 +121,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 100202
     age_group: child
     sample_rate: 256
@@ -129,7 +130,7 @@ image:
     background:
       type: continuous
       dominant_hz: 3.5
-      amplitude_uv: 55
+      amplitude_uv: 90
       slow_fraction: 0.7
       reactivity: present
     events:

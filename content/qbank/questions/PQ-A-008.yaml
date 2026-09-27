@@ -121,6 +121,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 100808
     age_group: adolescent
     sample_rate: 256
@@ -146,7 +147,9 @@ image:
       at_min: 0
       duration_s: 28800
       side: all
-      intensity: medium
+      # v3 puts 60 Hz only on 1-3 random high-impedance electrodes; the item shows it on every channel
+      channels: [Fp1, Fp2, F7, F3, Fz, F4, F8, T3, C3, Cz, C4, T4, T5, P3, Pz, P4, T6, O1, O2]
+      intensity: low
     - type: artifact
       kind: chest_pt
       at_min: 300

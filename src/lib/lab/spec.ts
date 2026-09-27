@@ -81,7 +81,7 @@ export const SPEC_VERSIONS: { id: LabSpecVersion; label: string }[] = [
  * to 3 once renderer 0.5.0 is deployed to the moltbot workers; until then a v3
  * spec is accepted here but warned, because the worker's own validate rejects it.
  */
-export const WORKER_MAX_SPEC_VERSION: LabSpecVersion = 2;
+export const WORKER_MAX_SPEC_VERSION: LabSpecVersion = 3;
 
 export const BACKGROUND_TYPES: { id: LabBackgroundType; label: string }[] = [
   { id: "continuous", label: "Continuous" },

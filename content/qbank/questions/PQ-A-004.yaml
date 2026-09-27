@@ -115,6 +115,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 100404
     age_group: adolescent
     sample_rate: 256
@@ -129,7 +130,7 @@ image:
       asymmetry:
         side: right
         attenuation_pct: 55
-        slowing_hz: 1.5
+        slowing_hz: 0     # v3 draws slowing as right polymorphic delta (red 1-3 Hz band); item needs uniform blue
     events:
       - type: stimulation
         at_min: 120

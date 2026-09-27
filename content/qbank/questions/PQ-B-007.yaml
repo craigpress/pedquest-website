@@ -117,6 +117,9 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 2
+    # kept at spec_version 2 (0.4.4 pixels): at v3 the generalized-onset cluster cancels in the bipolar trend
+    # chains and its per-cycle jitter removes the rhythmicity signature, so the bands the question asks about vanish
     seed: 8100007
     age_group: child
     sample_rate: 256

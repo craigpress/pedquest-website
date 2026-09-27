@@ -124,6 +124,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 102121
     layout: panel_over_page
     qeeg_panel:
@@ -139,7 +140,7 @@ image:
         reactivity: present
         burst_suppression:
           burst_s: 7.0
-          ibi_s: 3.0
+          ibi_s: 2.2   # v3 bursts dip below 10 uV more often: 3.0 read ~40 % SR (peaks >50 %); the item shows ~30 %
           ibi_floor: 0.005
       events: []
       panels:

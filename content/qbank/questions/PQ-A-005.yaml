@@ -124,6 +124,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 100505
     layout: panel_over_page
     qeeg_panel:
@@ -134,7 +135,7 @@ image:
       background:
         type: continuous
         dominant_hz: 7.5
-        amplitude_uv: 50
+        amplitude_uv: 90
         slow_fraction: 0.4
         reactivity: present
       events:
@@ -165,6 +166,7 @@ image:
         - aeeg_R
       time_axis: elapsed
       style:
+        aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
         spindle_hz: 12.5
         spindle_train_s: 180
         rhythmicity_hz_range: [1, 25]

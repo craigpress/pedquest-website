@@ -138,6 +138,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 8100015
     age_group: child
     sample_rate: 256
@@ -146,7 +147,7 @@ image:
     background:
       type: continuous
       dominant_hz: 4.0
-      amplitude_uv: 50
+      amplitude_uv: 90
       slow_fraction: 0.65
       asymmetry:
         side: left
@@ -161,7 +162,7 @@ image:
         seizure:
           duration_s: 90
           onset_region: left_frontal
-          evolution: { start_hz: 4.0, end_hz: 1.6, amplitude_start_uv: 60, amplitude_end_uv: 150 }
+          evolution: { start_hz: 4.0, end_hz: 1.6, amplitude_start_uv: 108, amplitude_end_uv: 270 }
     annotations:
       - { at_min: 0, label: "Hour 30 after injury" }
     panels:

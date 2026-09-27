@@ -120,6 +120,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 8100016
     age_group: child
     sample_rate: 256
@@ -128,7 +129,7 @@ image:
     background:
       type: continuous
       dominant_hz: 5.0
-      amplitude_uv: 50
+      amplitude_uv: 90
       slow_fraction: 0.55
       reactivity: present
     events:
@@ -152,6 +153,8 @@ image:
       - suppression_ratio_L
       - suppression_ratio_R
     time_axis: elapsed
+    style:
+      aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
 
 metadata:
   author: Writer B (claude-opus)

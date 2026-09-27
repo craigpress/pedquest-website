@@ -106,6 +106,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 8100024
     age_group: child
     sample_rate: 256
@@ -114,7 +115,7 @@ image:
     background:
       type: continuous
       dominant_hz: 4.0
-      amplitude_uv: 50
+      amplitude_uv: 90
       slow_fraction: 0.7
       reactivity: present
     events:
@@ -125,12 +126,14 @@ image:
         seizure:
           duration_s: 110
           onset_region: left_frontal
-          evolution: { start_hz: 3.5, end_hz: 1.5, amplitude_start_uv: 60, amplitude_end_uv: 150 }
+          evolution: { start_hz: 3.5, end_hz: 1.5, amplitude_start_uv: 108, amplitude_end_uv: 270 }
       - type: sedation_change
         at_min: 180
         direction: increase
         agent: pentobarbital
-        effect: { suppression_ratio_target_pct: 60, beta_boost: false, ramp_min: 20 }
+        # v3 drug burst suppression keeps a residual floor relative to the background: at 90 uV it sat above
+        # the 5-uV SR threshold, so the SR never reached the target; the drug also lowers the amplitude
+        effect: { suppression_ratio_target_pct: 60, beta_boost: false, ramp_min: 20, amplitude_pct: 55 }
     annotations:
       - { at_min: 180, label: "Pentobarbital infusion start" }
     panels:
@@ -145,6 +148,8 @@ image:
       - suppression_ratio_L
       - suppression_ratio_R
     time_axis: elapsed
+    style:
+      aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
 
 metadata:
   author: Writer B (claude-opus)

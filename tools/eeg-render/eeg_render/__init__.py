@@ -13,6 +13,6 @@ they are not drawn.
 # sleep staging / ACNS 2021 patterns / generalized and focal seizure types, key-vs-visible contracts, viewer montages.
 # spec_version 1 and 2 renders are byte-identical to 0.4.4/0.4.5.  The version string moves to 0.5.0 at rollout,
 # together with render-all / sidecar restamp (test_verify_sidecars pins committed sidecars to this string).
-RENDERER_VERSION = "0.4.4"
+RENDERER_VERSION = "0.5.0"
 
 __all__ = ["RENDERER_VERSION"]

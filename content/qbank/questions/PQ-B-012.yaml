@@ -131,6 +131,9 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 2
+    # kept at spec_version 2 (0.4.4 pixels): v3 randomizes the neonatal cluster (10-600 s runs) and jitters each ictal
+    # cycle, so the repeated right rhythmicity bands and seizure-probability rises the explanation describes mostly vanish
     seed: 8100012
     age_group: neonate
     sample_rate: 256

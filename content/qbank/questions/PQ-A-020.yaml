@@ -124,6 +124,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 102020
     age_group: child
     sample_rate: 256
@@ -132,7 +133,7 @@ image:
     background:
       type: continuous
       dominant_hz: 5.0
-      amplitude_uv: 50
+      amplitude_uv: 90
       slow_fraction: 0.55
       reactivity: present
     events:
@@ -140,14 +141,14 @@ image:
         onset_min: 95.0
         duration_s: 110
         onset_region: right_central
-        evolution: { start_hz: 4.5, end_hz: 1.5, amplitude_start_uv: 60, amplitude_end_uv: 150 }
+        evolution: { start_hz: 4.5, end_hz: 1.5, amplitude_start_uv: 108, amplitude_end_uv: 270 }
         spread: hemispheric
         postictal_attenuation_s: 45
       - type: seizure
         onset_min: 355.0
         duration_s: 100
         onset_region: right_central
-        evolution: { start_hz: 4.5, end_hz: 1.5, amplitude_start_uv: 60, amplitude_end_uv: 145 }
+        evolution: { start_hz: 4.5, end_hz: 1.5, amplitude_start_uv: 108, amplitude_end_uv: 261 }
         spread: hemispheric
         postictal_attenuation_s: 45
       - type: artifact
@@ -191,6 +192,7 @@ image:
       - aeeg_R
     time_axis: elapsed
     style:
+      aeeg_gridlines_uv: [5, 10, 25, 50, 100, 200]
       show_detector_event_strip: true
       detector_marks_at_min: [40, 95, 130, 215, 290, 355, 420]
       rhythmicity_hz_range: [1, 25]

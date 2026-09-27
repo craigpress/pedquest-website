@@ -131,6 +131,7 @@ image:
   license: synthetic-original
   attribution: null
   spec:
+    spec_version: 3
     seed: 101919
     layout: panel_over_page
     qeeg_panel:
@@ -149,7 +150,7 @@ image:
           onset_min: 250.0
           duration_s: 35
           onset_region: right_temporal
-          evolution: { start_hz: 3.0, end_hz: 2.0, amplitude_start_uv: 22, amplitude_end_uv: 32 }
+          evolution: { start_hz: 3.0, end_hz: 2.0, amplitude_start_uv: 22, amplitude_end_uv: 32, amplitude_mode: absolute }
           spread: none
           postictal_attenuation_s: 20
       panels:
