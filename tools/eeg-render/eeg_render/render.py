@@ -50,7 +50,8 @@ def _nominal_duration_s(kind: str, spec: Dict[str, Any]) -> float:
     if kind == "aeeg":
         return float(spec.get("duration_h", 6)) * 3600.0
     if kind == "eeg_page":
-        return float(spec.get("at_min", 0)) * 60.0 + float(spec.get("window_s", 15)) + 60.0
+        from .render_page import page_horizon_s
+        return page_horizon_s(spec)
     return 240.0 * 60.0
 
 

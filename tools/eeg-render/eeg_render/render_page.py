@@ -140,6 +140,16 @@ def apply_filters(sig: np.ndarray, sos_chain: List[np.ndarray], causal: bool = F
     return sig
 
 
+def page_horizon_s(spec: Dict) -> float:
+    """Synthesizer horizon for a page.  Versions 1-2: the page plus a minute (pinned pixels).  Version 3: the whole
+    record (``duration_min``), so the display calibration, the hypnogram and every per-record schedule are the same
+    whichever window is drawn (round-3 review: B1-09 drew 24 % smaller on its page than in the full record)."""
+    t_end = float(spec.get("at_min", 0.0)) * 60.0 + float(spec.get("window_s", 15.0)) + 60.0
+    if int(spec.get("spec_version") or 1) >= 3 and spec.get("duration_min"):
+        return max(t_end, float(spec["duration_min"]) * 60.0)
+    return t_end
+
+
 def causal_filters(spec: Dict) -> bool:
     return int(spec.get("spec_version") or 1) >= 3
 
@@ -157,7 +167,7 @@ def page_signals(spec: Dict, synth: Optional[Synthesizer] = None,
     t0 = float(spec["at_min"]) * 60.0
     win = float(spec["window_s"])
     if synth is None:
-        synth = Synthesizer(spec, t0 + win + 60.0)
+        synth = Synthesizer(spec, page_horizon_s(spec))
     fs = synth.fs
     causal = causal_filters(spec)
     pre = max(pad_s, filter_warmup_s(spec["filters"])) if causal else pad_s
