@@ -145,3 +145,19 @@ def test_n3_is_slow_wave_sleep_and_n2_is_not(S):
         w = np.array([np.ptp(y[k:k + 2 * S.fs]) for k in range(0, y.size - 2 * S.fs, S.fs)])
         frac[st] = float(np.mean(w >= 75.0))
     assert frac["N3"] >= 0.3 and frac["N2"] < 0.2, frac
+
+
+def test_v3_page_is_independent_of_where_it_sits():
+    """Round-3 review: pages were synthesized on a horizon of at + window + 60 s, so calibration and background moved
+    with the page position.  The same window must draw identically whether rendered as a page or from the record."""
+    from eeg_render.render_page import page_horizon_s, page_signals
+    base = {"sample_rate": 256, "channels": "standard_19", "seed": 27960625, "spec_version": 3, "age_group": "child",
+            "duration_min": 120, "background": {"type": "continuous", "reactivity": "present", "dominant_hz": 8.5,
+                                                "amplitude_uv": 50, "slow_fraction": 0.35},
+            "events": [{"type": "state_change", "at_min": 20, "to": "sleep"}]}
+    page = normalize({"kind": "eeg_page", "license": "synthetic-original", "attribution": None,
+                      "spec": dict(base, at_min=40.0, window_s=15.0)})["spec"]
+    assert page_horizon_s(page) == 120 * 60.0
+    _, _, a, _, _ = page_signals(page)
+    _, _, b, _, _ = page_signals(page, synth=Synthesizer(page, 120 * 60.0))
+    assert np.allclose(a, b)

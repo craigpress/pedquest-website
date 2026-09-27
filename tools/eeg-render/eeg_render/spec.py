@@ -756,7 +756,8 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         f.setdefault("notch_hz", None if version >= 3 and "sixty_hz" in art_kinds else 60.0)
         s["filters"] = f
         s["highlight"] = None
-        s.pop("duration_min", None)
+        if version < 3:
+            s.pop("duration_min", None)       # v3 keeps it: the page is synthesized on the whole record (page_horizon_s)
         if version >= 3 and art_kinds & {"ecg", "pulse"}:
             # every ECG / pulse artifact reference shows the ECG channel so the reader can time-lock (A110-04/05)
             st = dict(s.get("style") or {})
