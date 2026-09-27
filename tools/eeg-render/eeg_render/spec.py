@@ -14,6 +14,7 @@ import yaml
 
 from . import RENDERER_VERSION
 from .schema import ARTIFACTS, AUTHORED_VARIANTS, HONOURED_STYLE_KEYS, IMAGE_SCHEMA, spec_schema_for
+from . import montage as mt
 
 DEFAULT_PANELS: List[str] = [
     "seizure_probability",
@@ -499,6 +500,14 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     s["montage"] = s.get(
         "montage", "neonatal_reduced" if s["channels"] == "neonatal_9" else "longitudinal_bipolar"
     )
+    # 0.5.0 montage family: the site viewer's montages and the T1/T2 array are spec_version 3 only
+    s["montage"] = mt.MONTAGE_ALIASES.get(s["montage"], s["montage"])
+    if (s["montage"] in mt.VIEWER_MONTAGES or s["channels"] == "standard_19_t1t2") and version < 3:
+        raise SpecError(f"montage {s['montage']!r} / channels {s['channels']!r} need spec_version 3")
+    if s["montage"] == "t1t2_bipolar" and s["channels"] == "standard_19":
+        # the montage needs the subtemporal pair; an authored standard_19 is upgraded (a different electrode set,
+        # so the record differs from its standard_19 twin; render both montages from standard_19_t1t2 to compare)
+        s["channels"] = "standard_19_t1t2"
 
     # ---- background --------------------------------------------------
     ad = AGE_DEFAULTS[age]
@@ -892,6 +901,13 @@ def spec_warnings(image: Dict[str, Any]) -> List[str]:
                        "set graphoelements.<name>.enabled: false if that is not intended")
     for i, ev in enumerate(spec.get("events") or []):
         t = ev.get("type")
+        if t == "sporadic_discharges" and (ev.get("sleep_activation") is not None or ev.get("state_rates")
+                                           or ev.get("foci")):
+            if int(spec.get("spec_version") or 1) < 3:
+                out.append(f"events[{i}]: sleep_activation / state_rates / foci need spec_version 3 and are ignored")
+            elif age == "neonate" and (ev.get("sleep_activation") is not None or ev.get("state_rates")):
+                out.append(f"events[{i}]: neonatal records have no hypnogram, so the sporadic rate is not "
+                           "state-gated (rate_per_h everywhere)")
         if t == "seizure" and age == "neonate" and float(ev.get("duration_s", 0)) < 10.0:
             out.append(f"events[{i}]: a {ev.get('duration_s')}-s neonatal run is below the 10-s ACNS seizure minimum; "
                        "use type brd for a brief rhythmic discharge")
@@ -1000,10 +1016,10 @@ GENERALIZED_SEIZURE_DEFAULTS = {
                         "provocation": "hyperventilation", "clinical_correlate": "behavioral_arrest"},
     "atypical_absence": {"duration_s": 15.0, "frequency_hz": 2.0, "amplitude_uv": 250.0, "ramp_s": 2.5,
                          "clinical_correlate": "behavioral_arrest"},
-    "myoclonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 400.0, "count": 1, "interval_s": 3.0},
-    "myoclonic_atonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 400.0, "count": 1, "interval_s": 3.0,
+    "myoclonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 250.0, "count": 1, "interval_s": 3.0},
+    "myoclonic_atonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 250.0, "count": 1, "interval_s": 3.0,
                          "atonic_s": 0.8},
-    "myoclonic_tonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 400.0, "count": 1, "interval_s": 3.0,
+    "myoclonic_tonic": {"amplitude_uv": 250.0, "n_spikes": 5, "emg_uv": 250.0, "count": 1, "interval_s": 3.0,
                         "tonic_s": 2.0},
     "tonic": {"duration_s": 8.0, "amplitude_uv": 120.0, "start_hz": 20.0, "end_hz": 12.0, "decrement_s": 1.0,
               "decrement_depth": 0.7, "emg_uv": 120.0, "provocation": "sleep"},
@@ -1055,6 +1071,12 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
     if kind == "artifact" and e.get("kind") not in ARTIFACTS:
         raise SpecError("artifact kind must be an artifact waveform")
     if kind == "sporadic_discharges":
+        if e.get("foci"):
+            # 0.5.0 phase D: a multi-focus event names its first focus as ``focus`` (the key's summary row)
+            if e.get("focus_weights") is not None and len(e["focus_weights"]) != len(e["foci"]):
+                raise SpecError("sporadic_discharges focus_weights must match foci in length")
+            e.setdefault("focus", str(e["foci"][0]))
+            e.setdefault("synchrony", "independent")
         for k, v in SPORADIC_DEFAULTS.items():
             e.setdefault(k, v)
         return e

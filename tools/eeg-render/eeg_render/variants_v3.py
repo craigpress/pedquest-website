@@ -24,7 +24,7 @@ from .rng import substream
 # Full 19-electrode tables, LEFT hemisphere version (midline listed at the value each side contributes).  A side's
 # field is its table; the right side mirrors the names.  Every electrode is listed, so no neighbour sits at an
 # implicit 0 (the false-peak / flat-link failure the review measured on HV, RMTD and FAR).
-_MIRROR = {"Fp1": "Fp2", "F7": "F8", "F3": "F4", "T3": "T4", "C3": "C4", "T5": "T6", "P3": "P4", "O1": "O2"}
+_MIRROR = {"Fp1": "Fp2", "F7": "F8", "F3": "F4", "T3": "T4", "C3": "C4", "T5": "T6", "P3": "P4", "O1": "O2", "T1": "T2"}
 _MIRROR.update({v: k for k, v in list(_MIRROR.items())})
 
 FIELDS_LEFT: Dict[str, Dict[str, float]] = {
@@ -77,7 +77,7 @@ def side_field(kind: str, electrodes: Sequence[str], side: str) -> np.ndarray:
     out = np.zeros(len(electrodes))
     for i, e in enumerate(electrodes):
         name = e if side == "left" else _MIRROR.get(e, e)
-        out[i] = tab.get(name, 0.0)
+        out[i] = mt.table_value(tab, name, 0.0)
     return out
 
 

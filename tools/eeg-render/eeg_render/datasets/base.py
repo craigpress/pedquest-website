@@ -164,7 +164,9 @@ class DatasetSource:
         avg = x[[self._idx[c] for c in self.scalp], :].mean(axis=0)
         for a, b in pairs:
             ia = self._idx[a]
-            if b is not None:
+            if isinstance(b, tuple):          # 0.5.0 viewer montages: mean-of-electrodes reference
+                rows.append(x[ia] - x[[self._idx[c] for c in b]].mean(axis=0))
+            elif b is not None:
                 rows.append(x[ia] - x[self._idx[b]])
             elif montage == "average":
                 rows.append(x[ia] - avg)

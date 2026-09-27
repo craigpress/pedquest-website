@@ -29,6 +29,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 import numpy as np
 
 from . import montage as mt
+from . import state_v3 as sv3
 from .rng import substream
 
 SEIZURE_TYPES = ("typical_absence", "atypical_absence", "myoclonic", "myoclonic_atonic", "myoclonic_tonic",
@@ -484,9 +485,6 @@ class GeneralizedV3:
     }
     _BLOCK_S = 600.0
 
-    def _nrem(self) -> List[Tuple[float, float, str]]:
-        return [iv for iv in getattr(self.syn, "_hypno", []) or []]
-
     def _discharges(self, i, ev):
         pat = str(ev["pattern"])
         amp = float(ev["amplitude_uv"])
@@ -521,22 +519,34 @@ class GeneralizedV3:
                 self._row("generalized_discharge", i, t0 - 0.03, t0 + d, pattern=pat, frequency_hz=round(fb, 3),
                           amplitude_uv=round(ab, 1), n_complexes=n)
 
-    def _stage_spans(self, a: float, b: float) -> List[Tuple[float, float, str]]:
-        hyp = self._nrem()
-        if not hyp:
-            return [(a, b, "W")]
-        return [(max(x0, a), min(x1, b), st) for x0, x1, st in hyp if x1 > a and x0 < b]
+    def _stage_groups(self, a: float, b: float, groups) -> List[Tuple[float, float, Tuple[str, ...]]]:
+        """(start, end, stages) runs clipped to [a, b) from the shared state-gating hook (``Synthesizer.stage_intervals``,
+        merged runs); without a v3 hypnogram the whole span counts as awake."""
+        if not getattr(self.syn, "_hypno", None):
+            return [(a, b, ("W",))] if ("W",) in groups else []
+        out = []
+        for g in groups:
+            for x0, x1 in self.syn.stage_intervals(g):
+                if x1 > a and x0 < b:
+                    out.append((max(x0, a), min(x1, b), g))
+        return sorted(out)
+
+    def _stage_label(self, t: float) -> str:
+        st = self.syn.stage_at(np.array([t]))[0] if getattr(self.syn, "_hypno", None) else "W"
+        return str(st or "W")
 
     def _eses(self, i, ev, a, b, amp, side):
         """ESES / CSWS (ESES-example-left-hemispheric-predominance-at-20uV): near-continuous 1.5-2.5 Hz spike-and-wave
-        covering ``swi_pct`` of N2/N3 (default 90 %, >= 85 %), fragmented in REM (30 %), sparse awake (``wake_swi_pct``,
-        default 10 %).  Runs and gaps are drawn per hypnogram interval (keyed by its start), so the index holds per
-        stage and the schedule is the same for a page and for the whole record."""
+        covering ``swi_pct`` of N2/N3 (default 90 %, >= 85 %), fragmented in REM (30 %), N1 50 %, sparse awake
+        (``wake_swi_pct``, default 10 %).  Coverage per stage comes from ``state_v3.stage_rate_table`` (waking base,
+        explicit per-stage overrides) and the runs live in the merged stage windows of ``Synthesizer.stage_intervals``;
+        each window's runs and gaps are keyed by its start, so a page and the whole record see the same schedule."""
         f = float(ev.get("frequency_hz") or 2.0)
-        cov = {"N2": float(ev.get("swi_pct", 90.0)) / 100.0, "N3": float(ev.get("swi_pct", 90.0)) / 100.0,
-               "N1": 0.5, "R": 0.30, "W": float(ev.get("wake_swi_pct", 10.0)) / 100.0}
-        for x0, x1, st in self._stage_spans(a, b):
-            c = float(np.clip(cov.get(st, 0.1), 0.0, 0.99))
+        swi = float(ev.get("swi_pct", 90.0)) / 100.0
+        cov = sv3.stage_rate_table(float(ev.get("wake_swi_pct", 10.0)) / 100.0,
+                                   state_rates={"N1": 0.5, "N2": swi, "N3": swi, "R": 0.30})
+        for x0, x1, grp in self._stage_groups(a, b, (("N2", "N3"), ("N1",), ("R",), ("W",))):
+            c = float(np.clip(cov.get(grp[0], 0.1), 0.0, 0.99))
             if c <= 0 or x1 - x0 < 1.0:
                 continue
             rng = substream(self.syn.seed, "gen-v3-eses", i, int(round(x0 * 10)))
@@ -550,21 +560,20 @@ class GeneralizedV3:
                 n = self._train(i, rng, t, t + run, fr, fr, amp * float(np.exp(rng.normal(0.0, 0.1))), "sw",
                                 salt0=(i * 7919 + int(round(x0 * 10))) * 1009 + k * 131, jitter_f=0.10,
                                 field="eses", side=side, width=1.5, asym_amt=0.05, lead=0.006)
-                self._row("generalized_discharge", i, t - 0.03, t + run, pattern="eses", stage=st,
-                          frequency_hz=round(fr, 3), n_complexes=n)
+                self._row("generalized_discharge", i, t - 0.03, t + run, pattern="eses",
+                          stage=self._stage_label(t + 0.5 * run), frequency_hz=round(fr, 3), n_complexes=n)
                 gap = run * (1.0 - c) / c * float(np.exp(rng.normal(0.0, 0.4)))
                 t += run + max(gap, 0.3)
                 k += 1
 
     def _gpfa_sleep(self, i, ev, a, b, amp, side):
         """LGS generalized paroxysmal fast activity in NREM sleep: 1-10 s (median 3 s) bursts of 10-25 Hz, frontally
-        predominant, abrupt onset, no EMG; ``rate_per_h`` applies to N2/N3 only (none awake or in REM)."""
+        predominant, abrupt onset, no EMG; ``rate_per_h`` applies inside the merged N2/N3 windows only
+        (``Synthesizer.stage_intervals``), none awake or in REM."""
         rate_h = float(ev["rate_per_h"])
         f = float(ev.get("frequency_hz") or 15.0)
         med = float(ev.get("burst_s") or 3.0)
-        for x0, x1, st in self._stage_spans(a, b):
-            if st not in ("N2", "N3"):
-                continue
+        for x0, x1, _grp in self._stage_groups(a, b, (("N2", "N3"),)):
             rng = substream(self.syn.seed, "gen-v3-gpfa", i, int(round(x0 * 10)))
             m = int(np.floor(rate_h * (x1 - x0) / 3600.0 + rng.uniform()))
             for t0 in np.sort(rng.uniform(x0, x1, m)):
@@ -575,7 +584,7 @@ class GeneralizedV3:
                 ab = amp * float(np.exp(rng.normal(0.0, 0.15)))
                 self._add_gpfa(i, rng, t0, t0 + d, fb * 1.08, fb * 0.92, 0.6 * ab, ab, ramp=0.12, side=side)
                 self.bg.append((t0, t0 + d, 0.5, 0.1, 0.3))
-                self._row("generalized_discharge", i, t0, t0 + d, pattern="gpfa", stage=st,
+                self._row("generalized_discharge", i, t0, t0 + d, pattern="gpfa", stage=self._stage_label(t0 + 0.5 * d),
                           frequency_hz=round(fb, 2), amplitude_uv=round(ab, 1))
 
     # ---------------------------------------------------------------- rows --

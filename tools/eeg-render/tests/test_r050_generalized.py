@@ -176,7 +176,8 @@ def test_myoclonic_polyspike_wave_with_emg_burst():
         td, sd, nd = _display(syn, c["t"] - 3.0, c["t"] + 1.0)
         on = (td > c["t"]) & (td < c["t"] + lags[-1] + 0.05)
         pre = td < c["t"] - 0.5
-        assert _emg(syn, td, sd, nd, on, pre) >= 3.0
+        # myoclonic-jerk-examples/p1: the burst is visible over the temporal chains, not a saturating artifact
+        assert _emg(syn, td, sd, nd, on, pre) >= 2.5
         # conspicuity: the complex >= 3x the page's 1-s background in F3-C3
         assert np.ptp(sd[nd.index("F3-C3")][on | ((td > c["t"]) & (td < c["t"] + lags[-1] + 0.4))]) >= \
             3.0 * np.median(_p2p(sd[nd.index("F3-C3")][pre], fs))
