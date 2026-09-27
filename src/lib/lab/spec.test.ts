@@ -66,11 +66,20 @@ test("strict validation adds the renderer schema: an unknown key is an error", (
   assert.deepEqual(ok.errors, []);
 });
 
-test("a guided scenario without v3 choices builds the same spec as before (no spec_version)", () => {
-  const g = { ...defaultGuidedScenario(), events: [defaultEvent("seizure", 120)] };
-  const block = buildSpecFromGuided(g) as { spec: Record<string, unknown> };
-  assert.equal("spec_version" in block.spec, false);
-  assert.equal(requiredSpecVersion(g), 1);
+// Deliberate change (renderer 0.5.0 rollout, WORKER_MAX_SPEC_VERSION 3, bank migrating to v3): a NEW form starts
+// at spec_version 3, so a fresh child form shows the 90-uV awake default. This test used to require no
+// spec_version on a plain new form, written when the worker accepted only up to 2. A scenario without
+// specVersion (an older client or saved request) must still build exactly as before.
+test("a new guided form starts at spec_version 3; a scenario without specVersion still omits it", () => {
+  const fresh = { ...defaultGuidedScenario(), events: [defaultEvent("seizure", 120)] };
+  const block = buildSpecFromGuided(fresh) as { spec: Record<string, unknown> };
+  assert.equal(block.spec.spec_version, 3);
+  assert.equal(fresh.background.amplitudeUv, 90);
+  assert.equal(requiredSpecVersion(fresh), 1);
+
+  const older = { ...fresh, specVersion: undefined };
+  const legacy = buildSpecFromGuided(older) as { spec: Record<string, unknown> };
+  assert.equal("spec_version" in legacy.spec, false);
 });
 
 test("every guided event type builds a spec the renderer schema accepts, and v3 choices raise spec_version", () => {

@@ -1,5 +1,7 @@
 # Scientific image rendering and waveform export
 
+> **Adding or changing an authorable control?** Update the EEG Lab authoring guide (`src/lib/lab/guide-content.ts`, `src/lib/lab/guide-coverage.json`; page `/admin/eeg-lab/guide`) — `tests/test_guide_coverage.py` and `src/lib/lab/guide-content.test.ts` fail until you do.
+
 ## Waveform export (0.3.7)
 
 The same spec that renders an image can write a **reviewable recording** — Persyst `.lay/.dat` and

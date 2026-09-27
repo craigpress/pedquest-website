@@ -24,6 +24,7 @@ import {
   type GuidedScenario,
   type LabArtifactKind,
   type LabAgeBand,
+  type LabBackgroundLevel,
   type LabBackgroundType,
   type LabChannelSet,
   type LabMontage,
@@ -212,6 +213,59 @@ export const SAMPLE_RATES = [200, 256, 512];
 
 // ── defaults ───────────────────────────────────────────────────────────────
 
+/**
+ * Background levels the renderer fills when they are left out: AGE_DEFAULTS in
+ * tools/eeg-render/eeg_render/spec.py, plus its two special cases — a continuous
+ * child background at spec_version 3 (CHILD_AMPLITUDE_UV_V3, the awake voltage a
+ * reader measures on the bipolar page) and HYPSARRHYTHMIA_DEFAULTS. Suppressed,
+ * low-voltage and burst-suppression backgrounds keep the age preset: the renderer
+ * scales them down itself, so they stay physiologic. The guide's age table
+ * (guide-content.ts) is tested against this.
+ */
+export const AGE_BACKGROUND_DEFAULTS: Record<LabAgeBand, { dominantHz: number; amplitudeUv: number; slowFraction: number }> = {
+  neonate: { dominantHz: 1.5, amplitudeUv: 60, slowFraction: 0.8 },
+  infant: { dominantHz: 5.5, amplitudeUv: 55, slowFraction: 0.55 },
+  child: { dominantHz: 8, amplitudeUv: 45, slowFraction: 0.4 },
+  adolescent: { dominantHz: 9.5, amplitudeUv: 35, slowFraction: 0.3 },
+  adult: { dominantHz: 10, amplitudeUv: 30, slowFraction: 0.25 },
+};
+export const CHILD_AMPLITUDE_UV_V3 = 90;
+const HYPSARRHYTHMIA_LEVELS = { dominantHz: 1.3, amplitudeUv: 280, slowFraction: 0.95 };
+const BACKGROUND_LEVELS: LabBackgroundLevel[] = ["dominantHz", "amplitudeUv", "slowFraction"];
+
+export function backgroundDefaults(age: LabAgeBand, type: LabBackgroundType, specVersion: LabSpecVersion) {
+  if (type === "hypsarrhythmia") return { ...HYPSARRHYTHMIA_LEVELS };
+  const d = { ...AGE_BACKGROUND_DEFAULTS[age] };
+  if (specVersion >= 3 && age === "child" && type === "continuous") d.amplitudeUv = CHILD_AMPLITUDE_UV_V3;
+  return d;
+}
+
+/** The spec_version the built spec will carry: the author's choice, raised to what the events need. */
+export function effectiveSpecVersion(g: GuidedScenario): LabSpecVersion {
+  return Math.max(g.specVersion ?? 1, requiredSpecVersion(g)) as LabSpecVersion;
+}
+
+/** Refill every background level the author has not edited from the current age / type / edition defaults. */
+export function withBackgroundDefaults(g: GuidedScenario): GuidedScenario {
+  const d = backgroundDefaults(g.ageBand, g.background.type, effectiveSpecVersion(g));
+  const edited = g.background.edited ?? [];
+  const next = { ...g.background };
+  let changed = false;
+  for (const k of BACKGROUND_LEVELS) {
+    if (!edited.includes(k) && next[k] !== d[k]) { next[k] = d[k]; changed = true; }
+  }
+  return changed ? { ...g, background: next } : g;
+}
+
+/** Record an author's edit of one background level; it no longer follows the defaults. */
+export function editBackgroundLevel(g: GuidedScenario, level: LabBackgroundLevel, value: number): GuidedScenario {
+  const edited = g.background.edited ?? [];
+  return {
+    ...g,
+    background: { ...g.background, [level]: value, edited: edited.includes(level) ? edited : [...edited, level] },
+  };
+}
+
 export function randomSeed(): number {
   return Math.floor(Math.random() * 2_000_000_000) + 1;
 }
@@ -222,6 +276,9 @@ export function defaultEvolution() {
 
 export function defaultGuidedScenario(): GuidedScenario {
   return {
+    // New forms start at edition 3 (renderer 0.5.0, WORKER_MAX_SPEC_VERSION 3). A scenario without specVersion
+    // (older clients, saved requests) still builds as before: omitted = the renderer's version 1.
+    specVersion: 3,
     ageBand: "child",
     channels: "standard_19",
     montage: "longitudinal_bipolar",
@@ -231,9 +288,7 @@ export function defaultGuidedScenario(): GuidedScenario {
     seed: randomSeed(),
     background: {
       type: "continuous",
-      dominantHz: 7,
-      amplitudeUv: 40,
-      slowFraction: 0.4,
+      ...backgroundDefaults("child", "continuous", 3),
       reactivity: "present",
       burstS: 2,
       ibiS: 8,
@@ -435,10 +490,15 @@ export function buildSpecFromGuided(g: GuidedScenario): Json {
   const background: Json = {
     type: g.background.type,
     dominant_hz: g.background.dominantHz,
-    amplitude_uv: g.background.amplitudeUv,
     slow_fraction: g.background.slowFraction,
     reactivity: g.background.reactivity,
   };
+  // An unedited amplitude is left to the renderer, which fills the same default and, on a default child
+  // background, scales its event defaults (sporadic discharges, variants) to it; an authored value would not.
+  if ((g.background.edited ?? []).includes("amplitudeUv")
+      || g.background.amplitudeUv !== backgroundDefaults(g.ageBand, g.background.type, effectiveSpecVersion(g)).amplitudeUv) {
+    background.amplitude_uv = g.background.amplitudeUv;
+  }
   if (g.background.type === "burst_suppression") {
     background.burst_suppression = { burst_s: g.background.burstS, ibi_s: g.background.ibiS };
   }
@@ -448,7 +508,7 @@ export function buildSpecFromGuided(g: GuidedScenario): Json {
     .map((a) => ({ at_min: a.atMin, label: a.label.trim() }));
 
   // Omitted = the renderer's version 1 (what every guided recording used before spec_version was offered).
-  const specVersion = Math.max(g.specVersion ?? 1, requiredSpecVersion(g));
+  const specVersion = effectiveSpecVersion(g);
   const spec: Json = {
     ...(g.specVersion !== undefined || specVersion > 1 ? { spec_version: specVersion } : {}),
     seed: Math.trunc(g.seed),
