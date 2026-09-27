@@ -345,8 +345,8 @@ def test_blockade_leaves_the_ventilator_identical():
     S8, S9 = _nmb(False), _nmb(True)
     t = np.arange(560.0, 580.0, 1 / S8.fs)
     assert np.array_equal(S8._artifact_block(t, int(560 * S8.fs)), S9._artifact_block(t, int(560 * S9.fs)))
-@pytest.mark.xfail(reason="ventilator waveform belongs to the artifacts family (r050-artifacts); the 0.35 Hz sinusoid "
-                          "is removed by the 1 Hz LFF (sedation.md S109-08)", strict=False)
+
+
 def test_ventilator_survives_the_display_filter():
     """learningeeg ventilator artifact: sharp rhythmic transients at the ventilator rate visible at LFF 1 Hz."""
     S8 = _nmb(False)
