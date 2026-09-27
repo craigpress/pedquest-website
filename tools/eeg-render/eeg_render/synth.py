@@ -47,6 +47,7 @@ from . import montage as mt
 from .rng import substream
 from . import state_v3 as sv3
 from . import variants_v3 as vv3
+from . import rpp_v3 as rpp3
 
 FRAME_S = 32.0          # overlap-add frame length
 
@@ -637,6 +638,10 @@ class SeizureInstance:
     #: 0.5.0: clinical correlate with a clonic phase (focal_clonic, generalized_tonic_clonic) - the ictal EMG
     #: comes in bursts time-locked to the run's clonic modulation instead of as a continuous floor
     clonic: bool = False
+    #: 0.5.0 phase D (spec_version 3): generalized RPP field predominance (frontal / occipital / none); "" = legacy
+    predominance: str = ""
+    #: 0.5.0 phase D: ACNS rhythmic/periodic run configuration built by ``rpp_v3.schedule`` (None = phase-B path)
+    rpp: Optional[Dict] = None
 
     @property
     def t1(self) -> float:
@@ -2482,6 +2487,10 @@ class Synthesizer:
         amplitude, no post-event attenuation.  Runs are separated by gaps so
         the pattern is intermittent the way LRDA and LPDs actually are.
         """
+        if self.spec_version >= 3 and rpp3.wants_v3(ev):
+            # 0.5.0 phase D (acns-review.md): BIRDs, SI-, evolving/fluctuating, triphasic, sharpness, +F/+R, EDB,
+            # prevalence and duration categories
+            return rpp3.schedule(self, ev, i)
         rng = substream(self.seed, "rpp", i)
         f0 = float(ev["frequency_hz"])
         amp = float(ev["amplitude_uv"])
@@ -2544,6 +2553,9 @@ class Synthesizer:
                     spread="none", postictal_s=0.0, index=i, ordinal=k * len(generators) + gi,
                     kind="rhythmic_pattern", morph=morph, fluctuate=fluct,
                     plus_fast=plus_fast, plus_sharp=plus_sharp,
+                    # 0.5.0 phase D (epileptiform-v3 C26): a generalized RPP is frontally predominant, not flat
+                    predominance=(str(ev.get("predominance") or "frontal")
+                                  if self.spec_version >= 3 and region == "generalized" else ""),
                 ))
                 t += dur + max(run * duty_gap * float(_lognorm(grng, 1, 0.3)[0]), 3.0)
                 k += 1
@@ -3339,6 +3351,9 @@ class Synthesizer:
             if inst.morph == "spasm":
                 out += self._spasm_rows(inst, t)
                 continue
+            if inst.rpp is not None:
+                out += rpp3.rows(self, inst, t)
+                continue
             phase, u, amp, f_inst = self._ictal_phase(inst, t)
             if phase is None:
                 continue
@@ -3389,6 +3404,8 @@ class Synthesizer:
             # generators sum into every electrode.
             v3 = self.spec_version >= 3
             onset_scale = self._field_scale(inst.onset_region)
+            if inst.predominance and inst.onset_region == "generalized":
+                onset_scale = rpp3.field_scale(self, inst.predominance)
             onset_fall = mt.generator_falloff(inst.onset_region)
             gens = [(g, 1.0) for g in mt.region_generators(inst.onset_region, self.electrodes)]
             extra = [g for g in mt.FOCAL_RECRUIT_GENERATORS.get(inst.onset_region, []) if g[0] in self._idx] if v3run else []
@@ -3518,10 +3535,15 @@ class Synthesizer:
 
     def _ictal_gain(self, inst: SeizureInstance) -> float:
         """ICTAL_GAIN, corrected under the display amplitude reference (0.4.0)."""
+        gen = 1.0
+        if inst.kind == "rhythmic_pattern" and inst.predominance and inst.onset_region == "generalized":
+            # 0.5.0 phase D: a generalized RPP's amplitude is its max-bipolar-channel voltage (ACNS 2021)
+            lagged = "_lag" if (inst.rpp and inst.rpp.get("lag_s")) else ""
+            gen = rpp3.GEN_BIPOLAR_GAIN.get(inst.morph + lagged, rpp3.GEN_BIPOLAR_GAIN.get(inst.morph, 1.0))
         if not self.display_ref:
-            return ICTAL_GAIN
+            return ICTAL_GAIN * gen
         key = inst.morph if (inst.kind == "rhythmic_pattern" and inst.morph in DISPLAY_CAL) else "ictal"
-        return ICTAL_GAIN / DISPLAY_CAL[key]
+        return ICTAL_GAIN / DISPLAY_CAL[key] * gen
 
     def _calibrate_display(self) -> None:
         """Scale ``amp_rms`` so the background's 1-s peak-to-peak on the display montage equals ``amplitude_uv``.
@@ -3718,6 +3740,9 @@ class Synthesizer:
             # array edges, making the result depend on where the caller cut
             # its chunk - exactly what test_partition_independence forbids.
             f_inst = f0 * np.power(r, uu)
+        if inst.rpp is not None and inst.rpp.get("steps"):
+            # 0.5.0 phase D: ACNS evolution / fluctuation as discrete frequency levels (>= 0.5 Hz, >= 3 cycles each)
+            phase, f_inst = rpp3.step_phase(inst, uu, dur)
         # Slow phase wander so the run is rhythmic but not a pure tone.  This
         # is *additive* on purpose: perturbing the accumulated phase
         # multiplicatively scales with elapsed cycles and smears the ictal
@@ -3747,6 +3772,8 @@ class Synthesizer:
         ramp = 0.07 if inst.kind != "rhythmic_pattern" else 0.14
         if self.spec_version >= 3 and inst.kind in ("seizure", "seizure_cluster", "status_epilepticus"):
             ramp = min(ramp, 2.0 / dur)
+        if inst.rpp is not None and inst.rpp.get("ramp_s"):
+            ramp = min(0.3, float(inst.rpp["ramp_s"]) / dur)      # BIRDs: sudden onset and offset
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
         # cycle-group waxing and waning
         amp = amp * (1.0 + inst.fluctuate * np.sin(2 * np.pi * 0.11 * uu * dur + wax_phase))
@@ -4991,7 +5018,10 @@ class Synthesizer:
 
         # --- stimulation reactivity ---------------------------------------
         reactive = self.bg.get("reactivity", "present") == "present"
-        for ev in self.stimulations:
+        if self.spec_version >= 3 and self.stimulations:
+            # 0.5.0 phase D: stimulation.response increase / attenuation / paradoxical / none (ACNS 2021 A5)
+            x = rpp3.stimulus_rows(self, x, t, i0, n)
+        for ev in (self.stimulations if self.spec_version < 3 else []):
             at = float(ev["at_min"]) * 60.0
             if not reactive or at + 25.0 < t[0] or at > t[-1]:
                 continue

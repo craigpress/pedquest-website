@@ -11,6 +11,7 @@ import numpy as np
 from .. import RENDERER_VERSION
 from ..spec import canonical_json, spec_hash
 from ..synth import Synthesizer
+from .. import rpp_v3 as rpp3
 
 #: Streaming block length and the margin trimmed from each side.  The margin
 #: exists for the one filter in ``segment`` that settles against its input block
@@ -165,6 +166,10 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             spec_event_index=int(inst.index),
             cluster_ordinal=int(inst.ordinal),
         ))
+        # 0.5.0 phase D: every ACNS rhythmic/periodic run carries its ACNS 2021 descriptors (main term, plus
+        # modifiers, SI-, evolution, sharpness, triphasic, lag) and its classification (ESz A/B, IIC, BIRDs, RPP)
+        if inst.kind == "rhythmic_pattern" and int(getattr(synth, "spec_version", 1)) >= 3:
+            rows[-1].update(rpp3.classify(inst, (synth.spec.get("events") or [])[inst.index]))
         # EEG Atlas P5: ACNS advisories travel with the key, never change the signal
         if inst.kind == "brd":
             rows[-1]["acns_advisory"] = ("brief rhythmic discharge: evolving rhythmic activity shorter than "
@@ -278,6 +283,22 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             if kind == "stimulation":
                 # P7 batch 2: the response is part of the key, not something the reader infers
                 extra["response"] = str(synth.bg.get("reactivity", "present"))
+                if int(getattr(synth, "spec_version", 1)) >= 3:
+                    # 0.5.0 phase D: the realized response type, the stimulus, and any SI- runs it brought about
+                    reactive = synth.bg.get("reactivity", "present") == "present"
+                    extra["response_type"] = str(ev.get("response") or ("increase" if reactive else "none"))
+                    extra["stimulus"] = ev.get("stimulus") or "unspecified"
+                    stim_order = sorted((float(s["at_min"]), k) for k, s in enumerate(synth.spec.get("events") or [])
+                                        if s.get("type") == "stimulation")
+                    j = [k for _, k in stim_order].index(i)
+                    induced = [z for z in synth.seizures if getattr(z, "rpp", None)
+                               and z.rpp["acns"].get("stimulus_index") == j]
+                    extra["induced_runs"] = [{"spec_event_index": z.index, "onset_s": round(z.t0, 3),
+                                              "latency_s": z.rpp["acns"]["stimulus_latency_s"]} for z in induced]
+                    if induced and extra["response_type"] == "none":
+                        extra["acns_reactivity"] = "SIRPIDs-only"
+                    else:
+                        extra["acns_reactivity"] = "unreactive" if extra["response_type"] == "none" else "reactive"
             rows.append(_row(kind, at, at, fs, duration_s,
                              to=ev.get("to"), spec_event_index=i, **extra))
 
@@ -362,6 +383,10 @@ def _summary(synth, duration_s: float) -> Dict:
     sp = sporadic_summary(rows, duration_s)
     if sp:
         out["sporadic_discharges"] = sp
+    if int(getattr(synth, "spec_version", 1)) >= 3:
+        rp = rpp3.event_summary(rows, synth.spec.get("events") or [], duration_s)
+        if rp:
+            out["rhythmic_patterns"] = rp      # 0.5.0 phase D: ACNS prevalence / duration categories, EDB
     return out
 
 
@@ -374,7 +399,9 @@ def seizure_burden(rows: List[Dict], duration_s: float, age: str = "") -> Dict:
     shorter than an hour is one window.
     """
     import numpy as np
-    ict = [r for r in rows if r["kind"] in ICTAL_KINDS and r["offset_s"] > r["onset_s"]]
+    # 0.5.0 phase D: a rhythmic_pattern run keyed as an ACNS electrographic seizure (2.5-Hz rule / evolution) counts
+    ict = [r for r in rows if (r["kind"] in ICTAL_KINDS or r.get("acns_classification") == "electrographic_seizure")
+           and r["offset_s"] > r["onset_s"]]
     total = float(sum(r["offset_s"] - r["onset_s"] for r in ict))
     longest = float(max((r["offset_s"] - r["onset_s"] for r in ict), default=0.0))
     win = min(3600.0, float(duration_s))

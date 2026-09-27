@@ -1,0 +1,631 @@
+"""0.5.0 phase D (spec_version 3): ACNS 2021 critical-care rhythmic and periodic patterns.
+
+Review: research/eeg-atlas/feature-review-20260926/acns-review.md.  Before this module the generator accepted
+``sharpness``, ``"triphasic"``, ``+R``, ``evolving`` and ``SIRPIDs`` and ignored them; ``BIRDs`` went down the
+bilateral-independent (BIPD) path; ``+F`` was a 9x harmonic of the repetition rate; a ``stimulation`` could only raise
+amplitude and beta.
+
+Definitions implemented (Hirsch et al., J Clin Neurophysiol 2021;38:1-29, PMC8135051):
+* SI-: pattern reproducibly brought about by an alerting stimulus -> runs are scheduled after each ``stimulation``.
+* Evolving: >= 2 consecutive frequency changes in the same direction by >= 0.5 Hz, each level >= 3 cycles; an RPP
+  that evolves for >= 10 s is an electrographic seizure (criterion B).  Fluctuating: >= 3 changes <= 1 min apart
+  (by >= 0.5 Hz) not qualifying as evolving.  Voltage change alone is neither.
+* ESz criterion A: epileptiform discharges averaging > 2.5 Hz for >= 10 s.  IIC: PD/SW > 1 and <= 2.5 Hz; PD/SW
+  0.5-1 Hz with a plus modifier or fluctuation; lateralized RDA > 1 Hz with a plus modifier or fluctuation.
+* BIRDs: focal or generalized rhythmic activity > 4 Hz, >= 6 waves, 0.5 to < 10 s; definite if evolving,
+  possible if only sharply contoured.
+* Plus: +F (theta or faster, PDs or RDA), +R (rhythmic delta not time-locked, PDs only), +S (sharp waves, RDA only);
+  +FR / +FS allowed.  EDB: abundant or continuous RDA+F with the fast activity stereotyped to the delta wave.
+* Triphasic morphology: negative-positive-negative, each phase longer than the one before, phase 2 the largest;
+  PDs/SW only.  A-P (or P-A) lag: > 100 ms from the most anterior to the most posterior derivation.
+* Sharpness of the dominant phase measured at the EEG baseline: spiky < 70 ms, sharp 70-200 ms, sharply contoured,
+  blunt.
+* Prevalence continuous >= 90 / abundant 50-89 / frequent 10-49 / occasional 1-9 / rare < 1 %; duration very long
+  >= 1 h / long 10-59 min / intermediate 1-9.9 min / brief 10-59 s / very brief < 10 s.
+
+Everything is drawn once per record (``substream(seed, "rpp3", event index, ...)``); the row builders are pure
+functions of absolute time, so any window of the record sees the same discharges.  Sign convention: generator values
+are surface potentials (positive = surface-positive); the page draws negative-up.
+"""
+from __future__ import annotations
+
+import math
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+
+from . import montage as mt
+from .rng import substream
+
+#: sharpness -> width multiplier of the discharge's dominant (sharp) phase; measured on the displayed bipolar
+#: signal (tests/test_r050_acns.py): spiky < 70 ms at baseline, sharp 70-200 ms, contoured / blunt wider
+SHARPNESS_WIDTH = {"spiky": 0.42, "sharp": 1.0, "sharply_contoured": 2.0, "blunt": 3.4}
+SHARPNESS_ALIASES = {"sharply contoured": "sharply_contoured", "sharply-contoured": "sharply_contoured",
+                     "spike": "spiky", "sharp_wave": "sharp", "smooth": "blunt"}
+PREVALENCE = {"continuous": 0.95, "abundant": 0.70, "frequent": 0.30, "occasional": 0.05, "rare": 0.006}
+DURATION_RANGE = {"very_brief": (3.0, 9.0), "brief": (10.0, 59.0), "intermediate": (60.0, 590.0),
+                  "long": (600.0, 3540.0), "very_long": (3600.0, 7200.0)}
+STIMULI = ["auditory", "light_tactile", "patient_care", "noxious", "suction", "sternal_rub", "nailbed_pressure",
+           "nostril_tickle", "trapezius_squeeze", "other"]
+RESPONSES = ["increase", "attenuation", "paradoxical", "none"]
+
+#: 0.5.0 phase D: frontally predominant field of a generalized RPP (peak 1.0).  epileptiform-v3.md (C26): the flat
+#: GENERALIZED_FIELD reached the bipolar chain only through inter-electrode lag (GPDs 20-30 uV on the page, a quarter
+#: of the references' dominance: gpds-ty, triphasic-gpds, ncse-gpds, gpds-plus-f).  A real A-P gradient survives it.
+#: A monotonic anterior-to-posterior decline: a flat Fp=F plateau cancelled Fp1-F3 (0.3x background on the first
+#: render) and an Fp < F dip put a false phase reversal at F3/F4.
+FIELD_FRONTAL = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.76, "F3": 0.85, "Fz": 0.85, "F4": 0.85, "F8": 0.76,
+                 "T3": 0.45, "C3": 0.55, "Cz": 0.57, "C4": 0.55, "T4": 0.45,
+                 "T5": 0.28, "P3": 0.32, "Pz": 0.32, "P4": 0.32, "T6": 0.28, "O1": 0.18, "O2": 0.18}
+#: amplitude_uv of a generalized RPP means the ACNS voltage: the discharge in the longitudinal-bipolar channel where it
+#: is most readily appreciated.  DISPLAY_CAL (4.4 periodic / 2.9 rda) was measured on focal LPD/LRDA, whose field
+#: survives the chain; a generalized field loses more.  Measured delivered/requested on the max derivation with
+#: FIELD_FRONTAL (renders/phaseD/acns/measure.py): the correction below brings it back to about 1.0.
+GEN_BIPOLAR_GAIN = {"periodic": 3.4, "periodic_lag": 2.05, "rda": 4.45, "ictal": 3.0}
+_FLIP = {"Fp1": "O1", "Fp2": "O2", "F7": "T5", "F8": "T6", "F3": "P3", "F4": "P4", "Fz": "Pz"}
+_FLIP.update({v: k for k, v in list(_FLIP.items())})
+FIELD_OCCIPITAL = {e: FIELD_FRONTAL[_FLIP.get(e, e)] for e in FIELD_FRONTAL}
+
+
+def sharpness_key(val) -> Optional[str]:
+    if val in (None, ""):
+        return None
+    v = str(val).strip().lower()
+    v = SHARPNESS_ALIASES.get(v, v)
+    return v if v in SHARPNESS_WIDTH else None
+
+
+def parse_plus(plus: str) -> Tuple[bool, bool, bool]:
+    """(+F, +R, +S) from an ACNS plus string ("+F", "+R", "+S", "+FR", "+FS", "fast", ...)."""
+    p = str(plus or "").lower().replace(" ", "")
+    f = "+f" in p or "fast" in p
+    r = "+r" in p or "fr" in p.replace("+f", "f") or "rhythm" in p
+    s = "+s" in p or "fs" in p.replace("+f", "f") or "sharp" in p
+    return f, r, s
+
+
+def is_triphasic(ev: Dict) -> bool:
+    return (str(ev.get("pattern") or "").lower() == "triphasic"
+            or "triphasic" in str(ev.get("modifier") or "").lower())
+
+
+def wants_v3(ev: Dict) -> bool:
+    """True when a rhythmic_pattern uses any phase-D feature (otherwise the phase-B path is kept unchanged)."""
+    pat = str(ev.get("pattern") or "").upper()
+    mod = str(ev.get("modifier") or "").lower()
+    f, r, s = parse_plus(ev.get("plus_modifier"))
+    return bool(pat in ("BIRDS", "EDB", "SIRPIDS", "TRIPHASIC") or ev.get("stimulus_induced")
+                or "evolv" in mod or "fluctuat" in mod or "triphasic" in mod or isinstance(ev.get("evolution"), dict)
+                or f or r or (s and ev.get("periodic")) or sharpness_key(ev.get("sharpness"))
+                or ev.get("lag") not in (None, "none") or ev.get("prevalence") or ev.get("duration_category"))
+
+
+def main_term(ev: Dict) -> str:
+    """ACNS main term 1 + 2 for the key (e.g. GPDs, LRDA, BIPDs, BIRDs, EDB)."""
+    pat = str(ev.get("pattern") or "").upper()
+    if pat == "BIRDS":
+        return "BIRDs"
+    if pat == "EDB":
+        return "EDB"
+    region = str(ev.get("onset_region") or "")
+    if pat.startswith(("BIPD", "BIRDA")):
+        return "BIPDs" if ev.get("periodic") else "BIRDA"
+    loc = "G" if region == "generalized" else ("L" if region != "midline" else "G")
+    return f"{loc}PDs" if ev.get("periodic") else f"{loc}RDA"
+
+
+# ------------------------------------------------------------------ kernels --
+
+def tri_kernel(tau: np.ndarray, width: float | np.ndarray = 1.0) -> np.ndarray:
+    """Triphasic discharge, ``tau`` seconds from the phase-2 (positive) peak; surface potential.
+
+    Phase 1 small negative (~50 ms), phase 2 dominant positive (~120 ms, blunt), phase 3 slower negative (~250 ms):
+    each phase longer than the previous and phase 2 the largest (ACNS 2021 minor modifier; triphasic-gpds,
+    periodic-triphasics: blunt 1.5-2 Hz complexes).
+    """
+    w = width
+    p1 = -0.32 * np.exp(-0.5 * ((tau + 0.070 * w) / (0.020 * w)) ** 2)
+    p2 = np.exp(-0.5 * (tau / np.where(tau < 0.0, 0.030 * w, 0.048 * w)) ** 2)
+    p3 = -0.50 * np.exp(-0.5 * ((tau - 0.175 * w) / (0.080 * w)) ** 2)
+    return p1 + p2 + p3
+
+
+def _std_kernel(tau, width):
+    from .synth import _pd_kernel
+    return _pd_kernel(tau, width)
+
+
+def _blunt_kernel(tau, width):
+    """Blunt (smooth, near-sinusoidal) discharge: a symmetric rounded wave with a shallow after-going trough."""
+    s = 0.085 * width
+    return np.exp(-0.5 * (tau / s) ** 2) - 0.35 * np.exp(-0.5 * ((tau - 2.2 * s) / (1.4 * s)) ** 2)
+
+
+_KERNELS = {"standard": _std_kernel, "triphasic": tri_kernel, "blunt": _blunt_kernel}
+_NORM: Dict[Tuple[str, float], Tuple[float, float]] = {}
+
+
+def _kernel_norm(shape: str, width: float) -> Tuple[float, float]:
+    """(area in s, peak-to-peak) of one discharge; cached, a pure function of the shape (partition-independent)."""
+    key = (shape, round(float(width), 4))
+    if key not in _NORM:
+        tau = np.linspace(-1.5, 2.5, 16001)
+        k = _KERNELS[shape](tau, width)
+        _NORM[key] = (float(np.sum(k) * (tau[1] - tau[0])), float(np.ptp(k)) or 1.0)
+    return _NORM[key]
+
+
+def discharge_train(phase: np.ndarray, f_inst: np.ndarray, shape: str, width: float, salt: int) -> np.ndarray:
+    """PD train normalized like the phase-B periodic template (peak-to-peak ``_PERIODIC_PTP``, zero mean)."""
+    from .synth import _cycle_noise, _PD_AMP_VAR, _PD_WIDTH_VAR, _PERIODIC_PTP
+    f = np.clip(f_inst, 0.2, 12.0)
+    period = 1.0 / f
+    cycles = phase / (2 * np.pi)
+    k = np.floor(cycles + 0.5)
+    tau = (cycles - k) * period
+    out = np.zeros_like(tau)
+    kern = _KERNELS[shape]
+    for n in (-1, 0, 1, 2, 3):
+        kk = k - n
+        amp = 1.0 + (_cycle_noise(kk, salt + 131) - 0.5) * (2.0 * _PD_AMP_VAR)
+        wid = width * (1.0 + (_cycle_noise(kk, salt + 137) - 0.5) * (2.0 * _PD_WIDTH_VAR))
+        out = out + amp * kern(tau + n * period, wid)
+    area, ptp = _kernel_norm(shape, width)
+    return (out - area * f) / ptp * _PERIODIC_PTP
+
+
+def fast_carrier(t: np.ndarray, hz: float, seed: int, tag: int) -> np.ndarray:
+    """Independent fast activity around ``hz`` as a function of ABSOLUTE time (three detuned partials), peak <= 1."""
+    r = substream(seed, "rpp3fast", tag)
+    ph = r.uniform(0, 2 * np.pi, 3)
+    mul = (0.91, 1.0, 1.13)
+    return sum(np.sin(2 * np.pi * hz * m * t + p) for m, p in zip(mul, ph)) / 3.0
+
+
+# --------------------------------------------------------------- schedule --
+
+def _steps_evolving(f_start: float, f_end: float, dur: float) -> Tuple[List[Tuple[float, float]], float]:
+    """Equal-duration frequency levels from f_start to f_end, consecutive changes >= 0.5 Hz, each level >= 3 cycles."""
+    if abs(f_end - f_start) < 1.0:
+        f_end = f_start + math.copysign(1.0, (f_end - f_start) or 1.0)
+    n = max(3, int(round(abs(f_end - f_start) / 0.5)) + 1)
+    levels = np.linspace(f_start, f_end, n)
+    dur = max(dur, 3.0 * n / float(levels.min()) * 1.15)
+    hold = dur / n
+    return [(k * hold, float(v)) for k, v in enumerate(levels)], dur
+
+
+def _steps_fluctuating(f0: float, dur: float, rng, ceiling: float) -> Tuple[List[Tuple[float, float]], float]:
+    """Alternate f0 and f0 +/- 0.5 Hz, holds 3 cycles..20 s (<= 60 s apart), at least 3 changes."""
+    alt = f0 + 0.5 if f0 + 0.5 <= ceiling else f0 - 0.5
+    lo_hold = 3.0 / min(f0, alt)
+    dur = max(dur, 4.0 * lo_hold * 1.2)
+    out, t, k = [], 0.0, 0
+    while t < dur:
+        out.append((t, float(f0 if k % 2 == 0 else alt)))
+        t += float(np.clip(rng.uniform(lo_hold, max(lo_hold * 1.5, min(20.0, dur / 4.0))), lo_hold, 60.0))
+        k += 1
+    while len(out) < 4:                     # >= 3 changes inside the run
+        out.append((out[-1][0] + lo_hold, float(f0 if len(out) % 2 == 0 else alt)))
+    dur = max(dur, out[-1][0] + lo_hold)
+    return out, dur
+
+
+def schedule(syn, ev: Dict, i: int) -> List:
+    """Runs of a phase-D rhythmic_pattern (see module docstring)."""
+    from .synth import SeizureInstance, _RPP_BAND, _RPP_DRIFT
+    rng = substream(syn.seed, "rpp3", i)
+    pat = str(ev.get("pattern") or "").upper()
+    f0 = float(ev["frequency_hz"])
+    amp = float(ev["amplitude_uv"])
+    modifier = str(ev.get("modifier") or "").lower()
+    periodic = bool(ev.get("periodic"))
+    bird, edb = pat == "BIRDS", pat == "EDB"
+    tri = is_triphasic(ev) and periodic
+    has_f, has_r, has_s = parse_plus(ev.get("plus_modifier"))
+    if edb:
+        has_f = True
+    advisories: List[str] = []
+    if has_r and not periodic:
+        advisories.append("+R applies to PDs only (ACNS 2021); ignored on RDA")
+        has_r = False
+    sharp = sharpness_key(ev.get("sharpness"))
+    if has_s and periodic:
+        advisories.append("+S applies to RDA only (ACNS 2021); on PDs it is rendered as sharpness 'spiky' and keyed so")
+        has_s = False
+        sharp = sharp or "spiky"
+    if is_triphasic(ev) and not periodic:
+        advisories.append("triphasic morphology applies to PDs/SW, not RDA (ACNS 2021); ignored")
+    evo = ev.get("evolution") if isinstance(ev.get("evolution"), dict) else None
+    evolving = "evolv" in modifier or (evo is not None and (evo.get("start_hz") is not None or evo.get("end_hz") is not None))
+    fluct = ("fluctuat" in modifier) and not evolving
+    si = bool(ev.get("stimulus_induced")) or pat == "SIRPIDS"
+    ceiling = 30.0 if bird else _RPP_BAND[1]
+
+    # waveform configuration
+    shape = "triphasic" if tri else ("blunt" if sharp == "blunt" else "standard")
+    width = 1.0 if tri and not sharp else SHARPNESS_WIDTH.get(sharp or "sharp", 1.0)
+    if tri and sharp and sharp != "blunt":
+        width = {"spiky": 0.6, "sharp": 0.8, "sharply_contoured": 1.0}.get(sharp, 1.0)
+    if shape == "blunt":
+        width = 1.0 if not tri else width
+    lag = str(ev.get("lag") or ("anterior_posterior" if tri else "none"))
+    lag_s = float(ev.get("lag_ms", 120.0 if lag != "none" else 0.0)) / 1000.0
+    if lag == "posterior_anterior":
+        lag_s = -lag_s
+    elif lag == "none":
+        lag_s = 0.0
+    fast = None
+    if has_f:
+        if edb:
+            fast = {"mode": "brush", "hz": float(ev.get("fast_hz", 24.0)), "rel": 0.34}
+        elif periodic:
+            fast = {"mode": "pd_burst", "hz": float(ev.get("fast_hz", 14.0)), "rel": 0.60}
+        else:
+            fast = {"mode": "continuous", "hz": float(ev.get("fast_hz", 13.0)), "rel": 0.22}
+    plus_r = None
+    if has_r:
+        fr = float(np.clip(f0 * 1.43 if f0 * 1.43 <= 2.4 else f0 * 0.62, 1.0, 2.4))
+        plus_r = {"hz": fr, "rel": 1.2}
+    region = ev["onset_region"]
+    pred = str(ev.get("predominance") or ("frontal" if region == "generalized" else "none"))
+
+    # run length / gap
+    if bird:
+        run_mean = float(np.clip(float(ev.get("run_duration_s") or 3.0), 0.5, 9.5))
+    elif ev.get("duration_category"):
+        a, b = DURATION_RANGE[str(ev["duration_category"])]
+        run_mean = math.sqrt(a * b)
+    else:
+        run_mean = max(float(ev["run_duration_s"]), 4.0)
+    if str(ev.get("prevalence") or "") == "continuous" and not ev.get("duration_category") and not bird and not si:
+        # continuous (>= 90 %) without a duration category: one run over the whole epoch, not 30-s pieces
+        run_mean = float(ev["duration_min"]) * 60.0
+    single = run_mean == float(ev["duration_min"]) * 60.0 and str(ev.get("prevalence") or "") == "continuous"
+    p = PREVALENCE.get(str(ev.get("prevalence") or ""))
+    if p is not None:
+        gap_mean, gap_min = run_mean * (1.0 - p) / p, 0.3
+    elif bird:
+        gap_mean, gap_min = 20.0, 2.0
+    else:
+        gap_mean, gap_min = run_mean * (0.55 if "intermittent" in modifier else 0.30), 3.0
+
+    if pat.startswith(("BIPD", "BIRDA")):
+        base = (region.replace("left", "right") if region.startswith("left") else region.replace("right", "left"))
+        regions = [(base if region in ("left_hemisphere", "right_hemisphere", "left_temporal", "right_temporal")
+                    else "left_temporal", 0.88),
+                   (region if region in ("left_hemisphere", "right_hemisphere", "left_temporal", "right_temporal")
+                    else "right_temporal", 1.12)]
+    else:
+        regions = [(region, 1.0)]
+
+    start = float(ev["onset_min"]) * 60.0
+    end = start + float(ev["duration_min"]) * 60.0
+    stims = sorted(float(s["at_min"]) * 60.0 for s in syn.spec["events"] if s.get("type") == "stimulation")
+    if si and not stims:
+        advisories.append("stimulus_induced without a stimulation event: no runs are scheduled")
+    rate_jitter = float(ev.get("rate_jitter", 0.0))
+    fl_amp = float(ev.get("fluctuation", 0.45 if fluct else 0.15))
+    spread = str(ev.get("spread") or "none") if evolving else "none"
+    out = []
+    for gi, (reg, fmul) in enumerate(regions):
+        grng = substream(syn.seed, "rpp3", i, gi)
+        slots: List[Tuple[float, Optional[int], float]] = []      # (t0, stimulus index, latency)
+        if si:
+            for j, a in enumerate(stims):
+                if start <= a < end:
+                    lat = float(grng.uniform(0.5, 3.0))
+                    slots.append((a + lat, j, lat))
+        k = 0
+        t = start + (0.0 if gi == 0 else float(grng.uniform(0.0, run_mean * 0.5)))
+        while k < 4000:
+            if si:
+                if k >= len(slots):
+                    break
+                t, sidx, lat = slots[k]
+            else:
+                sidx, lat = None, None
+                if t >= end - 1.0:
+                    break
+            if ev.get("duration_category"):
+                a, b = DURATION_RANGE[str(ev["duration_category"])]
+                dur = float(math.exp(grng.uniform(math.log(a), math.log(b))))
+            else:
+                dur = run_mean * float(np.exp(grng.standard_normal() * 0.18)) if not single else end - t
+            if bird:
+                dur = float(np.clip(dur, max(0.5, 6.0 / max(f0, 4.1)), 9.5))
+            fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
+            f_run = f0 * fmul * fj
+            if not bird and _RPP_BAND[0] <= f0 <= _RPP_BAND[1]:
+                f_run = float(np.clip(f_run, _RPP_BAND[0] * (1.0 + _RPP_DRIFT) + 1e-6,
+                                      _RPP_BAND[1] * (1.0 - _RPP_DRIFT) - 1e-6))
+            if bird:
+                f_run = max(f_run, 4.3)
+            steps = None
+            a0, a1 = amp, amp
+            if evolving:
+                fs_ = float((evo or {}).get("start_hz") or f_run)
+                fe_ = float((evo or {}).get("end_hz") or (fs_ + 1.5 if fs_ + 1.5 <= ceiling else fs_ - 1.5))
+                steps, dur = _steps_evolving(fs_ * fmul, fe_ * fmul, dur)
+                if bird:
+                    dur = min(dur, 9.5)
+                a0 = float((evo or {}).get("amplitude_start_uv") or amp)
+                a1 = float((evo or {}).get("amplitude_end_uv") or amp * 1.5)
+            elif fluct:
+                steps, dur = _steps_fluctuating(f_run, dur, grng, ceiling)
+            if si and k + 1 < len(slots):
+                dur = min(dur, slots[k + 1][0] - t - 0.5)
+            if not si and end - t < 2.0:
+                break
+            dur = min(dur, end - t) if not si else dur
+            if dur <= 0.4:
+                k += 1
+                continue
+            fr_ = [s[1] for s in steps] if steps else [f_run]
+            cfg = {"shape": shape, "width": width, "lag_s": lag_s, "fast": fast, "plus_r": plus_r,
+                   "steps": steps, "predominance": pred, "bird": bird, "edb": edb, "sharpness": sharp,
+                   "ramp_s": 0.15 if bird else (2.0 if si else min(0.14 * dur, 5.0)),
+                   "acns": {"main_term": main_term(ev), "stimulus_induced": si, "stimulus_index": sidx,
+                            "stimulus_latency_s": None if lat is None else round(lat, 3),
+                            "plus": ("+" + ("F" if has_f else "") + ("R" if has_r else "") + ("S" if has_s else ""))
+                            if (has_f or has_r or has_s) else None,
+                            "evolution": "evolving" if evolving else ("fluctuating" if fluct else "static"),
+                            "min_hz": round(min(fr_), 3), "max_hz": round(max(fr_), 3),
+                            "periodic": periodic, "triphasic": tri,
+                            "lag_ms": round(lag_s * 1000.0, 1) if lag_s else None,
+                            "sharpness": sharp or ("blunt" if tri else None),
+                            "predominance": pred if region == "generalized" else None,
+                            "advisories": advisories or None}}
+            out.append(SeizureInstance(
+                t0=t, duration_s=dur, onset_region=reg,
+                start_hz=fr_[0], end_hz=fr_[-1], amp_start=a0, amp_end=a1,
+                spread=spread, postictal_s=0.0, index=i, ordinal=k * len(regions) + gi,
+                kind="rhythmic_pattern", morph="ictal" if bird else ("periodic" if periodic else "rda"),
+                fluctuate=fl_amp, plus_fast=0.0, plus_sharp=1.0 if (has_s and not periodic) else 0.0,
+                predominance=pred, rpp=cfg,
+            ))
+            if not si:
+                t += dur + max(gap_mean * float(np.exp(grng.standard_normal() * 0.3)), gap_min)
+            k += 1
+    return out
+
+
+def step_phase(inst, uu: np.ndarray, dur: float) -> Tuple[np.ndarray, np.ndarray]:
+    """Phase (rad) and frequency of a piecewise-constant frequency schedule at run fraction ``uu``."""
+    steps = inst.rpp["steps"]
+    ts = np.array([s[0] for s in steps] + [max(dur, steps[-1][0] + 1e-3)])
+    fs = np.array([s[1] for s in steps])
+    cum = np.concatenate([[0.0], np.cumsum(np.diff(ts) * fs)])
+    tau = uu * dur
+    k = np.clip(np.searchsorted(ts, tau, side="right") - 1, 0, fs.size - 1)
+    return 2 * np.pi * (cum[k] + fs[k] * (tau - ts[k])), fs[k].astype(float)
+
+
+# ------------------------------------------------------------------- rows --
+
+def field_scale(syn, pred: str) -> np.ndarray:
+    """Per-electrode scale that pins the generalized generators onto a predominance field (cached)."""
+    cache = syn.__dict__.setdefault("_rpp3_fs", {})
+    if pred not in cache:
+        target = FIELD_FRONTAL if pred == "frontal" else FIELD_OCCIPITAL if pred == "occipital" else mt.GENERALIZED_FIELD
+        base = np.asarray(syn._field_scale("generalized"))
+        flat = np.array([mt.GENERALIZED_FIELD.get(e, 0.035) for e in syn.electrodes])
+        want = np.array([target.get(e, 0.035) for e in syn.electrodes])
+        cache[pred] = base * want / np.maximum(flat, 1e-6)
+    return cache[pred]
+
+
+def rows(syn, inst, t: np.ndarray) -> np.ndarray:
+    """Scalp rows of one phase-D run (onset field, optional spread, +F, +R, lag)."""
+    from .synth import _PERIODIC_PTP, smoothstep
+    cfg = inst.rpp
+    out = np.zeros((syn.n_elec, t.size))
+    psi = substream(syn.seed, "szharm", inst.index).uniform(0, 2 * np.pi, 4)
+    base = int(syn.seed) * 31 + inst.index * 1009 + inst.ordinal * 101
+    region = inst.onset_region
+    gens = mt.region_generators(region, syn.electrodes)
+    fall = mt.generator_falloff(region)
+    scale = field_scale(syn, cfg["predominance"]) if region == "generalized" else np.asarray(syn._field_scale(region))
+    lag_s = float(cfg["lag_s"] or 0.0)
+    carrier = cfg["fast"] is not None
+    spread = None
+    if inst.spread not in (None, "none"):
+        spread = syn._spread_region(inst)
+    layers = [(gens, scale, fall, 0.0, None)]
+    if spread is not None:
+        layers.append((mt.region_generators(spread, syn.electrodes),
+                       np.asarray(field_scale(syn, "none") if spread == "generalized" else syn._field_scale(spread)),
+                       mt.generator_falloff(spread), 0.18, spread))
+    for gl, sc, fl, extra_lag, sp in layers:
+        for gi, (focus, ga, gph) in enumerate(gl):
+            y = mt.POSITIONS.get(focus, (0.0, 0.0))[1]
+            d = extra_lag + (lag_s * (0.95 - y) / 1.9 if lag_s >= 0 else -lag_s * (y + 0.95) / 1.9)
+            if not lag_s:
+                d += gph * 0.5          # phase-B convention: 0.5 s per generator offset cycle (an authored lag replaces it)
+            phase, u, amp, f_inst = syn._ictal_phase(inst, t - d)
+            if phase is None:
+                continue
+            salt = base + (500_003 if sp else 0)
+            gsalt = salt + 7919 * (gi + 1)
+            if inst.morph == "periodic":
+                wv = discharge_train(phase, f_inst, cfg["shape"], cfg["width"], salt)
+                unit = _PERIODIC_PTP
+            else:
+                wv = syn._wave(phase, psi, 0.0, inst.morph, 0.0, f_inst, salt, y, gsalt, True, inst.plus_sharp)
+                unit = 2.83
+            if carrier:
+                fm = cfg["fast"]
+                # the fast activity is generated per source with the source's own lag, so it survives the chain
+                car = fast_carrier(t - d, fm["hz"], syn.seed, inst.index)
+                if fm["mode"] == "pd_burst":
+                    cyc = phase / (2 * np.pi)
+                    tau = (cyc - np.floor(cyc + 0.5)) / np.clip(f_inst, 0.2, 12.0)
+                    gate = np.exp(-0.5 * ((tau - 0.06) / 0.075) ** 2)
+                elif fm["mode"] == "brush":
+                    gate = ((1.0 - np.sin(phase + psi[0])) / 2.0) ** 2.5
+                else:
+                    gate = 1.0
+                wv = wv + fm["rel"] * unit * 0.5 * car * gate
+            if cfg["plus_r"] is not None:
+                pr = cfg["plus_r"]
+                ph_r = 2 * np.pi * pr["hz"] * (t - d - inst.t0) + psi[2]
+                wv = wv + pr["rel"] * _PERIODIC_PTP / 2.83 * syn._wave(ph_r, psi, 0.0, "rda", 0.0, None, salt + 77,
+                                                                        y, gsalt + 77, True, 0.0)
+            w = syn._gen_weights(focus, fl) * sc
+            g = amp * ga
+            if sp is not None:
+                g = g * smoothstep((u - 0.35) / 0.30)
+            elif spread is not None:
+                g = g * (1.0 - 0.55 * smoothstep((u - 0.35) / 0.30))
+            out += w[:, None] * (wv * g)[None, :]
+    return out
+
+
+# -------------------------------------------------------------- stimulation --
+
+def stimulus_rows(syn, x: np.ndarray, t: np.ndarray, i0: int, n: int) -> np.ndarray:
+    """v3 reactivity (ACNS 2021 A5): increase (the 0.3.x response), attenuation, paradoxical, or none."""
+    reactive = syn.bg.get("reactivity", "present") == "present"
+    for j, ev in enumerate(syn.stimulations):
+        at = float(ev["at_min"]) * 60.0
+        resp = str(ev.get("response") or ("increase" if reactive else "none"))
+        hold = float(ev.get("duration_s") or 6.0)
+        if resp == "none" or at + hold + 25.0 < t[0] or at > t[-1]:
+            continue
+        if resp == "increase":
+            shape = np.exp(-np.clip(t - at, 0, None) / 7.0) * (t >= at)
+            x *= (1.0 + 0.55 * shape[None, :])
+            x += (syn._stream_signal(syn.st_beta, i0 + 5551, n) * (syn.amp_rms * 0.55 * shape)[None, :])
+            continue
+        d = t - at
+        env = np.clip(d / 0.4, 0.0, 1.0) * (d >= 0) * np.where(d <= hold, 1.0, np.exp(-np.clip(d - hold, 0, None) / 2.0))
+        if resp == "attenuation":
+            # generalized voltage attenuation of 55-65 % within 0.4 s, held for the stimulus, recovering over ~2 s
+            x *= (1.0 - 0.62 * env)[None, :]
+        elif resp == "paradoxical":
+            # faster activity drops and diffuse high-voltage delta appears (arousal delta of the encephalopathic ICU
+            # patient); 1.2-2 Hz stream at 2.2x the background RMS
+            x *= (1.0 - 0.35 * env)[None, :]
+            x += syn._stream_signal(syn.st_delta, i0 + 6007 + 13 * j, n) * (syn.amp_rms * 2.2 * env)[None, :]
+    return x
+
+
+# ------------------------------------------------------------ answer key --
+
+def classify(inst, ev: Optional[Dict] = None) -> Dict:
+    """ACNS 2021 classification of one realized run (answer key); ``ev`` describes a phase-B (plain) run."""
+    if inst.rpp:
+        a = dict(inst.rpp["acns"])
+    else:
+        ev = ev or {}
+        f, r, s = parse_plus(ev.get("plus_modifier"))
+        s = s and not ev.get("periodic")
+        a = {"main_term": main_term(ev), "stimulus_induced": False, "plus": ("+S" if s else None),
+             "evolution": "static", "min_hz": round(float(inst.start_hz), 3), "max_hz": round(float(inst.end_hz), 3),
+             "periodic": bool(ev.get("periodic")), "triphasic": False, "lag_ms": None, "sharpness": None,
+             "predominance": inst.predominance or None}
+    dur = float(inst.duration_s)
+    steps = inst.rpp.get("steps") if inst.rpp else None
+    if steps:
+        ts = [s[0] for s in steps] + [dur]
+        mean_hz = sum((ts[k + 1] - ts[k]) * steps[k][1] for k in range(len(steps))) / max(dur, 1e-9)
+    else:
+        mean_hz = 0.5 * (inst.start_hz + inst.end_hz)
+    lateral = inst.onset_region not in ("generalized",)
+    plus = bool(a.get("plus"))
+    fluct = a.get("evolution") == "fluctuating"
+    periodic = bool(a.get("periodic"))
+    a["mean_hz"] = round(float(mean_hz), 3)
+    a["duration_category"] = duration_category(dur)
+    if inst.rpp and inst.rpp.get("bird"):
+        cls = "BIRDs_definite" if a.get("evolution") == "evolving" else "BIRDs_possible"
+        basis = ("> 4 Hz, 0.5-10 s, evolving" if cls.endswith("definite") else "> 4 Hz, 0.5-10 s, sharply contoured")
+        if dur >= 10.0:
+            cls, basis = "electrographic_seizure", "rhythmic > 4 Hz for >= 10 s"
+    elif a.get("evolution") == "evolving" and dur >= 10.0:
+        cls, basis = "electrographic_seizure", "criterion B: definite evolution for >= 10 s"
+    elif periodic and mean_hz > 2.5 and dur >= 10.0:
+        cls, basis = "electrographic_seizure", "criterion A: discharges averaging > 2.5 Hz for >= 10 s"
+    elif periodic and 1.0 < mean_hz <= 2.5 and dur >= 10.0:
+        cls, basis = "IIC", "PDs averaging > 1 and <= 2.5 Hz over 10 s"
+    elif periodic and 0.5 <= mean_hz <= 1.0 and (plus or fluct) and dur >= 10.0:
+        cls, basis = "IIC", "PDs 0.5-1 Hz with a plus modifier or fluctuation"
+    elif (not periodic) and lateral and mean_hz > 1.0 and (plus or fluct) and dur >= 10.0:
+        cls, basis = "IIC", "lateralized RDA > 1 Hz with a plus modifier or fluctuation"
+    else:
+        cls, basis = "RPP_interictal", None
+    a["acns_classification"] = cls
+    a["classification_basis"] = basis
+    if a.get("stimulus_induced"):
+        a["acns_label"] = "SI-" + (("ESz" if cls == "electrographic_seizure" else a["main_term"])
+                                   + (a["plus"] or ""))
+    else:
+        a["acns_label"] = a["main_term"] + (a["plus"] or "") if not (inst.rpp and inst.rpp.get("edb")) else "EDB"
+    return a
+
+
+def duration_category(dur: float) -> str:
+    if dur >= 3600.0:
+        return "very_long"
+    if dur >= 600.0:
+        return "long"
+    if dur >= 60.0:
+        return "intermediate"
+    if dur >= 10.0:
+        return "brief"
+    return "very_brief"
+
+
+def prevalence_category(pct: float) -> str:
+    if pct >= 90.0:
+        return "continuous"
+    if pct >= 50.0:
+        return "abundant"
+    if pct >= 10.0:
+        return "frequent"
+    if pct >= 1.0:
+        return "occasional"
+    return "rare" if pct > 0 else "none"
+
+
+def event_summary(rows: List[Dict], events: List[Dict], duration_s: float) -> List[Dict]:
+    """Per rhythmic_pattern event: realized prevalence, typical/longest duration and their ACNS categories; EDB
+    definite/possible per Table 2."""
+    out = []
+    for i, ev in enumerate(events):
+        if ev.get("type") != "rhythmic_pattern":
+            continue
+        rr = [r for r in rows if r["kind"] == "rhythmic_pattern" and r.get("spec_event_index") == i]
+        if not rr:
+            continue
+        a0 = max(0.0, float(ev.get("onset_min", 0.0)) * 60.0)
+        a1 = min(duration_s, a0 + float(ev.get("duration_min", 0.0)) * 60.0)
+        # prevalence over the pattern's own epoch (ACNS: percent of record/epoch within the pattern)
+        iv = sorted((r["onset_s"], r["offset_s"]) for r in rr)
+        cov, cur = 0.0, None
+        for s, e in iv:
+            if cur is None or s > cur[1]:
+                if cur:
+                    cov += cur[1] - cur[0]
+                cur = [s, e]
+            else:
+                cur[1] = max(cur[1], e)
+        if cur:
+            cov += cur[1] - cur[0]
+        epoch = max(a1 - a0, 1e-9)
+        pct = 100.0 * min(cov / epoch, 1.0)
+        durs = sorted(r["offset_s"] - r["onset_s"] for r in rr)
+        med = float(np.median(durs))
+        s = {"spec_event_index": i, "acns_label": rr[0].get("acns_label"), "runs": len(rr),
+             "prevalence_pct": round(pct, 2), "acns_prevalence": prevalence_category(pct),
+             "typical_duration_s": round(med, 2), "acns_duration": duration_category(med),
+             "longest_duration_s": round(durs[-1], 2)}
+        if str(ev.get("pattern") or "").upper() == "EDB" or (rr[0].get("plus") and "F" in (rr[0].get("plus") or "")
+                                                               and not rr[0].get("periodic")):
+            stereotyped = str(ev.get("pattern") or "").upper() == "EDB"
+            if pct >= 50.0:
+                s["edb"] = "definite" if stereotyped else "possible"
+            else:
+                s["edb"] = "possible" if stereotyped else "no (RDA+F)"
+        out.append(s)
+    return out

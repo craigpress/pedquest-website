@@ -63,6 +63,9 @@ ALL_PANELS = PANELS + EXTRA_PANELS
 RPP_PATTERNS = [
     "LRDA", "GRDA", "BIRDA", "LPD", "GPD", "BIPD", "LPDs", "GPDs", "SIRPIDs",
     "BIRDs", "triphasic",
+    # 0.5.0 phase D (spec_version 3): extreme delta brush - abundant/continuous GRDA+F with the fast activity
+    # stereotyped to each delta wave (ACNS 2021 Table 2)
+    "EDB",
 ]
 AEEG_PATTERNS = ["CNV", "DNV", "BS", "CLV", "FT"]
 MONTAGES = ["longitudinal_bipolar", "referential", "average", "neonatal_reduced"]
@@ -176,7 +179,29 @@ _EVENT = {
         # run-to-run repetition-rate wander as a fraction of frequency_hz
         "fluctuation": {"type": "number", "minimum": 0, "maximum": 1},
         "rate_jitter": {"type": "number", "minimum": 0, "maximum": 0.5},
+        # ACNS 2021 sharpness of the dominant phase.  Read from spec_version 3 (0.5.0 phase D): spiky (< 70 ms at
+        # baseline), sharp (70-200 ms), sharply_contoured, blunt.  Kept a free string so older specs validate;
+        # spec_warnings flags an unknown value and any use below version 3.
         "sharpness": {"type": "string"},
+        # 0.5.0 phase D (spec_version 3), rhythmic_pattern, ACNS 2021 (acns-review.md):
+        # SI-: runs start 0.5-3 s after each `stimulation` and are absent otherwise (pattern "SIRPIDs" implies it)
+        "stimulus_induced": {"type": "boolean"},
+        # main modifier 1 / 2: the scheduler sets the run duty and run length to land in the category
+        "prevalence": {"enum": ["continuous", "abundant", "frequent", "occasional", "rare"]},
+        "duration_category": {"enum": ["very_long", "long", "intermediate", "brief", "very_brief"]},
+        # minor modifier: anterior-posterior / posterior-anterior lag across the chain (triphasic GPDs default
+        # anterior_posterior, 120 ms)
+        "lag": {"enum": ["none", "anterior_posterior", "posterior_anterior"]},
+        "lag_ms": {"type": "number", "minimum": 0, "maximum": 400},
+        # generalized RPP field: frontal (v3 default), occipital (OIRDA-like) or none (the flat GENERALIZED_FIELD)
+        "predominance": {"enum": ["frontal", "occipital", "none"]},
+        # +F / EDB: centre frequency of the superimposed fast activity (defaults: PDs+F 14, RDA+F 13, EDB 24 Hz)
+        "fast_hz": {"type": "number", "minimum": 4, "maximum": 40},
+        # stimulation (0.5.0 phase D): the stimulus type (ACNS asks for it) and the background response;
+        # response defaults to "increase" when background.reactivity is present, else "none"
+        "stimulus": {"enum": ["auditory", "light_tactile", "patient_care", "noxious", "suction", "sternal_rub",
+                              "nailbed_pressure", "nostril_tickle", "trapezius_squeeze", "other"]},
+        "response": {"enum": ["increase", "attenuation", "paradoxical", "none"]},
         # seizure
         "onset_min": _num,
         **_SEIZURE_CORE,

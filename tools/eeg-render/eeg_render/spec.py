@@ -844,6 +844,40 @@ def _normalize_style(kind: str, style: Dict[str, Any]) -> Dict[str, Any]:
 _RPP_ACNS_HZ = (0.5, 4.0)
 
 
+def _acns_rpp_warnings(ev: Dict[str, Any], version: int, events: List[Dict[str, Any]]) -> List[str]:
+    """0.5.0 phase D: ACNS 2021 consistency of a rhythmic_pattern's phase-D keys (acns-review.md)."""
+    from .rpp_v3 import is_triphasic, parse_plus, sharpness_key
+    out: List[str] = []
+    pat = str(ev.get("pattern") or "").upper()
+    mod = str(ev.get("modifier") or "").lower()
+    has_f, has_r, has_s = parse_plus(ev.get("plus_modifier"))
+    used = [k for k in ("sharpness", "stimulus_induced", "prevalence", "duration_category", "lag", "predominance")
+            if ev.get(k) not in (None, False, "")]
+    used += [w for w, hit in (("+R", has_r), ("evolving", "evolv" in mod), ("triphasic", is_triphasic(ev)),
+                             ("BIRDs", pat == "BIRDS"), ("SIRPIDs", pat == "SIRPIDS"), ("EDB", pat == "EDB")) if hit]
+    if version < 3:
+        if used:
+            out.append("accepted but not synthesized below spec_version 3: " + ", ".join(used)
+                       + ("; BIRDs render as two independent hemispheric clocks (BIPD)" if pat == "BIRDS" else ""))
+        return out
+    if ev.get("sharpness") not in (None, "") and sharpness_key(ev.get("sharpness")) is None:
+        out.append(f"sharpness {ev.get('sharpness')!r} is not an ACNS category (spiky, sharp, sharply_contoured, blunt)")
+    if has_r and not ev.get("periodic"):
+        out.append("+R applies to PDs only (ACNS 2021); ignored on RDA")
+    if has_s and ev.get("periodic"):
+        out.append("+S applies to RDA only (ACNS 2021); on PDs it renders as sharpness 'spiky'")
+    if is_triphasic(ev) and not ev.get("periodic"):
+        out.append("triphasic morphology applies to PDs/SW, not RDA; ignored")
+    if pat == "BIRDS":
+        if float(ev.get("frequency_hz") or 0) <= 4.0:
+            out.append("BIRDs are > 4 Hz (ACNS 2021); the run is raised to 4.3 Hz")
+        if float(ev.get("run_duration_s") or 0) >= 10.0:
+            out.append("BIRDs last < 10 s; run_duration_s is capped at 9.5 s")
+    if ev.get("stimulus_induced") and not any(e.get("type") == "stimulation" for e in events):
+        out.append("stimulus_induced without a stimulation event: no runs are scheduled")
+    return out
+
+
 def spec_warnings(image: Dict[str, Any]) -> List[str]:
     """ACNS advisories for a *normalized* image (EEG Atlas P5, 0.3.11).
 
@@ -902,15 +936,19 @@ def spec_warnings(image: Dict[str, Any]) -> List[str]:
                 out.append(f"events[{i}]: BRD is a neonatal term; older patients use BIRDs (rhythmic_pattern)")
         if t == "rhythmic_pattern":
             f = float(ev.get("frequency_hz", 0) or 0)
-            if not (_RPP_ACNS_HZ[0] <= f <= _RPP_ACNS_HZ[1]):
+            if not (_RPP_ACNS_HZ[0] <= f <= _RPP_ACNS_HZ[1]) and not (
+                    str(ev.get("pattern") or "").upper() == "BIRDS" and int(spec.get("spec_version") or 1) >= 3):
                 out.append(f"events[{i}]: {f} Hz is outside the ACNS rhythmic/periodic range "
                            f"{_RPP_ACNS_HZ[0]}-{_RPP_ACNS_HZ[1]} Hz")
             pat = str(ev.get("pattern") or "")
             if pat.upper() not in {p.upper() for p in RPP_PATTERNS}:
                 out.append(f"events[{i}]: pattern {pat!r} is not an ACNS main term ({', '.join(RPP_PATTERNS)})")
             run = float(ev.get("run_duration_s", 0) or 0)
-            if f > 0 and run * f < 6.0 and not ev.get("min_cycles"):
+            is_bird = pat.upper() == "BIRDS" and int(spec.get("spec_version") or 1) >= 3
+            if f > 0 and run * f < 6.0 and not ev.get("min_cycles") and not is_bird:
                 out.append(f"events[{i}]: run_duration_s {run} at {f} Hz is under six cycles; set min_cycles: 6")
+            out.extend(f"events[{i}]: {w}" for w in _acns_rpp_warnings(ev, int(spec.get("spec_version") or 1),
+                                                                     spec.get("events") or []))
     return out
 
 
@@ -1169,6 +1207,8 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e.setdefault("over_min", 60.0)
     elif kind == "stimulation":
         e.setdefault("at_min", 0.0)
+        # 0.5.0 phase D (v3): `stimulus`, `response` and `duration_s` (hold, default 6 s) are optional; the response
+        # is resolved against background.reactivity in rpp_v3.stimulus_rows (increase when present, else none)
     elif kind == "artifact":
         e.setdefault("at_min", 0.0)
         e.setdefault("duration_s", 60.0)
@@ -1190,6 +1230,22 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e.setdefault("onset_min", 0.0)
         e.setdefault("duration_min", 30.0)
         e.setdefault("pattern", "LRDA")
+        pat3 = str(e["pattern"]).upper()
+        if version >= 3 and pat3 in ("BIRDS", "EDB", "SIRPIDS", "TRIPHASIC"):
+            # 0.5.0 phase D (acns-review.md): ACNS 2021 defaults for the patterns that used to be labels only.
+            # BIRDs: focal > 4 Hz runs of 0.5-10 s, occasional (Yoo 2017; learningeeg birds: 4-5 Hz for 7 s).
+            # EDB: continuous frontally predominant 1-3 Hz delta with 20-30 Hz brushes (Schmitt 2012).
+            # triphasic: 1.5-2.5 Hz GPDs with triphasic morphology and an A-P lag.  SIRPIDs: stimulus-induced.
+            d = {"BIRDS": dict(frequency_hz=5.0, run_duration_s=3.0, amplitude_uv=70.0, onset_region="left_temporal",
+                               periodic=False),
+                 "EDB": dict(frequency_hz=1.5, run_duration_s=120.0, amplitude_uv=150.0, onset_region="generalized",
+                             periodic=False, plus_modifier="+F", prevalence="continuous"),
+                 "TRIPHASIC": dict(frequency_hz=1.8, amplitude_uv=110.0, onset_region="generalized", periodic=True,
+                                   lag="anterior_posterior"),
+                 "SIRPIDS": dict(stimulus_induced=True, run_duration_s=30.0)}[pat3]
+            for k, v in d.items():
+                if e.get(k) is None:
+                    e[k] = v
         e.setdefault("frequency_hz", 1.5)
         e.setdefault("run_duration_s", 60.0)
         e.setdefault("amplitude_uv", 60.0)
@@ -1197,6 +1253,10 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         e.setdefault("plus_modifier", None)
         if e.get("evolution") in ("none", None):
             e["evolution"] = "none"
+        if version >= 3 and e.get("stimulus_induced") is None and (
+                "stimulus" in str(e.get("modifier") or "").lower()
+                or str(e.get("modifier") or "").upper().split("-")[0].strip() == "SI"):
+            e["stimulus_induced"] = True           # modifier "SI" / "stimulus-induced" (ACNS SI-)
         # 0.4.0 (Craig, P5 C26): periodic patterns fluctuate in amplitude and their
         # repetition rate wanders a little from run to run - still no evolution
         fluctuating = "fluctuat" in str(e.get("modifier") or "").lower()
