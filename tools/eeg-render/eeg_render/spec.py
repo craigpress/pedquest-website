@@ -628,8 +628,20 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
             # 0.5.0 (feature review B1-01/B1-04: max IBI 8.0 s at day 3 and 13.4 s in the first hours): 5.75 s and
             # 3.7 s were the published MAXIMA and had been used as the mean.  Means of 3.2 / 3.0 s with sigma 0.25
             # put the ~99th percentile at 5.7 / 5.4 s, and the resample cap holds the maximum (S22; LE: 6 s at 37-40 w)
+            p_ta = pma_eff if pma_eff is not None else 40.0
+            if not early and bg["type"] == "continuous":
+                # r6 (r5-background open item "TA contrast": the interburst median was about 2 s against the single
+                # 7-s interburst of LE-QS4d): term tracé alternant is 3-8-s bursts alternating with 4-8-s interbursts
+                # of 25-50 uV mixed theta/delta.  That interburst is not a discontinuity IBI (the voltage stays above
+                # 25 uV), so the 6-s term ceiling does not bound it.  Mean 5.5 s, sigma 0.28, cap 8 s, bursts 5 s,
+                # falling to the day-3 values by 43 w, where quiet sleep becomes continuous slow-wave sleep
+                f = min(max((p_ta - 41.0) / 2.0, 0.0), 1.0)
+                bs.setdefault("ibi_s", 5.5 + f * (3.0 - 5.5))
+                bs.setdefault("ibi_sigma", 0.28 + f * (0.25 - 0.28))
+                bs.setdefault("ibi_max_s", 8.0 + f * (max_acceptable_ibi_s(p_ta) - 8.0))
+                bs.setdefault("burst_s", 5.0 + f * (4.5 - 5.0))
             bs.setdefault("ibi_s", 3.2 if early else 3.0)
-            bs.setdefault("ibi_max_s", 5.75 if early else max_acceptable_ibi_s(pma_eff if pma_eff is not None else 40.0))
+            bs.setdefault("ibi_max_s", 5.75 if early else max_acceptable_ibi_s(p_ta))
         bs.setdefault("burst_s", 4.0 if early else 4.5)
         bs.setdefault("ibi_s", 5.0 if early else 3.5)
         bs.setdefault("ibi_sigma", 0.25)

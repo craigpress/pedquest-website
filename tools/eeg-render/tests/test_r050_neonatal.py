@@ -202,9 +202,11 @@ def test_first_hours_ibi_honours_the_published_maximum():
     assert ibi.max() <= 5.75 and 2.5 <= np.median(ibi) <= 4.0
 
 
-@pytest.mark.parametrize("cid", ["B1-01", "B1-10"])
+@pytest.mark.parametrize("cid", ["B1-10"])
 def test_term_quiet_sleep_ibi_at_most_6_s(cid):
-    """LE-text: 6 s is the longest acceptable IBI at 37-40 w (0.4.x: B1-01 max 8.0 s, B1-10 max 8.9 s)."""
+    """LE-text: 6 s is the longest acceptable IBI at 37-40 w (0.4.x: B1-01 max 8.0 s, B1-10 max 8.9 s).  r6: B1-01's
+    quiet sleep is tracé alternant, whose 25-50-uV interburst is not a discontinuity IBI; its 4-8-s cycle is tested in
+    test_r050_fix_r6.py."""
     ibi = _sched_ibis(S(cid), "quiet_sleep")
     assert ibi.size >= 30
     assert ibi.max() <= 6.0

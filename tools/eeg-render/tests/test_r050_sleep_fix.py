@@ -156,11 +156,12 @@ def test_fast_spindles_are_parietal(CHILD):
 # ------------------------------------------------------------------------------- hypnagogic hypersynchrony --
 def test_hypnagogic_hypersynchrony_runs_are_long_and_dominate_the_page():
     """sleep-independent.md: infant runs 2-5 s at about 2x background; learningeeg Hypnapompic-Hypersynchrony: a > 10-s
-    paroxysmal run that dominates the page.  Target runs 5-15 s at about 3x background."""
+    paroxysmal run that dominates the page.  Target runs 5-15 s at about 3x background.  r6: paroxysmal bursts of 1-10 s
+    (median 6 s, 2-10 s), so the median bound is 5-9 s and the 10th percentile >= 3 s."""
     S = _mk("infant", minutes=40, seed=515151, variants={"hypnagogic_hypersynchrony": {"enabled": True}})
     runs = [r for nm, r in S._variants_v3 if nm == "hypnagogic_hypersynchrony" and r["t0"] > 60]
     durs = np.array([r["t1"] - r["t0"] for r in runs])
-    assert len(runs) >= 5 and 6.0 <= np.median(durs) <= 12.0 and np.percentile(durs, 10) >= 4.5, durs
+    assert len(runs) >= 5 and 5.0 <= np.median(durs) <= 9.0 and np.percentile(durs, 10) >= 3.0, durs
     ratios = []
     for r in runs[:6]:
         _, d = _disp(S, r["t0"] - 6, r["t1"])

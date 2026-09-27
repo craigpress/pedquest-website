@@ -64,8 +64,12 @@ FIELDS_LEFT: Dict[str, Dict[str, float]] = {
     "hyperventilation_buildup": {"Fp1": 0.80, "F7": 0.80, "F3": 1.0, "Fz": 0.50, "T3": 0.70, "C3": 0.85,
                                  "Cz": 0.45, "T5": 0.60, "P3": 0.65, "Pz": 0.32, "O1": 0.60},
     # hypnagogic / hypnopompic hypersynchrony: broad, every chain incl. temporal (Hypnapompic-Hypersynchrony)
-    "hypnagogic_hypersynchrony": {"Fp1": 0.70, "F7": 0.75, "F3": 0.95, "Fz": 0.50, "T3": 0.70, "C3": 0.95,
-                                  "Cz": 0.50, "T5": 0.60, "P3": 0.75, "Pz": 0.40, "O1": 0.50},
+    # r6 (r5-background open item; hypnagogic hypersynchrony is maximal fronto-centrally): F3/C3/Fz/Cz carry the
+    # maximum, the frontopolar, temporal and posterior leads fall off (the 0.5.0 table had P3 0.75 / O1 0.50 against
+    # F3 0.95 and the midline at 0.50, a fronto-central / posterior RMS ratio of 1.3).  T5 stays 0.45 over O1 0.15 so
+    # T5-O1 / T6-O2 still carry the run (B5-06: every chain involved)
+    "hypnagogic_hypersynchrony": {"Fp1": 0.55, "F7": 0.55, "F3": 1.0, "Fz": 0.90, "T3": 0.60, "C3": 1.0,
+                                  "Cz": 0.95, "T5": 0.45, "P3": 0.55, "Pz": 0.45, "O1": 0.15},
     # POSTS: occipital
     "posts": {"Fp1": 0.02, "F7": 0.02, "F3": 0.03, "Fz": 0.02, "T3": 0.06, "C3": 0.06, "Cz": 0.03, "T5": 0.35,
               "P3": 0.30, "Pz": 0.15, "O1": 1.0},
@@ -360,31 +364,53 @@ def hv_rows(burst: Dict, t: np.ndarray, field: np.ndarray, y: np.ndarray) -> np.
 # ------------------------------------------- scheduled (background) variants --
 def hh_schedule(seed: int, windows: Sequence[Tuple[float, float]], rate_per_min: float, amp: float,
                 arousal_starts: Sequence[float]) -> List[Dict]:
-    """Hypnagogic hypersynchrony runs in the drowsy windows (and hypnopompic runs at arousals from sleep):
-    duration lognormal median 8 s (5-15 s), 3-5 Hz, crescendo over the first 1-2 s.  Phase B (sleep-fix,
-    sleep-independent.md: runs of 2-5 s against a > 10-s paroxysmal run in learningeeg Hypnapompic-Hypersynchrony)."""
+    """Hypnagogic hypersynchrony runs in the drowsy windows (and hypnopompic runs at arousals from sleep), 3-5 Hz,
+    crescendo over the first 0.6-1.5 s.  Phase B (sleep-fix, sleep-independent.md: runs of 2-5 s against a > 10-s
+    paroxysmal run in learningeeg Hypnapompic-Hypersynchrony) set a median of 8 s (5-15 s).  r6: paroxysmal bursts of
+    1-10 s (median 6 s, 2-10 s), each built cycle by cycle (``_hh_run``)."""
     rng = substream(seed, "v3-hh")
     out = []
     gap_med = 60.0 / max(rate_per_min, 1e-6)
+
+    def dur():
+        return _ln(rng, 6.0, 0.35, 2.0, 10.0)
     for a, b in windows:
         t = a + float(rng.uniform(0.0, min(0.5 * gap_med, max(0.0, b - a - 2.0))))
         while t < b - 2.0:
-            d = _ln(rng, 8.0, 0.35, 5.0, 15.0)
-            d = min(d, b - t)
+            d = min(dur(), b - t)
             out.append(_hh_run(rng, t, d, amp))
             t += d + _ln(rng, gap_med, 0.5, 2.0, 10 * gap_med)
     for a in arousal_starts:
         if rng.random() < 0.6:
-            out.append(_hh_run(rng, a + float(rng.uniform(0.2, 1.0)), _ln(rng, 8.0, 0.35, 5.0, 15.0), amp))
+            out.append(_hh_run(rng, a + float(rng.uniform(0.2, 1.0)), dur(), amp))
     out.sort(key=lambda r: r["t0"])
     return out
 
 
 def _hh_run(rng, t, d, amp):
-    return {"t0": t, "t1": t + d, "hz": float(rng.uniform(3.0, 5.0)), "amp": amp * float(np.exp(rng.normal(0, 0.15))),
-            "ph0": float(rng.uniform(0, 2 * np.pi)), "rise": float(rng.uniform(1.0, 2.0)),
-            "asym": float(rng.uniform(-0.25, 0.25)), "fast_hz": float(rng.uniform(7.0, 9.0)),
-            "fast_ph": float(rng.uniform(0, 2 * np.pi)), "am_ph": float(rng.uniform(0, 2 * np.pi))}
+    """One run, drawn once: a cycle list rather than a phase-modulated sine.
+
+    r6 (r5-background open item "HH comb": a wandering sine with harmonics and a 7-9 Hz rider read as a dense, regular
+    comb; learningeeg Hypnapompic-Hypersynchrony: high-voltage rounded 3-5 Hz waves that wax and wane): every cycle
+    has its own period (lognormal, CV about 0.2, around a base frequency that drifts through the run), its own
+    amplitude (AR(1) in log, so neighbouring waves are related but not equal) and its own crest shape (skew), and each
+    hemisphere a partly independent amplitude sequence.  The waxing / waning envelope is two slow sinusoids of random
+    rate and phase on top of the crescendo."""
+    hz = float(rng.uniform(3.0, 4.6))
+    n = int(np.ceil((d + 2.0) * 6.5)) + 4
+    drift = hz * np.exp(0.12 * np.cumsum(rng.normal(0.0, 0.35, n)) / np.sqrt(np.arange(1, n + 1)))
+    per = np.clip(np.exp(rng.normal(0.0, 0.2, n)) / np.clip(drift, 2.6, 5.2), 0.18, 0.5)
+    la = np.zeros(n)
+    z = rng.normal(0.0, 0.28, n)
+    for k in range(n):
+        la[k] = (0.55 * la[k - 1] if k else 0.0) + z[k]
+    a = np.exp(la - la.mean())
+    side = np.exp(rng.normal(0.0, 0.14, (2, n)))
+    return {"t0": t, "t1": t + d, "hz": hz, "amp": amp * float(np.exp(rng.normal(0, 0.15))),
+            "rise": float(rng.uniform(0.6, 1.5)), "asym": float(rng.uniform(-0.25, 0.25)),
+            "bounds": np.concatenate([[0.0], np.cumsum(per)]) - float(rng.uniform(0.0, per[0])),
+            "cyc_amp": a, "cyc_side": side, "cyc_skew": rng.uniform(-0.35, 0.35, n),
+            "am_hz": rng.uniform(0.15, 0.6, 2), "am_ph": rng.uniform(0, 2 * np.pi, 2), "am_depth": float(rng.uniform(0.2, 0.4))}
 
 
 def hh_rows(run: Dict, t: np.ndarray, electrodes: Sequence[str], y: np.ndarray, x_sign: np.ndarray) -> np.ndarray:
@@ -395,6 +421,9 @@ def hh_rows(run: Dict, t: np.ndarray, electrodes: Sequence[str], y: np.ndarray, 
     lag = LAG_S_PER_Y["hypnagogic_hypersynchrony"]
     rows = np.zeros((len(electrodes), t.size))
     t0, t1 = run["t0"], run["t1"]
+    bnd, ca, cs, sk = run["bounds"], run["cyc_amp"], run["cyc_side"], run["cyc_skew"]
+    ctr = 0.5 * (bnd[:-1] + bnd[1:])
+    n = ca.size
     for e in range(len(electrodes)):
         d = t - lag * y[e] - t0
         live = (d >= 0) & (d < t1 - t0)
@@ -402,13 +431,15 @@ def hh_rows(run: Dict, t: np.ndarray, electrodes: Sequence[str], y: np.ndarray, 
             continue
         u = np.clip(d / run["rise"], 0.0, 1.0)
         env = (u * u * (3 - 2 * u) * np.clip((t1 - t0 - d) / 0.8, 0.0, 1.0)
-               * (1.0 + 0.25 * np.sin(2 * np.pi * 0.35 * d + run["am_ph"])))
-        # polymorphic: a wandering 3-5 Hz rhythm, a slower 1.5-3 Hz component, sharpened crests, and faster
-        # 7-9 Hz activity riding on it (Hypnapompic-Hypersynchrony: not a monomorphic sinusoid)
-        ph = (2 * np.pi * run["hz"] * d + run["ph0"]
-              + 1.6 * np.sin(2 * np.pi * 0.31 * d + run["am_ph"]) + 0.9 * np.sin(2 * np.pi * 0.73 * d + run["fast_ph"]))
-        ph2 = 2 * np.pi * 0.55 * run["hz"] * d + run["fast_ph"] + 1.2 * np.sin(2 * np.pi * 0.23 * d)
-        w = (-(np.sin(ph) + 0.30 * np.sin(2 * ph + 0.6)) / 1.25 - 0.45 * np.sin(ph2)) / 1.2             + 0.20 * np.sin(2 * np.pi * run["fast_hz"] * d + run["fast_ph"]) * (0.5 + 0.5 * np.sin(ph))
+               * (1.0 + run["am_depth"] * 0.5 * (np.sin(2 * np.pi * run["am_hz"][0] * d + run["am_ph"][0])
+                                                 + np.sin(2 * np.pi * run["am_hz"][1] * d + run["am_ph"][1]))))
+        k = np.clip(np.searchsorted(bnd, d, side="right") - 1, 0, n - 1)
+        phi = np.clip((d - bnd[k]) / (bnd[k + 1] - bnd[k]), 0.0, 1.0)
+        # per-cycle crest shape: skew the phase inside the cycle (sharper or broader surface-negative crest)
+        phi = phi + sk[k] * np.sin(2 * np.pi * phi) / (2 * np.pi)
+        sa = ca * (cs[0] if x_sign[e] < 0 else cs[1] if x_sign[e] > 0 else 0.5 * (cs[0] + cs[1]))
+        amp = np.interp(d, ctr, sa)
+        w = -np.sin(2 * np.pi * phi) * amp
         rows[e] = field[e] * env * live * w * 0.5 * run["amp"]
     return rows
 

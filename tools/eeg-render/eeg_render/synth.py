@@ -3418,22 +3418,60 @@ class Synthesizer:
             return two, m
         grid = np.arange(0.0, dur, 1.0 / self.fs)
         eg = np.exp(-0.5 * ((grid - 0.5 * dur) / (0.30 * dur)) ** 2)
-        two_g, mix_g = _mix(grid)
-        norm = np.ptp(two_g * eg, axis=1) / np.maximum(np.ptp(mix_g * eg, axis=1), 1e-9)
-        mix = _mix(dd)[1] * norm[:, None]
-        rows += (0.5 * inst.wave_fast_uv * jitter * (np.sqrt(field) * fast_side)[:, None] * env_w[None, :] * mix)
+        two_g = _mix(grid)[0]
+        f_hz, fd = f_wave, fw
         if inst.fast_uv > 0 and inst.decrement_s > 0:
-            start = inst.t0 + 0.55 * dur
-            w = smoothstep((t - start) / 0.3) * (1.0 - smoothstep((t - (start + inst.decrement_s)) / 0.5))
             f_hz = float(r3.uniform(16.0, 22.0))
             fd = f_hz + r3.normal(0.0, 1.2, n_e)
-            pd = r3.uniform(0.0, 2 * np.pi, n_e)
-            fb = fd + r3.uniform(3.0, 6.0, n_e)          # a second, beating component: irregular, not a sine train
-            pb = r3.uniform(0.0, 2 * np.pi, n_e)
+        # r6 (focal-fix.md / r5-seizures.md "partly": the riding fast activity was still a sum of steady partials, and
+        # the decrement's beta two beating sines, an even ripple at page scale).  All from its own substream, drawn
+        # once per spasm on a fixed grid around the spasm and read by interpolation (window independent):
+        # - on the wave (0.8 s; the r5 partials already wander +-2 Hz), a slow log-normal amplitude envelope (depth
+        #   0.3), still rescaled on the per-spasm grid to the two-sine peak-to-peak, so the fast / slow ratio and the
+        #   17-19 Hz peak stay where fix-focal put them (an added frequency wander pushed single-spasm peaks to 23 Hz);
+        # - in the decrement, narrow-band noise (a Gaussian spectrum, sd 2.5 Hz, around each electrode's frequency, a
+        #   tenth of the power common to all) under a slow log-normal envelope (< 2 Hz, depth 0.6), scaled to the RMS
+        #   of the r5 sine pair.  The amplitude then comes in irregular sub-bursts and the frequency wanders cycle to
+        #   cycle, as in S1.
+        rn = substream(self.seed, "spasm-fast-r6", inst.index, inst.ordinal)
+        dec = inst.decrement_s if inst.fast_uv > 0 and inst.decrement_s > 0 else 0.0
+        gd = np.arange(-0.5, dur + dec + 1.5, 1.0 / self.fs)
+        fq = np.fft.rfftfreq(gd.size, 1.0 / self.fs)
+        lo = np.exp(-0.5 * (fq / 1.2) ** 2)
+
+        def _slow(own_w, com_w):
+            m = (own_w * np.fft.irfft(np.fft.rfft(rn.normal(0.0, 1.0, (n_e, gd.size)), axis=1) * lo, gd.size, axis=1)
+                 + com_w * np.fft.irfft(np.fft.rfft(rn.normal(0.0, 1.0, gd.size)) * lo, gd.size)[None, :])
+            return m / np.maximum(np.std(m, axis=1, keepdims=True), 1e-12)
+        am = np.exp(0.3 * _slow(0.8, 0.6))
+
+        def _at(g, x):
+            return np.array([np.interp(x, gd, g[e]) for e in range(n_e)])
+
+        def _mix_r6(x):
+            amod = _at(am, x)
+            wb = (2.0 / fm_f)[:, :, None] * np.sin(2 * np.pi * fm_f[:, :, None] * x[None, None, :] + fm_p[:, :, None])
+            m = (0.75 * np.sin(2 * np.pi * fw[:, None] * x[None, :] + ph[:, None] + wb[0])
+                 + 0.4 * np.sin(2 * np.pi * fwb[:, None] * x[None, :] + phb[:, None] + wb[1]))
+            for q in range(3):
+                m += 0.35 * np.sin(2 * np.pi * fx_p[q][:, None] * x[None, :] + px_p[q][:, None])
+            return m * amod
+        norm = np.ptp(two_g * eg, axis=1) / np.maximum(np.ptp(_mix_r6(grid) * eg, axis=1), 1e-9)
+        mix = _mix_r6(dd) * norm[:, None]
+        rows += (0.5 * inst.wave_fast_uv * jitter * (np.sqrt(field) * fast_side)[:, None] * env_w[None, :] * mix)
+        if dec > 0:
+            start = inst.t0 + 0.55 * dur
+            w = smoothstep((t - start) / 0.3) * (1.0 - smoothstep((t - (start + inst.decrement_s)) / 0.5))
+            own = np.fft.rfft(rn.normal(0.0, 1.0, (n_e, gd.size)), axis=1)
+            com = np.fft.rfft(rn.normal(0.0, 1.0, gd.size))
+            nb_d = (0.95 * np.fft.irfft(own * np.exp(-0.5 * ((fq[None, :] - fd[:, None]) / 2.5) ** 2), gd.size, axis=1)
+                    + 0.30 * np.fft.irfft(com * np.exp(-0.5 * ((fq - f_hz) / 2.5) ** 2), gd.size)[None, :])
+            nb_d = nb_d * np.exp(0.6 * _slow(0.8, 0.6))
+            nb_d /= np.maximum(np.std(nb_d, axis=1, keepdims=True), 1e-12)
             gen = (0.4 + 0.6 * field) * fast_side
-            rows += (0.5 * inst.fast_uv * gen[:, None] * w[None, :]
-                     * (0.75 * np.sin(2 * np.pi * fd[:, None] * dd[None, :] + pd[:, None])
-                        + 0.5 * np.sin(2 * np.pi * fb[:, None] * dd[None, :] + pb[:, None])))
+            # 0.64 = the RMS of the r5 0.75 / 0.5 sine pair
+            rows += (0.5 * inst.fast_uv * 0.64 * gen[:, None] * w[None, :]
+                     * _at(nb_d, dd))
         return rows
 
     def _build_multifocal_spikes(self) -> None:
