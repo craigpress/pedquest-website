@@ -359,6 +359,14 @@ _BACKGROUND = {
         "blink_rate_per_min": {"type": "number", "minimum": 0, "maximum": 60},
         # 0.5.0 (spec_version 3): "cycling" draws N1/N2/N3/REM cycles inside every sleep span; "static" holds N2
         "sleep_staging": {"enum": ["cycling", "static"]},
+        # phase D (spec_version 3): natural sleep architecture - "absent" (encephalopathy; the default for an
+        # unreactive background) keeps a state change but draws no cycling and no spindles, vertex waves,
+        # K-complexes, slow waves or REM
+        "sleep_architecture": {"enum": ["normal", "absent"]},
+        # phase D (spec_version 3): coma patterns - "spindle" (unreactive, continuous N2-like spindles, vertex
+        # waves and K-complexes, no cycling) or "alpha" (unreactive, diffuse frontally predominant monotonous alpha,
+        # no posterior dominant rhythm); both default reactivity to absent
+        "coma_pattern": {"enum": ["spindle", "alpha"]},
         # 0.4.0: peak blink voltage at Fp (0.3.x fixed 95; version-2 default 160)
         "blink_amplitude_uv": {"type": "number", "minimum": 0, "maximum": 500},
         # 0.4.0: what amplitude_uv (and the events' amplitudes) mean - the referential
@@ -544,6 +552,8 @@ _STYLE = {
         "trend_strip_panels": {"type": "array", "items": {"type": "string"}},
         "trend_strip_duration_min": {"type": "number", "minimum": 5},
         "show_ecg_channel": {"type": "boolean"},
+        # phase D (spec_version 3): draw the photic stimulus marker channel when a photic train is on the page
+        "show_photic_channel": {"type": "boolean"},
         "chain_order": {"type": "string"},
         "single_channel": {"type": "string"},
         "layout": {"enum": ["side_by_side_single_vs_multichannel"]},

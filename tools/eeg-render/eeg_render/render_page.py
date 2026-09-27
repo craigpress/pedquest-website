@@ -191,6 +191,15 @@ def render_eeg_page(
         sig = np.vstack([sig, ecg[None, :]])
         labels = labels + ["ECG"]
         pairs = list(pairs) + [("A1", "A2")]
+    # phase D (normal-variants re-review V110-09): photic stimulation carries its stimulus marker channel, one tick
+    # per flash (eegatlas-online photic driving #010), so driving can be read against the flash rate
+    flashes = synth.photic_flashes(t0, t0 + win) if hasattr(synth, "photic_flashes") else []
+    photic_row = None
+    if len(flashes) and st.get("show_photic_channel", True):
+        photic_row = len(labels)
+        sig = np.vstack([sig, np.zeros((1, t.size))])
+        labels = labels + ["Photic"]
+        pairs = list(pairs) + [("A1", "A1")]       # its own row group (like the ECG row)
 
     own_fig = fig is None
     rc = dict(S.apply_rc(S.LIGHT))
@@ -235,6 +244,11 @@ def render_eeg_page(
         total_uv = row_uv * (n_slots + 1.7)
 
         offsets = row_offsets(n_rows, breaks, row_uv)
+        if photic_row is not None:
+            tick = np.zeros(t.size)
+            for fl in flashes:
+                tick[(t >= fl) & (t < fl + 0.012)] = 1.0
+            sig[photic_row] = page_polarity(spec) * 0.55 * row_uv * tick
 
         # --- grid ----------------------------------------------------------
         for k in range(int(np.floor(win)) + 1):

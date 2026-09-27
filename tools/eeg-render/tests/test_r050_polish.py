@@ -275,6 +275,10 @@ def test_trace_alternant_bursts_carry_high_voltage_slow_waves():
     theta/delta texture turned up."""
     syn = N.S("B1-01")
     t0 = N._first_state(syn, "quiet_sleep", minlen=120)
+    # merged with the sleep family: a term quiet-sleep epoch opens with high-voltage slow (HVS); tracé alternant
+    # follows it, so the window starts where that epoch's HVS ends
+    hvs_end = max([b for a, b in getattr(syn, "_hvs", []) if a <= t0 + 1.0 <= b + 1.0] or [t0])
+    t0 = max(t0, hvs_end + 10.0)
     burst, ibi, big = _ta(syn, t0, t0 + 120.0)
     assert burst >= 3.0 * ibi, (burst, ibi)
     assert 25.0 <= ibi <= 50.0

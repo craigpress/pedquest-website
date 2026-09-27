@@ -1092,6 +1092,7 @@ class Synthesizer:
         st_arousal: List[Tuple[float, float]] = []
         rem_starts: List[float] = []
         rem_intervals: List[Tuple[float, float]] = []
+        self._sleep_keys: List[Tuple[float, bool]] = []
         for ev in spec["events"]:
             if ev["type"] != "state_change":
                 continue
@@ -1099,6 +1100,7 @@ class Synthesizer:
             if ev["to"] == "arousal":
                 st_arousal.append((t, 30.0))
                 continue
+            self._sleep_keys.append((t, ev["to"] in ("sleep", "rem")))
             if ev["to"] == "rem":
                 rem_starts.append(t)
                 target = 1.0
@@ -1153,6 +1155,15 @@ class Synthesizer:
                 self._state_intervals.append((t, t + length, label))
                 t += length
                 k += 1
+        # phase D (sleep family): at term a quiet-sleep epoch opens with high-voltage slow (HVS: continuous 50-150 uV
+        # 0.5-4 Hz) before tracé alternant, and HVS takes over QS as TA fades after 40 w (ACNS 2013 neonatal
+        # terminology, Tsuchida 2013 J Clin Neurophysiol 30:161; learningeeg neonatal sleep)
+        self._hvs: List[Tuple[float, float]] = []
+        if self.spec_version >= 3 and self._state_intervals:
+            pma = float(bgc.get("dysmature_pma_weeks") or bgc.get("pma_weeks") or 40.0)
+            f = float(np.interp(pma, [37.0, 40.0, 42.0, 44.0], [0.0, 0.35, 0.5, 0.7]))
+            if f > 0:
+                self._hvs = [(a, a + f * (b - a)) for a, b, lab in self._state_intervals if lab == "quiet_sleep"]
 
         # temperature --------------------------------------------------
         tt: List[float] = [0.0]
@@ -1416,17 +1427,50 @@ class Synthesizer:
     _SPINDLE_FIELD_V3 = {"C3": 1.0, "C4": 1.0, "Cz": 1.0, "F3": 0.75, "F4": 0.75, "Fz": 0.85, "P3": 0.75, "P4": 0.75,
                          "Pz": 0.8, "T3": 0.55, "T4": 0.55, "F7": 0.4, "F8": 0.4, "T5": 0.4, "T6": 0.4,
                          "Fp1": 0.25, "Fp2": 0.25, "O1": 0.25, "O2": 0.25}
+    #: phase D: the fast (12.5-15 Hz) group is centro-parietal - best in C3-P3 / P3-O1, smaller in F3-C3 (learningeeg
+    #: Spindles: C3-P3, P3-O1, T3-T5, T5-O1)
+    _SPINDLE_FIELD_FAST = {"C3": 1.0, "C4": 1.0, "Cz": 1.0, "P3": 0.9, "P4": 0.9, "Pz": 0.95, "F3": 0.65, "F4": 0.65,
+                           "Fz": 0.7, "T3": 0.6, "T4": 0.6, "T5": 0.55, "T6": 0.55, "F7": 0.3, "F8": 0.3,
+                           "Fp1": 0.2, "Fp2": 0.2, "O1": 0.2, "O2": 0.2}
     _SPINDLE_LAG_RAD_PER_UNIT = 1.1
-    _VERTEX_FIELD = {"Cz": 1.0, "Fz": 0.55, "Pz": 0.5, "C3": 0.45, "C4": 0.45, "F3": 0.3, "F4": 0.3, "P3": 0.3, "P4": 0.3,
-                     "T3": 0.1, "T4": 0.1, "Fp1": 0.08, "Fp2": 0.08, "O1": 0.08, "O2": 0.08, "F7": 0.1, "F8": 0.1,
-                     "T5": 0.08, "T6": 0.08}
+    #: phase D: infant spindles are high-voltage combs over a high-voltage background (learningeeg 4-month-old asleep:
+    #: 100-200 uV in F3-C3 / C3-P3), so the 2.6 background-RMS packet weight is doubled for infants
+    _SPINDLE_GAIN_V3D = {"infant": 2.2}
+    #: phase D: slow (11-12.5 Hz) spindles are FRONTAL (Fz/F3/F4 maximum), so F3-C3 and Fp1-F3 carry them and C3-P3 /
+    #: P3-O1 much less (De Gennaro & Ferrara 2003); the fast group keeps the centro-parietal field above
+    _SPINDLE_FIELD_SLOW = {"Fz": 1.0, "F3": 1.0, "F4": 1.0, "Fp1": 0.45, "Fp2": 0.45, "F7": 0.6, "F8": 0.6, "Cz": 0.55,
+                           "C3": 0.45, "C4": 0.45, "T3": 0.3, "T4": 0.3, "Pz": 0.25, "P3": 0.2, "P4": 0.2, "T5": 0.12,
+                           "T6": 0.12, "O1": 0.08, "O2": 0.08}
+    #: phase D (normal-variants re-review: F3-C3 0.3 of the midline; learningeeg Vertexes shows them in F3-C3, C3-P3,
+    #: F4-C4, C4-P4 and T3-T5): a broader parasagittal field, central maximum
+    _VERTEX_FIELD = {"Cz": 1.0, "Fz": 0.5, "Pz": 0.45, "C3": 0.8, "C4": 0.8, "F3": 0.4, "F4": 0.4, "P3": 0.4, "P4": 0.4,
+                     "T3": 0.3, "T4": 0.3, "Fp1": 0.08, "Fp2": 0.08, "O1": 0.06, "O2": 0.06, "F7": 0.12, "F8": 0.12,
+                     "T5": 0.12, "T6": 0.12}
+    #: phase D slow waves: frontal maximum, steep enough front-to-back that the longitudinal chains show them
+    #: (learningeeg Bad-Fp1-electrode-during-SWS: largest in Fp2-F8, Fp2-F4, Fz-Cz); plus a front-leading lag
+    _SWS_FIELD = {"Fp1": 1.0, "Fp2": 1.0, "Fz": 0.8, "F3": 0.7, "F4": 0.7, "F7": 0.75, "F8": 0.75, "Cz": 0.5,
+                  "C3": 0.4, "C4": 0.4, "T3": 0.35, "T4": 0.35, "Pz": 0.25, "P3": 0.2, "P4": 0.2, "T5": 0.15, "T6": 0.15,
+                  "O1": 0.08, "O2": 0.08, "A1": 0.12, "A2": 0.12}
+    _SWS_LAG_S_PER_Y = 0.10
+    #: slow-wave peak (surface-negative, uV at the field maximum, referential) by age (children 100-300 uV)
+    _SWS_UV = {"infant": 250.0, "child": 280.0, "adolescent": 240.0, "adult": 220.0}
+    #: sawtooth waves: central / vertex maximum (eegatlas-online #2784: Fz-Cz, Cz-Pz, C3-P3, C4-P4)
+    _SAWTOOTH_FIELD = {"Cz": 1.0, "Fz": 0.55, "Pz": 0.5, "C3": 0.75, "C4": 0.75, "F3": 0.45, "F4": 0.45, "P3": 0.4,
+                       "P4": 0.4, "T3": 0.25, "T4": 0.25, "Fp1": 0.1, "Fp2": 0.1, "F7": 0.15, "F8": 0.15, "T5": 0.12,
+                       "T6": 0.12, "O1": 0.08, "O2": 0.08}
+    _SAWTOOTH_UV = {"infant": 120.0, "child": 130.0, "adolescent": 100.0, "adult": 80.0}
+    #: REM saccades are larger than waking scanning saccades on the page (learningeeg REM-Sleep-ex-3)
+    _REM_GAZE_GAIN = 1.8
     _KCOMPLEX_FIELD = {"Fz": 1.0, "F3": 0.85, "F4": 0.85, "Cz": 0.7, "C3": 0.5, "C4": 0.5, "Fp1": 0.55, "Fp2": 0.55,
                        "Pz": 0.3, "P3": 0.25, "P4": 0.25, "F7": 0.45, "F8": 0.45, "T3": 0.2, "T4": 0.2, "T5": 0.1,
                        "T6": 0.1, "O1": 0.05, "O2": 0.05}
     #: peak microvolts at the field maximum (median; lognormal per event).  Pediatric vertex waves and K-complexes are
     #: typically the largest waves of an N2 page; the bipolar chains show the field gradient, about a third of this
     _VERTEX_UV = {"infant": 170.0, "child": 200.0, "adolescent": 140.0, "adult": 90.0}
-    _KCOMPLEX_UV = {"infant": 300.0, "child": 350.0, "adolescent": 250.0, "adult": 160.0}
+    #: phase D: the K-complex is the largest wave of an N2 page (eegatlas-online #113: about 150 uV in the adult
+    #: longitudinal chains, in every chain); the 0.5.0 values drew it vertex-wave sized
+    _KCOMPLEX_UV = {"infant": 450.0, "child": 550.0, "adolescent": 450.0, "adult": 320.0}
+    _KCOMPLEX_LAG_S_PER_Y = 0.06
 
     #: N3 slow-wave weight (background-RMS units) by age: children carry the highest-voltage slow-wave sleep
     _SWS_W_V3 = {"infant": 0.65, "child": 0.7, "adolescent": 0.55, "adult": 0.4}
@@ -1437,7 +1481,37 @@ class Synthesizer:
         asleep = _piecewise(self._state_t, self._state_v, grid) >= 0.5
         staged = (self.bg.get("sleep_staging") or "cycling") == "cycling"
         sp = sv3.spans(grid, asleep)
-        if staged:
+        if self._sleep_keys:
+            # phase D (key vs visible, B2-07 / B5-07): the drawn sleep starts and ends at the KEYED state change,
+            # not where the 2-min voltage ramp crosses half way (30 s late)
+            sp, start = [], None
+            for tk, to in sorted(self._sleep_keys):
+                if to and start is None:
+                    start = max(0.0, tk)
+                elif not to and start is not None:
+                    sp.append((start, tk))
+                    start = None
+            if start is not None:
+                sp.append((start, dur + 1.0))
+            sp = [(a, b) for a, b in sp if b > a]
+        # phase D: frontal arousal rhythm is read on arousal FROM sleep (normal-variants re-review V110-08): an
+        # authored arousal with no sleep before it gets 4 min of N1 -> N2 ahead of it and wakes at the arousal
+        forced = []
+        for at, _w in self._arousals:
+            if at > 60.0 and not any(a <= at <= b for a, b in sp):
+                sp.append((max(0.0, at - 240.0), at))
+                forced.append((max(0.0, at - 150.0), at, "N2"))
+        sp = sorted(sp)
+        if self._arch_absent():
+            staged = False              # phase D: encephalopathy - a state change but no cycling stages
+        coma = self.bg.get("coma_pattern")
+        if coma:
+            # phase D: spindle / alpha coma - one unreactive state all record, no cycling, no arousals, no eyes
+            sp = []
+            staged = False
+        if coma:
+            hyp = [(-120.0, dur + 120.0, "N2" if coma == "spindle" else "W")]
+        elif staged:
             hyp = sv3.build_hypnogram(self.seed, sp, self.age, dur)
         else:
             hyp, prev = [], -120.0
@@ -1445,7 +1519,8 @@ class Synthesizer:
                 hyp += [(prev, a, "W"), (a, b, "N2")]
                 prev = b
             hyp.append((prev, dur + 120.0, "W"))
-        for a, b in self._rem_intervals:            # authored REM overrides the drawn stage
+        for a, b, stage in [(a, b, "R") for a, b in self._rem_intervals] + forced:
+            # authored REM overrides the drawn stage; so does the N2 ahead of an authored arousal from sleep
             cut = []
             for x0, x1, st in hyp:
                 if x1 <= a or x0 >= b:
@@ -1455,27 +1530,81 @@ class Synthesizer:
                     cut.append((x0, a, st))
                 if x1 > b:
                     cut.append((b, x1, st))
-            hyp = sorted(cut + [(a, b, "R")])
+            hyp = sorted(cut + [(a, b, stage)])
         self._hypno = [iv for iv in hyp if iv[1] > iv[0]]
-        self._arousals_v3 = sv3.build_arousals(self.seed, self._hypno) + [(a, w) for a, w in self._arousals]
-        eyes_on = self.bg.get("reactivity") == "present" and float(self.bg.get("blink_rate_per_min") or 0.0) > 0
+        self._arousals_v3 = (([] if coma or self._arch_absent() else sv3.build_arousals(self.seed, self._hypno))
+                             + [(a, w) for a, w in self._arousals])
+        eyes_on = (self.bg.get("reactivity") == "present" and float(self.bg.get("blink_rate_per_min") or 0.0) > 0
+                   and not coma)
         self._eyes = sv3.build_eye_timeline(self.seed, self._hypno) if eyes_on else []
         style = spec.get("style") or {}
         rate = float(style.get("spindle_rate_per_min", 4.0))
         self._sp_t = sv3.schedule_transients(self.seed, "spindles", self._hypno, sv3.SPINDLE, rate, 1.5)
-        self._sp = sv3.spindle_params(self.seed, self._sp_t.size, self.age)
         vrate = 6.0 if self.age in ("infant", "child") else 3.0
         self._vx_t = sv3.schedule_transients(self.seed, "vertex", self._hypno, sv3.VERTEX, vrate, 2.0)
         self._kc_t = sv3.schedule_transients(self.seed, "kcomplex", self._hypno, sv3.KCOMPLEX, 1.5, 4.0)
+        # phase D: an arousal from N2/N3 is often heralded by a K-complex (learningeeg arousal); K-complexes are often
+        # followed by a spindle (AASM; eegatlas-online K-complex #113)
+        ar = substream(self.seed, "arousal-kc")
+        lead = [a - float(ar.uniform(0.3, 0.8)) for a, _w in self._arousals_v3
+                if ar.random() < 0.5 and self.stage_at(np.array([a - 1.0]))[0] in ("N2", "N3")]
+        self._kc_t = np.unique(np.concatenate([self._kc_t, np.asarray(lead, float)]))
+        kr2 = substream(self.seed, "kc-spindle")
+        follow = np.array([tk + float(kr2.uniform(0.55, 0.9)) for tk in self._kc_t if kr2.random() < 0.6])
+        self._sp_t = np.sort(np.concatenate([self._sp_t, follow])) if follow.size else self._sp_t
+        self._sp = sv3.spindle_params(self.seed, self._sp_t.size, self.age, v3d=True)
         vr = substream(self.seed, "vertex-shape")
         self._vx_a = np.exp(vr.normal(0.0, 0.25, self._vx_t.size))
         kr = substream(self.seed, "kcomplex-shape")
         self._kc_a = np.exp(kr.normal(0.0, 0.25, self._kc_t.size))
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
-        self._sp_field = np.array([mt.table_value(self._SPINDLE_FIELD_V3, e, 0.2) for e in self.electrodes])
+        self._sp_field = np.array([mt.table_value(self._SPINDLE_FIELD_FAST, e, 0.2) for e in self.electrodes])
+        self._sp_field_drug = np.array([mt.table_value(self._SPINDLE_FIELD_V3, e, 0.2) for e in self.electrodes])
+        self._sp_field_slow = np.array([mt.table_value(self._SPINDLE_FIELD_SLOW, e, 0.1) for e in self.electrodes])
+        self._x_sign = np.sign(pos[:, 0]) * (np.abs(pos[:, 0]) > 1e-6)
         self._sp_lag = -self._SPINDLE_LAG_RAD_PER_UNIT * pos[:, 1]
         self._vx_field = np.array([mt.table_value(self._VERTEX_FIELD, e, 0.05) for e in self.electrodes])
         self._kc_field = np.array([mt.table_value(self._KCOMPLEX_FIELD, e, 0.05) for e in self.electrodes])
+        # phase D: individual slow waves (N3), REM sawtooth trains and rapid eye movements, N1 slow eye movements
+        self._sws = sv3.schedule_slow_waves(self.seed, self._hypno, self.age)
+        self._sws_field = np.array([mt.table_value(self._SWS_FIELD, e, 0.2) for e in self.electrodes])
+        self._sws_y = pos[:, 1]
+        self._saw = sv3.schedule_sawtooth(self.seed, self._hypno)
+        self._saw_field = np.array([mt.table_value(self._SAWTOOTH_FIELD, e, 0.1) for e in self.electrodes])
+        self._rem_steps = sv3.rem_saccades(self.seed, self._hypno, self._saw["t"])
+        self._rem_step_t = np.array([s[0] for s in self._rem_steps])
+
+    def sleep_stage_summary(self, duration_s: float) -> List[Dict]:
+        """Phase D answer-key rows: each drawn sleep stage with the natural transients realized in it (counted only
+        where sleep architecture is preserved), plus the drawn arousals."""
+        if not self._hypno or (len(self._hypno) == 1 and self._hypno[0][2] == "W" and not self.bg.get("coma_pattern")):
+            return []
+        if all(st == "W" for _a, _b, st in self._hypno) and not self.bg.get("coma_pattern"):
+            return []
+
+        def kept(times: np.ndarray) -> np.ndarray:
+            times = np.asarray(times, float)
+            if not times.size:
+                return times
+            return times[self._arch_w(times, self._sed_v3_at("loc", times, 0.0)) > 0.5]
+        sp, vx, kc = kept(self._sp_t), kept(self._vx_t), kept(self._kc_t)
+        sw, saw = kept(self._sws["t"]), kept(self._saw["t"])
+        rem = kept(np.array([s0 for s0, _r, _p0, p1 in self._rem_steps if p1 != 0.0]))
+        out = []
+        for a, b, st in self._hypno:
+            a2, b2 = max(a, 0.0), min(b, duration_s)
+            if b2 <= a2:
+                continue
+            n = lambda x: int(((x >= a2) & (x < b2)).sum())  # noqa: E731
+            label = f"{self.bg['coma_pattern']}_coma" if self.bg.get("coma_pattern") else st
+            out.append({"kind": "sleep_stage", "t0": a2, "t1": b2, "label": label, "spindles": n(sp),
+                        "vertex_waves": n(vx), "k_complexes": n(kc), "slow_waves": n(sw), "sawtooth_trains": n(saw),
+                        "rapid_eye_movements": n(rem), "coma_pattern": self.bg.get("coma_pattern"),
+                        "sleep_architecture": "absent" if self._arch_absent() else "present"})
+        for a, w in self._arousals_v3:
+            if 0.0 <= a < duration_s:
+                out.append({"kind": "arousal", "t0": a, "t1": min(a + w, duration_s)})
+        return out
 
     def stage_at(self, t: np.ndarray) -> np.ndarray:
         """Sleep stage label per sample (spec_version 3, non-neonatal); '' otherwise."""
@@ -1532,11 +1661,93 @@ class Synthesizer:
         return prof[None, :] * a_uv * self._blink_field()[:, None]
 
     def _spindle_rows_v3(self, t: np.ndarray) -> np.ndarray:
-        env, c, s = sv3.packets(t, self._sp_t, self._sp["dur"], self._sp["hz"], self._sp["amp"], self._sp["ph"])
-        if not env.any():
-            return np.zeros((self.n_elec, t.size))
+        rows = np.zeros((self.n_elec, t.size))
+        sp = self._sp
+        live = (self._sp_t + sp["dur"] > t[0]) & (self._sp_t < t[-1])
+        if not live.any():
+            return rows
         lag = self._sp_lag[:, None]
-        return self._sp_field[:, None] * (c[None, :] * np.cos(lag) - s[None, :] * np.sin(lag))
+        hemi = {-1.0: np.where(self._x_sign < 0, 1.0, np.where(self._x_sign > 0, 0.1, 0.45)),
+                1.0: np.where(self._x_sign > 0, 1.0, np.where(self._x_sign < 0, 0.1, 0.45)), 0.0: np.ones(self.n_elec)}
+        # slow frontal and fast centro-parietal groups; infants: one hemisphere per spindle (asynchronous)
+        for slow in (False, True):
+            for side in (-1.0, 0.0, 1.0):
+                m = live & (sp["slow"] == slow) & (sp["side"] == side)
+                if not m.any():
+                    continue
+                _, c, s = sv3.packets(t, self._sp_t[m], sp["dur"][m], sp["hz"][m], sp["amp"][m], sp["ph"][m], sp["peak"][m])
+                field = (self._sp_field_slow if slow else self._sp_field) * hemi[side]
+                rows += field[:, None] * (c[None, :] * np.cos(lag) - s[None, :] * np.sin(lag))
+        return rows
+
+    def _arch_w(self, t: np.ndarray, sed_loc: np.ndarray) -> np.ndarray:
+        """Phase D: weight of the natural sleep transients (spindles, vertex waves, K-complexes, slow waves, REM).
+
+        Sleep architecture is lost in encephalopathy (``background.sleep_architecture: absent``, the default for an
+        unreactive background) and under a hypnotic (1 - loss of consciousness); dexmedetomidine spindles are added
+        separately.  Spindle coma keeps its spindles (the defining feature)."""
+        if self.bg.get("coma_pattern") == "spindle":
+            return np.ones(t.size)
+        if self._arch_absent():
+            return np.zeros(t.size)
+        return np.clip(1.0 - sed_loc, 0.0, 1.0)
+
+    def _arch_absent(self) -> bool:
+        arch = self.bg.get("sleep_architecture")
+        return arch == "absent" or (arch is None and self.bg.get("reactivity") == "absent"
+                                    and not self.bg.get("coma_pattern"))
+
+    def _slow_wave_rows(self, t: np.ndarray) -> np.ndarray:
+        """Phase D: N3 slow waves, each a surface-negative half-wave (0.25-0.75 s) and a smaller positive rebound,
+        frontal maximum, travelling front to back (``_SWS_LAG_S_PER_Y``) so the longitudinal chains keep them."""
+        rows = np.zeros((self.n_elec, t.size))
+        w = self._sws
+        if not w["t"].size:
+            return rows
+        uv = self._SWS_UV.get(self.age, 100.0)
+        sel = np.nonzero((w["t"] + 3.0 * w["half"] + 0.5 > t[0]) & (w["t"] - 0.5 < t[-1]))[0]
+        for k in sel:
+            h, a = w["half"][k], uv * w["amp"][k]
+            for e in np.nonzero(self._sws_field > 0.01)[0]:
+                d = t - w["t"][k] + self._SWS_LAG_S_PER_Y * self._sws_y[e]
+                m = (d >= 0) & (d < 2.6 * h)
+                if not m.any():
+                    continue
+                dd = d[m]
+                neg = np.where(dd < h, -np.sin(np.pi * np.clip(dd / h, 0.0, 1.0)), 0.0)
+                pos = np.where(dd >= h, w["pos"][k] * np.sin(np.pi * np.clip((dd - h) / (1.6 * h), 0.0, 1.0)), 0.0)
+                rows[e, m] += a * self._sws_field[e] * (neg + pos)
+        return rows
+
+    def _rem_rows(self, t: np.ndarray) -> np.ndarray:
+        """Phase D REM: sawtooth trains (triangular 2-4 Hz, steep negative descent, central maximum) and rapid eye
+        movements (the artifacts family's lateral-gaze field, held between saccades)."""
+        rows = np.zeros((self.n_elec, t.size))
+        sw = self._saw
+        suv = self._SAWTOOTH_UV.get(self.age, 45.0)
+        for k in np.nonzero((sw["t"] + sw["n"] / sw["hz"] > t[0]) & (sw["t"] < t[-1]))[0]:
+            d = t - sw["t"][k]
+            T = 1.0 / sw["hz"][k]
+            span = sw["n"][k] * T
+            m = (d >= 0) & (d < span)
+            if not m.any():
+                continue
+            u = np.mod(d[m], T) / T
+            # triangle: slow rise over 75 % of the cycle, sharp surface-negative fall (serrated sawtooth)
+            tri = np.where(u < 0.75, u / 0.75, 1.0 - (u - 0.75) / 0.25) - 0.5
+            env = np.sin(np.pi * np.clip(d[m] / span, 0.0, 1.0)) ** 0.5
+            rows[:, m] += (suv * sw["amp"][k]) * self._saw_field[:, None] * (tri * env)[None, :]
+        if self._rem_steps:
+            j0 = max(0, int(np.searchsorted(self._rem_step_t, t[0], side="right")) - 1)
+            g = np.full(t.size, self._rem_steps[j0][2] if self._rem_steps[j0][0] > t[0] else self._rem_steps[j0][3])
+            for s0, rise, p0, p1 in self._rem_steps[j0:]:
+                if s0 > t[-1]:
+                    break
+                m = t >= s0
+                g[m] = p0 + (p1 - p0) * self._rc((t[m] - s0) / rise)
+            if g.any():
+                rows += self._gaze_field()[:, None] * (g * self.GAZE_UV * self._REM_GAZE_GAIN)[None, :]
+        return rows
 
     def _sleep_transient_rows(self, t: np.ndarray) -> np.ndarray:
         """Vertex sharp waves (surface-negative, about 150 ms, central) and K-complexes (sharp negative then positive
@@ -1545,19 +1756,28 @@ class Synthesizer:
         vuv = self._VERTEX_UV.get(self.age, 90.0)
         for tt, a in zip(self._vx_t, self._vx_a):
             d = t - tt
-            m = (d > -0.15) & (d < 0.45)
+            m = (d > -0.25) & (d < 0.6)
             if m.any():
                 dd = d[m]
-                w = -np.exp(-0.5 * (dd / 0.045) ** 2) + 0.35 * np.exp(-0.5 * ((dd - 0.14) / 0.06) ** 2)
+                # phase D (re-review: FWHM 78-90 ms read as midline spikes): a sharp but not spiky negative wave, 50 ms
+                # rise / 75 ms fall (about 150 ms wide), then a small positive after-wave
+                w = (-np.exp(-0.5 * (dd / np.where(dd < 0, 0.05, 0.075)) ** 2)
+                     + 0.3 * np.exp(-0.5 * ((dd - 0.22) / 0.08) ** 2))
                 rows[:, m] += (vuv * a) * self._vx_field[:, None] * w[None, :]
         kuv = self._KCOMPLEX_UV.get(self.age, 150.0)
+        ylag = self._KCOMPLEX_LAG_S_PER_Y * self._sws_y
         for tt, a in zip(self._kc_t, self._kc_a):
             d = t - tt
-            m = (d > -0.2) & (d < 1.4)
+            m = (d > -0.4) & (d < 1.7)
             if m.any():
-                dd = d[m]
-                w = -np.exp(-0.5 * (dd / 0.07) ** 2) + 0.6 * np.exp(-0.5 * ((dd - 0.45) / 0.18) ** 2)
-                rows[:, m] += (kuv * a) * self._kc_field[:, None] * w[None, :]
+                # front-to-back travel (a slow wave) so the broad field survives the longitudinal chains
+                dd = d[m][None, :] + ylag[:, None]
+                # phase D (re-review: "vertex wave plus slow"): AASM a well-delineated negative sharp wave immediately
+                # followed by a positive component, >= 0.5 s in all; sharp 60 ms onset, slow 170 ms negative fall
+                # (negative phase about 0.25 s wide), positive phase peaking about 0.55 s (eegatlas-online #113)
+                w = (-np.exp(-0.5 * (dd / np.where(dd < 0, 0.06, 0.17)) ** 2)
+                     + 0.55 * np.exp(-0.5 * ((dd - 0.58) / 0.2) ** 2))
+                rows[:, m] += (kuv * a) * self._kc_field[:, None] * w
         return rows
 
     def temperature_at(self, t: np.ndarray) -> np.ndarray:
@@ -1607,6 +1827,15 @@ class Synthesizer:
         """Maturational PMA: the dysmature PMA when the record carries a younger PMA's patterns."""
         return float(self.bg.get("dysmature_pma_weeks") or self.bg.get("pma_weeks") or 40.0)
 
+    def _hvs_gate(self, t: np.ndarray) -> np.ndarray:
+        """1 inside a quiet-sleep HVS window (10-s raised-cosine edges), 0 elsewhere."""
+        g = np.zeros(np.shape(t))
+        for a, b in self._hvs:
+            if b < np.min(t) - 10 or a > np.max(t) + 10:
+                continue
+            g = np.maximum(g, np.clip(np.minimum(t - a, b - t) / 10.0 + 0.5, 0.0, 1.0))
+        return 0.5 - 0.5 * np.cos(np.pi * g)
+
     def _qs_sf_v3(self, term_sf: float) -> float:
         """0.5.0 (feature review B1-09: 43-w quiet sleep was still day-3 trace alternant): TA is minimal by 42 w
         and gone by 46 w, replaced by continuous 50-150 uV slow-wave sleep (ACNS 2013), so the quiet-sleep
@@ -1636,6 +1865,8 @@ class Synthesizer:
             if self.spec_version >= 3:
                 table = dict(table, quiet_sleep=self._qs_sf_v3(table["quiet_sleep"]))
             base = self._state_lookup(t, table, np.zeros_like(t, dtype=float))
+            if getattr(self, "_hvs", None):
+                base = base * (1.0 - 0.9 * self._hvs_gate(t))     # phase D: HVS is continuous
             sleep = np.zeros_like(t)     # the state table already carries sleep
         out = (sed if len(self._sed_t) > 1 else base) + cold + sleep
         return np.clip(out, 0.0, 0.96)
@@ -3470,12 +3701,21 @@ class Synthesizer:
                 continue
             a = float(ev["at_min"]) * 60.0
             b = a + float(ev["duration_s"])
+            amp_uv = float(ev["amplitude_uv"])
+            if self.spec_version >= 3:
+                # phase D (normal-variants re-review): hyperventilation lasts 3-5 min and SREDA 40-80 s, so a shorter
+                # authored window becomes the END of a run of the minimum length (the authored page keeps the peak)
+                floor = self._AV_MIN_DURATION_S.get(ev["kind"], 0.0)
+                a = min(a, b - floor)
+                if ev["kind"] == "frontal_arousal_rhythm":
+                    # a subtle arousal pattern: at most about 2x the frontal background (re-review measured 4.9x)
+                    amp_uv = min(amp_uv, 0.65 * float(self.bg["amplitude_uv"]))
             blocks = []
             if ev["kind"] == "mu" and ev.get("block_at_min") is not None:
                 ba = float(ev["block_at_min"]) * 60.0
                 blocks = [(ba, ba + float(ev.get("block_duration_s", 1.0)))]
             run = {"t0": a, "t1": b, "variant": ev["kind"],
-                "frequency_hz": float(ev["frequency_hz"]), "amplitude_uv": float(ev["amplitude_uv"]),
+                "frequency_hz": float(ev["frequency_hz"]), "amplitude_uv": amp_uv,
                 "side": ev.get("side", "both"), "context": ev["context"], "blocks": blocks,
                 "spec_event_index": index}
             if self.spec_version >= 3:
@@ -3490,8 +3730,27 @@ class Synthesizer:
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
         self._av_y = pos[:, 1]
 
+    #: phase D: minimum realized duration (s) of an authored activation / variant run
+    _AV_MIN_DURATION_S = {"hyperventilation_buildup": 180.0, "sreda": 40.0}
+    #: phase D: lateral eye movement that times each lambda (re-review: 15-17 uV at F7-T3, obvious in
+    #: lambda-waves-at-10uV-2)
+    _LAMBDA_GAZE_UV = 70.0
+
     #: 0.5.0: kinds keyed per train (the key follows what is visible), not per authored window
     _AV_TRAIN_KEYED = ("mu", "wicket", "fourteen_and_six", "rmtd", "frontal_arousal_rhythm")
+
+    def photic_flashes(self, t0: float, t1: float) -> np.ndarray:
+        """Phase D: flash times of the authored photic stimulation trains inside [t0, t1) (spec_version 3)."""
+        if self.spec_version < 3:
+            return np.zeros(0)
+        out = []
+        for run in self._authored_variants:
+            if run["variant"] != "photic_driving" or run["t1"] < t0 or run["t0"] > t1:
+                continue
+            k = np.arange(int(np.floor((run["t1"] - run["t0"]) * run["frequency_hz"])) + 1)
+            f = run["t0"] + k / run["frequency_hz"]
+            out.append(f[(f >= t0) & (f < t1) & (f < run["t1"])])
+        return np.concatenate(out) if out else np.zeros(0)
 
     def authored_variant_runs(self) -> List[Dict]:
         out = []
@@ -3538,7 +3797,7 @@ class Synthesizer:
             if kind == "lambda" and gaze.any():
                 lat = np.array([mt.table_value({"F7": 1.0, "F8": -1.0, "Fp1": 0.35, "Fp2": -0.35, "T3": 0.25, "T4": -0.25}, e, 0.0)
                                 for e in self.electrodes])
-                part += np.outer(lat, 30.0 * gaze)
+                part += np.outer(lat, self._LAMBDA_GAZE_UV * gaze)
             for ba, bb in run["blocks"]:
                 part[:, (t >= ba) & (t < bb)] = 0.0
             rows += part
@@ -5332,6 +5591,13 @@ class Synthesizer:
         pdr_w *= 1.0 + np.minimum(sed_alpha, 0.0)
         if v3:
             pdr_w = pdr_w * sed_pdr
+        coma = self.bg.get("coma_pattern") if v3state else None
+        if coma:
+            # phase D: coma patterns have no posterior dominant rhythm.  Alpha coma: diffuse, frontally predominant,
+            # monotonous, unreactive 8-12 Hz activity (Westmoreland 1975; Kaplan 1999 J Clin Neurophysiol 16:341)
+            pdr_w = np.zeros(n)
+            if coma == "alpha":
+                x += self._stream_signal(self.st_sed_alpha, i0 + 9091, n) * 1.4
         if self.age != "neonate":
             x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
             # 0.5.0: awake theta by age.  Digitized against learningeeg 5-year-old awake figures, a flat 0.30 gave a
@@ -5372,6 +5638,12 @@ class Synthesizer:
                 # at 1.6 drew continuous 2-4 Hz activity that read as active sleep
                 delta_w = delta_w + 0.5 * mature * self._state_lookup(
                     t, {"awake": 0.0, "active_sleep": 0.0, "indeterminate": 0.3, "quiet_sleep": 1.0}, np.zeros_like(t))
+            if self._hvs:
+                # phase D: quiet-sleep HVS, the highest-voltage state.  Tapered by maturity at merge: past 40 w the
+                # polish family's mature-QS slow-wave stream carries the same high-voltage slow activity, and the two
+                # stacked to about 170 uV (ACNS 2013 range 50-150)
+                hvs_k = np.where(self._neo_sws_w(t) > 0, 0.5, 1.3)    # per sample: no dependence on the window cut
+                delta_w = delta_w + hvs_k * (1.0 - mature) * self._hvs_gate(t)
         cape_b = self.cape_phase(t) if (self.spec_version >= 3 and self.bg.get("cape")) else None
         if cape_b is not None:
             delta_w = delta_w * (1.0 - self._CAPE_SPECTRUM[0] * cape_b)
@@ -5454,8 +5726,10 @@ class Synthesizer:
 
         if v3state:
             # 0.5.0: scheduled spindle packets in N2/N3 (2.6 background-RMS units at the field maximum); the drug
-            # spindle weight (dexmedetomidine) adds to the stage rate through the same packets
-            x += self._spindle_rows_v3(t) * (2.6 * (1.0 + sed_spindle))[None, :]
+            # spindle weight (dexmedetomidine) adds to the stage rate through the same packets.  Phase D: natural sleep
+            # transients need preserved architecture (``_arch_w``: none in encephalopathy or under a hypnotic)
+            arch = self._arch_w(t, sed_loc)
+            x += self._spindle_rows_v3(t) * (2.6 * (self._SPINDLE_GAIN_V3D.get(self.age, 1.0) * arch + sed_spindle))[None, :]
             if not self._calibrating and self._dsp["t"].size:
                 # dexmedetomidine spindles in wake too: their own irregular schedule, same packet shape and field
                 x += self._drug_spindle_rows(t) * (self._DRUG_SPINDLE_W * sed_spindle)[None, :]
@@ -5638,12 +5912,20 @@ class Synthesizer:
         # A staring absence does not blink; see ABSENCE_EMG_DROP.
         # 0.5.0: an unconscious patient does not blink or open the eyes, and under complete neuromuscular blockade the
         # lids and extraocular muscles are paralysed too (sedation.md S109-01..06, S109-09)
-        eyes = (np.zeros(n) if blocked else 1.0 - sed_loc) if v3 else 1.0
+        eyes = (np.zeros(n) if blocked or (v3state and self.bg.get("coma_pattern")) else 1.0 - sed_loc) if v3 else 1.0
         if v3state:
             gate = sv3.weight(t, self._hypno, sv3.BLINK) * eye_blink * env * (1.0 - self.absence_gate(t)) * eyes
             x += self.blink_rows(t, gate)
             x += self._eye_event_rows(t) * (env * (1.0 - self.absence_gate(t)) * eyes)[None, :]
-            x += self._sleep_transient_rows(t) * env[None, :] * self._ch_gain[:, None]
+            arch_env = (env * arch)[None, :] * self._ch_gain[:, None]
+            x += self._sleep_transient_rows(t) * arch_env
+            # phase D: N3 slow waves (cerebral), REM sawtooth + rapid eye movements, N1 slow eye movements (ocular)
+            x += self._slow_wave_rows(t) * arch_env
+            x += self._rem_rows(t) * (arch * eyes)[None, :]
+            n1 = sv3.weight(t, self._hypno, {"N1": 1.0}, xfade=10.0)
+            if n1.any():
+                st = self._art_stream("sem-n1", band_shape(self._freqs, 0.3, 0.12, order=2.0))
+                x += self._gaze_field()[:, None] * (self._oa(st, i0, n, 1)[0] * 0.6 * self.ROVING_UV * n1 * arch * eyes)[None, :]
         elif self.spec_version >= 3 and self.age == "neonate":
             # 0.5.0: a neonate blinks only while awake (feature review, neonatal item 4), never in active sleep
             awake = self._state_lookup(t, {"awake": 1.0, "active_sleep": 0.0, "indeterminate": 0.0, "quiet_sleep": 0.0},

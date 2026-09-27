@@ -9,6 +9,9 @@ they are not drawn.
 # 0.3.10 gives hypsarrhythmia six asynchronous focal generators that reuse the
 # lower-voltage LPD sharp-slow morphology. Existing qbank PNGs are byte-identical
 # to 0.3.9; their sidecars were restamped after representative render checks.
-RENDERER_VERSION = "0.4.4"
+# 0.5.0 (2026-09-26): spec_version 3 - causal page filter, reference-matched artifacts / variants / seizures /
+# sleep staging / ACNS 2021 patterns / generalized and focal seizure types, key-vs-visible contracts, viewer montages.
+# spec_version 1 and 2 renders are byte-identical to 0.4.4/0.4.5.
+RENDERER_VERSION = "0.5.0"
 
 __all__ = ["RENDERER_VERSION"]

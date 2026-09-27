@@ -91,6 +91,10 @@ def _sched_ibis(syn, state=None):
     keep = (mid > 0) & (mid < syn.duration_s)
     if state is not None:
         keep &= syn.state_at(mid) == state
+    # phase D (sleep family): a term quiet-sleep epoch opens with continuous high-voltage slow (HVS); the interburst
+    # measures here are the tracé-alternant part
+    for a, b in getattr(syn, "_hvs", []):
+        keep &= ~((mid >= a - 10.0) & (mid < b + 10.0))
     return ibi[keep]
 
 
@@ -289,6 +293,9 @@ def test_background_is_not_pure_delta(cid, state):
     delta 0.70-0.88, theta >= 0.10, alpha + beta >= 0.015 (0.4.x: 0.009-0.019)."""
     syn = S(cid)
     t0 = _first_state(syn, state, minlen=60) if state else 300.0
+    for a, b_ in getattr(syn, "_hvs", []):
+        if a - 1.0 <= t0 < b_:
+            t0 = b_ + 15.0            # phase D: the tracé-alternant part of the epoch (HVS opens it)
     d, _ = _display(syn, t0, t0 + 60.0)
     b = _bands(d, syn.fs)
     assert 0.70 <= b["delta"] <= 0.88, b

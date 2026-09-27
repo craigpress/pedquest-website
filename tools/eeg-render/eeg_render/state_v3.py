@@ -163,22 +163,57 @@ def schedule_transients(seed: int, tag: str, hypno: Sequence[Interval], table: D
     return np.asarray(times)
 
 
-def spindle_params(seed: int, n: int, age: str) -> Dict[str, np.ndarray]:
-    """Per-spindle duration (s), carrier (Hz) and amplitude factor, drawn once per record."""
+#: phase D (sleep family): share of N2 spindles in the slow FRONTAL group (11-12.5 Hz, Fz/F3/F4 maximum); the rest
+#: are fast centro-parietal (12.5-15 Hz).  Slow frontal spindles dominate young children and wane with age (De
+#: Gennaro & Ferrara 2003, Sleep Med Rev 7:423; Shinomiya 1999); infant spindles are one central 12-14 Hz comb.
+SLOW_SPINDLE_FRAC = {"infant": 0.0, "child": 0.4, "adolescent": 0.3, "adult": 0.25}
+#: median spindle duration (s): AASM >= 0.5 s, most 0.5-2 s (learningeeg Spindles about 1.3-1.5 s visible); infant
+#: spindles 3-9 months run several seconds (learningeeg 4-month-old: a 5-6 s asynchronous spindle)
+SPINDLE_DUR = {"infant": (3.5, 0.4, 1.5, 8.0), "child": (1.25, 0.3, 0.6, 2.6), "adolescent": (1.15, 0.3, 0.6, 2.4),
+               "adult": (1.05, 0.3, 0.55, 2.2)}
+
+
+def spindle_params(seed: int, n: int, age: str, v3d: bool = False) -> Dict[str, np.ndarray]:
+    """Per-spindle duration (s), carrier (Hz) and amplitude factor, drawn once per record.
+
+    ``v3d`` (phase D): age-scaled durations, a slow frontal / fast centro-parietal split (``slow`` flag), and for
+    infants a hemisphere per spindle (``side`` -1 left, +1 right, 0 both): infant spindles are asynchronous until
+    about the second year (learningeeg 4-month-old asleep; Ellingson 1982).
+    """
     rng = substream(seed, "spindle-shape")
-    dur = np.clip(0.8 * np.exp(rng.normal(0.0, 0.35, n)), 0.5, 2.0)
+    if not v3d:
+        dur = np.clip(0.8 * np.exp(rng.normal(0.0, 0.35, n)), 0.5, 2.0)
+        if age == "infant":
+            dur = np.clip(dur * 1.6, 0.6, 3.0)       # infant spindles run long
+        return {"dur": dur, "hz": rng.uniform(12.0, 14.5, n), "amp": np.exp(rng.normal(0.0, 0.3, n)),
+                "ph": rng.uniform(0.0, 2 * np.pi, n)}
+    med, sig, lo, hi = SPINDLE_DUR.get(age, SPINDLE_DUR["adult"])
+    dur = np.clip(med * np.exp(rng.normal(0.0, sig, n)), lo, hi)
+    slow = rng.random(n) < SLOW_SPINDLE_FRAC.get(age, 0.25)
+    hz = np.where(slow, rng.uniform(11.0, 12.5, n), rng.uniform(12.5, 15.0, n))
     if age == "infant":
-        dur = np.clip(dur * 1.6, 0.6, 3.0)       # infant spindles run long
-    return {"dur": dur, "hz": rng.uniform(12.0, 14.5, n), "amp": np.exp(rng.normal(0.0, 0.3, n)),
-            "ph": rng.uniform(0.0, 2 * np.pi, n)}
+        hz = rng.uniform(12.0, 14.0, n)
+    side = np.zeros(n)
+    if age == "infant":
+        side = rng.choice([-1.0, 1.0, 0.0], size=n, p=[0.4, 0.4, 0.2])
+    return {"dur": dur, "hz": hz, "amp": np.exp(rng.normal(0.0, 0.3, n)), "ph": rng.uniform(0.0, 2 * np.pi, n),
+            "slow": slow, "side": side, "peak": rng.uniform(0.3, 0.5, n)}
+
+
+def spindle_envelope(u: np.ndarray, peak: float) -> np.ndarray:
+    """Phase D waxing-waning spindle envelope on u in [0, 1): a raised-sine rise to ``peak`` (0.3-0.5 of the duration)
+    and a longer fall, flattened (power 0.6) so about 70 % of the scheduled duration stands above half amplitude.
+    The 0.5.0 sin^2 envelope held only 0.4 s above half amplitude (normal-variants re-review)."""
+    w = np.where(u < peak, 0.5 * u / peak, 0.5 + 0.5 * (u - peak) / (1.0 - peak))
+    return np.sin(np.pi * np.clip(w, 0.0, 1.0)) ** 0.6
 
 
 def packets(t: np.ndarray, times: np.ndarray, dur: np.ndarray, hz: np.ndarray, amp: np.ndarray,
-            ph: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+            ph: np.ndarray, peak: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Spindle carrier pieces: returns (envelope, cos(phase), sin(phase)) summed over the packets touching ``t``.
 
     The caller builds each electrode's signal as env * (cos * cos(lag) - sin * sin(lag)), so a per-electrode phase
-    lag (traveling spindle) costs one pass.
+    lag (traveling spindle) costs one pass.  ``peak`` (phase D) selects the asymmetric envelope.
     """
     env = np.zeros(t.shape)
     c = np.zeros(t.shape)
@@ -191,7 +226,10 @@ def packets(t: np.ndarray, times: np.ndarray, dur: np.ndarray, hz: np.ndarray, a
         if not m.any():
             continue
         u = (t[m] - times[k]) / dur[k]
-        e = amp[k] * np.sin(np.pi * u) ** 2 * (1.0 + 0.25 * np.sin(np.pi * u))     # waxing-waning, slightly late peak
+        if peak is None:
+            e = amp[k] * np.sin(np.pi * u) ** 2 * (1.0 + 0.25 * np.sin(np.pi * u))
+        else:
+            e = amp[k] * spindle_envelope(u, float(peak[k]))
         phase = 2 * np.pi * hz[k] * (t[m] - times[k]) + ph[k]
         env[m] += e
         c[m] += e * np.cos(phase)
@@ -242,3 +280,57 @@ def stage_intervals(hypno: Sequence[Interval], stages: Sequence[str] = NREM_STAG
         else:
             out.append((a, b))
     return out
+
+
+# ------------------------------------------------------------------ phase D (sleep family) --
+#: slow waves per minute by stage: AASM N3 needs > 20 % of the epoch in 0.5-2 Hz waves >= 75 uV (frontal); N2 holds
+#: a few isolated ones
+SWS_RATE = {"N2": 1.5, "N3": 70.0}
+#: REM: sawtooth trains (AASM: trains of sharply contoured or triangular, often serrated, 2-6 Hz waves, central
+#: maximum, often preceding a burst of rapid eye movements; eegatlas-online sawtooth waves #2784)
+SAWTOOTH_RATE = {"R": 2.0}
+#: rapid eye movements: clusters per minute in REM (phasic REM; learningeeg REM-Sleep-ex-3)
+REM_CLUSTER_RATE = {"R": 4.0}
+
+
+def schedule_slow_waves(seed: int, hypno: Sequence[Interval], age: str) -> Dict[str, np.ndarray]:
+    """Individual slow waves (the slow oscillation) in N3 and a few in N2: onset, surface-negative half-wave duration
+    (0.25-0.75 s, i.e. 0.7-2 Hz), amplitude factor (lognormal) and the relative size of the positive rebound."""
+    times = schedule_transients(seed, "sws-waves", hypno, SWS_RATE, 1.0, 0.45)
+    rng = substream(seed, "sws-shape")
+    n = times.size
+    return {"t": times, "half": np.clip(0.45 * np.exp(rng.normal(0.0, 0.3, n)), 0.3, 0.9),
+            "amp": np.exp(rng.normal(0.0, 0.3, n)), "pos": rng.uniform(0.4, 0.8, n)}
+
+
+def schedule_sawtooth(seed: int, hypno: Sequence[Interval]) -> Dict[str, np.ndarray]:
+    """Sawtooth trains in REM: onset, wave count (3-8), frequency (2-4 Hz), amplitude factor."""
+    times = schedule_transients(seed, "sawtooth", hypno, SAWTOOTH_RATE, 1.0, 4.0)
+    rng = substream(seed, "sawtooth-shape")
+    n = times.size
+    return {"t": times, "n": rng.integers(3, 9, n), "hz": rng.uniform(2.0, 4.0, n), "amp": np.exp(rng.normal(0.0, 0.25, n))}
+
+
+def rem_saccades(seed: int, hypno: Sequence[Interval], saw_t: np.ndarray) -> List[Tuple[float, float, float, float]]:
+    """Rapid eye movements in REM as gaze steps ``(start, rise_s, from, to)``: clusters of 2-5 saccades in 1-2 s, rise
+    40-150 ms, alternating direction (REM-Sleep-ex-3), a cluster after each sawtooth train plus Poisson clusters;
+    the gaze drifts back to centre between clusters."""
+    rng = substream(seed, "rem-saccades")
+    starts = list(schedule_transients(seed, "rem-clusters", hypno, REM_CLUSTER_RATE, 1.0, 3.0))
+    starts += [float(s) + float(rng.uniform(0.8, 2.0)) for s in saw_t]
+    steps: List[Tuple[float, float, float, float]] = []
+    pos, side = 0.0, 1.0
+    for c0 in sorted(starts):
+        if steps and c0 < steps[-1][0] + steps[-1][1] + 0.3:
+            continue
+        tt = c0
+        for _ in range(int(rng.integers(2, 6))):
+            to = side * float(rng.uniform(0.4, 1.0))
+            rise = float(rng.uniform(0.04, 0.15))
+            steps.append((tt, rise, pos, to))
+            pos = to
+            side = -side if rng.random() < 0.8 else side
+            tt += rise + float(rng.uniform(0.15, 0.5))
+        steps.append((tt + 0.3, 0.7, pos, 0.0))             # slow drift back to centre after the cluster
+        pos = 0.0
+    return steps
