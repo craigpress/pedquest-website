@@ -261,7 +261,9 @@ def render_eeg_page(
                 at = float(event["at_min"]) * 60.0
                 if t0 <= at <= t0 + win:
                     ax.axvline(at, color="#0097a7", linewidth=0.9, linestyle="--", zorder=4)
-                    ax.text(at, 1.015, "Stimulus", transform=ax.get_xaxis_transform(),
+                    # 0.5.0 phase D: name the stimulus when authored (ACNS asks for the stimulus type)
+                    lab = f"Stimulus: {str(event['stimulus']).replace('_', ' ')}" if event.get("stimulus") else "Stimulus"
+                    ax.text(at, 1.015, lab, transform=ax.get_xaxis_transform(),
                             fontsize=7, color="#007783", ha="center", va="bottom")
         ax.set_xticks(np.arange(t0, t0 + win + 1e-9, 1.0))
         ax.set_xticklabels([f"{k}" for k in range(int(win) + 1)], fontsize=9.4)
