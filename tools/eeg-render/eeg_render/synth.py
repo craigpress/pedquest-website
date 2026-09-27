@@ -686,6 +686,16 @@ _BROAD = {"Fp1": 0.85, "Fp2": 0.85, "Fz": 0.92, "Cz": 0.92, "Pz": 0.92}
 #: midline) buried the temporal chains under EMG while leaving the midline
 #: clean - obviously wrong beside a real page, where muscle is frontotemporal
 #: and roughly bilateral rather than a band across two derivations.
+#: 0.5.0: relaxed scalp muscle is frontalis / temporalis.  Digitized against learningeeg 5-year-old awake figures,
+#: the parasagittal chains carried 3-4x the reference's fast "fuzz" while the temporal chains matched, so the
+#: parasagittal and posterior weights drop and the temporal / frontopolar ones stay.
+_MUSCLE_V3 = {
+    "T3": 1.00, "T4": 1.00, "F7": 0.95, "F8": 0.95,
+    "T5": 0.60, "T6": 0.60, "Fp1": 0.45, "Fp2": 0.45,
+    "F3": 0.25, "F4": 0.25, "Fz": 0.20,
+    "C3": 0.12, "C4": 0.12, "Cz": 0.10,
+    "P3": 0.10, "P4": 0.10, "Pz": 0.08, "O1": 0.15, "O2": 0.15,
+}
 _MUSCLE = {
     "T3": 1.00, "T4": 1.00, "F7": 0.95, "F8": 0.95,
     "T5": 0.72, "T6": 0.72, "Fp1": 0.70, "Fp2": 0.70,
@@ -853,7 +863,7 @@ class Synthesizer:
             for st in (self.st_broad, self.st_delta, self.st_theta):
                 st.common = 0.12
         # tonic floor gets its own, broader field; st_emg stays peaked for artifacts
-        musc = _profile(ch, _MUSCLE, 0.30)
+        musc = _profile(ch, _MUSCLE_V3 if self.spec_version >= 3 else _MUSCLE, 0.30)
         for e in mt.REFERENCE_ELECTRODES:
             musc[self._idx[e]] = 0.20
         self.st_muscle = self._mk("muscle", hp_lp_shape(f, 20.0, 95.0), musc,
@@ -1360,6 +1370,8 @@ class Synthesizer:
     #: typically the largest waves of an N2 page; the bipolar chains show the field gradient, about a third of this
     _VERTEX_UV = {"infant": 170.0, "child": 200.0, "adolescent": 140.0, "adult": 90.0}
     _KCOMPLEX_UV = {"infant": 300.0, "child": 350.0, "adolescent": 250.0, "adult": 160.0}
+
+    _THETA_W_V3 = {"infant": 0.9, "child": 0.65, "adolescent": 0.45, "adult": 0.30}
 
     def _build_state_v3(self, spec: Dict, dur: float) -> None:
         grid = np.arange(0.0, dur + 1.0, 1.0)
@@ -4697,7 +4709,10 @@ class Synthesizer:
             pdr_w = pdr_w * sed_pdr
         if self.age != "neonate":
             x += self._stream_signal(self.st_pdr, i0, n) * (0.62 * self.pdr_gain * pdr_w)[None, :]
-            x += self._stream_signal(self.st_theta, i0, n) * ((0.30 + 0.25 * sleep) * sed_theta)[None, :]
+            # 0.5.0: awake theta by age.  Digitized against learningeeg 5-year-old awake figures, a flat 0.30 gave a
+            # child half the reference theta share (0.17 vs 0.35 of 1-30 Hz) and a PDR that looked too pure
+            theta0 = self._THETA_W_V3.get(self.age, 0.30) if self.spec_version >= 3 else 0.30
+            x += self._stream_signal(self.st_theta, i0, n) * ((theta0 + 0.25 * sleep) * sed_theta)[None, :]
         elif self.spec_version >= 3:
             # 0.5.0 (feature review, neonatal item 5: rel delta 0.93-0.96 and rel alpha <= 0.01 on every card): bursts
             # carry dense theta and superimposed fast activity, and the trace-alternant interburst is MIXED theta and
