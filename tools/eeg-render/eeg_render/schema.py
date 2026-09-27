@@ -70,6 +70,8 @@ RPP_PATTERNS = [
     # 0.5.0 phase D (spec_version 3): extreme delta brush - abundant/continuous GRDA+F with the fast activity
     # stereotyped to each delta wave (ACNS 2021 Table 2)
     "EDB",
+    # r050-fix-acns (acns-independent.md): the plural main term, accepted like "LPDs" / "GPDs" (warning only)
+    "BIPDs",
 ]
 AEEG_PATTERNS = ["CNV", "DNV", "BS", "CLV", "FT"]
 MONTAGES = ["longitudinal_bipolar", "referential", "average", "neonatal_reduced"]
@@ -256,6 +258,10 @@ _EVENT = {
         # minor modifier: anterior-posterior / posterior-anterior lag across the chain (triphasic GPDs default
         # anterior_posterior, 120 ms)
         "lag": {"enum": ["none", "anterior_posterior", "posterior_anterior"]},
+        # r050-fix-acns (spec_version 3): sign of a periodic discharge's dominant phase at the focus.  Omitted =
+        # the renderer default, surface-positive (learningeeg lpds-clean / lpds-quiz-clean); "surface_negative" is
+        # the conventional ACNS 2021 Fig 26 schematic.  PDs only (RDA ignores it with a warning).
+        "polarity": {"enum": ["surface_negative", "surface_positive"]},
         "lag_ms": {"type": "number", "minimum": 0, "maximum": 400},
         # generalized RPP field: frontal (v3 default), occipital (OIRDA-like) or none (the flat GENERALIZED_FIELD)
         "predominance": {"enum": ["frontal", "occipital", "none"]},

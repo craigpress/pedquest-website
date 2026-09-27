@@ -39,7 +39,9 @@ from .rng import substream
 
 #: sharpness -> width multiplier of the discharge's dominant (sharp) phase; measured on the displayed bipolar
 #: signal (tests/test_r050_acns.py): spiky < 70 ms at baseline, sharp 70-200 ms, contoured / blunt wider
-SHARPNESS_WIDTH = {"spiky": 0.42, "sharp": 1.0, "sharply_contoured": 2.0, "blunt": 3.4}
+#: r050-fix-acns: spiky 0.42 -> 0.22 (acns-independent.md: 74 ms at referential T3 after the page chain; a
+#: small lead-in from the neighbouring generators' lag counts toward the baseline width, so 0.28 still measured 70)
+SHARPNESS_WIDTH = {"spiky": 0.22, "sharp": 1.0, "sharply_contoured": 2.0, "blunt": 3.4}
 SHARPNESS_ALIASES = {"sharply contoured": "sharply_contoured", "sharply-contoured": "sharply_contoured",
                      "spike": "spiky", "sharp_wave": "sharp", "smooth": "blunt"}
 PREVALENCE = {"continuous": 0.95, "abundant": 0.70, "frequent": 0.30, "occasional": 0.05, "rare": 0.006}
@@ -63,9 +65,56 @@ FIELD_FRONTAL = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.76, "F3": 0.85, "Fz": 0.85, "
 #: FIELD_FRONTAL (renders/phaseD/acns/measure.py): the correction below brings it back to about 1.0.
 # merge with the generalized family (its per-electrode GPD discharge raised the bipolar peak 1.26x): periodic 3.4 -> 2.7
 GEN_BIPOLAR_GAIN = {"periodic": 2.7, "periodic_lag": 2.05, "rda": 4.45, "ictal": 3.0}
+#: r050-fix-acns (acns-independent.md: an 80-uV LRDA request displayed 30 uV p-p, 0.85x the background; LPDs 58-70 uV
+#: for 100): amplitude_uv of a LATERALIZED (and midline) v3 RPP is also the p-p on its maximal longitudinal-bipolar
+#: derivation, as GEN_BIPOLAR_GAIN does for generalized ones.  1 / (delivered / requested) measured per region type
+#: (left side, 3 seeds, phase-B and phase-D paths averaged; renders/phaseB/fix-acns/calib_lat.py), sawtooth RDA.
+LAT_BIPOLAR_GAIN = {
+    "rda": {"temporal": 2.17, "frontal": 1.56, "central": 2.43, "parietal": 2.0, "occipital": 2.17,
+            "hemisphere": 1.67, "mesial_temporal": 2.22, "midline": 2.54},
+    "periodic": {"temporal": 1.32, "frontal": 1.30, "central": 1.49, "parietal": 1.60, "occipital": 1.45,
+                 "hemisphere": 1.13, "mesial_temporal": 1.57, "midline": 1.56},
+}
+
+
+def lateral_bipolar_gain(morph: str, region: str) -> float:
+    tab = LAT_BIPOLAR_GAIN.get(morph)
+    if tab is None:
+        return 1.0
+    base = region.split("_", 1)[1] if region.startswith(("left_", "right_")) else region
+    return tab.get(base, tab["temporal"])
+
+
+#: r050-fix-acns: generator-lag spread that makes the measured Fp1 -> O1 cross-correlation lag equal lag_ms
+LAG_FIELD_GAIN = 1.27
 _FLIP = {"Fp1": "O1", "Fp2": "O2", "F7": "T5", "F8": "T6", "F3": "P3", "F4": "P4", "Fz": "Pz"}
 _FLIP.update({v: k for k, v in list(_FLIP.items())})
 FIELD_OCCIPITAL = {e: FIELD_FRONTAL[_FLIP.get(e, e)] for e in FIELD_FRONTAL}
+
+
+#: r050-fix-acns: the ACNS 2021 rate cutoffs the key classifies on (PDs 0.5-1 Hz with a plus / fluctuation = IIC,
+#: > 1 and <= 2.5 Hz = IIC, > 2.5 Hz = ESz A; lateralized RDA > 1 Hz with a plus = IIC).  Bins are [lo, hi] with the
+#: cutoff value belonging to the lower bin, as the classifier reads it.  The 0.5-Hz floor is the ACNS band edge,
+#: which the band clip already holds.
+RATE_CUTOFFS = (1.0, 2.5)
+
+
+def keep_rate_side(f0: float, f: float) -> float:
+    """Keep a jittered run rate ``f`` in the ACNS rate bin of the authored rate ``f0`` (acns-independent.md: authored
+    2.5-Hz GPDs keyed ESz in 6 of 18 runs, 1.0-Hz LPDs keyed IIC in 6 of 18).  A draw across a cutoff is mirrored
+    back about it, then clipped, so the runs keep their spread on the authored side."""
+    lo, hi = -math.inf, math.inf
+    for c in RATE_CUTOFFS:
+        if f0 <= c:
+            hi = c
+            break
+        lo = c
+    lo_in = lo + 1e-3 if math.isfinite(lo) else lo       # the cutoff itself belongs to the lower bin
+    if f > hi:
+        f = 2.0 * hi - f
+    elif f < lo_in:
+        f = 2.0 * lo_in - f
+    return float(min(max(f, lo_in), hi))
 
 
 def sharpness_key(val) -> Optional[str]:
@@ -98,7 +147,8 @@ def wants_v3(ev: Dict) -> bool:
     return bool(pat in ("BIRDS", "EDB", "SIRPIDS", "TRIPHASIC") or ev.get("stimulus_induced")
                 or "evolv" in mod or "fluctuat" in mod or "triphasic" in mod or isinstance(ev.get("evolution"), dict)
                 or f or r or (s and ev.get("periodic")) or sharpness_key(ev.get("sharpness"))
-                or ev.get("lag") not in (None, "none") or ev.get("prevalence") or ev.get("duration_category"))
+                or ev.get("lag") not in (None, "none") or ev.get("prevalence") or ev.get("duration_category")
+                or (ev.get("polarity") == "surface_negative" and ev.get("periodic")))
 
 
 def main_term(ev: Dict) -> str:
@@ -185,12 +235,23 @@ def fast_carrier(t: np.ndarray, hz: float, seed: int, tag: int) -> np.ndarray:
 
 # --------------------------------------------------------------- schedule --
 
-def _steps_evolving(f_start: float, f_end: float, dur: float) -> Tuple[List[Tuple[float, float]], float]:
-    """Equal-duration frequency levels from f_start to f_end, consecutive changes >= 0.5 Hz, each level >= 3 cycles."""
+def _steps_evolving(f_start: float, f_end: float, dur: float,
+                    equal_cycles: bool = False) -> Tuple[List[Tuple[float, float]], float]:
+    """Frequency levels from f_start to f_end, consecutive changes >= 0.5 Hz, each level >= 3 cycles.
+
+    Equal-duration levels by default.  ``equal_cycles`` (r050-fix-acns, a run authored shorter than 10 s) gives every
+    level the same number of cycles instead, which is the shortest layout that keeps >= 3 cycles per level: 1 -> 2 Hz
+    fits in 7.2 s instead of 10.4 s, so "evolution for < 10 s is not a seizure" can be drawn."""
     if abs(f_end - f_start) < 1.0:
         f_end = f_start + math.copysign(1.0, (f_end - f_start) or 1.0)
     n = max(3, int(round(abs(f_end - f_start) / 0.5)) + 1)
     levels = np.linspace(f_start, f_end, n)
+    if equal_cycles:
+        per = 1.0 / levels
+        dur = max(dur, 3.0 * float(per.sum()) * 1.1)
+        hold = dur * per / float(per.sum())
+        ts = np.concatenate([[0.0], np.cumsum(hold)[:-1]])
+        return [(float(a), float(v)) for a, v in zip(ts, levels)], dur
     dur = max(dur, 3.0 * n / float(levels.min()) * 1.15)
     hold = dur / n
     return [(k * hold, float(v)) for k, v in enumerate(levels)], dur
@@ -214,7 +275,7 @@ def _steps_fluctuating(f0: float, dur: float, rng, ceiling: float) -> Tuple[List
 
 def schedule(syn, ev: Dict, i: int) -> List:
     """Runs of a phase-D rhythmic_pattern (see module docstring)."""
-    from .synth import SeizureInstance, _RPP_BAND, _RPP_DRIFT
+    from .synth import SeizureInstance, _RPP_BAND, _RPP_DRIFT, RPP_RAMP_S
     rng = substream(syn.seed, "rpp3", i)
     pat = str(ev.get("pattern") or "").upper()
     f0 = float(ev["frequency_hz"])
@@ -268,6 +329,11 @@ def schedule(syn, ev: Dict, i: int) -> List:
     if has_r:
         fr = float(np.clip(f0 * 1.43 if f0 * 1.43 <= 2.4 else f0 * 0.62, 1.0, 2.4))
         plus_r = {"hz": fr, "rel": 1.2}
+    # r050-fix-acns (acns-independent.md, LPD polarity: Craig's open call): the discharge kernels are surface-positive
+    # at the focus (learningeeg lpds-clean, lpds-quiz-clean); "surface_negative" flips them (ACNS 2021 Fig 26)
+    polarity = str(ev.get("polarity") or "surface_positive") if periodic else None
+    if ev.get("polarity") and not periodic:
+        advisories.append("polarity applies to periodic discharges, not RDA; ignored")
     region = ev["onset_region"]
     pred = str(ev.get("predominance") or ("frontal" if region == "generalized" else "none"))
 
@@ -337,6 +403,8 @@ def schedule(syn, ev: Dict, i: int) -> List:
                 dur = float(np.clip(dur, max(0.5, 6.0 / max(f0, 4.1)), 9.5))
             fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
             f_run = f0 * fmul * fj
+            if not bird and not fluct and f_run != f0:
+                f_run = keep_rate_side(f0, f_run)
             if not bird and _RPP_BAND[0] <= f0 <= _RPP_BAND[1]:
                 f_run = float(np.clip(f_run, _RPP_BAND[0] * (1.0 + _RPP_DRIFT) + 1e-6,
                                       _RPP_BAND[1] * (1.0 - _RPP_DRIFT) - 1e-6))
@@ -347,9 +415,21 @@ def schedule(syn, ev: Dict, i: int) -> List:
             if evolving:
                 fs_ = float((evo or {}).get("start_hz") or f_run)
                 fe_ = float((evo or {}).get("end_hz") or (fs_ + 1.5 if fs_ + 1.5 <= ceiling else fs_ - 1.5))
-                steps, dur = _steps_evolving(fs_ * fmul, fe_ * fmul, dur)
+                # r050-fix-acns (acns-independent.md: a 6-s evolving run was lengthened to 10.3-11.5 s and always keyed
+                # ESz): a run authored under 10 s stays under 10 s when its levels fit, one authored at >= 10 s stays
+                # at >= 10 s, so the ACNS 10-s boundary item keys the way it was written
+                short = (not bird and not ev.get("duration_category") and not single
+                         and float(ev.get("run_duration_s") or 0.0) < 10.0)
+                if short:
+                    dur = min(dur, 9.5)
+                elif not bird and not ev.get("duration_category") and float(ev.get("run_duration_s") or 0.0) >= 10.0:
+                    dur = max(dur, 10.5)
+                steps, dur = _steps_evolving(fs_ * fmul, fe_ * fmul, dur, equal_cycles=short)
                 if bird:
                     dur = min(dur, 9.5)
+                elif short and dur >= 10.0 and k == 0:
+                    advisories.append(f"evolution {fs_:g} -> {fe_:g} Hz needs {dur:.1f} s at 3 cycles per level, so "
+                                      "the run lasts >= 10 s and is keyed a seizure (criterion B)")
                 a0 = float((evo or {}).get("amplitude_start_uv") or amp)
                 a1 = float((evo or {}).get("amplitude_end_uv") or amp * 1.5)
             elif fluct:
@@ -364,15 +444,17 @@ def schedule(syn, ev: Dict, i: int) -> List:
                 continue
             fr_ = [s[1] for s in steps] if steps else [f_run]
             cfg = {"shape": shape, "width": width, "lag_s": lag_s, "fast": fast, "plus_r": plus_r,
-                   "steps": steps, "predominance": pred, "bird": bird, "edb": edb, "sharpness": sharp,
-                   "ramp_s": 0.15 if bird else (2.0 if si else min(0.14 * dur, 5.0)),
+                   "steps": steps, "predominance": pred, "polarity": polarity, "bird": bird, "edb": edb, "sharpness": sharp,
+                   # r050-fix-acns (epileptiform-icu-r3 C25/C26): full voltage within ~0.4 s; only an evolving run
+                   # keeps the slow build-up
+                   "ramp_s": 0.15 if bird else (min(0.14 * dur, 5.0) if evolving else RPP_RAMP_S),
                    "acns": {"main_term": main_term(ev), "stimulus_induced": si, "stimulus_index": sidx,
                             "stimulus_latency_s": None if lat is None else round(lat, 3),
                             "plus": ("+" + ("F" if has_f else "") + ("R" if has_r else "") + ("S" if has_s else ""))
                             if (has_f or has_r or has_s) else None,
                             "evolution": "evolving" if evolving else ("fluctuating" if fluct else "static"),
                             "min_hz": round(min(fr_), 3), "max_hz": round(max(fr_), 3),
-                            "periodic": periodic, "triphasic": tri,
+                            "periodic": periodic, "triphasic": tri, "polarity": polarity,
                             "lag_ms": round(lag_s * 1000.0, 1) if lag_s else None,
                             "sharpness": sharp or ("blunt" if tri else None),
                             "predominance": pred if region == "generalized" else None,
@@ -440,7 +522,10 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
     for gl, sc, fl, extra_lag, sp in layers:
         for gi, (focus, ga, gph) in enumerate(gl):
             y = mt.POSITIONS.get(focus, (0.0, 0.0))[1]
-            d = extra_lag + (lag_s * (0.95 - y) / 1.9 if lag_s >= 0 else -lag_s * (y + 0.95) / 1.9)
+            # r050-fix-acns: generator lags are spread by LAG_FIELD_GAIN so the electrode-level Fp1 -> O1 lag equals
+            # the keyed lag_ms (overlapping monopole fields compressed 120 ms to 90 ms, acns-independent.md)
+            lg = lag_s * LAG_FIELD_GAIN
+            d = extra_lag + (lg * (0.95 - y) / 1.9 if lg >= 0 else -lg * (y + 0.95) / 1.9)
             if not lag_s:
                 d += gph * 0.5          # phase-B convention: 0.5 s per generator offset cycle (an authored lag replaces it)
             phase, u, amp, f_inst = syn._ictal_phase(inst, t - d)
@@ -450,6 +535,8 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
             gsalt = salt + 7919 * (gi + 1)
             if inst.morph == "periodic":
                 wv = discharge_train(phase, f_inst, cfg["shape"], cfg["width"], salt)
+                if cfg.get("polarity") == "surface_negative":
+                    wv = -wv
                 unit = _PERIODIC_PTP
             else:
                 wv = syn._wave(phase, psi, 0.0, inst.morph, 0.0, f_inst, salt, y, gsalt, True, inst.plus_sharp)

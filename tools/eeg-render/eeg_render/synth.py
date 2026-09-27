@@ -490,6 +490,11 @@ _PD_FREQS, _PD_MEANS, _PD_PTPS = _pd_norm()
 #: it, and the largest in-run frequency drift as a FRACTION of the run rate (it was an absolute ~0.2-0.6 Hz)
 _RPP_BAND = (0.5, 4.0)
 _RPP_DRIFT = 0.05
+#: r050-fix-acns: v3 fraction of the ipsilateral mid-temporal (T3/T4) field that the ear electrode records for a
+#: cerebral source (was ~0.9 by projection distance)
+EAR_PICKUP = 0.30
+#: r050-fix-acns: v3 onset/offset smoothstep of a non-evolving rhythmic_pattern run, seconds (half voltage at ~0.4 s)
+RPP_RAMP_S = 0.75
 
 
 # 0.5.0 (spec_version 3): polyspike as discrete biphasic spikes.  Feature review B5-04: three summed monophasic
@@ -2912,6 +2917,10 @@ class Synthesizer:
                 # drawn only when asked for, so version-1 specs keep their RNG stream
                 fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
                 f_run = f0 * fmul * fj
+                if self.spec_version >= 3 and f_run != f0 and "fluctuat" not in modifier:
+                    # r050-fix-acns (acns-independent.md: authored 2.5-Hz GPDs keyed ESz in 6/18 runs): the run-to-run
+                    # jitter stays on the authored side of the ACNS 1.0 / 2.5 Hz cutoffs
+                    f_run = rpp3.keep_rate_side(f0, f_run)
                 if self.spec_version >= 3 and _RPP_BAND[0] <= f0 <= _RPP_BAND[1]:
                     # 0.5.0 (feature review C27/C31: run rates 0.39-0.46 Hz on a 0.5-Hz card, 4.5-5.0 Hz on a 4-Hz
                     # card): an authored rate inside the ACNS 0.5-4 Hz band stays inside it, including the in-run
@@ -2951,6 +2960,14 @@ class Synthesizer:
         key = (focus, falloff)
         if key not in cached:
             w = mt.monopole_weights(focus, self.electrodes, falloff=falloff)
+            if self.spec_version >= 3:
+                # r050-fix-acns (acns-independent.md: A1 at 0.18 from T3 took 0.9 of a T3 spike, cancelling T3-A1 and
+                # putting an 82-uV inverted spike in every other ear-referenced row): the earlobe hangs below the
+                # temporal plane and records a fraction of what the mid-temporal electrode sees - "active" enough to
+                # shrink T3-A1 and invert far rows, never enough to cancel the focus
+                for ear, temporal in (("A1", "T3"), ("A2", "T4")):
+                    if ear in w:
+                        w[ear] = EAR_PICKUP * mt.monopole_weights(focus, [temporal], falloff=falloff)[temporal]
             cached[key] = np.array([w[c] for c in self.electrodes])
         return cached[key]
 
@@ -3227,12 +3244,15 @@ class Synthesizer:
         # 0.5.0 phase D (montage family): SeLECTS centrotemporal field.  Negative maximum spread over C and T
         # (learningeeg BECTS-centrotemporal-spikes-4-bipolar: reversal at C4 in F4-C4/C4-P4 AND at T4 in F8-T4/T4-T6,
         # also in T2-T4), with the horizontal-dipole frontal positivity (negative weights at Fp/F: surface-positive).
+        # r050-fix-acns (acns-independent.md: Cz reversed on 60/60 discharges, not in the LE BECTS figure): the
+        # midline is flat from Cz back (Fz 0 / Cz 0.10 / Pz 0.10), so Fz-Cz and Cz-Pz carry no reversal; the ear takes
+        # EAR_PICKUP of T3/T4 as for every other source
         "left_centrotemporal": {
-            "C3": 1.0, "T3": 0.85, "P3": 0.35, "T5": 0.35, "F3": 0.20, "F7": 0.25, "Cz": 0.30, "T1": 0.55,
-            "Fp1": -0.20, "Fz": -0.10, "A1": 0.35},
+            "C3": 1.0, "T3": 0.85, "P3": 0.35, "T5": 0.35, "F3": 0.20, "F7": 0.25, "Cz": 0.10, "Pz": 0.10, "T1": 0.55,
+            "Fp1": -0.20, "Fz": 0.0, "A1": 0.25},
         "right_centrotemporal": {
-            "C4": 1.0, "T4": 0.85, "P4": 0.35, "T6": 0.35, "F4": 0.20, "F8": 0.25, "Cz": 0.30, "T2": 0.55,
-            "Fp2": -0.20, "Fz": -0.10, "A2": 0.35},
+            "C4": 1.0, "T4": 0.85, "P4": 0.35, "T6": 0.35, "F4": 0.20, "F8": 0.25, "Cz": 0.10, "Pz": 0.10, "T2": 0.55,
+            "Fp2": -0.20, "Fz": 0.0, "A2": 0.25},
     }
     #: ACNS 2021 "abundant" is >= 1 per 10 s: from that rate up no inter-discharge gap may exceed 10 s.
     _SED_ABUNDANT_PER_H = 360.0
@@ -4209,11 +4229,16 @@ class Synthesizer:
             wave = _periodic_template(x)
             wave = (wave - _PERIODIC_MEAN) / _PERIODIC_RMS
         else:
-            expo = 1.30 if morph == "ictal" else 2.60
+            # r050-fix-acns (epileptiform-icu-r3 C29/C31: the v3 RDA was still a sinusoid): v3 RDA harmonics fall as
+            # 1/k^1.8 with their phases locked to the fundamental, a smoothed sawtooth - the surface potential rises
+            # steeply over 26 % of the cycle and returns slowly, so the page (negative up) shows a steep descent and a
+            # slow return (learningeeg lrda-clean: T4-T6 / T6-O2 / T2)
+            saw = v3 and morph == "rda"
+            expo = 1.30 if morph == "ictal" else (1.80 if saw else 2.60)
             coeff = np.array([1.0 / k ** expo for k in range(1, 5)])
             wave = np.zeros_like(p)
             for k in range(1, 5):
-                wave += coeff[k - 1] * np.sin(k * p + psi[k - 1])
+                wave += coeff[k - 1] * np.sin(k * p + (k * psi[0] if saw else psi[k - 1]))
             wave /= math.sqrt(0.5 * float(np.sum(coeff ** 2)))
             if morph == "ictal":
                 wave += 0.22 * np.sin(6.0 * p + psi[0]) * (0.6 + 0.4 * np.sin(0.7 * p))
@@ -4224,7 +4249,9 @@ class Synthesizer:
                 # (rise 18 / fall 30 ms, FWHM ~57 ms, in SECONDS) on the negative crest of the delta wave, on 50-100 %
                 # of cycles with +/-25 % amplitude, keyed by absolute cycle (grda-plus-s-clean.webp)
                 period = 1.0 / np.clip(f_inst, 0.2, 30.0)
-                c = (p + psi[0] - 1.5 * np.pi) / (2 * np.pi)
+                # (the v3 sawtooth RDA has its negative crest at 1.74 pi, just before the steep rise: a notched
+                # triangle, grda-plus-s)
+                c = (p + psi[0] - (1.74 if saw else 1.5) * np.pi) / (2 * np.pi)
                 kc = np.floor(c + 0.5)
                 tau = (c - kc) * period
                 p_on = 0.5 + 0.5 * float(_cycle_noise(np.zeros(1), salt + 227)[0])
@@ -4243,6 +4270,10 @@ class Synthesizer:
             # 0.5.0 phase D: a generalized RPP's amplitude is its max-bipolar-channel voltage (ACNS 2021)
             lagged = "_lag" if (inst.rpp and inst.rpp.get("lag_s")) else ""
             gen = rpp3.GEN_BIPOLAR_GAIN.get(inst.morph + lagged, rpp3.GEN_BIPOLAR_GAIN.get(inst.morph, 1.0))
+        elif (self.spec_version >= 3 and inst.kind == "rhythmic_pattern" and inst.morph in ("rda", "periodic")
+              and inst.onset_region != "generalized"):
+            # r050-fix-acns: a lateralized RPP's amplitude is its max-bipolar-channel voltage too (LRDA displayed at 0.4x)
+            gen = rpp3.lateral_bipolar_gain(inst.morph, inst.onset_region)
         if not self.display_ref:
             return ICTAL_GAIN * gen
         key = inst.morph if (inst.kind == "rhythmic_pattern" and inst.morph in DISPLAY_CAL) else "ictal"
@@ -4521,6 +4552,10 @@ class Synthesizer:
         ramp = 0.07 if inst.kind != "rhythmic_pattern" else 0.14
         if self.spec_version >= 3 and inst.kind in ("seizure", "seizure_cluster", "status_epilepticus"):
             ramp = min(ramp, 2.0 / dur)
+        if self.spec_version >= 3 and inst.kind == "rhythmic_pattern":
+            # r050-fix-acns (epileptiform-icu-r3 C25/C26: 3.5 s to half amplitude left the page flat for 8 s): an RPP
+            # is at full voltage within about 0.4 s (0.75-s smoothstep); an evolving run keeps its build-up (rpp ramp_s)
+            ramp = min(ramp, RPP_RAMP_S / dur)
         if inst.rpp is not None and inst.rpp.get("ramp_s"):
             ramp = min(0.3, float(inst.rpp["ramp_s"]) / dur)      # BIRDs: sudden onset and offset
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
