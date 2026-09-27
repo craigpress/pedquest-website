@@ -381,6 +381,10 @@ export default function AdminEegLabPage() {
           review station — Persyst <code>.lay/.dat</code> or EDF+ — rather than a figure. The
           scenario spec is the answer key, and it is a separate download.
         </p>
+        <p style={{ marginTop: 8 }}>
+          <Link href="/admin/eeg-lab/guide">Authoring guide</Link>
+          <span style={{ color: "var(--text-muted)" }}> — what every setting does, its default, and how it looks on the page and trends.</span>
+        </p>
       </div>
 
       <div
@@ -1044,6 +1048,7 @@ export default function AdminEegLabPage() {
         <Link href="/admin/eeg-lab/viewer" style={btnGhost}>EEG Lab Viewer</Link>
         <Link href="/admin/qbank" style={btnGhost}>Question bank</Link>
         <Link href="/admin/eeg-lab/review" style={mini}>Review queue</Link>
+        <Link href="/admin/eeg-lab/guide" style={mini}>Authoring guide</Link>
       </div>
     </div>
   );
