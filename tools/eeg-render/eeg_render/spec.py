@@ -1050,6 +1050,9 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
                 e["evolution"] = evo
             else:
                 e.setdefault(k, v)
+        if version >= 3:
+            # 0.5.0 phase D: region-specific onset (schema onset_pattern; synth _onset_pattern resolves auto)
+            e.setdefault("onset_pattern", "auto")
     elif kind in ("spasm", "spasm_cluster"):
         # Epileptic spasm (Kellaway 1979; Fusco & Vigevano 1993): a generalized
         # high-voltage slow-wave transient, vertex/frontocentral maximum,
@@ -1082,6 +1085,11 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         evo = {"start_hz": 1.0, "end_hz": 1.0, "amplitude_start_uv": 420.0, "amplitude_end_uv": 420.0}
         evo.update(e.get("evolution", {}) or {})
         e["evolution"] = evo
+        if version >= 3:
+            # 0.5.0 phase D: the tonic contraction after the slow wave (infantile-spasm-i: a 0.3-0.5 s EMG burst;
+            # a tonic spasm holds 1-3 s) and the side of an asymmetric spasm
+            e.setdefault("tonic_s", 0.4)
+            e.setdefault("side", "both")
         if kind == "spasm_cluster":
             e.setdefault("interval_s", 12.0)
             e.setdefault("count", 12)
@@ -1129,6 +1137,8 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
                 z["evolution"] = evo
             else:
                 z.setdefault(k, v)
+        if version >= 3:
+            z.setdefault("onset_pattern", "auto")
         e["seizure"] = z
         e.setdefault("interval_min", 12.0)
     elif kind == "status_epilepticus":

@@ -22,6 +22,10 @@ REGIONS = [
     "left_temporal", "right_temporal", "left_frontal", "right_frontal",
     "left_central", "right_central", "left_occipital", "right_occipital",
     "left_hemisphere", "right_hemisphere", "generalized", "midline",
+    # 0.5.0 phase D (spec_version 3 onset patterns): mesial temporal onset is anterior temporal (F7/F8 maximum,
+    # rhythmic theta from the start); left/right_temporal stays the neocortical (T3/T5, T4/T6) onset.  Parietal
+    # onsets sit on P3/P4.  Older specs never name these, so their output is unchanged.
+    "left_mesial_temporal", "right_mesial_temporal", "left_parietal", "right_parietal",
 ]
 SPREAD = ["none", "hemispheric", "generalized", "contralateral"]
 ARTIFACTS = [
@@ -107,6 +111,12 @@ _SEIZURE_CORE = {
     # keeps its millisecond width as the repetition rate evolves.
     # ``spike`` / ``sharp_wave`` / ``polyspike`` belong to sporadic_discharges
     "morphology": {"enum": ["ictal", "spike_wave", "rda", "spike", "sharp_wave", "polyspike", None]},
+    # 0.5.0 phase D (spec_version 3, recruit profile): how a focal run starts.  ``auto`` picks by onset region:
+    # mesial temporal -> rhythmic_theta (5-9 Hz theta building from the first second, no fast onset), temporal /
+    # hemisphere -> lvfa (the 0.4.0 low-voltage fast onset), frontal -> electrodecrement (regional background
+    # attenuation carrying low-voltage fast activity), central / parietal / occipital -> rhythmic_spikes (rhythmic
+    # alpha-beta onset with a sharp transient on every cycle).  Ignored below spec_version 3.
+    "onset_pattern": {"enum": ["auto", "lvfa", "rhythmic_theta", "electrodecrement", "rhythmic_spikes"]},
 }
 
 _EVENT = {
@@ -157,6 +167,10 @@ _EVENT = {
         "fast_uv": {"type": "number", "minimum": 0, "maximum": 100},
         # spasm: cerebral beta riding the slow-wave deflection itself
         "wave_fast_uv": {"type": "number", "minimum": 0, "maximum": 150},
+        # 0.5.0 phase D (spec_version 3), spasm: seconds of tonic contraction (the EMG burst after the slow wave;
+        # 0.4 s default, 1-3 s for a tonic spasm).  An asymmetric spasm uses ``side`` (left/right: the named
+        # hemisphere carries the full slow wave and fast activity, the other 55 % / 30 %).
+        "tonic_s": {"type": "number", "minimum": 0.1, "maximum": 5},
         # spasm_cluster: mean seconds between spasms and how many
         "interval_s": {"type": "number", "minimum": 2, "maximum": 300},
         "count": {"type": "integer", "minimum": 1, "maximum": 400},
