@@ -276,6 +276,9 @@ export function defaultEvolution() {
 
 export function defaultGuidedScenario(): GuidedScenario {
   return {
+    // New forms start at edition 3 (renderer 0.5.0, WORKER_MAX_SPEC_VERSION 3). A scenario without specVersion
+    // (older clients, saved requests) still builds as before: omitted = the renderer's version 1.
+    specVersion: 3,
     ageBand: "child",
     channels: "standard_19",
     montage: "longitudinal_bipolar",
@@ -285,7 +288,7 @@ export function defaultGuidedScenario(): GuidedScenario {
     seed: randomSeed(),
     background: {
       type: "continuous",
-      ...backgroundDefaults("child", "continuous", 1),
+      ...backgroundDefaults("child", "continuous", 3),
       reactivity: "present",
       burstS: 2,
       ibiS: 8,

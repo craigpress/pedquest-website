@@ -85,7 +85,7 @@ export const GUIDE_READING_NOTES: string[] = [
   "\"In the Guided form\" controls have a field in the Lab's Guided view. \"Expert mode\" controls are available when you write the full recording description in the Expert view; switch on \"Show Expert-mode names\" to see the name each one uses there.",
   "Amplitudes are peak-to-peak microvolts as a reader measures them on the longitudinal bipolar page, unless a control says otherwise.",
   "Times are minutes from the start of the recording unless the unit says seconds.",
-  "Renderer defaults: choose edition 3 for every new case. The form moves to edition 3 automatically when a choice needs it; editions 1 and 2 exist so older question-bank recordings render exactly as they were reviewed.",
+  "Renderer defaults: new forms start at edition 3, which everything in this guide describes. Editions 1 and 2 exist so older question-bank recordings render exactly as they were reviewed; a choice that needs edition 3 moves the form back to it.",
 ];
 
 export const AGE_DEFAULTS_TABLE: AgeDefaultRow[] = [
@@ -206,7 +206,7 @@ const recording: GuideSection = {
         o("2", "Edition 2", "Intermediate defaults (display-referenced amplitude, recruiting seizures)."),
         o("3", "Edition 3 (current)", "Everything described in this guide: review-station display filter, realistic blinks and eye state, sleep staging, ACNS patterns, generalized seizure types, polarity and the full montage set."),
       ],
-      defaultText: "The form starts at edition 1 and moves to edition 3 automatically when a choice needs it. Choose edition 3 for new cases.",
+      defaultText: "Edition 3 for a new form. Older recordings keep the edition they were made with.",
       onPage: "Editions 1 and 2 keep older recordings identical to what was reviewed. Most of the realism described here applies only in edition 3.",
       names: ["rec:spec_version"],
     },
