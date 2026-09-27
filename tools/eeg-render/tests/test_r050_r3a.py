@@ -116,9 +116,12 @@ def test_ecg_spike_stands_above_the_posterior_rhythm():
         lo = [np.ptp(sig0[lab[name], int((b - 0.05 - t[0]) * fs):int((b + 0.08 - t[0]) * fs)]) for b in beats]
         return float(np.median(sp)), float(np.median(sp) / np.median(lo))
     p3, cz = ratio("P3-O1"), ratio("Cz-Pz")
-    assert 35.0 <= p3[0] <= 50.0, p3                  # review: P3-O1 about 40 uV at 65
-    # this test page's 9-Hz PDR is larger than the A110-04 gallery page's (there P3-O1 measures 1.69x, Cz-Pz 1.70x)
-    assert p3[1] >= 1.0 and cz[1] >= 1.5 and 0.5 * (p3[1] + cz[1]) >= 1.3, (p3, cz)
+    # r5 (r5-background.md, ECG visibility): the artifact field now weights T5-O1 / P3-O1 by their PDR-carrying
+    # background (0.75 of the O1 spike, was 0.55), so P3-O1 reads about 57 uV (was 42; the cap was 50) and stands
+    # 1.7x above its window.  The awake child's midline theta (learningeeg 5-yo, r5) busies Cz-Pz, which now reads
+    # 1.2x here (1.5x on the A110-04 gallery page).  Both chains must clear 1.0x and average >= 1.3x
+    assert 35.0 <= p3[0] <= 65.0, p3
+    assert p3[1] >= 1.5 and cz[1] >= 1.0 and 0.5 * (p3[1] + cz[1]) >= 1.3, (p3, cz)
     assert max(ratio(n)[1] for n in ("Fp1-F7", "Fp2-F8", "Fp1-F3", "Fp2-F4")) < 0.15
 
 
