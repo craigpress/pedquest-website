@@ -18,7 +18,7 @@ import { getRoleRowsByUserIds } from "@/lib/roles-server";
 import { hasRole, type Role } from "@/lib/roles";
 import { DEFAULT_TARGET, isAnnotationRegion } from "@/lib/eeg/annotations";
 import {
-  DISCHARGE_TASK, SEIZURE_TASK, parseAnswerKey, scoreLearner, summariseClass,
+  DISCHARGE_TASK, SEIZURE_TASK, parseAnswerKey, scoreLearner, summariseClass, taskGradesKey,
   type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask,
 } from "@/lib/lab/scoring";
 import { answerKeyCacheIdentity, applyAnswerOverrides, type AnswerOverrideRow } from "@/lib/lab/answer-overrides";
@@ -152,7 +152,7 @@ export async function computeJobResults(
 
   // seizures always (that is what these recordings are for); discharges only when the key or a learner has them
   const tasks: MarkTask[] = [SEIZURE_TASK];
-  if (key.some((k) => DISCHARGE_TASK.keyKinds.includes(k.kind)) || rows.some((r) => r.kind === "discharge")) tasks.push(DISCHARGE_TASK);
+  if (key.some((k) => taskGradesKey(DISCHARGE_TASK, k)) || rows.some((r) => r.kind === "discharge")) tasks.push(DISCHARGE_TASK);
 
   const learners: ResultsLearner[] = [...byUser.entries()].map(([userId, list]) => {
     const roleRow = roleRows.get(userId);

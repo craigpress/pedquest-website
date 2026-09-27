@@ -33,7 +33,8 @@ import { DEFAULT_PALETTE, PALETTES, loadPalettePreference, savePalettePreference
 import RawPane from "./RawPane";
 import TrendStrip, { TREND_PANELS, TREND_WINDOWS, trendRowLabel, trendStripHeight, type TrendRowId } from "./TrendStrip";
 import AnnotationPanel, { type Draft } from "./AnnotationPanel";
-import { parseAnswerKey, type KeyEvent } from "@/lib/lab/scoring";
+import { keyCategory, parseAnswerKey, type KeyEvent } from "@/lib/lab/scoring";
+import { KEY_OVERLAY_FILTERS, categoryColor, overlayShows, type KeyCategory, type KeyOverlayFilter } from "@/lib/lab/key-kinds";
 
 export type ViewerSource =
   | { kind: "file"; files: File[] }
@@ -58,7 +59,7 @@ export interface ViewerAssignment {
   onReopen: () => Promise<void>;
 }
 
-export interface AnswerSpan { id: string; onsetS: number; offsetS: number; label: string }
+export interface AnswerSpan { id: string; onsetS: number; offsetS: number; label: string; category: KeyCategory; color: string }
 
 const PAGE_OPTIONS = [5, 10, 15, 20, 30, 60];
 const SENS_OPTIONS = [2, 3, 5, 7, 10, 15, 20, 30, 50];
@@ -91,9 +92,10 @@ function parseAnswerManifest(json: unknown): AnswerSpan[] {
   return parseAnswerKey(json).map(answerSpan);
 }
 
-const answerSpan = (event: KeyEvent): AnswerSpan => ({
-  id: event.id, onsetS: event.onsetS, offsetS: event.offsetS, label: event.label,
-});
+const answerSpan = (event: KeyEvent): AnswerSpan => {
+  const category = keyCategory(event);
+  return { id: event.id, onsetS: event.onsetS, offsetS: event.offsetS, label: event.label || event.kind, category, color: categoryColor(category) };
+};
 
 function downloadText(name: string, text: string, type = "text/plain") {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -158,6 +160,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
   const [error, setError] = useState<string | null>(null);
 
   const [showKey, setShowKey] = useState(false);
+  const [keyFilter, setKeyFilter] = useState<KeyOverlayFilter>("findings");
   const [answers, setAnswers] = useState<AnswerSpan[] | null>(null);
   const [fileAnnotationCount, setFileAnnotationCount] = useState<number | null>(null);
 
@@ -355,7 +358,10 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
   );
   const durationS = opened?.reader.durationS ?? 0;
   const maxT0 = Math.max(0, durationS - pageS);
-  const answerSpans = useMemo(() => (showKey && answers ? answers : []), [showKey, answers]);
+  const answerSpans = useMemo(
+    () => (showKey && answers ? answers.filter((a) => overlayShows(keyFilter, a.category)) : []),
+    [showKey, answers, keyFilter],
+  );
 
   const panelRows = useMemo(() => (TREND_PANELS.find((p) => p.id === panelId) ?? TREND_PANELS[0]).rows, [panelId]);
   const trendRowOptions = useMemo(() => panelRows.map((id: TrendRowId) => ({ id, label: trendRowLabel(id) })), [panelRows]);
@@ -770,6 +776,12 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
             <button type="button" style={{ ...mini, borderColor: showKey ? "var(--accent-secondary)" : "var(--border)", color: showKey ? "var(--accent-secondary)" : "var(--text-secondary)" }} onClick={() => void toggleKey()}>
               {showKey ? "Hide key" : "Answer key"}
             </button>
+          )}
+          {showKey && answers && (
+            <select style={sel} value={keyFilter} aria-label="Answer-key rows shown" title="Which answer-key rows the overlay shows"
+              onChange={(e) => setKeyFilter(e.target.value as KeyOverlayFilter)}>
+              {KEY_OVERLAY_FILTERS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+            </select>
           )}
         </div>
       </div>

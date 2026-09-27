@@ -23,6 +23,10 @@ import {
   type AnnotationPane, type AnnotationRegion, type ViewerAnnotationKind,
   isAnnotationRegion, normaliseChannelLabel,
 } from "@/lib/eeg/annotations";
+import {
+  DISCHARGE_KINDS, categoryOf, describeKeyRow, gradedRegion, isIctalRow, pickDetail,
+  type KeyCategory, type KeyDetail,
+} from "./key-kinds";
 
 // ── answer key ─────────────────────────────────────────────────────────────
 
@@ -35,6 +39,24 @@ export interface KeyEvent {
   region: AnnotationRegion | null;
   channels: string[];
   label: string;
+  /** scalar descriptors from the manifest row (ACNS terms, onset pattern, seizure type, stage, ...); absent on hand-added rows */
+  detail?: KeyDetail;
+}
+
+/** Whether a key row counts as a seizure (an ictal kind, or an ACNS run classified as an electrographic seizure). */
+export function isIctal(event: Pick<KeyEvent, "kind" | "detail">): boolean {
+  return isIctalRow(event.kind, event.detail);
+}
+
+export function keyCategory(event: Pick<KeyEvent, "kind" | "detail">): KeyCategory {
+  return categoryOf(event.kind, event.detail);
+}
+
+/** The electrode of a sporadic discharge focus ("T3"), when it names one; "generalized_frontocentral" is a field, not an electrode. */
+function focusChannels(focus: unknown): string[] {
+  if (typeof focus !== "string" || !/^[A-Za-z]{1,3}\d{0,2}$/.test(focus)) return [];
+  const c = normaliseChannelLabel(focus);
+  return c ? [c] : [];
 }
 
 /** The realized-event manifest written by `eeg-render export`; unknown fields are ignored. */
@@ -42,16 +64,21 @@ export function parseAnswerKey(manifest: unknown): KeyEvent[] {
   const m = (typeof manifest === "object" && manifest !== null ? manifest : {}) as { events?: unknown[] };
   return (Array.isArray(m.events) ? m.events : [])
     .map((e, originalIndex) => ({ event: e as Record<string, unknown>, originalIndex }))
-    .filter(({ event }) => typeof event.onset_s === "number")
+    .filter(({ event }) => typeof event === "object" && event !== null && typeof event.onset_s === "number")
     .map(({ event: e, originalIndex }) => {
       const onsetS = e.onset_s as number;
       const offsetS = typeof e.offset_s === "number" ? Math.max(onsetS, e.offset_s) : onsetS;
-      const region = isAnnotationRegion(e.onset_region) ? e.onset_region : null;
-      const channels = Array.isArray(e.channels)
+      const kind = typeof e.kind === "string" ? e.kind : "event";
+      const detail = pickDetail(e);
+      let channels = Array.isArray(e.channels)
         ? e.channels.map(normaliseChannelLabel).filter((c): c is string => c !== null)
         : [];
-      const kind = typeof e.kind === "string" ? e.kind : "event";
-      return { id: `original:${originalIndex}`, kind, onsetS, offsetS, region, channels, label: [kind, e.onset_region ?? e.artifact_kind ?? ""].filter(Boolean).join(" ") };
+      let region = gradedRegion(e.onset_region, isAnnotationRegion);
+      if (!channels.length) channels = focusChannels(e.focus);
+      if (!region && typeof e.focus === "string") {
+        region = e.focus.startsWith("generalized") ? "generalized" : regionsOfChannels(channels)[0] ?? null;
+      }
+      return { id: `original:${originalIndex}`, kind, onsetS, offsetS, region, channels, label: describeKeyRow(kind, detail), detail };
     })
     .sort((a, b) => a.onsetS - b.onsetS);
 }
@@ -91,6 +118,8 @@ export interface MarkTask {
   learnerKinds: string[];
   /** key kinds this task is graded against */
   keyKinds: string[];
+  /** also grade against any row `isIctal` accepts (an ACNS run classified as an electrographic seizure) */
+  keyIctal?: boolean;
   /** a RAW-pane mark starting within this many seconds of a key event (before or after) still counts as detecting it; trend marks widen this by view resolution (`toleranceFor`) */
   toleranceS: number;
   /** trend_point: the row the learner was told to use; null = any trend row */
@@ -102,7 +131,11 @@ export const SEIZURE_TASK: MarkTask = {
   title: "Mark every electrographic seizure (onset to offset)",
   type: "span",
   learnerKinds: ["seizure", "seizure_onset"],
-  keyKinds: ["seizure", "seizure_onset", "seizure_cluster", "spasm", "spasm_cluster", "tonic_seizure"],
+  keyKinds: [
+    "seizure", "seizure_onset", "seizure_cluster", "status_epilepticus", "spasm", "spasm_cluster", "tonic_seizure",
+    "generalized_seizure",
+  ],
+  keyIctal: true,
   toleranceS: 10,
 };
 
@@ -111,9 +144,14 @@ export const DISCHARGE_TASK: MarkTask = {
   title: "Mark each epileptiform discharge and the channel it is maximal in",
   type: "channel_point",
   learnerKinds: ["discharge"],
-  keyKinds: ["discharge", "spike", "sharp_wave"],
+  keyKinds: [...DISCHARGE_KINDS],
   toleranceS: 2,
 };
+
+/** Whether a task grades against this key row. */
+export function taskGradesKey(task: MarkTask, key: Pick<KeyEvent, "kind" | "detail">): boolean {
+  return task.keyKinds.includes(key.kind) || (task.keyIctal === true && isIctal(key));
+}
 
 // ── time tolerance by view ─────────────────────────────────────────────────
 
@@ -292,7 +330,7 @@ export function scoreLearner(
   task: MarkTask, keyAll: KeyEvent[], marksAll: LearnerMark[],
   opts: { /** recording length; the fallback view span for legacy trend marks */ durationS?: number | null } = {},
 ): LearnerScore {
-  const key = keyAll.filter((k) => task.keyKinds.includes(k.kind));
+  const key = keyAll.filter((k) => taskGradesKey(task, k));
   let marks = marksAll.filter((m) => task.learnerKinds.includes(m.kind));
   if (task.type === "trend_point") marks = marks.filter((m) => m.pane === "trend" && (!task.trendRow || m.trendRow === task.trendRow));
   const tolOf = (m: LearnerMark) => toleranceFor(task, m, opts.durationS);
@@ -394,7 +432,7 @@ export interface ClassSummary {
 }
 
 export function summariseClass(task: MarkTask, keyAll: KeyEvent[], scores: LearnerScore[]): ClassSummary {
-  const key = keyAll.map((k, i) => ({ k, i })).filter(({ k }) => task.keyKinds.includes(k.kind));
+  const key = keyAll.map((k, i) => ({ k, i })).filter(({ k }) => taskGradesKey(task, k));
   const sens = scores.map((s) => s.sensitivity).filter((x): x is number => x !== null);
   const comps = scores.map((s) => s.composite).filter((x): x is number => x !== null);
   return {

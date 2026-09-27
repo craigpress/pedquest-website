@@ -102,6 +102,10 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       if (!event || event.onsetS > job.durationS || event.offsetS > job.durationS + 1) {
         return NextResponse.json({ error: "The event times or fields are invalid for this recording." }, { status: 400 });
       }
+      // a retimed rendered row keeps its descriptors (ACNS classification, onset pattern, ...) unless its kind changed
+      if (action === "update" && !event.detail && existing?.detail && existing.kind === event.kind) {
+        event = { ...event, detail: existing.detail };
+      }
     }
   }
 

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { btnGhost, btnPrimary, card, fieldLabel, inp, meta, mini } from "@/lib/admin-ui";
 import { ANNOTATION_REGIONS, REGION_LABELS, formatClock, type AnnotationRegion } from "@/lib/eeg/annotations";
-import type { KeyEvent } from "@/lib/lab/scoring";
+import { isIctal, keyCategory, type KeyEvent } from "@/lib/lab/scoring";
+import { KEY_CATEGORIES, categoryColor, type KeyCategory } from "@/lib/lab/key-kinds";
 import type { AnswerOverrideHistory } from "@/lib/lab/answer-overrides";
 
 interface Payload {
@@ -26,6 +27,15 @@ interface Draft {
   note: string;
 }
 
+/** The renderer's own reasoning for a row: the ACNS basis, the ILAE semiology, a neonatal advisory. */
+function teachingNote(event: KeyEvent): string {
+  const d = event.detail ?? {};
+  return [d.classification_basis, d.semiology, d.acns_advisory].filter((v): v is string => typeof v === "string" && v.length > 0).join(" · ");
+}
+
+/** Rows listed before "Show all" — a v3 key with abundant discharges and staged sleep runs to thousands. */
+const KEY_ROWS_SHOWN = 200;
+
 const emptyDraft = (): Draft => ({ id: null, kind: "seizure", onsetS: 0, offsetS: 0, region: null, channels: "", label: "", note: "" });
 
 export default function AnswerKeyEditor({ jobId, durationS }: { jobId: string; durationS: number }) {
@@ -33,6 +43,8 @@ export default function AnswerKeyEditor({ jobId, durationS }: { jobId: string; d
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<KeyCategory | "">("");
+  const [showAll, setShowAll] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ action: "remove"; event: KeyEvent } | { action: "reset" } | null>(null);
 
   const headers = useCallback(async () => {
@@ -70,6 +82,10 @@ export default function AnswerKeyEditor({ jobId, durationS }: { jobId: string; d
 
   if (!data) return <section style={{ ...card, padding: 16 }}><div style={fieldLabel}>Answer key</div><p style={meta}>{error ?? "Loading…"}</p></section>;
   const activeHistory = data.history.filter((h) => h.activeArtifact);
+  const categoryCounts = new Map<KeyCategory, number>();
+  for (const event of data.key) categoryCounts.set(keyCategory(event), (categoryCounts.get(keyCategory(event)) ?? 0) + 1);
+  const filteredKey = categoryFilter ? data.key.filter((event) => keyCategory(event) === categoryFilter) : data.key;
+  const shownKey = showAll ? filteredKey : filteredKey.slice(0, KEY_ROWS_SHOWN);
   const activeChanges = activeHistory.slice(0, activeHistory.findIndex((h) => h.action === "reset") < 0
     ? activeHistory.length
     : activeHistory.findIndex((h) => h.action === "reset")).length;
@@ -116,13 +132,30 @@ export default function AnswerKeyEditor({ jobId, durationS }: { jobId: string; d
         </form>
       )}
 
-      <div style={{ display: "grid", gap: 6, marginTop: 14 }}>
+      {data.key.length > 0 && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 14 }}>
+          <label style={{ ...meta, display: "flex", gap: 6, alignItems: "center" }}>
+            Show
+            <select style={{ ...inp, width: "auto" }} value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value as KeyCategory | ""); setShowAll(false); }}>
+              <option value="">All rows ({data.key.length})</option>
+              {KEY_CATEGORIES.filter((c) => categoryCounts.has(c.id)).map((c) => <option key={c.id} value={c.id}>{c.label} ({categoryCounts.get(c.id)})</option>)}
+            </select>
+          </label>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gap: 6, marginTop: 10 }}>
         {data.key.length === 0 && <p style={meta}>No events in the merged key.</p>}
-        {data.key.map((event) => (
+        {shownKey.map((event) => (
           <div key={event.id} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, padding: "9px 10px", border: "1px solid var(--border)", borderRadius: 8 }}>
             <div>
-              <div style={{ fontSize: 13.5, color: "var(--text)" }}><b>{event.label || event.kind}</b> · {formatClock(event.onsetS)}–{formatClock(event.offsetS)}</div>
-              <div style={meta}>{event.kind}{event.region ? ` · ${REGION_LABELS[event.region]}` : ""}{event.channels.length ? ` · ${event.channels.join(", ")}` : ""}</div>
+              <div style={{ fontSize: 13.5, color: "var(--text)" }}>
+                <span aria-hidden="true" style={{ display: "inline-block", width: 9, height: 9, borderRadius: 2, marginRight: 7, background: categoryColor(keyCategory(event)) }} />
+                <b>{event.label || event.kind}</b> · {formatClock(event.onsetS)}–{formatClock(event.offsetS)}
+                {isIctal(event) && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: categoryColor("ictal") }}>counts as seizure</span>}
+              </div>
+              <div style={meta}>{KEY_CATEGORIES.find((c) => c.id === keyCategory(event))?.label} · {event.kind}{event.region ? ` · ${REGION_LABELS[event.region]}` : ""}{event.channels.length ? ` · ${event.channels.join(", ")}` : ""}</div>
+              {teachingNote(event) && <div style={{ ...meta, fontStyle: "italic" }}>{teachingNote(event)}</div>}
             </div>
             <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
               <button type="button" style={mini} disabled={busy || !!draft} onClick={() => setDraft({ id: event.id, kind: event.kind, onsetS: event.onsetS, offsetS: event.offsetS, region: event.region, channels: event.channels.join(", "), label: event.label, note: "" })}>edit</button>
@@ -130,6 +163,9 @@ export default function AnswerKeyEditor({ jobId, durationS }: { jobId: string; d
             </div>
           </div>
         ))}
+        {!showAll && filteredKey.length > shownKey.length && (
+          <button type="button" style={mini} onClick={() => setShowAll(true)}>Show all {filteredKey.length} rows</button>
+        )}
       </div>
 
       {confirmAction && (

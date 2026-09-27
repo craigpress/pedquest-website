@@ -14,7 +14,7 @@ import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, card, eyebrow, h1, meta, mini } from "@/lib/admin-ui";
 import { REGION_LABELS, annotationColor, describeTarget, formatClock } from "@/lib/eeg/annotations";
-import type { ClassSummary, KeyEvent, LearnerMark, LearnerScore, MarkTask } from "@/lib/lab/scoring";
+import { taskGradesKey, type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask } from "@/lib/lab/scoring";
 import { SUBMISSION_COLORS, SUBMISSION_LABELS, type SubmissionState } from "@/lib/courses/types";
 
 interface Learner {
@@ -156,7 +156,7 @@ export default function ClassResultsPage() {
                   {task.summary.perKeyEvent.map((k, n) => (
                     <tr key={k.keyIndex}>
                       <td style={td}>{n + 1}</td>
-                      <td style={td}>{k.event.kind}</td>
+                      <td style={td} title={k.event.kind}>{k.event.label || k.event.kind}</td>
                       <td style={td}>
                         <Link href={`/admin/eeg-lab/viewer?job=${data.job.id}&t=${Math.round(k.event.onsetS)}`} title="Open the viewer at this event (everyone's marks)">
                           {formatClock(k.event.onsetS)}
@@ -338,11 +338,11 @@ function Timeline({ durationS, keyEvents, task, learners, instructors, onPick }:
         {/* answer key row */}
         <text x={0} y={PAD + ROW_H / 2 + 4} fontSize={12} fontWeight={700} fill="var(--text)">Answer key</text>
         {keyEvents.map((k, i) => {
-          const graded = task.keyKinds.includes(k.kind);
+          const graded = taskGradesKey(task, k);
           return (
             <rect key={i} x={x(k.onsetS)} y={PAD + 3} width={Math.max(2, x(k.offsetS) - x(k.onsetS))} height={ROW_H - 6}
               fill={graded ? annotationColor("seizure") : "var(--text-muted)"} opacity={graded ? 0.9 : 0.4} rx={2}>
-              <title>{`${k.kind} ${formatClock(k.onsetS)} – ${formatClock(k.offsetS)}${k.region ? ` · ${REGION_LABELS[k.region]}` : ""}`}</title>
+              <title>{`${k.label || k.kind} ${formatClock(k.onsetS)} – ${formatClock(k.offsetS)}${k.region ? ` · ${REGION_LABELS[k.region]}` : ""}`}</title>
             </rect>
           );
         })}

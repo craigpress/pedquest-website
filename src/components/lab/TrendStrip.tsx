@@ -98,7 +98,7 @@ export default function TrendStrip({
   pageT0: number;
   pageS: number;
   annotations: ViewerAnnotation[];
-  answerSpans: { onsetS: number; offsetS: number; label: string }[];
+  answerSpans: { onsetS: number; offsetS: number; label: string; color?: string }[];
   /** 0..1 while trends are computing */
   progress: number;
   rows: TrendRowId[];
@@ -359,7 +359,7 @@ export default function TrendStrip({
     for (const a of answerSpans) {
       const x0 = xOf(a.onsetS), x1 = Math.max(x0 + 2, xOf(a.offsetS));
       if (x1 < GUTTER || x0 > w) continue;
-      ctx.fillStyle = "rgba(229,72,77,0.28)"; ctx.fillRect(Math.max(GUTTER, x0), AXIS_H, Math.min(w, x1) - Math.max(GUTTER, x0), h - AXIS_H);
+      ctx.fillStyle = (a.color ?? "#e5484d") + "47"; ctx.fillRect(Math.max(GUTTER, x0), AXIS_H, Math.min(w, x1) - Math.max(GUTTER, x0), h - AXIS_H);
     }
     // annotations
     for (const a of annotations) {
