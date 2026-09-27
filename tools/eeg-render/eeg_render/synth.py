@@ -3369,9 +3369,29 @@ class Synthesizer:
         rb = substream(self.seed, "spasm-wave-fast", inst.index, inst.ordinal)
         fwb = fw + rb.uniform(2.0, 4.0, n_e)
         phb = rb.uniform(0.0, 2 * np.pi, n_e)
-        rows += (0.5 * inst.wave_fast_uv * jitter * (np.sqrt(field) * fast_side)[:, None] * env_w[None, :]
-                 * (0.75 * np.sin(2 * np.pi * fw[:, None] * dd[None, :] + ph[:, None])
-                    + 0.4 * np.sin(2 * np.pi * fwb[:, None] * dd[None, :] + phb[:, None])))
+        # r5 (focal-fix.md open item: the riding fast activity was more regular than S1, whose overriding fast comes in
+        # irregular bursts): three more partials per electrode spread over 14-24 Hz (random phases) and a +-2 Hz
+        # frequency wander per component, drawn once per spasm from their own substream (the draws above are
+        # unchanged).  Each electrode is rescaled to the two-sine burst's peak-to-peak, both measured on a fixed
+        # per-spasm grid (window independent), so the fast/slow ratio holds
+        rc = substream(self.seed, "spasm-wave-fast-r5", inst.index, inst.ordinal)
+        fm_f, fm_p = rc.uniform(2.0, 5.0, (2, n_e)), rc.uniform(0.0, 2 * np.pi, (2, n_e))
+        fx_p, px_p = rc.uniform(14.0, 24.0, (3, n_e)), rc.uniform(0.0, 2 * np.pi, (3, n_e))
+
+        def _mix(x):
+            wb = (2.0 / fm_f)[:, :, None] * np.sin(2 * np.pi * fm_f[:, :, None] * x[None, None, :] + fm_p[:, :, None])
+            two = (0.75 * np.sin(2 * np.pi * fw[:, None] * x[None, :] + ph[:, None] + wb[0])
+                   + 0.4 * np.sin(2 * np.pi * fwb[:, None] * x[None, :] + phb[:, None] + wb[1]))
+            m = two.copy()
+            for q in range(3):
+                m += 0.35 * np.sin(2 * np.pi * fx_p[q][:, None] * x[None, :] + px_p[q][:, None])
+            return two, m
+        grid = np.arange(0.0, dur, 1.0 / self.fs)
+        eg = np.exp(-0.5 * ((grid - 0.5 * dur) / (0.30 * dur)) ** 2)
+        two_g, mix_g = _mix(grid)
+        norm = np.ptp(two_g * eg, axis=1) / np.maximum(np.ptp(mix_g * eg, axis=1), 1e-9)
+        mix = _mix(dd)[1] * norm[:, None]
+        rows += (0.5 * inst.wave_fast_uv * jitter * (np.sqrt(field) * fast_side)[:, None] * env_w[None, :] * mix)
         if inst.fast_uv > 0 and inst.decrement_s > 0:
             start = inst.t0 + 0.55 * dur
             w = smoothstep((t - start) / 0.3) * (1.0 - smoothstep((t - (start + inst.decrement_s)) / 0.5))
@@ -4246,7 +4266,12 @@ class Synthesizer:
                 # the near-uniform generalized field reached the chain only through the inter-electrode lag)
                 onset_scale = self._gpd_field_scale()
             onset_fall = mt.generator_falloff(inst.onset_region)
-            gens = [(g, 1.0) for g in mt.region_generators(inst.onset_region, self.electrodes, v3=v3run)]
+            if v3run and inst.onset_region.endswith("_occipital"):
+                # r5 (focal-fix.md open item: C3-P3 carried the largest ratio for most of an occipital run; learningeeg
+                # o1-onset-seizure-bipolar p1/p2 has it in P3-O1 / T5-O1): at the default falloff the O1 source puts
+                # 0.32 of itself on P3, so P3-O1 half-cancels and C3-P3 (C3 ~0) reads as large as P3-O1
+                onset_fall = self._OCCIPITAL_FALLOFF_V3
+            gens =[(g, 1.0) for g in mt.region_generators(inst.onset_region, self.electrodes, v3=v3run)]
             if v3 and inst.kind == "tonic_seizure":
                 # phase D (learningeeg atlas-tonic-seizure-i/-ii: 10-20 Hz fast activity in every chain, parasagittal
                 # and midline included): the generalized fast activity was near-synchronous at 15-22 Hz, so it
@@ -4381,6 +4406,11 @@ class Synthesizer:
     #: (whole head obscured), neonatal clonic jerk
     _EMG_V3_GAIN = {"spasm": 5.0, "gtc": 9.0, "neo_clonic": 2.5, "neo_tonic": 2.0}
     _EMG_V3_OFFSET = 1_500_000_000
+    #: r5: background RMS (uV) above which the spasm EMG burst stops growing with the background (a normal infant page
+    #: is 10-12 uV, hypsarrhythmia ~55)
+    _SPASM_EMG_RMS_CAP = 20.0
+    #: r5: monopole falloff of a v3 occipital ictal run's sources (default 0.42: O1 -> P3 0.32; 0.33: 0.16)
+    _OCCIPITAL_FALLOFF_V3 = 0.33
 
     def _emg_field_v3(self, kind: str, inst: SeizureInstance) -> np.ndarray:
         key = ("emgf", kind, inst.onset_region, inst.side)
@@ -4434,7 +4464,10 @@ class Synthesizer:
                 # 0.3-0.5 s burst after the wave (a tonic spasm holds tonic_s)
                 shape = (smoothstep((t - on) / 0.08)
                          * (1.0 - smoothstep((t - (on + inst.tonic_s)) / 0.15)))
-                gain = factor / MUSCLE_FACTOR["modest"]
+                # r5 (focal-fix.md open item: on hypsarrhythmia, amp_rms 55 uV against 10-12 on a normal infant page,
+                # the burst reached 584-960 uV p-p and was the most prominent thing on the page): muscle voltage does
+                # not follow the cerebral background, so the spasm burst is scaled by at most _SPASM_EMG_RMS_CAP
+                gain = factor / MUSCLE_FACTOR["modest"] * min(1.0, self._SPASM_EMG_RMS_CAP / max(self.amp_rms, 1e-9))
             elif kind == "neo_tonic":
                 # neonatal focal tonic: sustained posturing, EMG held through the run (ACNS 2013 / ILAE 2021
                 # neonatal classification: focal tonic seizures carry an EEG correlate)
@@ -4593,6 +4626,12 @@ class Synthesizer:
               and inst.onset_region != "generalized"):
             # r050-fix-acns: a lateralized RPP's amplitude is its max-bipolar-channel voltage too (LRDA displayed at 0.4x)
             gen = rpp3.lateral_bipolar_gain(inst.morph, inst.onset_region)
+            fast = (inst.rpp or {}).get("fast") or {}
+            if inst.morph == "rda" and fast.get("mode") == "continuous":
+                # r5 (acns-fix.md: LRDA+F 1.94x background, the weakest lateral variant): the ACNS voltage is the
+                # delta's; the phase-D path's delta measured 0.84x the plain LRDA's (3 seeds x 4 runs), so the
+                # carrier was taking the delta's share of the calibrated peak-to-peak
+                gen *= rpp3.RDA_PLUS_F_GAIN
         if not self.display_ref:
             return ICTAL_GAIN * gen
         key = inst.morph if (inst.kind == "rhythmic_pattern" and inst.morph in DISPLAY_CAL) else "ictal"

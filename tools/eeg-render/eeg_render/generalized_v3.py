@@ -78,10 +78,14 @@ _ESES_FIELD = {"C3": 1.0, "C4": 1.0, "Cz": 0.95, "T3": 0.70, "T4": 0.70, "P3": 0
                "Fp1": 0.22, "Fp2": 0.22, "O1": 0.30, "O2": 0.30}
 #: myoclonic / JME polyspike-and-wave (eeg0094_db1, myoclonic-jerk-examples/p1, 4-6-Hz-spike-and-waves-with-JME):
 #: bilateral frontal maximum, largest in F3-C3 / F4-C4 / Fz-Cz, Fp-F and P-O smaller, temporal chains small (the
-#: sporadic ``generalized_frontocentral`` table)
-_FC_FIELD = {"F3": 1.0, "F4": 1.0, "Fz": 0.95, "Fp1": 0.55, "Fp2": 0.55, "C3": 0.45, "C4": 0.45, "Cz": 0.45,
-             "P3": 0.40, "P4": 0.40, "Pz": 0.35, "F7": 0.35, "F8": 0.35, "T3": 0.30, "T4": 0.30,
-             "T5": 0.20, "T6": 0.20, "O1": 0.10, "O2": 0.10}
+#: sporadic ``generalized_frontocentral`` table).  r5 (generalized-fix.md open item): C 0.45 / P 0.40 / O 0.10 put
+#: P3-O1 (0.37-0.81) above C3-P3 (0.12-0.30), a non-monotonic chain; eeg0094 has P3-O1 about equal to F3-C3 and
+#: myoclonic-jerk-examples a front-to-back decline.  An even fall F 1.0 / C 0.68 / P 0.42 / O 0.22 makes the
+#: parasagittal links decline F3-C3 > C3-P3 > P3-O1 (0.32 / 0.26 / 0.20 before jitter), Fp1-F3 below F3-C3, and the
+#: temporal links stay small (Fp1-F7 0.17, F7-T3 0.10, T3-T5 0.13).
+_FC_FIELD = {"F3": 1.0, "F4": 1.0, "Fz": 0.95, "Fp1": 0.72, "Fp2": 0.72, "C3": 0.68, "C4": 0.68, "Cz": 0.65,
+             "P3": 0.42, "P4": 0.42, "Pz": 0.40, "F7": 0.55, "F8": 0.55, "T3": 0.45, "T4": 0.45,
+             "T5": 0.32, "T6": 0.32, "O1": 0.22, "O2": 0.22}
 #: eyelid myoclonia (independent re-review; PMC8610539 Fig 1 E/F, Jeavons syndrome: polyspikes largest bioccipitally
 #: right after each eye closure; PMC12593124 Fig 2: generalized PSW after closure).  Occipital maximum falling steeply
 #: to the parietal and posterior temporal rows, so P3-O1 / T5-O1 carry the largest share of the longitudinal chain
@@ -245,6 +249,8 @@ class GeneralizedV3:
         self._norm: Dict[tuple, float] = {}
         self.emg_field = np.array([_EMG_FIELD.get(e, 0.3) for e in self.el])
         self.photic_field = np.array([_PHOTIC_FIELD.get(e, 0.03) for e in self.el])
+        from .synth import BLINK_UV          # lazy: synth imports this module
+        self._closure_blink_uv = float(syn.bg.get("blink_amplitude_uv", BLINK_UV))
         # schedule
         self.cx_t: List[float] = []
         self.cx: List[dict] = []
@@ -396,7 +402,9 @@ class GeneralizedV3:
         for k in range(count):
             ps = polyspike_draw(rng, int(ev.get("n_spikes") or 5), lo=3, hi=8)
             a = amp * float(np.exp(rng.normal(0.0, 0.10)))
-            self._add_cx(t, "psw", a, 0.5, i * 1_000_003 + k, ps=ps, wave_gain=2.4 * (1.4 if label == "myoclonic_atonic" else 1.0),
+            # r5 (generalized-independent: wave / first spike 1.8-2.9 on F3-ear; eeg0094_db1 and myoclonic-jerk-examples
+            # show spikes as tall as or taller than the wave): wave_gain 2.4 -> 1.1 (myoclonic-atonic keeps its 1.4x)
+            self._add_cx(t, "psw", a, 0.5, i * 1_000_003 + k, ps=ps, wave_gain=1.1 * (1.4 if label == "myoclonic_atonic" else 1.0),
                          asym=float(rng.uniform(-0.08, 0.08)), lead=0.008, field="fc")
             e0 = t + float(rng.uniform(0.010, 0.030))
             e1 = e0 + float(np.clip(float(ps[0][-1]) + rng.uniform(0.03, 0.08), 0.05, 0.25))
@@ -431,9 +439,17 @@ class GeneralizedV3:
             self.emg.append((a0, a0 + dur, float(ev.get("emg_uv", 150.0)), 0.25, 0.4, "tonic"))
             self.bg.append((a0, a0 + dur, 0.6, 0.15, 0.4))
             self._add_gpfa(i, rng, a0, a0 + dur, 22.0, 16.0, 0.3 * float(ev["amplitude_uv"]) * 0.4,
-                           0.3 * float(ev["amplitude_uv"]))
+                           0.3 * float(ev["amplitude_uv"]), **self._TONIC_FAST)
             return max(end, a0 + dur)
         self._jerks(i, ev, rng, "myoclonic_tonic", after)
+
+    #: r5 (generalized-independent, tonic / myoclonic-tonic: waxing-waning packets read as spindles, homologous chains
+    #: dephased, iso F3-C3/F4-C4 0.16-0.33; atlas-tonic-seizure-i/-ii: a continuous, monomorphic, bisynchronous rhythm
+    #: under one crescendo): no per-electrode AM or frequency scatter, phase scatter +-0.7 -> +-0.05 rad, and the bifrontal
+    #: GPFA field.  On the shallow slow-wave gradient any phase scatter between neighbours IS the bipolar signal (a
+    #: +-0.15 rad draw still gave F3-C3/F4-C4 -0.2 to 0.5); on the steep field the link carries the rhythm itself.
+    #: (The focal ``tonic_seizure`` event keeps the defaults: its reviewer asked for less, not more, regularity.)
+    _TONIC_FAST = dict(am=0.0, df_sd=0.0, dphi=0.05, field="gpfa")
 
     def _add_gpfa(self, i, rng, t0, t1, f0, f1, a0, a1, ramp=0.15, side="both", am=0.35, df_sd=0.6, dphi=0.7,
                   field="gen"):
@@ -455,7 +471,7 @@ class GeneralizedV3:
         f0, f1 = float(ev.get("start_hz", 20.0)), float(ev.get("end_hz", 12.0))
         amp = float(ev["amplitude_uv"])
         self.bg.append((t0, t1, float(ev.get("decrement_depth", 0.7)), 0.2, 1.0))
-        self._add_gpfa(i, rng, t0 + dec, t1, f0, f1, 0.3 * amp, amp)
+        self._add_gpfa(i, rng, t0 + dec, t1, f0, f1, 0.3 * amp, amp, **self._TONIC_FAST)
         self.emg.append((t0 + 0.3 * dec, t1, float(ev.get("emg_uv", 120.0)), 1.5, 0.6, "tonic"))
         self._row("generalized_seizure", i, t0, t1, seizure_type="tonic", start_hz=f0, end_hz=f1,
                   decrement_s=dec)
@@ -528,8 +544,12 @@ class GeneralizedV3:
         f = float(ev["frequency_hz"])
         self.photic.append((t0, t0 + stim, fl, float(ev.get("driving_uv", 40.0))))
         self.bg.append((t0 + lat, t0 + stim + out, 0.5, 0.2, 0.3))
+        # r5 (generalized-independent: a regular 3.5-Hz train with a uniform field, read as an absence; eeg0066 and
+        # PMC8610539 Fig 1B show irregular polyspikes, posterior-predominant): per-cycle rate jitter 0.15 -> 0.30,
+        # complex amplitude scatter 0.10 -> 0.25, 2-5 spikes per complex, and the posterior (eyelid-myoclonia) field
         n = self._train(i, rng, t0 + lat, t0 + stim + out, f, f, float(ev["amplitude_uv"]), "psw",
-                        salt0=i * 1_000_003, jitter_f=0.15, ps_n=3, wave_gain=1.8, asym_amt=0.12)
+                        salt0=i * 1_000_003, jitter_f=0.30, amp_sd=0.25, ps_n=3, ps_range=(2, 5), wave_gain=1.8,
+                        asym_amt=0.12, field="post")
         self._row("generalized_seizure", i, t0 + lat, t0 + stim + out, seizure_type="photoparoxysmal",
                   stimulus_onset_s=round(t0, 3), stimulus_offset_s=round(t0 + stim, 3), stimulus_frequency_hz=fl,
                   outlasting=bool(ev.get("outlasting")), n_complexes=n)
@@ -741,6 +761,11 @@ class GeneralizedV3:
             if kind == "closure":
                 # lids close in ~0.25 s, the eyes roll up (cornea-positive at Fp) and stay until reopening
                 prof += amp * np.clip(d / 0.25, 0.0, 1.0) * np.clip(1.0 - (t - e1) / 0.3, 0.0, 1.0)
+                # r5 (generalized-independent: the closure was ~5 mm at 15 uV/mm; PMC8610539 Fig 1E/F and PMC12593124
+                # Fig 2 show a large closure transient): the lid closure itself is a blink-sized cornea-positive
+                # deflection (the nominal v3 blink shape at 0.8 x the record's blink amplitude) before the sustained
+                # shift; with the shift it peaks at about 1.0-1.4 x a nominal blink on Fp1-F3
+                prof += 0.8 * self._closure_blink_uv * self.syn._blink_profile(t, np.array([e0]))
             else:
                 ph = np.mod(d * f, 1.0)
                 live = (d >= 0) & (t <= e1)

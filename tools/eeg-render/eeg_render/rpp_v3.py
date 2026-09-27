@@ -77,6 +77,11 @@ LAT_BIPOLAR_GAIN = {
 }
 
 
+#: r050-fix-r5-seizures: lateralized RDA+F (continuous carrier) delta correction, 1 / 0.84 (the +F delta below 5 Hz
+#: against the plain LRDA's on T3-T5, seeds 771203 / 5150 / 90210, four runs each; lrda_probe2.py)
+RDA_PLUS_F_GAIN = 1.19
+
+
 def lateral_bipolar_gain(morph: str, region: str) -> float:
     tab = LAT_BIPOLAR_GAIN.get(morph)
     if tab is None:

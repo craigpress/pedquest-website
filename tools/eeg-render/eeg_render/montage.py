@@ -481,8 +481,9 @@ FOCAL_RECRUIT_GENERATORS: Dict[str, List[Tuple[str, float, float]]] = {
     "left_central":    [("P3", 0.40, 0.18), ("Cz", 0.30, 0.05), ("T3", 0.30, 0.12)],
     "right_central":   [("P4", 0.40, 0.18), ("Cz", 0.30, 0.05), ("T4", 0.30, 0.12)],
     # (phase D: P3/Pz lowered from 0.35/0.25, which put an occipital run's maximum in C3-P3 / Cz-Pz by 10 s)
-    "left_occipital":  [("T5", 0.40, 0.18), ("P3", 0.20, 0.12), ("Pz", 0.10, 0.05)],
-    "right_occipital": [("T6", 0.40, 0.18), ("P4", 0.20, 0.12), ("Pz", 0.10, 0.05)],
+    # (r5: P3/Pz 0.20/0.10 -> 0.08/0.05; a recruited parietal source reverses at P3 and made C3-P3 >= P3-O1 from 6 s)
+    "left_occipital":  [("T5", 0.40, 0.18), ("P3", 0.08, 0.12), ("Pz", 0.05, 0.05)],
+    "right_occipital": [("T6", 0.40, 0.18), ("P4", 0.08, 0.12), ("Pz", 0.05, 0.05)],
     # (phase B fix-focal: 0.45 / 0.35 put the maximum in T3-T5 from 5 s; synth._MESIAL_RECRUIT_S also delays them)
     "left_mesial_temporal":  [("T3", 0.20, 0.10), ("T5", 0.25, 0.22), ("C3", 0.15, 0.05)],
     "right_mesial_temporal": [("T4", 0.20, 0.10), ("T6", 0.25, 0.22), ("C4", 0.15, 0.05)],
