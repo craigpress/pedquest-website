@@ -146,6 +146,37 @@ def arousal_gate(t: np.ndarray, arousals: Sequence[Tuple[float, float]]) -> np.n
     return g
 
 
+#: phase B (variants-neonatal-r3, awake child vs learningeeg 5yo-F-posterior-slow-wave-of-youth-2: fast activity is
+#: intermittent there, continuous on every synthetic awake page): tonic temporalis EMG on about 40 % of the time while
+#: awake / drowsy, 1.4x the old floor when on and 0.35x when off (about the old RMS over a minute, so the EMG-ratio
+#: contracts of other families keep their baseline)
+EMG_ON_S = (3.5, 0.6)          # lognormal median / sigma of an "on" episode
+EMG_OFF_S = (5.0, 0.6)
+EMG_ON_LEVEL, EMG_OFF_LEVEL = 1.4, 0.35
+
+
+def emg_episodes(seed: int, horizon: float) -> np.ndarray:
+    """Alternating on-episode (start, end) pairs over the whole record, drawn once from the record seed."""
+    rng = substream(seed, "emg-episodes")
+    out, t = [], -120.0 - float(rng.uniform(0.0, EMG_OFF_S[0]))
+    while t < horizon + 120.0:
+        d = EMG_ON_S[0] * _lognorm(rng, EMG_ON_S[1])
+        out.append((t, t + d))
+        t += d + EMG_OFF_S[0] * _lognorm(rng, EMG_OFF_S[1])
+    return np.asarray(out)
+
+
+def emg_gate(t: np.ndarray, episodes: np.ndarray, ramp: float = 0.4) -> np.ndarray:
+    """EMG_OFF_LEVEL .. EMG_ON_LEVEL per sample: raised-cosine ramps into and out of each on-episode."""
+    on = np.zeros(t.shape)
+    if episodes.size:
+        sel = np.nonzero((episodes[:, 1] + ramp > t[0]) & (episodes[:, 0] - ramp < t[-1]))[0]
+        for a, b in episodes[sel]:
+            u = np.clip(np.minimum(t - a, b - t) / ramp + 0.5, 0.0, 1.0)
+            on = np.maximum(on, 0.5 - 0.5 * np.cos(np.pi * u))
+    return EMG_OFF_LEVEL + (EMG_ON_LEVEL - EMG_OFF_LEVEL) * on
+
+
 def schedule_transients(seed: int, tag: str, hypno: Sequence[Interval], table: Dict[str, float],
                         rate_per_min: float, refractory_s: float = 2.0) -> np.ndarray:
     """Poisson event times at ``rate_per_min`` x the stage weight (thinned), with a refractory gap."""
@@ -286,6 +317,9 @@ def stage_intervals(hypno: Sequence[Interval], stages: Sequence[str] = NREM_STAG
 #: slow waves per minute by stage: AASM N3 needs > 20 % of the epoch in 0.5-2 Hz waves >= 75 uV (frontal); N2 holds
 #: a few isolated ones
 SWS_RATE = {"N2": 1.5, "N3": 70.0}
+#: phase B (sleep-fix, sleep-independent.md: 34-72 % of child / infant N2 epochs met the N3 criterion on F4-A1): the
+#: high-voltage pediatric slow wave makes each N2 slow wave count, so children and infants hold fewer in N2
+SWS_N2_RATE_B = {"infant": 0.25, "child": 0.4, "adolescent": 1.0}
 #: REM: sawtooth trains (AASM: trains of sharply contoured or triangular, often serrated, 2-6 Hz waves, central
 #: maximum, often preceding a burst of rapid eye movements; eegatlas-online sawtooth waves #2784)
 SAWTOOTH_RATE = {"R": 2.0}
@@ -296,7 +330,8 @@ REM_CLUSTER_RATE = {"R": 4.0}
 def schedule_slow_waves(seed: int, hypno: Sequence[Interval], age: str) -> Dict[str, np.ndarray]:
     """Individual slow waves (the slow oscillation) in N3 and a few in N2: onset, surface-negative half-wave duration
     (0.25-0.75 s, i.e. 0.7-2 Hz), amplitude factor (lognormal) and the relative size of the positive rebound."""
-    times = schedule_transients(seed, "sws-waves", hypno, SWS_RATE, 1.0, 0.45)
+    table = dict(SWS_RATE, N2=SWS_N2_RATE_B.get(age, SWS_RATE["N2"]))
+    times = schedule_transients(seed, "sws-waves", hypno, table, 1.0, 0.45)
     rng = substream(seed, "sws-shape")
     n = times.size
     return {"t": times, "half": np.clip(0.45 * np.exp(rng.normal(0.0, 0.3, n)), 0.3, 0.9),

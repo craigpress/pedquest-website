@@ -395,6 +395,11 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
         if t1 < 0.0 or t0 > duration_s:
             continue
         rows.append(_row("state_detail", t0, t1, fs, duration_s, label="quiet_sleep_high_voltage_slow"))
+    # phase B: the low-voltage-irregular stretch of each term active-sleep epoch (the rest is mixed activity)
+    for t0, t1 in getattr(synth, "_lvi", []) or []:
+        if t1 < 0.0 or t0 > duration_s:
+            continue
+        rows.append(_row("state_detail", t0, t1, fs, duration_s, label="active_sleep_low_voltage_irregular"))
 
     for ann in synth.spec.get("annotations") or []:
         at = float(ann["at_min"]) * 60.0

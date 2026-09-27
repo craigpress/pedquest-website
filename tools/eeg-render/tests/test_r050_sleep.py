@@ -256,7 +256,9 @@ def test_rem_has_sawtooth_waves_rapid_eye_movements_and_atonia(CHILD):
     l, r = d[names.index("Fp1-F7")], d[names.index("Fp2-F8")]
     assert np.ptp(l) >= 60.0 and np.corrcoef(l, r)[0, 1] < -0.5      # opposed frontal eye-movement field
     assert not [s for s in S._rem_steps if S.stage_at(np.array([s[0]]))[0] not in ("R", "")]
-    hp = sps.butter(4, [30, 70], "bandpass", fs=FS, output="sos")
+    # phase B: 40-70 Hz (was 30-70; the delta stream's broadband tail reaches 30-40 Hz, and phase B cut N2 delta,
+    # which moved the old ratio from 0.598 to 0.601 without any change in muscle)
+    hp = sps.butter(4, [40, 70], "bandpass", fs=FS, output="sos")
     emg = {}
     for st in ("N2", "R"):
         a, b = _stage(S, st, 120)
