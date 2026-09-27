@@ -11,7 +11,8 @@ they are not drawn.
 # to 0.3.9; their sidecars were restamped after representative render checks.
 # 0.5.0 (2026-09-26): spec_version 3 - causal page filter, reference-matched artifacts / variants / seizures /
 # sleep staging / ACNS 2021 patterns / generalized and focal seizure types, key-vs-visible contracts, viewer montages.
-# spec_version 1 and 2 renders are byte-identical to 0.4.4/0.4.5.
-RENDERER_VERSION = "0.5.0"
+# spec_version 1 and 2 renders are byte-identical to 0.4.4/0.4.5.  The version string moves to 0.5.0 at rollout,
+# together with render-all / sidecar restamp (test_verify_sidecars pins committed sidecars to this string).
+RENDERER_VERSION = "0.4.4"
 
 __all__ = ["RENDERER_VERSION"]
