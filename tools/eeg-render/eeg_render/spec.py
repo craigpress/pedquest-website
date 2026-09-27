@@ -563,7 +563,11 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         if version >= 3 and age != "neonate":
             # phase D (artifacts-v3 blinks): 160 uV displayed an eyes-open Fp1-F3 median of 0.97 rows (3.5x bg) against a
             # reference median of 1.9 channel spacings (0.9-4.3) and 3-10x background; 320 measures 1.83 rows, 5.3x
-            bg.setdefault("blink_amplitude_uv", 320.0)
+            # phase B fix-focal (focal-independent / generalized-independent: 522-686 uV blink p2p in Fp1-F7): 320 put the
+            # eyes-open Fp1-F3 median at 2.0 rows / 9x bg (adult), 2.4 / 7x (child), 2.2 / 4.4x (infant), maxima 5-6.7
+            # rows.  Adult 300 gives about 1.9 rows; children and infants carry more background, so 250 keeps them at
+            # 3.5-5x bg with a lower on-page size (artifacts.md 1e: 0.9-4.3 spacings, median 1.9, 3-10x bg)
+            bg.setdefault("blink_amplitude_uv", 300.0 if age == "adult" else 250.0)
         bg.setdefault("blink_amplitude_uv", 160.0)
         bg.setdefault("amplitude_reference", "display")
         bg.setdefault("pdr_field", "focal")
@@ -1211,6 +1215,11 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1) -> Dict[str, Any]:
         # (fast_uv); Traub & Moeller 2020 (PMID 31525161) put very fast
         # oscillations at the start of the decrement, coincident with the spasm.
         e.setdefault("fast_uv", 22.0)
+        if version >= 3:
+            # phase B fix-focal (focal-independent SPASM; infantile-spasm-craig-20260926: the overriding 17-19 Hz fast
+            # activity is 0.4-0.75x the slow wave in F3-C3/C3-P3/P3-O1/Cz-Pz; 40 measured 0.06-0.12x).  With the
+            # sqrt(field) weighting in synth._spasm_rows_v3, 110 lands at 0.45-0.7x
+            e.setdefault("wave_fast_uv", 110.0)
         e.setdefault("wave_fast_uv", 40.0)
         # Scalp EMG is off by default so the beta reads as cerebral; add
         # muscle: modest for a recording where neck/frontalis EMG shows.
