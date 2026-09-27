@@ -47,6 +47,7 @@ from . import montage as mt
 from .rng import substream
 from . import state_v3 as sv3
 from . import variants_v3 as vv3
+from . import generalized_v3 as gv3
 
 FRAME_S = 32.0          # overlap-add frame length
 
@@ -487,9 +488,12 @@ _RPP_DRIFT = 0.05
 # spikes left the inter-spike valleys at 0.44-0.55 of the peak, so the complex read as one notched 97-ms sharp wave
 # (Craig: "merged on a sharp wave").  eeg0094_db1.png and myoclonic-jerk-examples/p1.webp show 4-8 spikes at
 # 55-80 ms intervals, each swinging through the baseline, then a slow wave.
-_PS_RISE, _PS_FALL = 0.010, 0.014          # s, negative spike limbs (surface sign applied by the caller)
-_PS_TROUGH_LAG, _PS_TROUGH_SIGMA = 0.028, 0.014
-_PS_WAVE_LAG, _PS_WAVE_SIGMA, _PS_WAVE_GAIN = 0.150, 0.100, 0.90
+_PS_RISE, _PS_FALL = 0.007, 0.010          # s, negative spike limbs (surface sign applied by the caller)
+# 0.5.0 phase D (epileptiform-v3.md change 1: the 0.5-0.7 x 14-ms trough made each spike one cycle of a 16-Hz sine
+# and the after-going wave measured 0.41x the spike train): a smaller, broader trough (0.20-0.35 x 22 ms, drawn in
+# generalized_v3.polyspike_draw) and a slow wave at least as large as the spikes after the 1-Hz display high-pass
+_PS_TROUGH_LAG, _PS_TROUGH_SIGMA = 0.032, 0.022
+_PS_WAVE_LAG, _PS_WAVE_SIGMA, _PS_WAVE_GAIN = 0.160, 0.100, 2.2
 
 
 def _polyspike_kernel(d: np.ndarray, lags: np.ndarray, gains: np.ndarray, troughs: np.ndarray,
@@ -514,7 +518,7 @@ def _polyspike_unit_ptp(width: float = 1.0, trough: float = 0.6) -> float:
     return float(np.ptp(_polyspike_kernel(d, np.array([0.0]), np.array([1.0]), np.array([trough]), width, False)))
 
 
-_PS_UNIT_PTP = _polyspike_unit_ptp(1.0, 0.6)
+_PS_UNIT_PTP = _polyspike_unit_ptp(1.0, 0.28)
 
 
 # --------------------------------------------------------------------------
@@ -775,7 +779,12 @@ class Synthesizer:
         self._build_sporadic()
         self._build_variants()
         self._build_authored_variants()
+        self._gen = None
         self._collect_seizures()
+        if self.spec_version >= 3 and any(e["type"] in ("generalized_seizure", "generalized_discharges", "tonic_seizure")
+                                          for e in spec["events"]):
+            # 0.5.0 phase D: generalized seizures and generalized interictal patterns (generalized_v3.py)
+            self._gen = gv3.GeneralizedV3(self)
         self.artifacts = [e for e in spec["events"]
                           if e["type"] == "artifact" and self._artifact_eligible(e)]
         self.stimulations = [e for e in spec["events"] if e["type"] == "stimulation"]
@@ -2582,6 +2591,19 @@ class Synthesizer:
                 mt.generator_field_scale(region, self.electrodes))
         return cached[region]
 
+    def _gpd_field_scale(self) -> np.ndarray:
+        """Per-electrode scale that pins the generalized generator sum onto the steep GPD field (v3)."""
+        cached = getattr(self, "_gpd_fs", None)
+        if cached is None:
+            target = gv3.gpd_field_target(self.electrodes)
+            fall = mt.generator_falloff("generalized")
+            raw = np.zeros(self.n_elec)
+            for focus, ga, _ in mt.region_generators("generalized", self.electrodes):
+                raw += ga * self._gen_weights(focus, fall)
+            cached = np.array([target[e] for e in self.electrodes]) / np.maximum(raw, raw.max() * 1e-6)
+            self._gpd_fs = cached
+        return cached
+
     #: Field of the spasm slow wave: vertex and central-parietal maximum with
     #: a large posterior deflection, smaller frontally.
     _SPASM_FIELD = {"Cz": 1.0, "Pz": 1.0, "P3": 0.95, "P4": 0.95, "C3": 0.9, "C4": 0.9,
@@ -2861,17 +2883,13 @@ class Synthesizer:
 
     @staticmethod
     def _polyspike_params(rng: np.random.Generator, n_spikes: int, lo: int = 3):
-        """One polyspike's spike lags, heights and troughs (0.5.0; drawn once per discharge)."""
-        n = int(np.clip(n_spikes + int(rng.integers(-1, 2)), lo, 8))
-        isi = float(rng.uniform(0.060, 0.075))
-        steps = np.clip(isi + rng.uniform(-0.010, 0.010, n - 1), 0.055, 0.080)
-        lags = np.concatenate([[0.0], np.cumsum(steps)])
-        gains = rng.uniform(0.8, 1.1, n)
-        if rng.uniform() < 0.5:
-            gains = np.sort(gains)                 # crescendo; otherwise roughly flat
-        gains = gains / gains[0]                   # the first spike is the keyed (t0) one at amplitude 1
-        troughs = rng.uniform(0.5, 0.7, n)
-        return lags, gains, troughs
+        """One polyspike's spike lags, heights and troughs (0.5.0; drawn once per discharge).
+
+        Phase D (epileptiform-v3.md B5-04 / HYPS: equal 60-75 ms ISIs and 0.8-1.1 heights read as a 16-Hz sinusoidal
+        burst, 81 % of the train's power within 3 Hz of 1/ISI): irregular lognormal ISIs (55-120 ms), unsorted
+        heights 0.5-1.2 and small troughs, shared with the generalized polyspike-and-wave (generalized_v3).
+        """
+        return gv3.polyspike_draw(rng, n_spikes, lo=lo, hi=8)
 
     def _build_sporadic(self) -> None:
         """Draw every sporadic discharge once: (t0, event index, width, amplitude) sorted by time."""
@@ -3339,6 +3357,8 @@ class Synthesizer:
             if inst.morph == "spasm":
                 out += self._spasm_rows(inst, t)
                 continue
+            if inst.kind == "tonic_seizure" and self.spec_version >= 3:
+                continue          # 0.5.0 phase D: generalized_v3 draws its paroxysmal fast activity
             phase, u, amp, f_inst = self._ictal_phase(inst, t)
             if phase is None:
                 continue
@@ -3389,6 +3409,12 @@ class Synthesizer:
             # generators sum into every electrode.
             v3 = self.spec_version >= 3
             onset_scale = self._field_scale(inst.onset_region)
+            gpd = (v3 and inst.kind == "rhythmic_pattern" and inst.morph == "periodic"
+                   and inst.onset_region == "generalized")
+            if gpd:
+                # 0.5.0 phase D (epileptiform-v3.md C26: GPDs fell to 20-30 uV bipolar, 0.30x referential Fz, because
+                # the near-uniform generalized field reached the chain only through the inter-electrode lag)
+                onset_scale = self._gpd_field_scale()
             onset_fall = mt.generator_falloff(inst.onset_region)
             gens = [(g, 1.0) for g in mt.region_generators(inst.onset_region, self.electrodes)]
             extra = [g for g in mt.FOCAL_RECRUIT_GENERATORS.get(inst.onset_region, []) if g[0] in self._idx] if v3run else []
@@ -3401,7 +3427,7 @@ class Synthesizer:
                 w = self._gen_weights(focus, onset_fall) * onset_scale
                 wv = (self._wave(phase, psi, gph, inst.morph, inst.plus_fast,
                                  f_inst, base, mt.POSITIONS.get(focus, (0.0, 0.0))[1],
-                                 base + 7919 * (gi + 1), v3, inst.plus_sharp)
+                                 base + 7919 * (gi + 1), v3, inst.plus_sharp, gpd)
                       * amp * ga * onset_keep * join)
                 out += w[:, None] * wv[None, :]
             if spread is not None and phase_d is not None:
@@ -3446,7 +3472,7 @@ class Synthesizer:
               morph: str = "ictal", plus_fast: float = 0.0,
               f_inst: Optional[np.ndarray] = None, salt: int = 0,
               lead: float = 0.0, gsalt: Optional[int] = None,
-              v3: bool = False, plus_sharp: float = 0.0) -> np.ndarray:
+              v3: bool = False, plus_sharp: float = 0.0, disperse: bool = False) -> np.ndarray:
         """Waveform for one generator, from its instantaneous phase.
 
         ``ictal``      four harmonics at 1/k^1.3 - the spiky, non-sinusoidal
@@ -3481,10 +3507,16 @@ class Synthesizer:
             # the generator offset is a time lag too (0.5 s per offset cycle, <= 50 ms), not a cycle fraction that
             # grew to 200 ms between T3 and T5 at 0.5 Hz
             cycles = (phase + 2 * np.pi * offset_cycles * 0.5 * f) / (2 * np.pi)
+            if disperse and gsalt is not None:
+                # 0.5.0 phase D (C26, gpds-ty: GPDs in every chain, P-O and Cz-Pz included): each generator keeps its
+                # own fixed +/-12 ms timing, so the discharge is not one waveform scaled across the head
+                cycles = cycles - 0.012 * (2.0 * float(_cycle_noise(np.zeros(1), gsalt + 401)[0]) - 1.0) * f
             k = np.floor(cycles + 0.5)
             wave = _pd_cycle((cycles - k) * period, period, k, salt)
             wave = ((wave - np.interp(f, _PD_FREQS, _PD_MEANS))
                     / np.interp(f, _PD_FREQS, _PD_PTPS) * _PERIODIC_PTP)
+            if disperse and gsalt is not None:
+                wave = wave * (1.0 + 0.25 * (2.0 * _cycle_noise(k, gsalt + 409) - 1.0))   # per-generator, per-cycle
         elif morph == "periodic":
             x = np.mod(p / (2 * np.pi), 1.0)
             wave = _periodic_template(x)
@@ -3812,7 +3844,10 @@ class Synthesizer:
         and periodic patterns (LPDs, LRDA) drive neither gate: they are not
         seizures and recruit nothing.
         """
-        return self._run_gate(t, [z for z in self.ictal if z.morph == "spike_wave"])
+        gate = self._run_gate(t, [z for z in self.ictal if z.morph == "spike_wave"])
+        if getattr(self, "_gen", None) is not None:
+            gate = np.maximum(gate, self._gen.absence_gate(t))
+        return gate
 
     @staticmethod
     def _run_gate(t: np.ndarray, insts: Sequence[SeizureInstance]) -> np.ndarray:
@@ -4849,6 +4884,11 @@ class Synthesizer:
         # An electrodecrement (spasm, tonic onset) silences the muscle floor
         # too: the child is still, and the page must actually flatten.
         dec = self.decrement_envelope(t)
+        gen = self._gen if (self._gen is not None and not self._calibrating) else None
+        if gen is not None:
+            # 0.5.0 phase D: an absence replaces the background, a tonic seizure decrements it, a GTC ends in
+            # postictal suppression (the ictal rows themselves are added after the envelopes, below)
+            dec = dec * gen.bg_factor(t)
         # 0.4.1 (Craig, P5 C08 "shouldn't have fast muscle"): an unreactive patient - sedated,
         # paralysed, post-anoxic - has no tonic muscle, inside bursts included.  Version 2 only.
         unreactive = self.spec_version >= 2 and self.bg.get("reactivity") == "absent"
@@ -4858,6 +4898,7 @@ class Synthesizer:
                  * (1.0 + self.ictal_gate(t))
                  * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
                  * dec
+                 * (gen.emg_factor(t) if gen is not None else 1.0)
                  # an infant's temporalis floor is a fraction of a child's
                  * (0.45 if self.age == "infant" else self._neo_emg_v3(t) if self.age == "neonate" else 1.0))
         muscle_term = self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
@@ -5004,6 +5045,8 @@ class Synthesizer:
         if self._calibrating:
             return t, x            # background only: what the display calibration measures
         x += self._seizure_block(t)
+        if gen is not None:
+            x += gen.rows(t, i0) * self._ch_gain[:, None]
         if self.spec_version >= 3 and self.bg["type"] == "burst_suppression":
             x += self._burst_onset_rows(t) * self._ch_gain[:, None]
         if self.spec_version >= 3 and self.ictal:
