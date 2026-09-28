@@ -24,6 +24,7 @@ import {
   DUPLICATE_THRESHOLD, QBANK_ID_PATTERN, stemSimilarity,
   type QbankQuestion,
 } from "../src/lib/qbank/question";
+import { letterRefProblems, questionTextFields } from "../src/lib/qbank/option-letters";
 
 const ROOT = "content/qbank";
 const SCHEMA_PATH = join(ROOT, "schema/question.schema.json");
@@ -156,6 +157,12 @@ async function main() {
       const banned = (q.options ?? []).find((o) =>
         /\b(all|none) of the above\b/i.test(o.text ?? ""));
       if (banned) report.errors.push(`option "${banned.text}" is banned by the style guide`);
+    }
+    // Option letters in the text are AUTHORING letters; the importer remaps
+    // them to the shuffled display order, which only works if they name a
+    // real option (and "the correct answer is X" names the key).
+    if (q.stem && q.options) {
+      for (const p of letterRefProblems(questionTextFields(q), q.options)) report.errors.push(`option letter: ${p}`);
     }
     if (q.question_type === "point_to_feature" && !q.point_to_feature) {
       report.errors.push("point_to_feature items need a point_to_feature block");

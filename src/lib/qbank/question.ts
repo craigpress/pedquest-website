@@ -8,6 +8,8 @@
 // Framework-agnostic: no next/*, no React, no Supabase client. Safe to import
 // from API routes AND from tsx scripts.
 
+import { displayLetterMap, remapOptionLetters } from "./option-letters";
+
 export interface QbankStem {
   vignette: string;
   image_caption: string;
@@ -278,6 +280,14 @@ export function questionToRows(
 ): { case: CaseRowFields; options: OptionRowFields[]; references: ReferenceRowFields[] } {
   const side = sidecar ?? q.image.rendered ?? null;
   const dims = (side ?? {}) as Record<string, unknown>;
+  // Text says "The correct answer is A" in AUTHORING order; learners see the
+  // shuffled order, so rewrite option references to the displayed letters.
+  // `content` keeps the authoring text: it is the source this function is
+  // re-run on (revisions), and remapping it too would remap twice.
+  const displayed = shuffleOptions(q.id, q.options);
+  const letters = displayLetterMap(q.options, displayed);
+  const fix = (s: string) => (s ? remapOptionLetters(s, letters).text : s);
+  const keyPoints = (q.key_points ?? []).map(fix);
 
   return {
     case: {
@@ -288,21 +298,21 @@ export function questionToRows(
       setting: q.setting,
       bloom: q.bloom,
       difficulty: q.difficulty,
-      learning_objective: q.learning_objective,
-      clinical_vignette: q.stem.vignette,
-      image_caption: q.stem.image_caption,
-      lead_in: q.stem.lead_in,
+      learning_objective: fix(q.learning_objective),
+      clinical_vignette: fix(q.stem.vignette),
+      image_caption: fix(q.stem.image_caption),
+      lead_in: fix(q.stem.lead_in),
       question_type: q.question_type,
       // question_prompt is what the learner is asked; for point_to_feature the
       // instruction is the prompt, otherwise the lead-in is.
-      question_prompt: q.question_type === "point_to_feature"
+      question_prompt: fix(q.question_type === "point_to_feature"
         ? (q.point_to_feature?.instruction ?? q.stem.lead_in)
-        : q.stem.lead_in,
-      explanation: q.explanation,
-      key_points: q.key_points,
+        : q.stem.lead_in),
+      explanation: fix(q.explanation),
+      key_points: keyPoints,
       // teaching_points powers the existing Case-of-the-Day reveal UI; the
       // bank's key_points are the same three bullets.
-      teaching_points: q.key_points,
+      teaching_points: keyPoints,
       tags: q.topics ?? [],
       correct_region: q.question_type === "point_to_feature" ? regionFromSidecar(side) : null,
       region_tolerance: q.question_type === "point_to_feature"
@@ -321,10 +331,10 @@ export function questionToRows(
       source: q.metadata.source_method === "ai-generated-pipeline" ? "ai" : "team",
       version: q.version,
     },
-    options: shuffleOptions(q.id, q.options).map((o, i) => ({
-      label: o.text,
+    options: displayed.map((o, i) => ({
+      label: fix(o.text),
       is_correct: o.correct,
-      option_explanation: o.rationale,
+      option_explanation: fix(o.rationale),
       sort_order: i,
     })),
     references: q.references.map((r, i) => ({
