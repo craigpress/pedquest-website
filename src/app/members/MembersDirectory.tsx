@@ -187,11 +187,13 @@ export default function MembersDirectory({ members }: { members: Member[] }) {
         .mem-search {
           flex: 1 1 260px; display: flex; align-items: center; gap: 0.6rem;
           background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
-          padding: 0.7rem 0.95rem;
+          padding: 0 0.95rem;
         }
         .mem-search:focus-within { border-color: var(--accent); }
+        /* the input carries the vertical padding so the whole pill is its hit area */
         .mem-search input {
-          flex: 1; border: none; background: transparent; outline: none;
+          flex: 1; min-width: 0; align-self: stretch; padding: 0.7rem 0;
+          border: none; background: transparent; outline: none;
           font-family: var(--body-font); font-size: 0.95rem; color: var(--ink);
         }
         .mem-search input::placeholder { color: var(--muted); }

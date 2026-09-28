@@ -47,10 +47,21 @@
 }
 
 /* ─── Base Styles ─── */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* Layered so Tailwind's spacing utilities (layer `utilities`) can override it;
+   unlayered, this beat every p-* / m-* class on the site. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* Phones and tablets: iOS Safari zooms the page when a field under 16px takes focus. */
+@media (pointer: coarse), (any-pointer: coarse) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
 html {

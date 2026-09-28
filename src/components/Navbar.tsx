@@ -225,7 +225,7 @@ function DrawerSection(props: { title: string; links: MenuLink[]; pathname: stri
             <Link
               href={l.href}
               onClick={props.onNavigate}
-              className="flex items-center justify-between gap-3 px-5 py-3 rounded-xl no-underline"
+              className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl no-underline"
               style={{
                 fontSize: "1rem",
                 fontWeight: 600,
@@ -298,10 +298,11 @@ export default function Navbar() {
           background: "linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary, var(--accent-primary)))",
         }} />
 
+        {/* 60px bar on phones (header 65 incl. accent + border), 88px from lg (header 93).
+            The 16px gutter sits inside a 1352 box so wide screens keep a 1320 content row. */}
         <nav
-          className="mx-auto flex items-center justify-between px-5 lg:px-10"
-          // globals.css has an unlayered `* { margin: 0 }` that beats Tailwind's mx-auto, so centre explicitly
-          style={{ maxWidth: 1320, height: 88, margin: "0 auto" }}
+          className="flex items-center justify-between h-[60px] lg:h-[88px]"
+          style={{ maxWidth: 1352, margin: "0 auto", padding: "0 16px" }}
         >
           {/* Logo / Brand */}
           <Link
@@ -317,7 +318,8 @@ export default function Navbar() {
               width={1254}
               height={1254}
               priority
-              style={{ height: 44, width: 44, flex: "none" }}
+              className="h-9 w-9 lg:h-11 lg:w-11"
+              style={{ flex: "none" }}
             />
             <Image
               src="/images/pedquest-wordmark-flame-darknav-2026.png"
@@ -325,8 +327,7 @@ export default function Navbar() {
               width={2113}
               height={744}
               priority
-              className="transition-opacity duration-300 group-hover:opacity-85"
-              style={{ height: 48, width: "auto" }}
+              className="h-9 lg:h-12 w-auto transition-opacity duration-300 group-hover:opacity-85"
             />
           </Link>
 
@@ -338,7 +339,7 @@ export default function Navbar() {
                 <li key={link.href} className="flex items-center gap-1.5">
                   <Link
                     href={link.href}
-                    className="relative px-5 py-3 rounded-lg no-underline transition-all duration-200"
+                    className="relative rounded-lg no-underline transition-all duration-200"
                     aria-current={active ? "page" : undefined}
                     style={{
                       fontSize: "1.05rem",
@@ -501,8 +502,7 @@ export default function Navbar() {
       {/* Mobile slide-down menu */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 xl:hidden"
-          style={{ top: 92 }}
+          className="fixed left-0 right-0 bottom-0 top-16 lg:top-[92px] z-40 xl:hidden"
         >
           {/* Backdrop */}
           <div
@@ -512,16 +512,16 @@ export default function Navbar() {
           />
           {/* Menu panel — solid so page content can't bleed through */}
           <div
-            className="relative"
+            className="relative max-h-[calc(100dvh-64px)] lg:max-h-[calc(100dvh-92px)]"
             style={{
               background: "var(--bg)",
               borderBottom: "1px solid var(--border)",
               boxShadow: "0 20px 40px rgba(0,0,0,0.45)",
-              maxHeight: "calc(100vh - 92px)",
               overflowY: "auto",
+              overscrollBehavior: "contain",
             }}
           >
-            <ul id="mobile-nav-menu" className="flex flex-col gap-1 list-none m-0 px-6 py-5" role="navigation" aria-label="Mobile navigation">
+            <ul id="mobile-nav-menu" className="flex flex-col gap-1 list-none m-0 px-4 pt-3 pb-5" role="navigation" aria-label="Mobile navigation">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
                 return (
@@ -529,7 +529,7 @@ export default function Navbar() {
                     <Link
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className="block px-5 py-4 rounded-xl no-underline transition-all duration-200"
+                      className="block px-4 py-3 rounded-xl no-underline transition-all duration-200"
                       style={{
                         fontSize: "1.05rem",
                         fontWeight: active ? 700 : 500,
@@ -556,7 +556,7 @@ export default function Navbar() {
                   <Link
                     href="/profile"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl no-underline"
                     style={{
                       fontSize: "1rem",
                       fontWeight: 600,
@@ -575,7 +575,7 @@ export default function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl no-underline"
                     style={{
                       fontSize: "1rem",
                       fontWeight: 600,
@@ -594,7 +594,7 @@ export default function Navbar() {
                   <Link
                     href="/join"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 px-5 py-4 rounded-xl no-underline"
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl no-underline"
                     style={{
                       fontSize: "1rem",
                       fontWeight: 600,
@@ -616,7 +616,7 @@ export default function Navbar() {
       )}
 
       {/* Spacer to push content below the fixed navbar */}
-      <div style={{ height: 92 }} />
+      <div className="h-16 lg:h-[92px]" />
     </>
   );
 }

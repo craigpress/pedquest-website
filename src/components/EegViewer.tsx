@@ -125,7 +125,8 @@ export default function EegViewer({
   const [dragging, setDragging] = useState(false);
   const canDrag = allowDragPan && zoom > 1;
   const onPointerDown = (e: React.PointerEvent) => {
-    if (!canDrag || e.button !== 0) return;
+    // a finger pans the scroller natively (touch-action below); only mouse/pen drag here
+    if (!canDrag || e.button !== 0 || e.pointerType === "touch") return;
     const el = scrollRef.current!;
     drag.current = { x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop };
     el.setPointerCapture(e.pointerId);
@@ -152,29 +153,47 @@ export default function EegViewer({
 
   return (
     <div>
+      <style>{`
+        .ev-bar button, .ev-bar select { box-sizing: border-box; }
+        @media (pointer: coarse), (any-pointer: coarse) {
+          .ev-bar button { min-width: 40px; min-height: 40px; }
+          .ev-bar select { min-height: 40px; }
+        }
+        .ev-hint-touch { display: none; }
+        @media (hover: none) {
+          .ev-hint-mouse { display: none; }
+          .ev-hint-touch { display: inline; }
+        }
+      `}</style>
+      {/* Wraps on narrow screens: nowrap forced the row (and a grid parent) wider
+          than a phone, pushing the palette picker off-screen. */}
       <div
         role="toolbar"
         aria-label="Image tools"
-        style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", marginBottom: 8,
+        className="ev-bar"
+        style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8,
           fontFamily: "monospace", fontSize: 12, color: "var(--text-muted)" }}
       >
-        <button type="button" style={btn} onClick={zoomOut} disabled={zoom <= ZOOM_MIN} aria-label="Zoom out">−</button>
-        <span style={{ minWidth: 42, textAlign: "center" }} aria-live="polite">{Math.round(zoom * 100)}%</span>
-        <button type="button" style={btn} onClick={zoomIn} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in">+</button>
-        <button type="button" style={btn} onClick={zoomFit} disabled={zoom === 1}>Fit</button>
-        <button type="button" style={btn} onClick={zoomActual} disabled={!naturalWidth} title="Show at the rendered pixel size">1:1</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "none" }}>
+          <button type="button" style={btn} onClick={zoomOut} disabled={zoom <= ZOOM_MIN} aria-label="Zoom out">−</button>
+          <span style={{ minWidth: 42, textAlign: "center" }} aria-live="polite">{Math.round(zoom * 100)}%</span>
+          <button type="button" style={btn} onClick={zoomIn} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in">+</button>
+          <button type="button" style={btn} onClick={zoomFit} disabled={zoom === 1}>Fit</button>
+          <button type="button" style={btn} onClick={zoomActual} disabled={!naturalWidth} title="Show at the rendered pixel size">1:1</button>
+        </div>
         {/* The hint yields its width first, so the palette picker stays on the
-            toolbar row instead of wrapping onto one of its own. */}
-        <span style={{ opacity: 0.7, flex: "1 1 auto", minWidth: 0, overflow: "hidden",
+            toolbar row while there is room for it. */}
+        <span style={{ opacity: 0.7, flex: "1 1 0", minWidth: 0, overflow: "hidden",
           whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
-          · ctrl + scroll to zoom{canDrag ? ", drag to pan" : ""}
+          <span className="ev-hint-mouse">· ctrl + scroll to zoom{canDrag ? ", drag to pan" : ""}</span>
+          <span className="ev-hint-touch">· pinch or + to zoom</span>
         </span>
 
         {/* The picker is shown on every figure so its absence is never a
             mystery; on a figure with no spectrogram panels (a raw page, an
             aEEG) it is disabled and says why. */}
         <label style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6,
-          flex: "0 0 auto", whiteSpace: "nowrap", opacity: paletteEnabled ? 1 : 0.65 }}>
+          flex: "0 1 auto", minWidth: 0, flexWrap: "wrap", opacity: paletteEnabled ? 1 : 0.65 }}>
           <span>Heat map</span>
           <select
             value={palette}
@@ -205,9 +224,9 @@ export default function EegViewer({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         style={{
-          overflow: "auto", maxHeight: zoom > 1 ? "80vh" : undefined,
+          overflow: "auto", maxHeight: zoom > 1 ? "60svh" : undefined,
           borderRadius: 14, cursor: canDrag ? (dragging ? "grabbing" : "grab") : undefined,
-          touchAction: zoom > 1 ? "pan-x pan-y" : undefined,
+          touchAction: zoom > 1 ? "pan-x pan-y pinch-zoom" : undefined,
         }}
       >
         <div

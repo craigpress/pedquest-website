@@ -367,7 +367,7 @@ function PointImage({ src, alt, point, onPick, reveal }:
     <div>
       <div ref={wrapRef} onClick={handleClick} onKeyDown={handleKey}
         role={interactive ? "button" : "img"}
-        aria-label={interactive ? `${alt}. Click, or use arrow keys then Enter, to mark the feature.` : alt}
+        aria-label={interactive ? `${alt}. Tap or click, or use arrow keys then Enter, to mark the feature.` : alt}
         tabIndex={interactive ? 0 : -1}
         style={{ position: "relative", width: "100%", borderRadius: 14, overflow: "hidden",
           border: "1px solid var(--border)", background: "var(--bg-card)", cursor: interactive ? "crosshair" : "default", lineHeight: 0 }}>
@@ -383,7 +383,7 @@ function PointImage({ src, alt, point, onPick, reveal }:
       </div>
       {interactive && (
         <div style={{ fontFamily: "monospace", fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>
-          {point ? `Marked at ${Math.round(point.x * 100)}%, ${Math.round(point.y * 100)}% — submit to check` : "Click the tracing to place your marker (or use arrow keys)."}
+          {point ? `Marked at ${Math.round(point.x * 100)}%, ${Math.round(point.y * 100)}% — submit to check` : "Tap or click the tracing to place your marker (or use arrow keys)."}
         </div>
       )}
       {reveal && (

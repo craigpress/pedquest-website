@@ -346,7 +346,7 @@ export default function AdminQbankItemPage() {
         .qbi-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .qbi-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 0; font-family: var(--mono-font); font-size: 11.5px; }
         @media (max-width: 980px) {
-          .qbi-grid, .qbi-2, .qbi-3, .qbi-diff { grid-template-columns: 1fr; }
+          .qbi-grid, .qbi-2, .qbi-3, .qbi-diff { grid-template-columns: minmax(0, 1fr); }
         }
       `}</style>
 
