@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const quickLinks = [
   { href: "/about", label: "About" },
@@ -16,8 +17,29 @@ const quickLinks = [
   { href: "/sponsor", label: "Sponsor" },
 ];
 
+/** Full-height tools where the footer would only take room from the work. */
+const COMPACT_ROUTES = ["/admin/eeg-lab/viewer"];
+
 export default function Footer() {
   const year = new Date().getFullYear();
+  const pathname = usePathname() ?? "";
+
+  if (COMPACT_ROUTES.some((r) => pathname.startsWith(r))) {
+    const small: React.CSSProperties = { color: "var(--text-muted)", fontFamily: "var(--body-font)", fontSize: 12 };
+    return (
+      <footer style={{ background: "var(--bg-card)", borderTop: "1px solid var(--border)" }}>
+        <div
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1"
+          style={{ maxWidth: 1200, margin: "0 auto", padding: "0.5rem 1rem", ...small }}
+        >
+          <span>&copy; {year} PedQuEST · research &amp; education only, not medical advice</span>
+          <Link href="/" className="no-underline" style={small}>Home</Link>
+          <Link href="/admin/eeg-lab/library" className="no-underline" style={small}>EEG Library</Link>
+          <Link href="/privacy" className="no-underline" style={small}>Privacy</Link>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer

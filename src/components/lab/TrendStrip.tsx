@@ -90,7 +90,7 @@ const WHEEL_NOTCH_PX = 60;
 
 export default function TrendStrip({
   trends, durationS, cursorT, pageT0, pageS, annotations, answerSpans, progress,
-  rows, palette, windowT0, windowS, baseline, theme, height, onSeek, onScroll, onPage, onSelect, onPick,
+  rows, palette, windowT0, windowS, baseline, theme, height, markMode = false, onSeek, onScroll, onPage, onSelect, onPick,
 }: {
   trends: ViewerTrends | null;
   durationS: number;
@@ -116,6 +116,8 @@ export default function TrendStrip({
   onScroll: (deltaS: number) => void;
   /** wheel when the whole record is shown: move the raw page by this many seconds */
   onPage?: (deltaS: number) => void;
+  /** touch: a drag selects a span for onSelect instead of scrubbing (a mouse uses Shift-drag) */
+  markMode?: boolean;
   /** Shift-drag on the strip selected [t0, t1]; the parent decides what to do with it (plain drag scrubs) */
   onSelect?: (t0: number, t1: number) => void;
   /** a plain click (no drag): which row it landed on, so a mark can be aimed at that trend */
@@ -417,7 +419,9 @@ export default function TrendStrip({
     return null;
   };
   // A press seeks and a drag scrubs the cursor; Shift-drag selects a span to mark.
-  const dragRef = useRef<{ x0: number; t: number; moved: boolean; scrub: boolean; row: TrendRowId | null } | null>(null);
+  // Touch never seeks on the press: a finger that lands here on its way down
+  // the page is a scroll, not a seek. It seeks on a tap or once it moves sideways.
+  const dragRef = useRef<{ x0: number; t: number; moved: boolean; scrub: boolean; touch: boolean; row: TrendRowId | null } | null>(null);
 
   // Wheel: zoomed in, it scrolls the trend window; on the whole record it
   // pages the raw EEG (one page per notch, 1 s with Shift). A passive listener
@@ -449,21 +453,22 @@ export default function TrendStrip({
     <div ref={wrapRef} style={{ width: "100%" }}>
       <canvas
         ref={canvasRef}
-        style={{ width: w, height: h, display: "block", cursor: "pointer", touchAction: "pan-y" }}
+        style={{ width: w, height: h, display: "block", cursor: "pointer", touchAction: markMode && onSelect ? "none" : "pan-y" }}
         onPointerCancel={() => { dragRef.current = null; setSel(null); }}
         onPointerDown={(e) => {
           if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
-          const scrub = !e.shiftKey || !onSelect;
-          dragRef.current = { x0: e.clientX, t, moved: false, scrub, row: rowAt(e.clientY) };
+          const touch = e.pointerType === "touch";
+          const scrub = !onSelect || (touch ? !markMode : !e.shiftKey);
+          dragRef.current = { x0: e.clientX, t, moved: false, scrub, touch, row: rowAt(e.clientY) };
           try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
-          if (scrub) onSeek(t);
+          if (scrub && !touch) onSeek(t);
         }}
         onPointerMove={(e) => {
           const d = dragRef.current;
           if (!d) return;
-          if (Math.abs(e.clientX - d.x0) > 4) d.moved = true;
-          if (d.scrub) { onSeek(timeAt(e.clientX)); return; }
+          if (Math.abs(e.clientX - d.x0) > (d.touch ? 8 : 4)) d.moved = true;
+          if (d.scrub) { if (!d.touch || d.moved) onSeek(timeAt(e.clientX)); return; }
           if (d.moved) setSel({ a: d.t, b: timeAt(e.clientX) });
         }}
         onPointerUp={(e) => {
@@ -472,6 +477,7 @@ export default function TrendStrip({
           if (!d) return;
           // a click that never dragged aims the next mark at this row
           if (!d.moved) onPick?.(d.t, d.row);
+          if (d.touch && d.scrub && !d.moved && !onPick) onSeek(d.t);
           if (d.scrub) return;
           if (d.moved && onSelect) {
             const t1 = timeAt(e.clientX);

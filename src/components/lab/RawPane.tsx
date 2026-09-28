@@ -23,10 +23,13 @@ interface Page { t0: number; fs: number; rows: Float32Array[]; fileAnnotations: 
 
 /** Wheel travel (px) that counts as one notch → one page. Trackpads send many small deltas. */
 const WHEEL_NOTCH_PX = 60;
+/** Touch: a horizontal swipe this long (and mostly sideways) turns the page; a tap moves less than TAP_PX. */
+const SWIPE_PX = 50;
+const TAP_PX = 10;
 
 export default function RawPane({
   reader, t0, pageS, derivations, filters, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT,
-  theme, penWidth = 0.75, onCursor, onSelect, onLoading, onPage,
+  theme, penWidth = 0.75, markMode = false, onCursor, onSelect, onLoading, onPage,
 }: {
   reader: Recording;
   t0: number;
@@ -44,6 +47,12 @@ export default function RawPane({
   theme: "dark" | "light";
   /** trace line width in CSS px; review stations draw hairlines */
   penWidth?: number;
+  /**
+   * Touch only. Off, a finger scrolls the document, swipes pages and taps the
+   * cursor, so reading never starts a mark; on, a drag selects a span as a
+   * mouse drag does. Mouse and pen always drag-select.
+   */
+  markMode?: boolean;
   /** `channel` is the derivation row the press landed on, so the mark can name it */
   onCursor: (t: number, channel: string | null) => void;
   /** drag-select a span; the parent decides what to do with it */
@@ -57,7 +66,7 @@ export default function RawPane({
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [page, setPage] = useState<Page | null>(null);
   const [drag, setDrag] = useState<{ a: number; b: number } | null>(null);
-  const dragRef = useRef<{ x0: number; t0: number; moved: boolean; channel: string | null } | null>(null);
+  const dragRef = useRef<{ x0: number; y0: number; t0: number; moved: boolean; channel: string | null; browse: boolean } | null>(null);
 
   // Drag-select past either edge of the page keeps going: the page turns at a
   // rate set by how far past the edge the pointer is (0.3 – 3 pages/s), in
@@ -327,17 +336,18 @@ export default function RawPane({
     <div ref={wrapRef} style={{ position: "relative", width: "100%", height: "100%", minHeight: 320 }}>
       <canvas
         ref={canvasRef}
-        style={{ width: size.w, height: size.h, display: "block", cursor: "crosshair", touchAction: "pan-y" }}
+        style={{ width: size.w, height: size.h, display: "block", cursor: "crosshair", touchAction: markMode ? "none" : "pan-y" }}
         onPointerCancel={() => { stopAuto(); dragRef.current = null; setDrag(null); }}
         onPointerDown={(e) => {
-          if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
+          const browse = e.pointerType === "touch" && !markMode;
+          if (!browse && e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
-          dragRef.current = { x0: e.clientX, t0: t, moved: false, channel: channelAt(e.clientY) };
+          dragRef.current = { x0: e.clientX, y0: e.clientY, t0: t, moved: false, channel: channelAt(e.clientY), browse };
           try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
         }}
         onPointerMove={(e) => {
           const d = dragRef.current;
-          if (!d) return;
+          if (!d || d.browse) return;
           if (Math.abs(e.clientX - d.x0) > 4) d.moved = true;
           if (!d.moved) return;
           const r = canvasRef.current!.getBoundingClientRect();
@@ -352,6 +362,13 @@ export default function RawPane({
           const d = dragRef.current;
           dragRef.current = null;
           if (!d) return;
+          if (d.browse) {
+            const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
+            // swipe left = forward in time, like turning a page
+            if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > 1.5 * Math.abs(dy)) onPage?.(dx < 0 ? pageS : -pageS);
+            else if (Math.abs(dx) < TAP_PX && Math.abs(dy) < TAP_PX && e.clientX - canvasRef.current!.getBoundingClientRect().left >= GUTTER) onCursor(d.t0, d.channel);
+            return;
+          }
           if (d.moved) {
             const t1 = timeAt(e.clientX);
             setDrag(null);

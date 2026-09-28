@@ -159,6 +159,21 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
   const [annBusy, setAnnBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // touch: a finger reads (scroll / swipe / tap) until Mark is on; one span, then back to reading
+  const [markMode, setMarkMode] = useState(false);
+  // phones: the display settings fold away so the traces start near the top
+  const [controlsOpen, setControlsOpen] = useState(false);
+  // phones: the stacked layout gives the trend strip a share of the screen, not its full natural height
+  const [narrowTrendH, setNarrowTrendH] = useState<number | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const update = () => setNarrowTrendH(mq.matches ? Math.max(150, Math.round(window.innerHeight * 0.3)) : null);
+    update();
+    mq.addEventListener("change", update);
+    window.addEventListener("resize", update);
+    return () => { mq.removeEventListener("change", update); window.removeEventListener("resize", update); };
+  }, []);
+
   const [showKey, setShowKey] = useState(false);
   const [keyFilter, setKeyFilter] = useState<KeyOverlayFilter>("findings");
   const [answers, setAnswers] = useState<AnswerSpan[] | null>(null);
@@ -431,10 +446,11 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
   const trendPaneH = useMemo(() => {
     if (view === "trends") return Math.max(naturalTrendH, mainH);
     if (view === "raw") return 0;
+    if (narrowTrendH !== null) return Math.min(naturalTrendH, narrowTrendH);
     const want = trendH ?? naturalTrendH;
     const max = mainH ? Math.max(MIN_PANE_PX, mainH - splitterPx - MIN_PANE_PX) : Infinity;
     return Math.round(Math.min(max, Math.max(MIN_PANE_PX, want)));
-  }, [view, trendH, naturalTrendH, mainH]);
+  }, [view, trendH, naturalTrendH, mainH, narrowTrendH]);
   const onSplitDown = (e: React.PointerEvent<HTMLDivElement>) => {
     splitDrag.current = { y0: e.clientY, h0: trendPaneH };
     try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
@@ -468,7 +484,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
         case "Home": e.preventDefault(); setPageT0(0); break;
         case "End": e.preventDefault(); setPageT0(maxT0); break;
         case "a": case "A": if (cursorT !== null && !draft) { e.preventDefault(); startDraft(cursorT, 0, lastPick.current); } break;
-        case "Escape": setDraft(null); break;
+        case "Escape": setDraft(null); setMarkMode(false); break;
         case "+": case "=": setSensitivity((s) => SENS_OPTIONS[Math.max(0, SENS_OPTIONS.indexOf(s) - 1)] ?? s); break;
         case "-": case "_": setSensitivity((s) => SENS_OPTIONS[Math.min(SENS_OPTIONS.length - 1, SENS_OPTIONS.indexOf(s) + 1)] ?? s); break;
       }
@@ -605,12 +621,12 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
     : ({ "--lab-overlay": "rgba(255,255,255,0.10)" } as React.CSSProperties);
 
   return (
-    <div className="lv-root" style={{ ...themeVars, background: theme === "light" ? "var(--bg)" : undefined, borderRadius: 12, padding: theme === "light" ? 8 : 0 }}>
+    <div className={`lv-root${controlsOpen ? " lv-open" : ""}`} style={{ ...themeVars, background: theme === "light" ? "var(--bg)" : undefined, borderRadius: 12, padding: theme === "light" ? 8 : 0 }}>
       <style>{`
-        .lv-root { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); height: 100%; min-height: 0; gap: 8px; }
+        .lv-root { display: flex; flex-direction: column; height: 100%; min-height: 0; gap: 8px; }
         .lv-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 0 4px; }
         .lv-bar select { max-width: 100%; }
-        .lv-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 10px; min-height: 0; }
+        .lv-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 10px; flex: 1 1 0; min-height: 0; }
         .lv-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
         .lv-main-trends, .lv-main-raw { grid-template-rows: minmax(0, 1fr); }
         .lv-trend { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; min-height: 0; }
@@ -626,7 +642,8 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
            layout leaves the raw page a few pixels wide.  Stack everything, let
            the page scroll, and give the raw page a viewport-relative height. */
         @media (max-width: 900px) {
-          .lv-root { display: flex; flex-direction: column; height: auto; }
+          .lv-root { height: auto; }
+          .lv-body { flex: none; }
           .lv-bar { gap: 8px 10px; }
           .lv-body { grid-template-columns: minmax(0, 1fr); }
           .lv-main { display: flex; flex-direction: column; gap: 6px; }
@@ -634,7 +651,22 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
           .lv-raw { height: 60vh; min-height: 320px; }
           .lv-side { max-height: 55vh; overflow: auto; }
         }
+        .lv-opts { display: contents; }
+        .lv-mobile-only { display: none !important; }
+        .lv-mark-hint { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--accent-primary); border-radius: 8px; color: var(--accent-primary); font-size: 12.5px; }
+        @media (max-width: 900px) {
+          .lv-mobile-only { display: inline-flex !important; }
+          .lv-opts, .lv-opts-row { display: none; }
+          .lv-open .lv-opts, .lv-open .lv-opts-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 10px; width: 100%; }
+          .lv-root button, .lv-root select, .lv-root a { min-height: 40px; }
+          .lv-root button, .lv-root a { display: inline-flex; align-items: center; justify-content: center; }
+          /* iOS zooms the page when a control under 16px takes focus */
+          .lv-root select, .lv-root input, .lv-root textarea { font-size: 16px !important; }
+          /* the mark editor rises over the page instead of sitting below the fold */
+          .lv-side.lv-drafting { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; max-height: 60vh; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.45); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        }
         @media (hover: none) { .lv-wheel-hint { display: none; } }
+        @media (hover: hover) and (pointer: fine) { .lv-touch-only { display: none !important; } }
       `}</style>
       {/* header */}
       <div className="lv-bar" style={{ alignItems: "center" }}>
@@ -695,6 +727,9 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
         <button type="button" style={{ ...mini, marginLeft: "auto" }} onClick={toggleTheme} title="Toggle light / dark background">
           {theme === "dark" ? "\u2600 light" : "\u263E dark"}
         </button>
+        <button type="button" className="lv-mobile-only" style={mini} onClick={() => setControlsOpen((o) => !o)} aria-expanded={controlsOpen}>
+          {controlsOpen ? "Hide settings" : "Settings"}
+        </button>
         {synthetic && (
           <span style={{ fontFamily: "var(--mono-font)", fontSize: 11, letterSpacing: ".08em", color: "var(--accent-secondary)", border: "1px solid var(--accent-secondary)", borderRadius: 6, padding: "3px 8px" }}>
             {SYNTHETIC_STAMP}
@@ -704,6 +739,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
 
       {/* toolbar */}
       <div className="lv-bar">
+        <div className="lv-opts">
         {group("Montage", (
           <select style={sel} value={montageId} onChange={(e) => setMontageId(e.target.value as ViewerMontageId)}>
             {MONTAGE_GROUPS.map((g) => (
@@ -756,6 +792,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
             {PEN_OPTIONS.map((p) => <option key={p.w} value={p.w}>{p.label}</option>)}
           </select>
         ))}
+        </div>
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
           <button type="button" style={mini} onClick={() => setPageT0(0)} title="Home">⏮</button>
           <button type="button" style={mini} onClick={() => page(-pageS)} title="Previous page (←)">◀</button>
@@ -766,7 +803,15 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
           <button type="button" style={mini} onClick={() => setPageT0(maxT0)} title="End">⏭</button>
           {loadingPage && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>loading…</span>}
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+        <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <button
+            type="button" className="lv-touch-only" aria-pressed={markMode} disabled={!!draft}
+            onClick={() => setMarkMode((m) => !m)}
+            title="Touch: turn on, then drag across the EEG or a trend row to mark a span"
+            style={{ ...mini, borderColor: markMode ? "var(--accent-primary)" : "var(--border)", color: markMode ? "var(--accent-primary)" : "var(--text-secondary)", fontWeight: markMode ? 700 : 400 }}
+          >
+            {markMode ? "Marking…" : "Mark span"}
+          </button>
           {cursorT !== null && (
             <button type="button" style={mini} onClick={() => startDraft(cursorT, 0, lastPick.current)} disabled={!!draft}>
               + mark at {formatClock(cursorT)}
@@ -786,8 +831,15 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
         </div>
       </div>
 
+      {markMode && (
+        <div className="lv-mark-hint lv-touch-only" role="status">
+          <span>Drag across the EEG or a trend row to mark a span. Tap a point, then “+ mark”, for a single time.</span>
+          <button type="button" style={{ ...mini, marginLeft: "auto" }} onClick={() => setMarkMode(false)}>Cancel</button>
+        </div>
+      )}
+
       {/* trend toolbar */}
-      <div className="lv-bar">
+      <div className="lv-bar lv-opts-row">
         {group("Trend panel", (
           <select style={sel} value={panelId} onChange={(e) => setPanelId(e.target.value)}>
             {TREND_PANELS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
@@ -874,8 +926,8 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
                 annotations={visibleAnnotations} answerSpans={answerSpans} progress={trendProgress} onSeek={seek}
                 rows={panelRows} palette={palette} windowT0={windowT0} windowS={windowS} baseline={baseline} theme={theme}
                 height={view === "trends" ? Math.max(naturalTrendH, mainH - 2) : trendPaneH - 2}
-                onScroll={scrollWindow} onPage={page}
-                onSelect={(a, b) => { seek(a); startDraft(a, b - a, { pane: "trend", trendRow: null, viewSpanS: windowS ?? durationS }); }}
+                onScroll={scrollWindow} onPage={page} markMode={markMode}
+                onSelect={(a, b) => { setMarkMode(false); seek(a); startDraft(a, b - a, { pane: "trend", trendRow: null, viewSpanS: windowS ?? durationS }); }}
                 onPick={(t, row) => { lastPick.current = { pane: "trend", trendRow: row, viewSpanS: windowS ?? durationS }; seek(t); }}
                 key={trendVersion === 0 ? "empty" : "live"}
               />
@@ -902,16 +954,16 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
               <RawPane
                 reader={reader} t0={pageT0} pageS={pageS} derivations={derivations} filters={filters}
                 sensitivityUvPerMm={sensitivity} auxSensitivityUvPerMm={auxSensitivity} annotations={visibleAnnotations} answerSpans={answerSpans} cursorT={cursorT} theme={theme}
-                penWidth={penWidth}
+                penWidth={penWidth} markMode={markMode}
                 onCursor={(t, channel) => { lastPick.current = { pane: "raw", channels: channel ? [channel] : [] }; setCursorT(t); }}
-                onSelect={(a, b, channel) => { setCursorT(a); startDraft(a, b - a, { pane: "raw", channels: channel ? [channel] : [] }); }}
+                onSelect={(a, b, channel) => { setMarkMode(false); setCursorT(a); startDraft(a, b - a, { pane: "raw", channels: channel ? [channel] : [] }); }}
                 onLoading={setLoadingPage}
                 onPage={page}
               />
             </div>
           )}
         </div>
-        <div className="lv-side">
+        <div className={`lv-side${draft ? " lv-drafting" : ""}`}>
           {error && <div style={{ color: "var(--accent-secondary)", fontSize: 12.5, marginBottom: 8 }}>{error}</div>}
           <AnnotationPanel
             annotations={annotations} draft={draft} storeLabel={opened.store.label} busy={annBusy}
