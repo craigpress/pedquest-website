@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from . import montage as mt  # noqa: E402
 from . import style as S  # noqa: E402
 from .render_aeeg import render_aeeg, synth_spec_for_aeeg  # noqa: E402
 from .render_page import render_eeg_page  # noqa: E402
@@ -110,11 +111,16 @@ def render_image(
     if qa_images is not None and kind in ("qeeg_panel", "aeeg"):
         # Reuse the exact source object used by the trend render.
         duration = _nominal_duration_s(kind, spec)
+        # The item's own montage when it authored one, else longitudinal bipolar (the synth's electrode set
+        # decides whether that is the full double banana or the reduced neonatal chains).
+        montage = mt.MONTAGE_ALIASES.get((image.get("spec") or {}).get("montage"),
+                                         (image.get("spec") or {}).get("montage")) or "longitudinal_bipolar"
+        extra = {"spec_version": 3} if montage in mt.VIEWER_MONTAGES else {}
         for i, fraction in enumerate((0, .5, .9)):
             start = max(0, min(duration - 15, duration * fraction))
             page = normalize({"kind": "eeg_page", "license": "synthetic-original",
                 "spec": {"seed": spec.get("seed", 0), "age_group": spec.get("age_group", "child"), "at_min": start/60,
-                         "window_s": 15, "montage": "longitudinal_bipolar"}})["spec"]
+                         "window_s": 15, "montage": montage, **extra}})["spec"]
             path = out_dir / f"{ident}-qa-raw-{i+1}.png"
             render_eeg_page(page, str(path), synth=synth, header_note="QA: paired source used for generated trend")
             qa_images.append(path)

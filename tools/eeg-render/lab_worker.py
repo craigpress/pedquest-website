@@ -348,7 +348,8 @@ def run_job(db: Supabase, job: dict, cfg: argparse.Namespace) -> None:
                 log.info("job %s: trends sidecar %s (%d epochs, %d bytes)",
                          job["id"], sidecar.name, info.get("nT", 0), info.get("bytes", 0))
                 if info.get("qaPath"):
-                    qa_images, qa_context = lab_evidence(Path(info["qaPath"]), out)
+                    qa_images, qa_context = lab_evidence(Path(info["qaPath"]), out,
+                                                         montage=(spec.get("spec") or {}).get("montage"))
                     for evidence in qa_images:
                         _copy_to_store(evidence, dest / evidence.name)
                     qa_context["evidence_paths"] = [f"eeglab://{folder}/{p.name}" for p in qa_images]
