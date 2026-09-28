@@ -153,6 +153,10 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
 
   const [annotations, setAnnotations] = useState<ViewerAnnotation[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
+  // a new draft opens the phone's sheet at its first field, not where the last one was scrolled
+  const sideRef = useRef<HTMLDivElement>(null);
+  const draftOpen = draft ? `${draft.id ?? "new"}:${draft.onsetS}` : null;
+  useEffect(() => { if (draftOpen && sideRef.current) sideRef.current.scrollTop = 0; }, [draftOpen]);
   // where the last click landed, so "A" / "mark at cursor" aims at the same
   // place the eye is on: a trend row, or a raw row's derivation
   const lastPick = useRef<Partial<AnnotationTarget>>({ pane: "raw" });
@@ -167,11 +171,12 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
   const [narrowTrendH, setNarrowTrendH] = useState<number | null>(null);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 900px)");
-    const update = () => setNarrowTrendH(mq.matches ? Math.max(150, Math.round(window.innerHeight * 0.3)) : null);
+    // not on every resize: iOS resizes as its URL bar slides, and the strip would jump while scrolling
+    const update = () => setNarrowTrendH(mq.matches ? Math.max(150, Math.round(window.innerHeight * 0.28)) : null);
     update();
     mq.addEventListener("change", update);
-    window.addEventListener("resize", update);
-    return () => { mq.removeEventListener("change", update); window.removeEventListener("resize", update); };
+    window.addEventListener("orientationchange", update);
+    return () => { mq.removeEventListener("change", update); window.removeEventListener("orientationchange", update); };
   }, []);
 
   const [showKey, setShowKey] = useState(false);
@@ -185,7 +190,9 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
     try {
       const t = localStorage.getItem("pq-lab-theme"); if (t === "light" || t === "dark") setTheme(t);
       const p = Number(localStorage.getItem("pq-lab-pen")); if (PEN_OPTIONS.some((o) => o.w === p)) setPenWidth(p);
-      const v = localStorage.getItem("pq-lab-view"); if (v === "both" || v === "trends" || v === "raw") setView(v);
+      const v = localStorage.getItem("pq-lab-view");
+      if (v === "both" || v === "trends" || v === "raw") setView(v);
+      else if (window.matchMedia("(max-width: 900px)").matches) setView("raw"); // a phone has room for one pane
       const h = Number(localStorage.getItem("pq-lab-trend-h")); if (h > 0) setTrendH(h);
     } catch { /* private mode */ }
   }, []);
@@ -648,25 +655,35 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
           .lv-body { grid-template-columns: minmax(0, 1fr); }
           .lv-main { display: flex; flex-direction: column; gap: 6px; }
           .lv-split { display: none; }
-          .lv-raw { height: 60vh; min-height: 320px; }
+          .lv-raw { height: 60vh; height: 60svh; min-height: 320px; }
           .lv-side { max-height: 55vh; overflow: auto; }
         }
         .lv-opts { display: contents; }
         .lv-mobile-only { display: none !important; }
-        .lv-mark-hint { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--accent-primary); border-radius: 8px; color: var(--accent-primary); font-size: 12.5px; }
+        .lv-mark-hint { position: sticky; top: 72px; z-index: 5; background: var(--bg-card); display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--accent-primary); border-radius: 8px; color: var(--accent-primary); font-size: 12.5px; }
         @media (max-width: 900px) {
           .lv-mobile-only { display: inline-flex !important; }
-          .lv-opts, .lv-opts-row { display: none; }
-          .lv-open .lv-opts, .lv-open .lv-opts-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 10px; width: 100%; }
+          .lv-opts { display: none; }
+          .lv-open .lv-opts { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 10px; width: 100%; }
           .lv-root button, .lv-root select, .lv-root a { min-height: 40px; }
           .lv-root button, .lv-root a { display: inline-flex; align-items: center; justify-content: center; }
           /* iOS zooms the page when a control under 16px takes focus */
           .lv-root select, .lv-root input, .lv-root textarea { font-size: 16px !important; }
           /* the mark editor rises over the page instead of sitting below the fold */
-          .lv-side.lv-drafting { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; max-height: 60vh; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.45); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+          .lv-side.lv-drafting { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; max-height: 45vh; max-height: 45svh; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.45); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+          /* the sheet scrolls, not the form, so the form's sticky Save row pins to the sheet's bottom */
+          .lv-side.lv-drafting form { overflow: visible !important; max-height: none !important; }
         }
         @media (hover: none) { .lv-wheel-hint { display: none; } }
-        @media (hover: hover) and (pointer: fine) { .lv-touch-only { display: none !important; } }
+        /* touch affordances show wherever a finger is possible, including touchscreen laptops */
+        .lv-touch-only, .lv-touch-hint { display: none !important; }
+        @media (any-pointer: coarse) {
+          .lv-touch-only { display: inline-flex !important; }
+          .lv-mark-hint.lv-touch-only, .lv-touch-hint { display: flex !important; }
+        }
+        @media not (any-pointer: fine) { .lv-pointer-hint { display: none; } }
+        .lv-touch-copy { display: none; }
+        @media (hover: none) { .lv-mouse-copy { display: none; } .lv-touch-copy { display: inline; } }
       `}</style>
       {/* header */}
       <div className="lv-bar" style={{ alignItems: "center" }}>
@@ -720,7 +737,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
             </a>
           ) : (
             <span style={{ fontSize: 12.5, color: "var(--text-secondary)" }} title="Your marks are private to you and your instructors">
-              <b>Your task:</b> mark every electrographic seizure from onset to offset (drag on the raw EEG or a trend row) and say which channels or region.
+              <b>Your task:</b> mark every electrographic seizure from onset to offset (<span className="lv-mouse-copy">drag on the raw EEG or a trend row</span><span className="lv-touch-copy">tap Mark span, then drag across the raw EEG or a trend row</span>) and say which channels or region.
             </span>
           )
         )}
@@ -839,7 +856,8 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
       )}
 
       {/* trend toolbar */}
-      <div className="lv-bar lv-opts-row">
+      <div className="lv-bar">
+        <div className="lv-opts">
         {group("Trend panel", (
           <select style={sel} value={panelId} onChange={(e) => setPanelId(e.target.value)}>
             {TREND_PANELS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
@@ -893,6 +911,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
             {PALETTES.map((p) => <option key={p.id} value={p.id} title={p.hint}>{p.label}</option>)}
           </select>
         ))}
+        </div>
         {group("Show", (
           <div className="lv-seg" role="group" aria-label="Which panes to show">
             {([["both", "Both"], ["trends", "Trends"], ["raw", "EEG"]] as [ViewMode, string][]).map(([id, label]) => (
@@ -963,7 +982,7 @@ export default function LabViewer({ source, onClose, initialT, initialAuthor, as
             </div>
           )}
         </div>
-        <div className={`lv-side${draft ? " lv-drafting" : ""}`}>
+        <div ref={sideRef} className={`lv-side${draft ? " lv-drafting" : ""}`}>
           {error && <div style={{ color: "var(--accent-secondary)", fontSize: 12.5, marginBottom: 8 }}>{error}</div>}
           <AnnotationPanel
             annotations={annotations} draft={draft} storeLabel={opened.store.label} busy={annBusy}

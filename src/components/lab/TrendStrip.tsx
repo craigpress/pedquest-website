@@ -456,7 +456,7 @@ export default function TrendStrip({
         style={{ width: w, height: h, display: "block", cursor: "pointer", touchAction: markMode && onSelect ? "none" : "pan-y" }}
         onPointerCancel={() => { dragRef.current = null; setSel(null); }}
         onPointerDown={(e) => {
-          if (e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
+          if (!e.isPrimary || e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
           const touch = e.pointerType === "touch";
           const scrub = !onSelect || (touch ? !markMode : !e.shiftKey);
@@ -466,15 +466,15 @@ export default function TrendStrip({
         }}
         onPointerMove={(e) => {
           const d = dragRef.current;
-          if (!d) return;
+          if (!d || !e.isPrimary) return;
           if (Math.abs(e.clientX - d.x0) > (d.touch ? 8 : 4)) d.moved = true;
           if (d.scrub) { if (!d.touch || d.moved) onSeek(timeAt(e.clientX)); return; }
           if (d.moved) setSel({ a: d.t, b: timeAt(e.clientX) });
         }}
         onPointerUp={(e) => {
           const d = dragRef.current;
+          if (!d || !e.isPrimary) return;
           dragRef.current = null;
-          if (!d) return;
           // a click that never dragged aims the next mark at this row
           if (!d.moved) onPick?.(d.t, d.row);
           if (d.touch && d.scrub && !d.moved && !onPick) onSeek(d.t);

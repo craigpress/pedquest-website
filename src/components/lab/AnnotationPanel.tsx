@@ -103,12 +103,12 @@ export default function AnnotationPanel({
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <label>
               <span style={fieldLabel}>Onset (s)</span>
-              <input type="number" step={0.1} min={0} value={round1(draft.onsetS)} style={inp}
+              <input type="number" inputMode="decimal" step={0.1} min={0} value={round1(draft.onsetS)} style={inp}
                 onChange={(e) => onDraftChange({ ...draft, onsetS: Number(e.target.value) })} />
             </label>
             <label>
               <span style={fieldLabel}>Duration (s)</span>
-              <input type="number" step={0.1} min={0} value={round1(draft.durationS)} style={inp}
+              <input type="number" inputMode="decimal" step={0.1} min={0} value={round1(draft.durationS)} style={inp}
                 onChange={(e) => onDraftChange({ ...draft, durationS: Number(e.target.value) })} />
             </label>
           </div>
@@ -182,7 +182,8 @@ export default function AnnotationPanel({
             <textarea value={draft.note} style={{ ...inp, minHeight: 56, resize: "vertical" }} maxLength={2000}
               onChange={(e) => onDraftChange({ ...draft, note: e.target.value })} />
           </label>
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          {/* stays in reach when the phone's bottom sheet scrolls the form */}
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", position: "sticky", bottom: 0, background: "var(--bg-card)", paddingTop: 6 }}>
             <button type="button" style={btnGhost} onClick={onCancel} disabled={busy}>Cancel</button>
             <button type="submit" style={btnPrimary} disabled={busy}>{draft.id ? "Save" : "Add"}</button>
           </div>
@@ -190,10 +191,15 @@ export default function AnnotationPanel({
       )}
 
       {!draft && (
-        <p style={{ margin: 0, fontSize: 12.5, color: "var(--text-muted)" }}>
-          Click the raw EEG to place a mark, or drag to select a span. Click a trend row to mark on that trend.
-          Press <kbd>A</kbd> to annotate at the cursor.
-        </p>
+        <>
+          <p className="lv-pointer-hint" style={{ margin: 0, fontSize: 12.5, color: "var(--text-muted)" }}>
+            Click the raw EEG to place a mark, or drag to select a span. Click a trend row to mark on that trend.
+            Press <kbd>A</kbd> to annotate at the cursor.
+          </p>
+          <p className="lv-touch-hint" style={{ margin: 0, fontSize: 12.5, color: "var(--text-muted)" }}>
+            Swipe the raw EEG to turn pages. Tap a point, then “+ mark”; or tap “Mark span” and drag across the EEG or a trend row.
+          </p>
+        </>
       )}
 
       <div style={{ overflowY: "auto", minHeight: 0, flex: 1, display: "grid", gap: 6, alignContent: "start" }}>

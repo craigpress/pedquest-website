@@ -16,7 +16,8 @@ import { formatClock } from "@/lib/eeg/annotations";
 
 /** CSS px per mm at 96 dpi; sensitivity is quoted in µV/mm like a review station. */
 const PX_PER_MM = 96 / 25.4;
-const GUTTER = 72;
+/** channel-label column; a phone gives it less of a narrow page */
+const gutterFor = (w: number) => (w < 500 ? 48 : 72);
 const AXIS_H = 20;
 
 interface Page { t0: number; fs: number; rows: Float32Array[]; fileAnnotations: EdfAnnotation[] }
@@ -26,6 +27,8 @@ const WHEEL_NOTCH_PX = 60;
 /** Touch: a horizontal swipe this long (and mostly sideways) turns the page; a tap moves less than TAP_PX. */
 const SWIPE_PX = 50;
 const TAP_PX = 10;
+/** Touch in Mark mode: a span shorter than this is a wobbling tap, so it places the cursor instead. */
+const MIN_TOUCH_SPAN_S = 0.2;
 
 export default function RawPane({
   reader, t0, pageS, derivations, filters, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT,
@@ -64,9 +67,15 @@ export default function RawPane({
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
+  const GUTTER = gutterFor(size.w);
   const [page, setPage] = useState<Page | null>(null);
   const [drag, setDrag] = useState<{ a: number; b: number } | null>(null);
-  const dragRef = useRef<{ x0: number; y0: number; t0: number; moved: boolean; channel: string | null; browse: boolean } | null>(null);
+  const dragRef = useRef<{ x0: number; y0: number; t0: number; moved: boolean; channel: string | null; browse: boolean; touch: boolean } | null>(null);
+  /** browse swipe: the page follows the finger until release, so the gesture is discoverable */
+  const nudge = (dx: number) => {
+    const el = canvasRef.current;
+    if (el) el.style.transform = dx ? `translateX(${Math.max(-0.4, Math.min(0.4, dx / size.w)) * size.w * 0.5}px)` : "";
+  };
 
   // Drag-select past either edge of the page keeps going: the page turns at a
   // rate set by how far past the edge the pointer is (0.3 – 3 pages/s), in
@@ -296,7 +305,7 @@ export default function RawPane({
       ctx.strokeStyle = accent; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size.h); ctx.stroke();
     }
-  }, [derived, page, derivations, layout, size, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT, drag, t0, pageS, theme, penWidth]);
+  }, [derived, page, derivations, layout, size, sensitivityUvPerMm, auxSensitivityUvPerMm, annotations, answerSpans, cursorT, drag, t0, pageS, theme, penWidth, GUTTER]);
 
   // ── wheel = paging ──────────────────────────────────────────────────────
   // Non-passive so the document does not scroll while the page turns.
@@ -337,18 +346,25 @@ export default function RawPane({
       <canvas
         ref={canvasRef}
         style={{ width: size.w, height: size.h, display: "block", cursor: "crosshair", touchAction: markMode ? "none" : "pan-y" }}
-        onPointerCancel={() => { stopAuto(); dragRef.current = null; setDrag(null); }}
+        onPointerCancel={() => { stopAuto(); nudge(0); dragRef.current = null; setDrag(null); }}
         onPointerDown={(e) => {
-          const browse = e.pointerType === "touch" && !markMode;
+          if (!e.isPrimary) return;
+          const touch = e.pointerType === "touch";
+          const browse = touch && !markMode;
           if (!browse && e.clientX - canvasRef.current!.getBoundingClientRect().left < GUTTER) return;
           const t = timeAt(e.clientX);
-          dragRef.current = { x0: e.clientX, y0: e.clientY, t0: t, moved: false, channel: channelAt(e.clientY), browse };
+          dragRef.current = { x0: e.clientX, y0: e.clientY, t0: t, moved: false, channel: channelAt(e.clientY), browse, touch };
           try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
         }}
         onPointerMove={(e) => {
           const d = dragRef.current;
-          if (!d || d.browse) return;
-          if (Math.abs(e.clientX - d.x0) > 4) d.moved = true;
+          if (!d || !e.isPrimary) return;
+          if (d.browse) {
+            const dx = e.clientX - d.x0;
+            if (Math.abs(dx) > Math.abs(e.clientY - d.y0)) nudge(dx);
+            return;
+          }
+          if (Math.abs(e.clientX - d.x0) > (d.touch ? TAP_PX : 4)) d.moved = true;
           if (!d.moved) return;
           const r = canvasRef.current!.getBoundingClientRect();
           const left = r.left + GUTTER, right = r.right - 8;
@@ -360,16 +376,20 @@ export default function RawPane({
         onPointerUp={(e) => {
           stopAuto();
           const d = dragRef.current;
+          if (!d || !e.isPrimary) return;
           dragRef.current = null;
-          if (!d) return;
           if (d.browse) {
+            nudge(0);
             const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
             // swipe left = forward in time, like turning a page
             if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > 1.5 * Math.abs(dy)) onPage?.(dx < 0 ? pageS : -pageS);
             else if (Math.abs(dx) < TAP_PX && Math.abs(dy) < TAP_PX && e.clientX - canvasRef.current!.getBoundingClientRect().left >= GUTTER) onCursor(d.t0, d.channel);
             return;
           }
-          if (d.moved) {
+          if (d.moved && d.touch && Math.abs(timeAt(e.clientX) - d.t0) < MIN_TOUCH_SPAN_S) {
+            setDrag(null);
+            onCursor(d.t0, d.channel);
+          } else if (d.moved) {
             const t1 = timeAt(e.clientX);
             setDrag(null);
             onSelect(Math.min(d.t0, t1), Math.max(d.t0, t1), d.channel);
