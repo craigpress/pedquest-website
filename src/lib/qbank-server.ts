@@ -4,10 +4,12 @@
 import { cache } from "react";
 import { createServerClient } from "@/lib/supabase";
 import {
-  mapCase, mapReference, toPublicCase,
+  mapCase, mapReference,
   type CaseReference, type Difficulty, type EegCase, type PublicCase,
   type QbankDomain, type QbankPopulation, type QbankSetting,
 } from "@/lib/cases";
+import { toVersionedPublicCase } from "@/lib/cases-server";
+import { versionedImageUrl } from "@/lib/image-version";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -63,7 +65,8 @@ function mapSummary(r: any): BankSummary {
     setting: (r.setting as QbankSetting) ?? null,
     difficulty: (r.difficulty as Difficulty) ?? "intermediate",
     questionType: r.question_type,
-    imageUrl: r.image_url ?? "",
+    // updated_at is selected by every caller; it keys remote images
+    imageUrl: versionedImageUrl(r.image_url ?? "", r.updated_at),
     tags: r.tags ?? [],
     publishDate: r.publish_date ?? null,
   };
@@ -78,7 +81,7 @@ export async function listBankItems(filters: BankFilters = {}): Promise<BankSumm
   if (!supabase) return [];
   let q = supabase
     .from("eeg_cases")
-    .select(SUMMARY_COLUMNS)
+    .select(`${SUMMARY_COLUMNS},updated_at`)
     .eq("in_bank", true)
     .in("status", LEARNER_STATUSES);
   if (filters.domain) q = q.eq("domain", filters.domain);
@@ -147,7 +150,7 @@ export const getPublicBankItem = cache(async function getPublicBankItem(id: stri
   if (!row || !row.in_bank || !LEARNER_STATUSES.includes(row.status)) return null;
   const { data: opts } = await supabase
     .from("eeg_case_options").select("*").eq("case_id", row.id).order("sort_order");
-  return toPublicCase(mapCase(row, opts ?? []));
+  return toVersionedPublicCase(mapCase(row, opts ?? []));
 });
 
 /**

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { imageCreditLine, type CaseReference, type PublicCase, type RevealResult, type Region } from "@/lib/cases";
-import EegViewer from "@/components/EegViewer";
+import EegViewer, { type EegImgProps } from "@/components/EegViewer";
 
 const SESSION_KEY = "pedquest_eeg_session";
 function getSessionId(): string {
@@ -76,6 +76,11 @@ export default function CaseQuiz({
 
   const answered = !!reveal;
   const credit = imageCreditLine(caseData);
+  // Lay the figure out at the rendered aspect ratio whichever variant (optimized
+  // WebP, original PNG, recoloured PNG) is on screen, so normalized click
+  // coordinates always map to the same point of the figure.
+  const aspectRatio = caseData.imageWidth && caseData.imageHeight
+    ? `${caseData.imageWidth} / ${caseData.imageHeight}` : undefined;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -99,10 +104,14 @@ export default function CaseQuiz({
           panels={caseData.imagePanels ?? []}
           allowDragPan={caseData.questionType !== "point_to_feature"}
           protect
+          optimize
+          width={caseData.imageWidth}
+          height={caseData.imageHeight}
         >
-          {(displaySrc) => caseData.questionType === "point_to_feature" ? (
+          {(_displaySrc, img) => caseData.questionType === "point_to_feature" ? (
             <PointImage
-              src={displaySrc}
+              img={img}
+              aspectRatio={aspectRatio}
               alt={caseData.title}
               point={answered ? (reveal!.yourAnswer.x != null ? { x: reveal!.yourAnswer.x!, y: reveal!.yourAnswer.y! } : point) : point}
               onPick={answered ? undefined : setPoint}
@@ -110,8 +119,8 @@ export default function CaseQuiz({
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={displaySrc} alt={caseData.title} draggable={false}
-              style={{ width: "100%", display: "block", borderRadius: 14, border: "1px solid var(--border)", background: "var(--bg-card)", userSelect: "none" }} />
+            <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt={caseData.title} draggable={false}
+              style={{ width: "100%", height: "auto", aspectRatio, display: "block", borderRadius: 14, border: "1px solid var(--border)", background: "var(--bg-card)", userSelect: "none" }} />
           )}
         </EegViewer>
       )}
@@ -298,8 +307,8 @@ function Reveal({ reveal }: { reveal: RevealResult }) {
 }
 
 // ---- interactive point-to-feature image with heat-map reveal ----
-function PointImage({ src, alt, point, onPick, reveal }:
-  { src: string; alt: string; point: { x: number; y: number } | null; onPick?: (p: { x: number; y: number }) => void; reveal: RevealResult | null }) {
+function PointImage({ img, aspectRatio, alt, point, onPick, reveal }:
+  { img: EegImgProps; aspectRatio?: string; alt: string; point: { x: number; y: number } | null; onPick?: (p: { x: number; y: number }) => void; reveal: RevealResult | null }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dims, setDims] = useState({ w: 0, h: 0 });
@@ -372,7 +381,8 @@ function PointImage({ src, alt, point, onPick, reveal }:
         style={{ position: "relative", width: "100%", borderRadius: 14, overflow: "hidden",
           border: "1px solid var(--border)", background: "var(--bg-card)", cursor: interactive ? "crosshair" : "default", lineHeight: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" draggable={false} style={{ width: "100%", display: "block", userSelect: "none" }} />
+        <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt="" draggable={false}
+          style={{ width: "100%", height: "auto", aspectRatio, display: "block", userSelect: "none" }} />
         <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
         {/* live crosshair before submit */}
         {interactive && point && (

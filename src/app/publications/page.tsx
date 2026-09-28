@@ -7,6 +7,11 @@ import { conferenceAbstracts, abstractCategories } from "@/data/abstracts";
 import { members } from "@/data/members";
 
 type Tab = "articles" | "abstracts";
+
+// The full record is ~330 papers; rendering every card put ~11,800 DOM nodes
+// on a phone. Show a page at a time — search, filters and export still work
+// over the whole list.
+const PAGE_SIZE = 25;
 type Sort = "new" | "old" | "az";
 
 function highlightMemberAuthors(authorList: string[], memberAuthorIds: string[]) {
@@ -249,7 +254,17 @@ export default function PublicationsPage() {
     setToast(`${filteredPubs.length} entries exported (.bib)`);
   }
 
+  // "Show more" grows the list for the current query only; any change to the
+  // tab, search, sort or filters starts again from the first page.
+  const listKey = [tab, search, sort, filterCategory, filterYear, filterJournal, filterType,
+    filterConference, memberOnly, filterPopulation].join("|");
+  const [extra, setExtra] = useState<{ key: string; n: number }>({ key: "", n: 0 });
+  const visibleCount = PAGE_SIZE + (extra.key === listKey ? extra.n : 0);
+  const showMore = (n: number) =>
+    setExtra((e) => ({ key: listKey, n: (e.key === listKey ? e.n : 0) + n }));
+
   const resultCount = tab === "abstracts" ? filteredAbstracts.length : filteredPubs.length;
+  const hiddenCount = Math.max(0, resultCount - visibleCount);
   const totalCount = tab === "abstracts" ? conferenceAbstracts.length : tabPubs.length;
 
   const activeTags: { key: string; label: string; clear: () => void }[] = [];
@@ -477,7 +492,8 @@ export default function PublicationsPage() {
 
           <div className="pubs-resbar">
             <span className="n">
-              <b>{resultCount}</b> of {totalCount} shown
+              <b>{resultCount}</b> of {totalCount} match
+              {hiddenCount > 0 && <> · first {resultCount - hiddenCount} listed</>}
             </span>
             <div className="active-tags">
               {activeTags.map((t) => (
@@ -501,7 +517,7 @@ export default function PublicationsPage() {
             </div>
           ) : tab === "articles" ? (
             <div>
-              {filteredPubs.map((pub) => (
+              {filteredPubs.slice(0, visibleCount).map((pub) => (
                 <article key={pub.id} className="pub">
                   <div className="pub-top">
                     <span className="pub-year">{pub.year}</span>
@@ -563,7 +579,7 @@ export default function PublicationsPage() {
             </div>
           ) : (
             <div>
-              {filteredAbstracts.map((abs) => {
+              {filteredAbstracts.slice(0, visibleCount).map((abs) => {
                 const typeInfo = presentationTypeLabels[abs.presentationType];
                 return (
                   <article key={abs.id} className="pub">
@@ -599,6 +615,17 @@ export default function PublicationsPage() {
                   </article>
                 );
               })}
+            </div>
+          )}
+
+          {hiddenCount > 0 && (
+            <div className="pubs-more">
+              <button type="button" className="pubs-more-btn" onClick={() => showMore(PAGE_SIZE)}>
+                Show {Math.min(PAGE_SIZE, hiddenCount)} more
+              </button>
+              <button type="button" className="clear-tags" onClick={() => showMore(hiddenCount)}>
+                show all {resultCount}
+              </button>
             </div>
           )}
         </section>
@@ -771,6 +798,14 @@ export default function PublicationsPage() {
           display: inline-flex; align-items: center;
         }
         .act:hover { color: var(--accent); border-color: var(--accent); }
+
+        .pubs-more { display: flex; gap: 1rem; align-items: center; justify-content: center; margin-top: 1rem; }
+        .pubs-more-btn {
+          font-family: var(--body-font); font-size: 0.9rem; font-weight: 600; color: var(--accent);
+          background: var(--accent-soft); border: 1px solid transparent; border-radius: 10px;
+          padding: 0.7rem 1.2rem; cursor: pointer;
+        }
+        .pubs-more-btn:hover { border-color: var(--accent); }
 
         .pubs-empty {
           text-align: center; padding: 3.75rem 1.25rem; color: var(--muted);

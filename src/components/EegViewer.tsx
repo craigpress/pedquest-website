@@ -8,8 +8,15 @@
 // Children receive the src to display (the original URL, or a recoloured
 // object URL when a non-default palette is active) so the point-to-feature
 // overlay keeps working unchanged inside the zoomed frame.
+//
+// With `optimize`, the fit-to-width view shows a width-appropriate WebP from
+// the image optimizer (passed as `img.srcSet`/`img.sizes`). Anything that needs
+// the exact pixels uses the original PNG instead: the palette recolour reads
+// and rewrites it on a canvas (and displays the full-size result), and a
+// zoomed-in view switches to it so traces stay crisp.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { getImageProps } from "next/image";
 import type { ImagePanel } from "@/lib/cases";
 import {
   DEFAULT_PALETTE, PALETTES, hasHeatRegions, heatRegions, loadPalettePreference,
@@ -20,12 +27,21 @@ const ZOOM_MIN = 1;
 const ZOOM_MAX = 6;
 const ZOOM_STEP = 1.25;
 
+/** Learner pages cap the figure at 860 px minus 1.5rem gutters. */
+const OPTIMIZED_SIZES = "(max-width: 860px) calc(100vw - 48px), 812px";
+
+/** What a child spreads onto its <img>. srcSet/sizes only for the optimized view. */
+export interface EegImgProps { src: string; srcSet?: string; sizes?: string }
+
 export default function EegViewer({
   src,
   kind,
   panels,
   allowDragPan = true,
   protect = false,
+  optimize = false,
+  width,
+  height,
   children,
 }: {
   src: string;
@@ -40,11 +56,17 @@ export default function EegViewer({
    * where saving a figure is legitimate.
    */
   protect?: boolean;
-  children: (displaySrc: string) => ReactNode;
+  /** serve the fit view through the image optimizer (learner pages) */
+  optimize?: boolean;
+  /** rendered pixel size of `src`, when known (1:1 zoom, optimizer nominal size) */
+  width?: number | null;
+  height?: number | null;
+  children: (displaySrc: string, img: EegImgProps) => ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
-  const [naturalWidth, setNaturalWidth] = useState(0);
+  const [probedWidth, setNaturalWidth] = useState(0);
+  const naturalWidth = width || probedWidth;
   const [palette, setPalette] = useState<PaletteId>(DEFAULT_PALETTE);
   const [displaySrc, setDisplaySrc] = useState(src);
   const [paletteState, setPaletteState] = useState<"idle" | "working" | "unavailable" | "noop">("idle");
@@ -79,12 +101,14 @@ export default function EegViewer({
     };
   }, [src, palette, paletteEnabled, kind, panels]);
 
-  // natural width for the 1:1 button (also set by the recolour path)
+  // natural width for the 1:1 button (also set by the recolour path). Probing
+  // it would download the full PNG, so only do that when the row lacks it.
   useEffect(() => {
+    if (width) return;
     const img = new Image();
     img.onload = () => setNaturalWidth(img.naturalWidth);
     img.src = src;
-  }, [src]);
+  }, [src, width]);
 
   // ---- zoom, keeping the viewport centre fixed ----
   const prevZoom = useRef(1);
@@ -144,6 +168,15 @@ export default function EegViewer({
     setPalette(id);
     savePalettePreference(id);
   }, []);
+
+  // Fit view, default palette: optimized variant. Recoloured or zoomed: exact pixels.
+  let img: EegImgProps = { src: displaySrc };
+  if (optimize && displaySrc === src && zoom === 1) {
+    const { props } = getImageProps({
+      src, alt: "", width: width || 1600, height: height || 1000, quality: 85, sizes: OPTIMIZED_SIZES,
+    });
+    img = { src: props.src, srcSet: props.srcSet, sizes: props.sizes };
+  }
 
   const btn: React.CSSProperties = {
     font: "inherit", fontFamily: "monospace", fontSize: 12, lineHeight: 1,
@@ -240,7 +273,7 @@ export default function EegViewer({
           onContextMenu={protect ? (e) => e.preventDefault() : undefined}
           onDragStart={protect ? (e) => e.preventDefault() : undefined}
         >
-          {children(displaySrc)}
+          {children(img.src, img)}
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import {
   isLearnerVisible, mapCase, mapReference, toPublicCase,
   type CaseReference, type EegCase, type PublicCase, type CaseStats,
 } from "@/lib/cases";
+import { versionedImageUrl } from "@/lib/image-version";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 async function loadCaseRow(match: (q: any) => any): Promise<EegCase | null> {
@@ -52,14 +53,20 @@ export async function getCaseReferences(caseId: string): Promise<CaseReference[]
 /** Public (answer-stripped) variants for rendering pages. */
 export async function getTodaysPublicCase(): Promise<PublicCase | null> {
   const c = await getTodaysCase();
-  return c ? toPublicCase(c) : null;
+  return c ? toVersionedPublicCase(c) : null;
 }
 export async function getPublicCaseById(id: string): Promise<PublicCase | null> {
   const c = await getCaseById(id);
   if (!c) return null;
   // published/archived cases, plus approved bank items (not yet in the CoTD rotation)
   if (!isLearnerVisible(c)) return null;
-  return toPublicCase(c);
+  return toVersionedPublicCase(c);
+}
+
+/** Learner payload with the image URL carrying its cache key. */
+export function toVersionedPublicCase(c: EegCase): PublicCase {
+  const pc = toPublicCase(c);
+  return { ...pc, imageUrl: versionedImageUrl(pc.imageUrl, c.updatedAt) };
 }
 
 /** Archive list (published + archived), lightweight. */
@@ -73,7 +80,7 @@ export async function getArchive(limit = 60): Promise<ArchiveItem[]> {
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from("eeg_cases")
-    .select("id,title,publish_date,question_type,difficulty,tags,image_url,status")
+    .select("id,title,publish_date,question_type,difficulty,tags,image_url,status,updated_at")
     .in("status", ["published", "archived"])
     .lte("publish_date", today)
     .order("publish_date", { ascending: false })
@@ -82,7 +89,7 @@ export async function getArchive(limit = 60): Promise<ArchiveItem[]> {
   return data.map((r: any) => ({
     id: r.id, title: r.title, publishDate: r.publish_date ?? null,
     questionType: r.question_type, difficulty: r.difficulty ?? "intermediate",
-    tags: r.tags ?? [], imageUrl: r.image_url ?? "", status: r.status,
+    tags: r.tags ?? [], imageUrl: versionedImageUrl(r.image_url ?? "", r.updated_at), status: r.status,
   }));
 }
 

@@ -146,6 +146,8 @@ export interface EegCase {
   aiModel: string | null;
   status: CaseStatus;
   createdAt: string;
+  /** row updated_at — cache key for remote images (see image-version.ts) */
+  updatedAt: string | null;
   options: CaseOption[];
   // ---- question-bank fields (null on legacy Case-of-the-Day rows) ----
   qbankId: string | null;
@@ -177,6 +179,9 @@ export interface PublicCase {
   title: string;
   clinicalVignette: string | null;
   imageUrl: string;
+  /** rendered pixel size; fixes the layout aspect ratio whatever variant is shown */
+  imageWidth: number | null;
+  imageHeight: number | null;
   questionType: QuestionType;
   questionPrompt: string;
   difficulty: Difficulty;
@@ -306,6 +311,7 @@ export function mapCase(r: any, options: any[] = []): EegCase {
     aiModel: r.ai_model ?? null,
     status: r.status,
     createdAt: r.created_at,
+    updatedAt: r.updated_at ?? null,
     options: options.map(mapOption).sort((a, b) => a.sortOrder - b.sortOrder),
     qbankId: r.qbank_id ?? null,
     domain: (r.domain as QbankDomain) ?? null,
@@ -372,6 +378,8 @@ export function toPublicCase(c: EegCase): PublicCase {
     title: c.title,
     clinicalVignette: c.clinicalVignette,
     imageUrl: c.imageUrl,
+    imageWidth: c.imageWidth,
+    imageHeight: c.imageHeight,
     questionType: c.questionType,
     questionPrompt: c.questionPrompt,
     difficulty: c.difficulty,

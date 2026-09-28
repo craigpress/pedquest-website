@@ -81,6 +81,7 @@ export default function Footer() {
                 alt="PedQuEST"
                 width={2113}
                 height={744}
+                sizes="142px"
                 className="ft-logo"
               />
             </Link>

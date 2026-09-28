@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ArchiveItem } from "@/lib/cases-server";
 
@@ -10,8 +11,11 @@ export default function CaseCard({ item }: { item: ArchiveItem }) {
         color: "inherit",
       }}>
       {item.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.imageUrl} alt="" style={{ width: "100%", height: 130, objectFit: "cover", background: "var(--bg)", borderBottom: "1px solid var(--border)" }} />
+        // Optimized thumbnail for the 130-px strip (see QuestionBankBrowser);
+        // width/height are nominal, the style sets the box.
+        <Image src={item.imageUrl} alt="" width={1600} height={1000} quality={60}
+          sizes="(max-width: 600px) 70vw, 300px"
+          style={{ width: "100%", height: 130, objectFit: "cover", background: "var(--bg)", borderBottom: "1px solid var(--border)" }} />
       )}
       <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>

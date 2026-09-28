@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
         hostname: "*.supabase.co",
       },
     ],
+    // Local sources: any path without a query, plus question-bank PNGs with a
+    // `?v=<content hash>` cache key (src/lib/image-version.ts). Next caps
+    // localPatterns at 25 entries, so the qbank query cannot be pinned to the
+    // exact hashes; the pattern is limited to that folder's PNGs instead.
+    localPatterns: [
+      { pathname: "/**", search: "" },
+      { pathname: "/images/qbank/*.png" },
+    ],
+    // 60: small card thumbnails; 75: default; 85: full EEG figures (thin traces).
+    qualities: [60, 75, 85],
   },
   experimental: {
     // Limit dev server workers to prevent OOM on Windows (default = CPU count)
@@ -64,7 +74,18 @@ const nextConfig: NextConfig = {
         value: csp,
       },
     ];
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // A versioned bank PNG never changes (a re-render gets a new hash), so the
+      // browser, the CDN and the image optimizer — whose TTL follows the
+      // upstream max-age — may keep it for a year. Unversioned requests keep the
+      // default revalidating headers.
+      {
+        source: "/images/qbank/:file*",
+        has: [{ type: "query", key: "v" }],
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+    ];
   },
 };
 

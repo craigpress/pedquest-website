@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
@@ -224,8 +225,12 @@ export default function QuestionBankBrowser({ initialFacets }: { initialFacets: 
           {visible.map((i) => (
             <Link className="qb-card" href={`/education/question-bank/${i.id}`} key={i.id}>
               {i.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img className="qb-card-img" draggable={false} onContextMenu={(e) => e.preventDefault()} src={i.imageUrl} alt="" loading="lazy" />
+                // Optimized thumbnail: the .qb-card-img box is ~132 px tall, so a
+                // phone-width WebP replaces the full-size PNG. width/height are
+                // nominal (CSS sets the box); `sizes` picks the variant.
+                <Image className="qb-card-img" draggable={false} onContextMenu={(e) => e.preventDefault()}
+                  src={i.imageUrl} alt="" width={1600} height={1000} quality={60}
+                  sizes="(max-width: 560px) 70vw, (max-width: 900px) 40vw, 300px" />
               ) : (
                 <div className="qb-card-img qb-card-noimg">no figure</div>
               )}

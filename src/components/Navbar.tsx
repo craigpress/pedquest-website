@@ -317,6 +317,7 @@ export default function Navbar() {
               aria-hidden="true"
               width={1254}
               height={1254}
+              sizes="(min-width: 1024px) 44px, 36px"
               priority
               className="h-9 w-9 lg:h-11 lg:w-11"
               style={{ flex: "none" }}
@@ -326,6 +327,7 @@ export default function Navbar() {
               alt="PedQuEST"
               width={2113}
               height={744}
+              sizes="(min-width: 1024px) 137px, 103px"
               priority
               className="h-9 lg:h-12 w-auto transition-opacity duration-300 group-hover:opacity-85"
             />
@@ -415,9 +417,11 @@ export default function Navbar() {
                 }}
               >
                 {member?.photoUrl ? (
-                  <img
+                  <Image
                     src={member.photoUrl}
                     alt={member.name}
+                    width={34}
+                    height={34}
                     style={{
                       width: 34,
                       height: 34,
