@@ -4,7 +4,7 @@ version: 1
 status: draft
 title: Who gets continuous EEG after neonatal cardiopulmonary bypass
 domain: monitoring_practice
-topics: [neonatal cardiac surgery, cardiopulmonary bypass, risk prediction model, monitoring policy]
+topics: [neonatal cardiac surgery, cardiopulmonary bypass, risk prediction model, monitoring policy, background continuity]
 population: neonate
 setting: CICU
 difficulty: introductory
@@ -22,12 +22,14 @@ stem:
     a locally implemented seizure prediction score places him in a low-risk band. The unit
     has one spare EEG amplifier. The cardiac intensivist asks whether the score can be
     used to decide who is monitored, and shows you the first 12 hours of trends from the
-    neonate already on the machine.
+    neonate already on the machine, a late-preterm infant born at 36 weeks who is 4 days
+    after a similar operation.
   image_caption: >-
-    Twelve-hour qEEG panel from a monitored postoperative neonate: seizure probability; rhythmicity
-    spectrogram (left, right); FFT spectrogram 0-20 Hz (left, right); asymmetry index; aEEG (left,
-    right); suppression ratio (left, right). Elapsed time (hours:minutes) on the time axis. No
-    medication annotations fall within this window.
+    Late-preterm neonate, full 19-electrode array. Upper: 12-hour qEEG panel (seizure
+    probability; rhythmicity L and R; FFT 0-20 Hz L and R; asymmetry index; aEEG L and R;
+    suppression ratio L and R, below 5 microvolts), elapsed time (hours:minutes), no medication
+    annotations. Lower: 20-s raw page at 5:22 (quiet sleep), longitudinal bipolar, 7
+    microvolts per millimetre, 1-70 Hz, 60 Hz notch.
   lead_in: >-
     What is the best monitoring recommendation for the neonate who has just returned from
     bypass?
@@ -68,10 +70,16 @@ options:
 
 explanation: >-
   The correct answer is A. What the image shows, on the monitored neighbour, is why the
-  policy matters: through the first 12 hours the rhythmicity spectrograms are empty, the
-  seizure-probability trend is flat, the aEEG margins are stable and the suppression-ratio
-  trends are low, yet the published onset distribution means the high-risk window has not
-  yet been reached. A clean early panel is not a reason to remove the amplifier. Evidence:
+  policy matters: through the first 12 hours the rhythmicity spectrograms are empty and
+  the seizure-probability trend is flat apart from a few small isolated blips with no
+  rhythmic band. The background cycles with sleep state: long continuous stretches (aEEG
+  lower margin about 12 microvolts, upper about 50 microvolts) alternate roughly every 70
+  minutes with 15- to 25-minute quiet-sleep epochs in which the lower margin dips toward 5
+  microvolts and the suppression ratio shows only brief small rises. The raw page from one
+  of those epochs shows bursts separated by an interburst interval of about 8 seconds whose
+  voltage, about 15 microvolts, is lower than expected for 36 to 37 weeks: mildly excessive
+  quiet-sleep discontinuity after bypass, not suppression and not a seizure. Yet the
+  published onset distribution means the high-risk window has not yet been reached. A clean early panel is not a reason to remove the amplifier. Evidence:
   in a multicenter prospective cohort in which all postoperative neonates who underwent
   cardiopulmonary bypass also underwent continuous EEG, electrographic seizures occurred in
   7.4 percent (78 of 1053). A prediction model using gestational age, head circumference,
@@ -126,35 +134,50 @@ references:
     member_author: true
 
 image:
-  kind: qeeg_panel
+  kind: composite
   license: synthetic-original
   attribution: null
   spec:
     spec_version: 3
+    # 2026-09-28 (Craig, revision drafts d9b4de4f/435f34b4): a late-preterm neonate on the full 19-electrode array,
+    # continuous in wake/active sleep with mildly excessive quiet-sleep discontinuity (IBI 4-13 s, interburst ~14 uV,
+    # below the 25-50 uV of 36-37 w trace alternant) - variable, not suppressed.  Page falls in quiet sleep 314.6-333.5 min.
     seed: 8100019
     age_group: neonate
     sample_rate: 256
-    channels: neonatal_reduced
-    duration_min: 720
-    background:
-      type: continuous
-      dominant_hz: 2.2
-      amplitude_uv: 38
-      slow_fraction: 0.78
-      reactivity: present
-    events: []
-    panels:
-      - seizure_probability
-      - rhythmicity_L
-      - rhythmicity_R
-      - fft_L
-      - fft_R
-      - asymmetry_index
-      - aeeg_L
-      - aeeg_R
-      - suppression_ratio_L
-      - suppression_ratio_R
-    time_axis: elapsed
+    channels: standard_19
+    layout: panel_over_page
+    qeeg_panel:
+      duration_min: 720
+      background:
+        type: discontinuous
+        pma_weeks: 36.5
+        state_cycle: term
+        hours_of_life: 84
+        amplitude_uv: 55
+        reactivity: present
+        ibi_range_s: [4, 13]
+        ibi_floor_uv: 14
+      events: []
+      panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - asymmetry_index
+        - aeeg_L
+        - aeeg_R
+        - suppression_ratio_L
+        - suppression_ratio_R
+      time_axis: elapsed
+    eeg_page:
+      at_min: 322
+      window_s: 20
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      filters: { lf_hz: 1, hf_hz: 70, notch_hz: 60 }
+      highlight: null
 
 metadata:
   author: Writer B (claude-opus)

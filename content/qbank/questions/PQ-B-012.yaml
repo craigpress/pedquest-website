@@ -15,9 +15,9 @@ learning_objective: >-
 
 stem:
   vignette: >-
-    A term neonate with moderate hypoxic-ischemic encephalopathy is on the second day of
+    A term neonate with moderate hypoxic-ischemic encephalopathy is on the first day of
     therapeutic hypothermia. Continuous video EEG was started at 5 hours of life. Rhythmic
-    right-arm jerking at 12 hours of life prompted a phenobarbital load of 20 milligrams
+    left-arm jerking at 12 hours of life prompted a phenobarbital load of 20 milligrams
     per kilogram, after which the movements stopped. The 6-hour window shown begins 1 hour
     after that load. The bedside examination is unchanged and no further movements have
     been seen, yet the trend panel and raw page show recurrent right-hemispheric
@@ -26,7 +26,7 @@ stem:
     Composite. Upper: 6-hour qEEG panel (seizure probability; rhythmicity L and R; FFT 0-20 Hz L and
     R; asymmetry index; aEEG L and R), elapsed time (hours:minutes); the phenobarbital load occurred
     60 minutes before the displayed window. Lower: 15-second raw page from minute 93, neonatal
-    reduced montage, 7 microvolts per millimetre, 1-70 Hz.
+    reduced montage, 7 microvolts per millimetre, 1-70 Hz with 60 Hz notch.
   lead_in: >-
     What is the best next step in the management of this infant's seizure burden?
 
@@ -70,9 +70,12 @@ explanation: >-
   The correct answer is A. What the image shows: the right rhythmicity spectrogram carries
   repeated discrete bands that begin near 2.5 Hz and slow over about 2 minutes, the
   seizure-probability trend rises with each, the asymmetry index deflects to the right
-  during each event and returns to baseline between them, the right aEEG margins rise
-  while the left is unchanged, and the raw page from minute 93 shows evolving rhythmic
-  sharp activity in the right central chain. The left-sided trends are quiet, so this is
+  during each event and returns to baseline between them, and the right aEEG margins rise
+  briefly with each event while the left is unchanged. Between events both aEEG bands are
+  continuous, with lower margins near 9 microvolts and upper margins near 30 microvolts
+  (continuous normal voltage), so the background is not suppressed. The raw page from
+  minute 93 falls inside one event and shows rhythmic sharp waves near 2 Hz, maximal over
+  the right central electrode (C4), growing in voltage. The left-sided trends are quiet, so this is
   focal right-hemispheric ictal activity, not artifact and not a global change. Evidence:
   in a randomized trial of 69 neonates at or beyond 36 weeks with moderate or severe
   hypoxic-ischemic encephalopathy, 35 (51 percent) developed seizures. Excluding infants
@@ -131,9 +134,12 @@ image:
   license: synthetic-original
   attribution: null
   spec:
-    spec_version: 2
-    # kept at spec_version 2 (0.4.4 pixels): v3 randomizes the neonatal cluster (10-600 s runs) and jitters each ictal
-    # cycle, so the repeated right rhythmicity bands and seizure-probability rises the explanation describes mostly vanish
+    spec_version: 3
+    # v3 (2026-09-28): the cluster is written out as 15 explicit 120-s runs every 22 min (v3 randomizes neonatal
+    # seizure_cluster run lengths and spacing); sharp-wave morphology keeps the rhythmicity bands and seizure-probability
+    # rises visible through the v3 per-cycle jitter; run 4 spans the minute-93 page. Background continuous term
+    # (Craig, revision drafts 392fd219/4a67aabc: interictal aEEG lower margin was too low) - interictal aEEG lower
+    # ~9 uV / upper ~30 uV; seizures scaled with it (1.8-4.6x background).
     seed: 8100012
     age_group: neonate
     sample_rate: 256
@@ -142,24 +148,43 @@ image:
     qeeg_panel:
       duration_min: 360
       background:
-        type: discontinuous
+        type: continuous
+        pma_weeks: 40
         dominant_hz: 1.8
-        amplitude_uv: 30
+        amplitude_uv: 25
         slow_fraction: 0.8
         reactivity: present
       events:
-      - type: seizure_cluster
-        start_min: 25
-        end_min: 340
-        interval_min: 22
-        seizure:
-          duration_s: 120
-          onset_region: right_central
-          evolution:
-            start_hz: 2.5
-            end_hz: 1.2
-            amplitude_start_uv: 45
-            amplitude_end_uv: 120
+      - {type: seizure, onset_min: 26.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 48.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 70.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 92.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 114.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 136.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 158.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 180.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 202.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 224.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 246.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 268.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 290.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 312.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
+      - {type: seizure, onset_min: 334.2, duration_s: 120, onset_region: right_central, spread: none, morphology: sharp_wave,
+         evolution: {start_hz: 2.5, end_hz: 1.2, amplitude_start_uv: 45, amplitude_end_uv: 115}}
       annotations:
       - at_min: -60
         label: Phenobarbital 20 mg/kg

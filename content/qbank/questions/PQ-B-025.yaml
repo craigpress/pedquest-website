@@ -25,7 +25,7 @@ stem:
   image_caption: >-
     Composite. Upper: 4-hour qEEG panel (seizure probability; rhythmicity L and R; FFT 0-20 Hz L and
     R; relative asymmetry spectrogram; asymmetry index; aEEG L and R; suppression ratio L and R),
-    elapsed minutes; levetiracetam and lorazepam annotated at minute 60. Lower:
+    elapsed time (hours:minutes); levetiracetam and lorazepam annotated at minute 60. Lower:
     15-second raw page from minute 80, longitudinal bipolar, 7 microvolts per millimetre, 1-70 Hz
     with 60 Hz notch.
   lead_in: >-
@@ -72,10 +72,11 @@ explanation: >-
   seizure-probability trend is saturated and both aEEG margins are elevated and narrowed.
   At minute 60, coincident with seizure termination and the annotated medications, the
   rhythmicity bands stop. Both aEEG margins then fall together, low-frequency FFT power
-  drops, asymmetry stays near zero, and the margins later recover. The suppression-ratio
-  panels remain near baseline, showing low voltage with preserved continuity rather than
-  new suppression. The raw page at minute 80 is low-voltage, slow, continuous, symmetric
-  and non-ictal. Because lorazepam and seizure offset occur together, the tracing cannot
+  drops, asymmetry stays near zero, and the margins recover by about 1:55. The
+  suppression-ratio panels stay near zero apart from one brief spike near minute 75,
+  showing low voltage with preserved continuity rather than new suppression. The raw page
+  at minute 80 is low-voltage, slow, continuous, symmetric and non-ictal, apart from a
+  brief burst of temporal muscle artifact. Because lorazepam and seizure offset occur together, the tracing cannot
   distinguish medication effect from post-ictal attenuation. Bilaterality and recovery
   support that interpretation but do not independently exclude global injury, metabolic
   change or electrode problems; clinical correlation remains necessary. Evidence: in 259
