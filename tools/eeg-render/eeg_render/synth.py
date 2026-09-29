@@ -3104,8 +3104,10 @@ class Synthesizer:
                                     for i, ev in enumerate(self.spec["events"]))}
             for z in out:
                 if z.kind in ("seizure", "seizure_cluster", "status_epilepticus") and z.morph == "ictal"                         and modes.get(z.index) != "absolute" and bg_pp > 0:
-                    z.amp_start = max(z.amp_start, 1.5 * bg_pp)
-                    z.amp_end = max(z.amp_end, 2.0 * bg_pp)
+                    k0, k1 = (self._MESIAL_FLOOR_X if z.onset_pattern == "rhythmic_theta"
+                              and z.onset_region.endswith("mesial_temporal") else (1.5, 2.0))
+                    z.amp_start = max(z.amp_start, k0 * bg_pp)
+                    z.amp_end = max(z.amp_end, k1 * bg_pp)
                 elif z.kind == "spasm" and modes.get(z.index) != "absolute" and bg_pp > 0:
                     # 0.5.0 (feature review SPASM): the slow wave is the largest deflection on the page, also on a
                     # hypsarrhythmic background (infantile-spasm-ii: it towers over the 300-uV chaos)
@@ -3133,6 +3135,10 @@ class Synthesizer:
 
     #: phase B fix-focal: spasm slow wave on a hypsarrhythmic background, in units of the background peak-to-peak
     _SPASM_HYPS_X = 3.5
+    #: r9 (gallery-20260929 szf-mesial-temporal-left: the rhythmic theta was 0.7-1.2x background for 15 s, on a sleep
+    #: page whose background runs above amplitude_uv): relative-mode floor of a mesial temporal run (start, end), in
+    #: units of the background peak-to-peak
+    _MESIAL_FLOOR_X = (2.2, 2.6)
 
     #: phase D: "+S" weight of the rhythmic-spike onset (central / parietal / occipital) relative to the run RMS
     _RHYTHMIC_SPIKE_SHARP = 1.6
@@ -3545,6 +3551,17 @@ class Synthesizer:
 
     #: v3 multifocal spike normalization: peak-to-peak of the single spike-and-wave kernel
     _MF_SPIKE_PTP = None
+
+    #: r9: background amplitude (uV) at which a hypsarrhythmic page's tonic muscle floor has its normal-infant voltage
+    _HYPS_EMG_REF_UV = 60.0
+
+    def _hyps_emg_scale(self) -> float:
+        """r9 (gallery-20260929 szf-hypsarrhythmia: blocks of fast, muscle-like activity in the temporal chains, worse
+        above the default amplitude): the muscle floor rides ``amp_rms`` (48 uV at the 280-uV default, 71 at 400,
+        against 12 on a normal infant page).  Muscle is not cerebral: at v3 it keeps the normal-infant voltage."""
+        if self.spec_version < 3 or self.bg["type"] != "hypsarrhythmia":
+            return 1.0
+        return min(1.0, self._HYPS_EMG_REF_UV / max(float(self.bg["amplitude_uv"]), 1e-6))
 
     def _multifocal_spike_rows(self, t: np.ndarray) -> np.ndarray:
         rows = np.zeros((self.n_elec, t.size))
@@ -4356,6 +4373,15 @@ class Synthesizer:
                 # every generalized event look like it propagated.
                 lag = 0.02 if spread == "generalized" else 0.18
                 phase_d, _, _, f_d = self._ictal_phase(inst, t - lag)
+            bilat = self._bilateral_spread(inst) if v3run else None
+            if bilat is not None:
+                # r9 (gallery-20260929 szf-hemispheric-spread, global "focal-to-bilateral spread does not render"): the
+                # near-uniform generalized field cancelled in the bipolar chain (the far side stayed at 1.0-1.3x
+                # background).  A focal run that generalizes recruits its own hemisphere, then the other one a little
+                # later, each through its hemisphere field with the within-hemisphere generator lags
+                bilat = [(reg, gain, smoothstep((u - 0.30 - du) / 0.30)) + self._ictal_phase(inst, t - lag)[::3]
+                         for reg, gain, du, lag in bilat]
+                phase_d = None
             psi_d = psi
             if (self.spec_version >= 3 and inst.kind == "rhythmic_pattern" and inst.morph == "periodic"
                     and inst.onset_region == "generalized"):
@@ -4377,6 +4403,9 @@ class Synthesizer:
                 if phase_d is not None:
                     psi_d = self._cycle_psi(phase_d, psi0, base)
                     phase_d = self._cycle_warp(phase_d, base)
+                if bilat is not None:
+                    bilat = [(reg, gain, sw, self._cycle_warp(ph, base), self._cycle_psi(ph, psi0, base), fb)
+                             for reg, gain, sw, ph, fb in bilat]
             if late is not None:
                 spread = late
 
@@ -4423,6 +4452,11 @@ class Synthesizer:
                     delays = np.array([a + (d - 1.0) / 6.0 * (b - a) for d, (a, b) in zip(delays, span)])
                 gens += [(g, smoothstep((t - inst.t0 - d) / 3.0)) for g, d in zip(extra, delays)]
             onset_keep = (1.0 - 0.55 * s) if late is None else 1.0
+            sharp = inst.plus_sharp
+            neo = self._neo_evolution(inst)
+            if neo is not None:
+                # r9: the morphology sharpens as each neonatal evolution epoch slows and builds
+                sharp = self._NEO_EVO_SHARP * self._neo_epoch_pos(t - inst.t0, neo) ** 1.5
             # r7 (spec_version 3): periodic discharges render their resolved polarity (default surface-negative at the
             # source; the kernel is surface-positive); a dipole adds the positive pole from the static onset field
             pol = (rpp3.resolve_polarity(self.spec["events"][inst.index], 3)
@@ -4432,7 +4466,7 @@ class Synthesizer:
                 w = self._gen_weights(focus, onset_fall) * onset_scale
                 wv = (self._wave(phase, psi, gph, inst.morph, inst.plus_fast,
                                  f_inst, base, mt.POSITIONS.get(focus, (0.0, 0.0))[1],
-                                 base + 7919 * (gi + 1), v3, inst.plus_sharp, gpd)
+                                 base + 7919 * (gi + 1), v3, sharp, gpd)
                       * amp * ga * onset_keep * join)
                 if clon is not None:
                     wv = wv * clon
@@ -4456,7 +4490,35 @@ class Synthesizer:
                     if clon is not None:
                         wv = wv * clon
                     out += w[:, None] * wv[None, :]
+            for hi, (reg, gain, sw, ph, ps, fb) in enumerate(bilat or ()):
+                reg_scale = self._field_scale(reg)
+                reg_fall = mt.generator_falloff(reg)
+                off = base + 500_003 + 250_001 * hi
+                for gi, (focus, ga, gph) in enumerate(mt.region_generators(reg, self.electrodes)):
+                    w = self._gen_weights(focus, reg_fall) * reg_scale
+                    wv = (self._wave(ph, ps, gph, inst.morph, inst.plus_fast, fb, off,
+                                     mt.POSITIONS.get(focus, (0.0, 0.0))[1], off + 7919 * (gi + 1), v3,
+                                     inst.plus_sharp)
+                          * amp * ga * gain * sw)
+                    if clon is not None:
+                        wv = wv * clon
+                    out += w[:, None] * wv[None, :]
         return out
+
+    #: r9: focal-to-bilateral spread, (hemisphere, gain, extra delay in run fraction, lag s): the onset hemisphere, then
+    #: the other one joining a little later and ending as large (bilateral and larger than the focal onset)
+    _BILATERAL_SPREAD = (("ipsi", 1.0, 0.0, 0.18), ("contra", 1.0, 0.06, 0.32))
+
+    def _bilateral_spread(self, inst: SeizureInstance):
+        """v3 focal onset with ``spread: generalized``: the two hemisphere fields that carry the spread (None otherwise)."""
+        if inst.spread != "generalized" or inst.onset_region == "generalized":
+            return None
+        hemi = mt.HEMISPHERE_OF_REGION.get(inst.onset_region, "both")
+        if hemi not in ("left", "right"):
+            return None
+        other = "right" if hemi == "left" else "left"
+        return [(f"{hemi if side == 'ipsi' else other}_hemisphere", g, du, lag)
+                for side, g, du, lag in self._BILATERAL_SPREAD]
 
     # ---------------- phase D: generalized tonic-clonic phases and v3 ictal EMG ----------------
 
@@ -4739,7 +4801,7 @@ class Synthesizer:
             if morph == "ictal":
                 wave += 0.22 * np.sin(6.0 * p + psi[0]) * (0.6 + 0.4 * np.sin(0.7 * p))
                 wave /= 1.012
-            if plus_sharp > 0 and f_inst is not None:
+            if np.any(np.greater(plus_sharp, 0)) and f_inst is not None:
                 # (phase D: also an ictal run with a rhythmic-spike onset; plus_sharp is 0 on every other ictal run)
                 # 0.5.0 "+S" (feature review C30: the modifier was never read): a surface-negative sharp transient
                 # (rise 18 / fall 30 ms, FWHM ~57 ms, in SECONDS) on the negative crest of the delta wave, on 50-100 %
@@ -4903,10 +4965,11 @@ class Synthesizer:
                 # frontal: low-voltage fast activity inside a regional electrodecrement
                 f_onset = float(np.clip(f_start * pr.uniform(2.5, 3.5), 15.0, 25.0))
             elif pat == "rhythmic_spikes" and inst.onset_region.endswith(("_occipital", "_parietal")):
-                # phase B fix-focal (focal-independent; o1-onset-seizure-bipolar p1: 22-24 Hz low-voltage fast activity
-                # in P3-O1/T5-O1, p2 16 -> 13 Hz): the 7-13 Hz clip drew an 11 -> 8 Hz rhythm that read as an asymmetric
-                # posterior dominant rhythm.  Posterior onsets start at 15-25 Hz, as the electrodecrement branch does
-                f_onset = float(np.clip(f_start * pr.uniform(2.5, 3.5), 15.0, 25.0))
+                # r9 (gallery-20260929 szf-occipital-right / szf-parietal-right; Lab guide "rhythmic spikes": rhythmic
+                # alpha-beta onset with a sharp transient on every cycle): phase B fix-focal's 15-25 Hz onset read as
+                # low-voltage fast activity.  Posterior onsets are rhythmic spikes at 11-15 Hz, above the 7-13 Hz
+                # central clip so an 11 -> 8 Hz rhythm cannot pass for an asymmetric posterior dominant rhythm
+                f_onset = float(np.clip(f_start * pr.uniform(1.5, 2.0), 11.0, 15.0))
             elif pat == "rhythmic_spikes":
                 # central: rhythmic alpha-beta spikes
                 f_onset = float(np.clip(f_start * pr.uniform(1.4, 1.8), 7.0, 13.0))
@@ -4925,11 +4988,27 @@ class Synthesizer:
             dev = 0.55 * dev + float(rng.normal(0.0, 0.16))
             logf[k] = glide + dev
         logf[-1] = math.log(f_end * float(rng.uniform(0.65, 0.85)))    # terminal slowing
+        neo = self._neo_evolution(inst)
+        if neo is not None:
+            # r9: each neonatal evolution epoch starts fast and slows (see _neo_evolution).  Breakpoints are added
+            # 1 s before and at every epoch boundary so the log-frequency sawtooth is not aliased by the 2.5-5 s grid
+            e, off = neo
+            tau = u[2:-1] * dur
+            k = np.arange(np.ceil((u_on * dur + off) / e), np.floor((u_off * dur + off) / e) + 1)
+            edges = np.concatenate([k * e - off - 1.0, k * e - off])
+            edges = edges[(edges > u_on * dur + 0.5) & (edges < u_off * dur - 0.5)]
+            new = np.unique(np.concatenate([tau, edges]))
+            lf = np.interp(new, tau, logf[2:-1])
+            pos = np.where(np.isin(new, k * e - off - 1.0), (e - 1.0) / e,
+                           np.where(np.isin(new, k * e - off), 0.0, self._neo_epoch_pos(new, neo)))
+            lf += np.log(self._NEO_EVO_HZ[0]) + np.log(self._NEO_EVO_HZ[1] / self._NEO_EVO_HZ[0]) * pos
+            u = np.concatenate([u[:2], new / dur, u[-1:]])
+            logf = np.concatenate([logf[:2], lf, logf[-1:]])
         if pat == "rhythmic_spikes" and inst.onset_region.endswith(("_occipital", "_parietal")):
-            # phase B fix-focal: the fast onset holds (to 0.8x) through the first half of the onset before slowing
-            # (o1-onset-seizure-bipolar: p1 22-24 Hz, p2 16 -> 13 Hz); no extra draws
+            # phase B fix-focal: the onset rhythm holds (r9: to 0.9x) through the first half of the onset before
+            # slowing; no extra draws
             u = np.insert(u, 1, 0.5 * u_on)
-            logf = np.insert(logf, 1, math.log(0.8 * f_onset))
+            logf = np.insert(logf, 1, math.log(0.9 * f_onset))
         f = np.clip(np.exp(logf), 0.5, 25.0)
         # cumulative phase at each breakpoint: exact integral of a geometric glide
         cum = np.zeros_like(u)
@@ -4941,6 +5020,33 @@ class Synthesizer:
         clonic_ph = float(rng.uniform(0, 2 * np.pi))
         cache[key] = (u, f, cum, clonic_hz, clonic_ph)
         return cache[key]
+
+    #: r9 neonatal within-run evolution: epoch length (s), frequency factor at the start / end of an epoch, amplitude
+    #: factor at the start / peak of an epoch
+    _NEO_EVO_S = (12.0, 18.0)
+    _NEO_EVO_HZ = (1.5, 0.65)
+    _NEO_EVO_AMP = (0.45, 1.3)
+    _NEO_EVO_SHARP = 1.2
+
+    def _neo_evolution(self, inst: SeizureInstance) -> Optional[Tuple[float, float]]:
+        """(epoch length s, epoch offset s) of a v3 neonatal rhythmic run longer than 30 s, else None.
+
+        r9 (gallery-20260929 neo-seizure-rhythmic-temporal: a mid-run page read as a steady rhythmic pattern; the
+        evolution was only visible across pages): ACNS 2013 neonatal seizures evolve in frequency and voltage within
+        the page.  The run proceeds in 12-18 s epochs, each starting faster and lower and slowing while it builds, so
+        a 15-20 s page holds at least one visible change; the run's own start -> end glide carries on underneath."""
+        if (self.spec_version < 3 or self.age != "neonate" or inst.onset_pattern != "rhythmic_theta"
+                or inst.duration_s <= 30.0):
+            return None
+        r = substream(self.seed, "neo-evolution", inst.index, inst.ordinal).uniform(0.0, 1.0, 2)
+        e = self._NEO_EVO_S[0] + (self._NEO_EVO_S[1] - self._NEO_EVO_S[0]) * float(r[0])
+        return e, float(r[1]) * e
+
+    @staticmethod
+    def _neo_epoch_pos(tau: np.ndarray, neo: Tuple[float, float]) -> np.ndarray:
+        """Position 0..1 inside the neonatal evolution epoch at ``tau`` seconds into the run."""
+        e, off = neo
+        return np.mod(np.asarray(tau, dtype=float) + off, e) / e
 
     def _recruit_bounds(self, dur: float, pattern: str = "") -> Tuple[float, float]:
         """Fractions of the run at which the onset ends and the offset begins.
@@ -5001,6 +5107,12 @@ class Synthesizer:
                           [0.25 * inst.amp_start, inst.amp_start, inst.amp_end, 0.55 * inst.amp_end])
             ramp = 0.04
         amp = a / 2.9 * self._ictal_gain(inst)
+        neo = self._neo_evolution(inst)
+        if neo is not None:
+            pos = self._neo_epoch_pos(uu * dur, neo)
+            a0, a1 = self._NEO_EVO_AMP
+            # builds through the epoch, falls back over its last 15 %
+            amp = amp * (a0 + (a1 - a0) * np.where(pos < 0.85, pos / 0.85, (1.0 - pos) / 0.15))
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
         # clonic bursting over the last third: the run breaks into groups at 1-2 Hz
         w = smoothstep((uu - 0.68) / 0.15)
@@ -6371,7 +6483,8 @@ class Synthesizer:
                  * dec
                  * (gen.emg_factor(t) if gen is not None else 1.0)
                  # an infant's temporalis floor is a fraction of a child's
-                 * (0.45 if self.age == "infant" else self._neo_emg_v3(t) if self.age == "neonate" else 1.0))
+                 * (0.45 if self.age == "infant" else self._neo_emg_v3(t) if self.age == "neonate" else 1.0)
+                 * self._hyps_emg_scale())
         muscle_term = self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
         if self._breach_gain is None:
             x += muscle_term

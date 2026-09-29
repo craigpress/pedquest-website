@@ -1254,8 +1254,11 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1, amp_scale: float = 1.
         e.setdefault("decrement_s", 3.5)
         if version >= 3:
             # 0.5.0 (feature review SPASM, infantile-spasm-i/-ii): the decrement leaves residual activity and
-            # fast/EMG (0.95 drew a flat line in every channel), and a brief EMG burst follows the slow wave
-            e.setdefault("decrement_depth", 0.6)
+            # fast/EMG (0.95 drew a flat line in every channel), and a brief EMG burst follows the slow wave.
+            # r9 (gallery-20260929 szf-spasm-cluster-hyps, single spasm dropped: 0.6 left a short, shallow decrement
+            # that the lateral chains and a hypsarrhythmic background filled): 0.85, the decrement's low-voltage
+            # fast activity still riding it
+            e.setdefault("decrement_depth", 0.85)
             e.setdefault("muscle", "modest")
         e.setdefault("decrement_depth", 0.95)
         # Cerebral fast activity, NOT muscle: beta rides the slow wave itself

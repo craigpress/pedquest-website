@@ -176,17 +176,16 @@ def test_spasm_defaults_are_version_gated():
 # ------------------------------------------------------------------------------------------------ posterior onsets
 
 @pytest.mark.parametrize("case,chains", [("occipital", ("P3-O1", "T5-O1")), ("parietal", ("P4-O2", "C4-P4"))])
-def test_posterior_onset_starts_with_low_voltage_fast_activity(case, chains):
-    """LO p1: 22-24 Hz low-voltage fast activity at about 1.5x in P3-O1/T5-O1, then 16 -> 13 Hz and slower.
-    focal-independent: the onset was an 11 -> 8 Hz rhythm (the 7-13 Hz clip) that read as an asymmetric alpha."""
+def test_posterior_onset_starts_above_the_alpha_band(case, chains):
+    """focal-independent: the onset was an 11 -> 8 Hz rhythm (the 7-13 Hz clip) that read as an asymmetric alpha.
+    r9 (gallery-20260929, Lab guide "rhythmic spikes"): phase B's 15-25 Hz onset read as low-voltage fast activity;
+    the onset is now rhythmic spikes at 11-15 Hz (test_r052_seizures), still above the alpha rhythm, then slows."""
     z = S(case).seizures[0]
     A, B, I, names = _pair(case, z.t0, z.t0 + 10.0)
     js = [names.index(c) for c in chains]
     j = max(js, key=lambda q: np.std(I[q, : int(1.5 * FS)]))
     y = I[j, : int(1.5 * FS)]
-    assert 15.0 <= _peak_hz(y, 2.0, 40.0) <= 25.0, _peak_hz(y, 2.0, 40.0)
-    ratio = np.std(y) / np.std(B[j, : int(1.5 * FS)])
-    assert 1.0 <= ratio <= 2.5, ratio                                    # low voltage
+    assert 10.0 <= _peak_hz(y, 2.0, 40.0) <= 16.0, _peak_hz(y, 2.0, 40.0)
     assert _peak_hz(I[j, 6 * FS: 10 * FS], 2.0, 40.0) <= 13.0            # then it slows
 
 
