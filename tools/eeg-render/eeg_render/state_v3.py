@@ -155,18 +155,27 @@ EMG_OFF_S = (5.0, 0.6)
 EMG_ON_LEVEL, EMG_OFF_LEVEL = 1.4, 0.35
 
 
-def emg_episodes(seed: int, horizon: float) -> np.ndarray:
+#: 0.5.2 (gallery r9: frequent multi-second temporal muscle bursts on every awake child page competed with the
+#: feature): an awake child's tonic temporalis bursts are shorter and rarer (on about 15 % of the time, median 2 s)
+#: and lower when on; the off level rises a little so the minute-scale EMG stays near the old floor
+EMG_ON_S_CHILD = (2.0, 0.5)
+EMG_OFF_S_CHILD = (11.0, 0.6)
+EMG_LEVELS_CHILD = (1.0, 0.4)
+
+
+def emg_episodes(seed: int, horizon: float, on_s=EMG_ON_S, off_s=EMG_OFF_S) -> np.ndarray:
     """Alternating on-episode (start, end) pairs over the whole record, drawn once from the record seed."""
     rng = substream(seed, "emg-episodes")
-    out, t = [], -120.0 - float(rng.uniform(0.0, EMG_OFF_S[0]))
+    out, t = [], -120.0 - float(rng.uniform(0.0, off_s[0]))
     while t < horizon + 120.0:
-        d = EMG_ON_S[0] * _lognorm(rng, EMG_ON_S[1])
+        d = on_s[0] * _lognorm(rng, on_s[1])
         out.append((t, t + d))
-        t += d + EMG_OFF_S[0] * _lognorm(rng, EMG_OFF_S[1])
+        t += d + off_s[0] * _lognorm(rng, off_s[1])
     return np.asarray(out)
 
 
-def emg_gate(t: np.ndarray, episodes: np.ndarray, ramp: float = 0.4) -> np.ndarray:
+def emg_gate(t: np.ndarray, episodes: np.ndarray, ramp: float = 0.4,
+             levels=(EMG_ON_LEVEL, EMG_OFF_LEVEL)) -> np.ndarray:
     """EMG_OFF_LEVEL .. EMG_ON_LEVEL per sample: raised-cosine ramps into and out of each on-episode."""
     on = np.zeros(t.shape)
     if episodes.size:
@@ -174,7 +183,7 @@ def emg_gate(t: np.ndarray, episodes: np.ndarray, ramp: float = 0.4) -> np.ndarr
         for a, b in episodes[sel]:
             u = np.clip(np.minimum(t - a, b - t) / ramp + 0.5, 0.0, 1.0)
             on = np.maximum(on, 0.5 - 0.5 * np.cos(np.pi * u))
-    return EMG_OFF_LEVEL + (EMG_ON_LEVEL - EMG_OFF_LEVEL) * on
+    return levels[1] + (levels[0] - levels[1]) * on
 
 
 def schedule_transients(seed: int, tag: str, hypno: Sequence[Interval], table: Dict[str, float],

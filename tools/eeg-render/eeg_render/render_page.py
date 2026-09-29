@@ -361,7 +361,9 @@ def _page_header(fig, spec: Dict, st: Dict, note: str, rx, ry, rw, rh, sens) -> 
         f"{PAPER_MM_PER_S:g} mm/s",
         f"LFF {f['lf_hz'] or '-'} Hz",
         f"HFF {f['hf_hz'] or '-'} Hz",
-        f"notch {f['notch_hz'] or 'off'} Hz",
+        # 0.5.2: "notch off" (the v1/v2 header kept its pinned "notch off Hz" pixels)
+        (f"notch {f['notch_hz']} Hz" if f["notch_hz"] else "notch off")
+        if int(spec.get("spec_version") or 1) >= 3 else f"notch {f['notch_hz'] or 'off'} Hz",
         f"seed {spec['seed']}",
     ]
     right = "SYNTHETIC - not patient data  |  " + "  |  ".join(bits)
