@@ -3203,8 +3203,10 @@ class Synthesizer:
                 base_regions = [region.replace("left", "right") if region.startswith("left") else region.replace("right", "left"), region]
             else:
                 base_regions = ["left_temporal", "right_temporal"]
-            generators = [(base_regions[0], 0.88, substream(self.seed, "rpp", i, "L")),
-                          (base_regions[1], 1.12, substream(self.seed, "rpp", i, "R"))]
+            # r9 (v3): the two clocks as a pair inside the authored ACNS bin (1.12 was folded onto 0.88 at 1.0 Hz)
+            m_lo, m_hi = rpp3.pair_muls(f0, rpp3.BIPD_RATE_MUL) if self.spec_version >= 3 else (0.88, 1.12)
+            generators = [(base_regions[0], m_lo, substream(self.seed, "rpp", i, "L")),
+                          (base_regions[1], m_hi, substream(self.seed, "rpp", i, "R"))]
         else:
             generators = [(ev["onset_region"], 1.0, rng)]
 
@@ -3224,7 +3226,9 @@ class Synthesizer:
                     break
                 dur = min(dur, end - t)
                 # drawn only when asked for, so version-1 specs keep their RNG stream
-                fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
+                # r9 (v3): SD capped at rpp3.RATE_JITTER_MAX so the realized mean rate stays within ~5 % of the request
+                rj = min(rate_jitter, rpp3.RATE_JITTER_MAX) if self.spec_version >= 3 else rate_jitter
+                fj = float(np.clip(1.0 + rj * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
                 f_run = f0 * fmul * fj
                 if self.spec_version >= 3 and f_run != f0 and "fluctuat" not in modifier:
                     # r050-fix-acns (acns-independent.md: authored 2.5-Hz GPDs keyed ESz in 6/18 runs): the run-to-run
@@ -4368,6 +4372,10 @@ class Synthesizer:
                 amp = amp * ((1.0 + self._GPD_AMP8 * self._cycle_interp(phase / (2 * np.pi), base + 29))
                              * (1.0 + 0.10 * np.sin(2 * np.pi * (t - inst.t0) / (6.0 + 6.0 * dr[0])
                                                     + 2 * np.pi * dr[1])))
+            elif self.spec_version >= 3 and inst.kind == "rhythmic_pattern" and inst.morph == "periodic":
+                # r9: lateralized PDs get a per-cycle interval scatter too (rpp3.LPD_WARP; metronomic 1-Hz LPDs drove
+                # the heuristic seizure trend to 0.8-1)
+                phase = phase + 2 * np.pi * rpp3.LPD_WARP * self._cycle_interp(phase / (2 * np.pi), base + 23)
             if v3run:
                 # 0.5.0 (feature review B4-02/C14/C18: harmonic comb on the CSA): per-cycle period and
                 # morphology jitter, keyed by the absolute cycle index so every window sees the same run
@@ -4391,7 +4399,7 @@ class Synthesizer:
             if inst.predominance and inst.onset_region == "generalized":
                 # ACNS family: predominance-shaped generalized field, calibrated on the strongest bipolar link.  Chosen
                 # over generalized_v3's steeper GPD field at merge: that one left Cz-Pz at background level (23 vs 24 uV)
-                onset_scale = rpp3.field_scale(self, inst.predominance)
+                onset_scale = rpp3.field_scale(self, inst.predominance, inst.morph)
             elif gpd:
                 # 0.5.0 phase D (epileptiform-v3.md C26: GPDs fell to 20-30 uV bipolar, 0.30x referential Fz, because
                 # the near-uniform generalized field reached the chain only through the inter-electrode lag)
@@ -4766,6 +4774,8 @@ class Synthesizer:
             # 0.5.0 phase D: a generalized RPP's amplitude is its max-bipolar-channel voltage (ACNS 2021)
             lagged = "_lag" if (inst.rpp and inst.rpp.get("lag_s")) else ""
             gen = rpp3.GEN_BIPOLAR_GAIN.get(inst.morph + lagged, rpp3.GEN_BIPOLAR_GAIN.get(inst.morph, 1.0))
+            if rpp3.rda_field(self, inst.predominance, inst.morph):
+                gen = rpp3.GEN_RDA_BIPOLAR_GAIN[inst.predominance]     # r9: steep GRDA field
         elif (self.spec_version >= 3 and inst.kind == "rhythmic_pattern" and inst.morph in ("rda", "periodic")
               and inst.onset_region != "generalized"):
             # r050-fix-acns: a lateralized RPP's amplitude is its max-bipolar-channel voltage too (LRDA displayed at 0.4x)
@@ -4776,6 +4786,8 @@ class Synthesizer:
                 # delta's; the phase-D path's delta measured 0.84x the plain LRDA's (3 seeds x 4 runs), so the
                 # carrier was taking the delta's share of the calibrated peak-to-peak
                 gen *= rpp3.RDA_PLUS_F_GAIN
+        if inst.kind == "rhythmic_pattern" and inst.morph == "periodic" and inst.rpp:
+            gen *= rpp3.SHAPE_GAIN.get(inst.rpp.get("shape"), 1.0)      # r9: spiky / blunt kernels
         if not self.display_ref:
             return ICTAL_GAIN * gen
         key = inst.morph if (inst.kind == "rhythmic_pattern" and inst.morph in DISPLAY_CAL) else "ictal"
@@ -5055,6 +5067,13 @@ class Synthesizer:
             wander += a * np.sin(2 * np.pi * fq * (uu * dur) + p)
             f_inst = f_inst + a * fq * np.cos(2 * np.pi * fq * (uu * dur) + p)
         phase = phase + wander
+        se_am = None
+        if self.spec_version >= 3 and inst.kind == "status_epilepticus" and inst.rpp is None:
+            dph, dfq, se_am = self._status_var(inst, uu * dur, dur)
+            phase = phase + dph
+            f_inst = f_inst + dfq
+            se_am = se_am * (1.0 + self._SE_CYCLE_AMP * self._cycle_interp(phase / (2 * np.pi),
+                                                                           int(self.seed) * 31 + inst.index * 1009 + 61))
         f_inst = np.clip(f_inst, 0.2, 30.0)
 
         # amplitude_*_uv is the peak-to-peak of the ictal run; a rhythmic,
@@ -5073,8 +5092,61 @@ class Synthesizer:
         amp = amp * smoothstep(uu / ramp) * (1.0 - smoothstep((uu - (1.0 - ramp)) / ramp))
         # cycle-group waxing and waning
         amp = amp * (1.0 + inst.fluctuate * np.sin(2 * np.pi * 0.11 * uu * dur + wax_phase))
+        if se_am is not None:
+            amp = amp * se_am
         amp = amp * live
         return phase, uu, amp, f_inst
+
+    #: r9 (gallery-20260929 trd-ese-trends: a 90-min status drew one perfectly rhythmic harmonic stack gliding
+    #: 2.5 -> 1.6 Hz, no waxing / waning, and stopped dead): spec_version 3 status_epilepticus variability.  Slow
+    #: frequency wander (a log-rate walk, step SD 10 % of the run's geometric-mean rate, breakpoints 1-4 min apart)
+    #: plus faster fluctuation (+/-6 %, 20-60 s); slow voltage waxing / waning (+/-30 %, 1-7 min); per-cycle voltage
+    #: scatter; and an offset over the last 8 % of the run (20-300 s) that slows to 0.75x, breaks into bursts and
+    #: fades out.
+    _SE_FREQ_SD, _SE_FLUCT, _SE_AMP_WAX, _SE_CYCLE_AMP = 0.10, 0.06, 0.30, 0.18
+
+    def _status_var(self, inst: SeizureInstance, tau: np.ndarray, dur: float):
+        """(phase offset rad, frequency offset Hz, amplitude factor) of a v3 status run at ``tau`` s into it."""
+        rng = substream(self.seed, "se-var", inst.index, inst.ordinal)
+        f_mid = math.sqrt(max(inst.start_hz, 0.2) * max(inst.end_hz, 0.2))
+        # slow wander: a mean-reverting log-frequency walk on breakpoints 1-4 min apart, linear between them; the
+        # phase is its exact integral (cumulative at the breakpoints + the partial segment), so any window agrees
+        n_bp = int(dur // 60.0) + 2
+        bt = np.concatenate([[0.0], np.cumsum(rng.uniform(60.0, 240.0, n_bp))])
+        dev, bf = 0.0, np.empty(bt.size)
+        for k in range(bt.size):
+            dev = 0.6 * dev + float(rng.normal(0.0, self._SE_FREQ_SD))
+            bf[k] = f_mid * (math.exp(dev) - 1.0)
+        bf -= float(np.mean(bf[bt <= dur]))          # centred: the authored glide stays the run's mean rate
+        cum = np.concatenate([[0.0], np.cumsum(0.5 * (bf[1:] + bf[:-1]) * np.diff(bt))])
+        k = np.clip(np.searchsorted(bt, tau, side="right") - 1, 0, bt.size - 2)
+        seg = np.clip(tau - bt[k], 0.0, None)
+        slope = (bf[k + 1] - bf[k]) / (bt[k + 1] - bt[k])
+        dfq = bf[k] + slope * seg
+        dph = 2 * np.pi * (cum[k] + bf[k] * seg + 0.5 * slope * seg ** 2)
+        # faster fluctuation, 20-60 s
+        per_f = rng.uniform(20.0, 60.0, 2)
+        ph_f = rng.uniform(0.0, 2 * np.pi, 2)
+        for pk, qk in zip(per_f, ph_f):
+            ak = f_mid * self._SE_FLUCT / math.sqrt(2.0)
+            arg = 2 * np.pi * tau / pk + qk
+            dfq = dfq + ak * np.sin(arg)
+            dph = dph + ak * pk * (math.cos(qk) - np.cos(arg))      # 2 pi * integral of ak sin(2 pi tau / pk + qk)
+        per_a = rng.uniform(60.0, 420.0, 2)
+        ph_a = rng.uniform(0.0, 2 * np.pi, 2)
+        am = 1.0 + self._SE_AMP_WAX * 0.5 * (np.sin(2 * np.pi * tau / per_a[0] + ph_a[0])
+                                             + np.sin(2 * np.pi * tau / per_a[1] + ph_a[1]))
+        # offset: slowing to 0.75x (analytic integral of the smoothstep), bursts with growing gaps, fade-out
+        tail = float(np.clip(0.08 * dur, 20.0, 300.0))
+        x = np.clip((tau - (dur - tail)) / tail, 0.0, 1.0)
+        f_end = max(inst.end_hz, 0.2)
+        dfq -= 0.25 * f_end * smoothstep(x)
+        dph -= 2 * np.pi * 0.25 * f_end * tail * (x ** 3 - 0.5 * x ** 4)
+        p_b = float(rng.uniform(6.0, 12.0))
+        q_b = float(rng.uniform(0.0, 2 * np.pi))
+        burst = smoothstep((np.sin(2 * np.pi * tau / p_b + q_b) + 1.0 - 1.6 * x) / 0.5)
+        am = am * (1.0 - smoothstep(x / 0.35) * (1.0 - burst)) * (1.0 - smoothstep((x - 0.55) / 0.45))
+        return dph, dfq, am
 
     def ictal_gate(self, t: np.ndarray) -> np.ndarray:
         """0..1 over the support of any ictal run, with a short rise and fall.

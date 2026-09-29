@@ -227,12 +227,15 @@ def test_v2_ear_weights_are_unchanged():
 def test_run_rate_stays_on_the_authored_side_of_the_acns_cutoff(ev, want):
     """acns-independent.md: authored 2.5-Hz GPDs keyed ESz in 6/18 runs, authored 1.0-Hz LPDs keyed IIC in 6/18 (ACNS
     2021 D1: > 2.5 Hz; F: > 1 and <= 2.5 Hz).  Every run keys the authored class, and the rate_jitter spread is kept
-    (>= 0.1 Hz between runs) on the authored side."""
+    on the authored side.  r9 (gallery-20260929 global: realized rates 10-25 % low): the jitter SD is capped at 5 %,
+    so the runs still spread (>= 4 % of the rate) and their mean is within 5 % of the request."""
     s = _syn([ev], horizon=1800.0)
     rows = [x for x in realized_events(s, 1800.0) if x["kind"] == "rhythmic_pattern"]
     assert len(rows) >= 18 and {x["acns_classification"] for x in rows} == {want}
     hz = [x["mean_hz"] for x in rows]
-    assert max(hz) - min(hz) >= 0.1
+    f0 = float(ev["frequency_hz"])
+    assert max(hz) - min(hz) >= 0.04 * f0
+    assert abs(np.mean(hz) / f0 - 1.0) <= 0.05, np.mean(hz)
 
 
 def test_keep_rate_side_bins():

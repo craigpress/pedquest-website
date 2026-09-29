@@ -90,11 +90,30 @@ def lateral_bipolar_gain(morph: str, region: str) -> float:
     return tab.get(base, tab["temporal"])
 
 
+#: r9 (gallery-20260929 trd-lpds-vs-seizure): per-cycle phase warp of a lateralized v3 PD train, in cycles (interval CV
+#: about 0.8x this), as r8 gave GPDs (synth._GPD_WARP).  The train had amplitude and width scatter but metronomic
+#: intervals; with the realized rate now at the authored 1.0 Hz (fundamental inside the 1-4 Hz band of the heuristic
+#: seizure trend's slow-rhythmic term) that perfect comb drove seizure probability to 0.8-1.
+LPD_WARP = 0.10
+
 #: r050-fix-acns: generator-lag spread that makes the measured Fp1 -> O1 cross-correlation lag equal lag_ms
 LAG_FIELD_GAIN = 1.27
 _FLIP = {"Fp1": "O1", "Fp2": "O2", "F7": "T5", "F8": "T6", "F3": "P3", "F4": "P4", "Fz": "Pz"}
 _FLIP.update({v: k for k, v in list(_FLIP.items())})
 FIELD_OCCIPITAL = {e: FIELD_FRONTAL[_FLIP.get(e, e)] for e in FIELD_FRONTAL}
+#: r9 (gallery-20260929 acn-grda-frontal / acn-grda-occipital: frontal GRDA read largest in F3-C3 / Fz-Cz, occipital
+#: GRDA centroparietal): an in-phase field shows on a longitudinal-bipolar link as the DIFFERENCE of its two ends, so
+#: FIELD_FRONTAL's shallow Fp 1.0 -> F 0.85 step put the smallest frontal voltage in Fp1-F3 and the largest in F-C.
+#: Rhythmic delta has no discharge-level lag to rescue it, so GRDA gets a field whose steepest step is Fp -> F (and
+#: O -> P for the occipital mirror): halving per row keeps the maximum in the Fp-F (P-O) links, still monotonic (no
+#: false phase reversal), with Fp / O the referential maximum.  GPDs keep FIELD_FRONTAL.
+FIELD_FRONTAL_RDA = {"Fp1": 1.00, "Fp2": 1.00, "F7": 0.50, "F3": 0.52, "Fz": 0.52, "F4": 0.52, "F8": 0.50,
+                     "T3": 0.26, "C3": 0.27, "Cz": 0.28, "C4": 0.27, "T4": 0.26,
+                     "T5": 0.13, "P3": 0.13, "Pz": 0.14, "P4": 0.13, "T6": 0.13, "O1": 0.07, "O2": 0.07}
+FIELD_OCCIPITAL_RDA = {e: FIELD_FRONTAL_RDA[_FLIP.get(e, e)] for e in FIELD_FRONTAL_RDA}
+#: r9: GRDA on the steep fields above: 1 / (delivered / requested) on the max longitudinal-bipolar link (2-Hz frontal and
+#: 3-Hz occipital, 3 seeds, ICU background; replaces GEN_BIPOLAR_GAIN["rda"] for them)
+GEN_RDA_BIPOLAR_GAIN = {"frontal": 3.08, "occipital": 3.12}
 
 
 #: r050-fix-acns: the ACNS 2021 rate cutoffs the key classifies on (PDs 0.5-1 Hz with a plus / fluctuation = IIC,
@@ -104,17 +123,40 @@ FIELD_OCCIPITAL = {e: FIELD_FRONTAL[_FLIP.get(e, e)] for e in FIELD_FRONTAL}
 RATE_CUTOFFS = (1.0, 2.5)
 
 
-def keep_rate_side(f0: float, f: float) -> float:
-    """Keep a jittered run rate ``f`` in the ACNS rate bin of the authored rate ``f0`` (acns-independent.md: authored
-    2.5-Hz GPDs keyed ESz in 6 of 18 runs, 1.0-Hz LPDs keyed IIC in 6 of 18).  A draw across a cutoff is mirrored
-    back about it, then clipped, so the runs keep their spread on the authored side."""
+#: r9 (gallery-20260929 global: realized LPD rates 0.75-0.9 Hz for 1.0 authored): spec_version 3 run-to-run rate
+#: jitter SD cap (fraction of the rate).  The default rate_jitter 0.10 was drawn once for a continuous single run
+#: (0.78 Hz for the whole record), and at an authored rate ON a cutoff (1.0, 2.5 Hz) keep_rate_side folds every upward
+#: draw down, so the runs averaged 0.92x.  At 0.05 the folded mean stays within 4 % and a single run keeps f0.
+RATE_JITTER_MAX = 0.05
+#: r9: v3 BIPD / BIRDA per-side rate multipliers (were 0.88 / 1.12: at 1.0 Hz keep_rate_side folded 1.12 onto 0.88, so
+#: both "independent" clocks ran at 0.88 Hz); shifted as a pair into the authored ACNS bin by pair_muls
+BIPD_RATE_MUL = (0.96, 1.04)
+
+
+def rate_bin(f0: float) -> Tuple[float, float]:
+    """(lowest, highest) rate of the ACNS bin holding ``f0``; a cutoff belongs to the lower bin."""
     lo, hi = -math.inf, math.inf
     for c in RATE_CUTOFFS:
         if f0 <= c:
             hi = c
             break
         lo = c
-    lo_in = lo + 1e-3 if math.isfinite(lo) else lo       # the cutoff itself belongs to the lower bin
+    return (lo + 1e-3 if math.isfinite(lo) else lo), hi
+
+
+def pair_muls(f0: float, muls: Tuple[float, ...]) -> Tuple[float, ...]:
+    """Rate multipliers ``muls`` shifted together so every side stays in the authored ACNS bin, spacing kept."""
+    lo, hi = rate_bin(f0)
+    a, b = f0 * min(muls), f0 * max(muls)
+    off = hi - b if b > hi else (lo - a if a < lo else 0.0)
+    return tuple((f0 * m + off) / f0 for m in muls)
+
+
+def keep_rate_side(f0: float, f: float) -> float:
+    """Keep a jittered run rate ``f`` in the ACNS rate bin of the authored rate ``f0`` (acns-independent.md: authored
+    2.5-Hz GPDs keyed ESz in 6 of 18 runs, 1.0-Hz LPDs keyed IIC in 6 of 18).  A draw across a cutoff is mirrored
+    back about it, then clipped, so the runs keep their spread on the authored side."""
+    lo_in, hi = rate_bin(f0)
     if f > hi:
         f = 2.0 * hi - f
     elif f < lo_in:
@@ -252,12 +294,43 @@ def _std_kernel(tau, width):
 
 
 def _blunt_kernel(tau, width):
-    """Blunt (smooth, near-sinusoidal) discharge: a symmetric rounded wave with a shallow after-going trough."""
-    s = 0.085 * width
-    return np.exp(-0.5 * (tau / s) ** 2) - 0.35 * np.exp(-0.5 * ((tau - 2.2 * s) / (1.4 * s)) ** 2)
+    """Blunt (smooth, near-sinusoidal) discharge: a symmetric rounded wave with a shallow after-going trough.
+
+    r9 (gallery-20260929 acn-lpds-blunt: at 1 Hz the 0.7-s complex left no interval and read as LRDA): the wave
+    narrows to sigma 66 ms (dominant phase still > 200 ms at the baseline) and the trough follows closer, so the
+    complex is over in about 0.45 s and the rest of the cycle is flat - blunt, but periodic."""
+    s = 0.066 * width
+    return np.exp(-0.5 * (tau / s) ** 2) - 0.30 * np.exp(-0.5 * ((tau - 2.3 * s) / (1.2 * s)) ** 2)
 
 
-_KERNELS = {"standard": _std_kernel, "triphasic": tri_kernel, "blunt": _blunt_kernel}
+#: r9 (gallery-20260929 acn-lpds-spiky: needle doublets / triplets with little after-going slow wave): a spiky LPD is
+#: ONE narrow spike per cycle (rise 13 / fall 20 ms: < 70 ms at the baseline on the page), a small opposite lead-in and
+#: dip, and a clear after-going slow wave (0.9 of the raw spike, about half of it on the page; 80 ms sigma, peaking
+#: 220 ms after it).  The standard kernel at
+#: width 0.22 kept its 0.42 slow wave for a 1/4.5-width spike, and the region's generator offsets (+/-50 ms) split
+#: the needle into two or three.
+_SPIKY = dict(pre_lag=0.025, pre_sigma=0.010, pre_gain=0.12, rise=0.013, fall=0.020,
+              dip_lag=0.040, dip_sigma=0.018, dip_gain=0.45, wave_lag=0.220, wave_sigma=0.080, wave_gain=0.90)
+
+
+def _spiky_kernel(tau, width):
+    k = _SPIKY
+    sig = np.where(tau < 0.0, k["rise"], k["fall"]) * width
+    return (np.exp(-0.5 * (tau / sig) ** 2)
+            - k["pre_gain"] * np.exp(-0.5 * ((tau + k["pre_lag"] * width) / (k["pre_sigma"] * width)) ** 2)
+            - k["dip_gain"] * np.exp(-0.5 * ((tau - k["dip_lag"] * width) / (k["dip_sigma"] * width)) ** 2)
+            + k["wave_gain"] * np.exp(-0.5 * ((tau - k["wave_lag"]) / k["wave_sigma"]) ** 2))
+
+
+#: r9: fraction of the phase-B generator offset (0.5 s per offset cycle, up to +/-50 ms) a v3 periodic run without an
+#: authored lag keeps, by kernel shape: a 30-ms spike must not be split into one needle per generator
+GEN_OFFSET_FRAC = {"spiky": 0.2}
+#: r9: 1 / (delivered / requested) on the max bipolar link of the spiky / blunt kernels (sharp: 1.02 with
+#: LAT_BIPOLAR_GAIN alone; 3 seeds, left temporal 1 Hz, ICU background)
+SHAPE_GAIN = {"spiky": 1.37, "blunt": 1.43}
+
+
+_KERNELS = {"standard": _std_kernel, "triphasic": tri_kernel, "blunt": _blunt_kernel, "spiky": _spiky_kernel}
 _NORM: Dict[Tuple[str, float], Tuple[float, float]] = {}
 
 
@@ -296,6 +369,22 @@ def fast_carrier(t: np.ndarray, hz: float, seed: int, tag: int) -> np.ndarray:
     ph = r.uniform(0, 2 * np.pi, 3)
     mul = (0.91, 1.0, 1.13)
     return sum(np.sin(2 * np.pi * hz * m * t + p) for m, p in zip(mul, ph)) / 3.0
+
+
+def fast_run(t: np.ndarray, hz: float, seed: int, tag: int) -> np.ndarray:
+    """r9 (gallery-20260929 acn-lrda-plus-f: the fast activity came in brush-like bursts on each delta wave, EDB-like):
+    continuous RDA+F fast activity as a function of ABSOLUTE time.  fast_carrier's partials 0.91 / 1.0 / 1.13x beat at
+    1.2-1.7 Hz at 13 Hz - the LRDA's own rate - so its envelope looked phase-locked.  Here two partials 3 % apart (beat
+    ~0.4 Hz at 13 Hz) with a slow +/-0.6-Hz frequency wander and a +/-25 % amplitude drift over 5-10 s: rhythmic fast
+    activity running through the run, waxing and waning on its own clock.  Same RMS as fast_carrier (0.41)."""
+    r = substream(seed, "rpp3fastrun", tag)
+    ph = r.uniform(0, 2 * np.pi, 4)
+    fm = r.uniform(0.12, 0.25, 2)
+    am = r.uniform(0.10, 0.20)
+    s1 = np.sin(2 * np.pi * hz * t + (0.6 / fm[0]) * np.sin(2 * np.pi * fm[0] * t + ph[2]) + ph[0])
+    s2 = np.sin(2 * np.pi * hz * 1.03 * t + (0.6 / fm[1]) * np.sin(2 * np.pi * fm[1] * t + ph[3]) + ph[1])
+    env = 1.0 + 0.25 * np.sin(2 * np.pi * am * t + ph[2] + ph[3])
+    return 0.80 * env * (s1 + 0.6 * s2) / 1.6
 
 
 # --------------------------------------------------------------- schedule --
@@ -376,6 +465,8 @@ def schedule(syn, ev: Dict, i: int) -> List:
         width = {"spiky": 0.6, "sharp": 0.8, "sharply_contoured": 1.0}.get(sharp, 1.0)
     if shape == "blunt":
         width = 1.0 if not tri else width
+    if sharp == "spiky" and not tri and periodic:
+        shape, width = "spiky", 1.0         # r9: _spiky_kernel is in seconds
     lag = str(ev.get("lag") or ("anterior_posterior" if tri else "none"))
     lag_s = float(ev.get("lag_ms", 120.0 if lag != "none" else 0.0)) / 1000.0
     if lag == "posterior_anterior":
@@ -424,10 +515,11 @@ def schedule(syn, ev: Dict, i: int) -> List:
 
     if pat.startswith(("BIPD", "BIRDA")):
         base = (region.replace("left", "right") if region.startswith("left") else region.replace("right", "left"))
+        m_lo, m_hi = pair_muls(f0, BIPD_RATE_MUL)
         regions = [(base if region in ("left_hemisphere", "right_hemisphere", "left_temporal", "right_temporal")
-                    else "left_temporal", 0.88),
+                    else "left_temporal", m_lo),
                    (region if region in ("left_hemisphere", "right_hemisphere", "left_temporal", "right_temporal")
-                    else "right_temporal", 1.12)]
+                    else "right_temporal", m_hi)]
     else:
         regions = [(region, 1.0)]
 
@@ -466,7 +558,11 @@ def schedule(syn, ev: Dict, i: int) -> List:
                 dur = run_mean * float(np.exp(grng.standard_normal() * 0.18)) if not single else end - t
             if bird:
                 dur = float(np.clip(dur, max(0.5, 6.0 / max(f0, 4.1)), 9.5))
-            fj = float(np.clip(1.0 + rate_jitter * grng.normal(), 0.7, 1.3)) if rate_jitter > 0 else 1.0
+            # r9: jitter SD capped at RATE_JITTER_MAX, none on a single whole-epoch run (the draw is kept for the stream)
+            fj = (float(np.clip(1.0 + min(rate_jitter, RATE_JITTER_MAX) * grng.normal(), 0.7, 1.3))
+                  if rate_jitter > 0 else 1.0)
+            if single:
+                fj = 1.0
             f_run = f0 * fmul * fj
             if not bird and not fluct and f_run != f0:
                 f_run = keep_rate_side(f0, f_run)
@@ -551,16 +647,26 @@ def step_phase(inst, uu: np.ndarray, dur: float) -> Tuple[np.ndarray, np.ndarray
 
 # ------------------------------------------------------------------- rows --
 
-def field_scale(syn, pred: str) -> np.ndarray:
+def rda_field(syn, pred: str, morph: str) -> bool:
+    """True when a generalized run takes the steep r9 GRDA field (spec_version 3 rhythmic delta, frontal / occipital)."""
+    return syn.spec_version >= 3 and morph == "rda" and pred in ("frontal", "occipital")
+
+
+def field_scale(syn, pred: str, morph: str = "periodic") -> np.ndarray:
     """Per-electrode scale that pins the generalized generators onto a predominance field (cached)."""
     cache = syn.__dict__.setdefault("_rpp3_fs", {})
-    if pred not in cache:
-        target = FIELD_FRONTAL if pred == "frontal" else FIELD_OCCIPITAL if pred == "occipital" else mt.GENERALIZED_FIELD
+    key = (pred, "rda") if rda_field(syn, pred, morph) else pred
+    if key not in cache:
+        if key != pred:
+            target = FIELD_FRONTAL_RDA if pred == "frontal" else FIELD_OCCIPITAL_RDA
+        else:
+            target = (FIELD_FRONTAL if pred == "frontal" else FIELD_OCCIPITAL if pred == "occipital"
+                      else mt.GENERALIZED_FIELD)
         base = np.asarray(syn._field_scale("generalized"))
         flat = np.array([mt.GENERALIZED_FIELD.get(e, 0.035) for e in syn.electrodes])
         want = np.array([target.get(e, 0.035) for e in syn.electrodes])
-        cache[pred] = base * want / np.maximum(flat, 1e-6)
-    return cache[pred]
+        cache[key] = base * want / np.maximum(flat, 1e-6)
+    return cache[key]
 
 
 def rows(syn, inst, t: np.ndarray) -> np.ndarray:
@@ -573,7 +679,7 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
     region = inst.onset_region
     gens = mt.region_generators(region, syn.electrodes)
     fall = mt.generator_falloff(region)
-    scale = field_scale(syn, cfg["predominance"]) if region == "generalized" else np.asarray(syn._field_scale(region))
+    scale = field_scale(syn, cfg["predominance"], inst.morph) if region == "generalized" else np.asarray(syn._field_scale(region))
     lag_s = float(cfg["lag_s"] or 0.0)
     carrier = cfg["fast"] is not None
     spread = None
@@ -597,13 +703,18 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
             lg = lag_s * LAG_FIELD_GAIN
             d = extra_lag + (lg * (0.95 - y) / 1.9 if lg >= 0 else -lg * (y + 0.95) / 1.9)
             if not lag_s:
-                d += gph * 0.5          # phase-B convention: 0.5 s per generator offset cycle (an authored lag replaces it)
+                # phase-B convention: 0.5 s per generator offset cycle (an authored lag replaces it); r9: a spiky
+                # discharge keeps a fifth of it (GEN_OFFSET_FRAC)
+                d += gph * 0.5 * (GEN_OFFSET_FRAC.get(cfg["shape"], 1.0) if inst.morph == "periodic" else 1.0)
             phase, u, amp, f_inst = syn._ictal_phase(inst, t - d)
             if phase is None:
                 continue
             salt = base + (500_003 if sp else 0)
             gsalt = salt + 7919 * (gi + 1)
             if inst.morph == "periodic":
+                if region != "generalized" and LPD_WARP:
+                    # r9: per-cycle interval scatter, common to every generator (keyed by the absolute cycle)
+                    phase = phase + 2 * np.pi * LPD_WARP * syn._cycle_interp(phase / (2 * np.pi), base + 23)
                 wv = apply_polarity(polarity, discharge_train(phase, f_inst, cfg["shape"], cfg["width"], salt))
                 unit = _PERIODIC_PTP
             else:
@@ -612,7 +723,7 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
             if carrier:
                 fm = cfg["fast"]
                 # the fast activity is generated per source with the source's own lag, so it survives the chain
-                car = fast_carrier(t - d, fm["hz"], syn.seed, inst.index)
+                car = (fast_run if fm["mode"] == "continuous" else fast_carrier)(t - d, fm["hz"], syn.seed, inst.index)
                 if fm["mode"] == "pd_burst":
                     cyc = phase / (2 * np.pi)
                     tau = (cyc - np.floor(cyc + 0.5)) / np.clip(f_inst, 0.2, 12.0)
