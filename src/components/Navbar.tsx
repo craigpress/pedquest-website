@@ -24,6 +24,7 @@ const editorLinks: MenuLink[] = [
   { href: "/admin/eeg-lab/review", label: "EEG review queue", hint: "Recordings awaiting peer review" },
   { href: "/admin/eeg-lab", label: "EEG Lab console", hint: "Build and queue recordings" },
   { href: "/admin/eeg-lab/guide", label: "EEG Lab guide", hint: "What each Lab setting does" },
+  { href: "/admin/eeg-lab/gallery", label: "EEG feature gallery", hint: "Everything the renderer can draw" },
   { href: "/admin", label: "Admin dashboard", hint: "Members, publications, events" },
 ];
 
