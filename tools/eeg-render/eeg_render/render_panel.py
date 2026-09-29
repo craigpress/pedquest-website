@@ -665,6 +665,8 @@ def _draw_cursor_caption(axes, spec: Dict, theme: S.Theme, duration_min: float,
         for a in (spec.get("annotations") or [])
     )
     ypos = 1.70 if near else 1.05
+    if near and int(spec.get("spec_version") or 1) >= 3:
+        ypos = _annotation_tier_y(axes[0][1], 1)      # r9: the second tier, below the header row
     axes[0][1].annotate(
         label, xy=(at, 1.0), xycoords=("data", "axes fraction"),
         xytext=(at, ypos), textcoords=("data", "axes fraction"),
@@ -677,12 +679,27 @@ def _draw_cursor_caption(axes, spec: Dict, theme: S.Theme, duration_min: float,
     )
 
 
+def _label_width_min(ax, text: str, fontsize: float, duration_min: float) -> float:
+    """Approximate width of a boxed annotation label in minutes of the time axis."""
+    px = (len(text) * 0.56 + 1.2) * fontsize * ax.figure.dpi / 72.0
+    return px / max(ax.bbox.width, 1.0) * duration_min
+
+
+def _annotation_tier_y(ax, tier: int) -> float:
+    """Axes-fraction y of an annotation label's bottom on ``tier`` (0 just above the top panel, 1 directly above
+    tier 0), so neither tier reaches the header row however short the top panel is."""
+    label_px = 9.6 * 1.9 * ax.figure.dpi / 72.0
+    return 1.06 + tier * label_px / max(ax.bbox.height, 1.0)
+
+
 def _draw_annotations(fig, axes, spec: Dict, theme: S.Theme, duration_min: float,
                       rx: float, ry: float, rw: float, rh: float) -> None:
     anns = spec.get("annotations") or []
     if not anns:
         return
     top_ax = axes[0][1]
+    v3 = int(spec.get("spec_version") or 1) >= 3
+    placed: List[Tuple[float, float, int]] = []
     for k, ann in enumerate(sorted(anns, key=lambda a: a["at_min"])):
         at = float(ann["at_min"])
         if at < 0 or at > duration_min:
@@ -692,6 +709,15 @@ def _draw_annotations(fig, axes, spec: Dict, theme: S.Theme, duration_min: float
                        linestyle=(0, (5, 3)), zorder=5)
         tier = k % 2
         ypos = 1.06 + 0.60 * tier
+        if v3:
+            # r9 (gallery trd-suppression-ratio): every second label went 0.6 of the top panel's height up, which on
+            # a short top panel is the header row, over "SYNTHETIC - not patient data".  A label now steps up only when
+            # it would overlap a label on the first tier, and the second tier sits directly above the first.
+            half = 0.5 * _label_width_min(top_ax, str(ann["label"]), 9.6, duration_min)
+            lo_x, hi_x = at - half, at + half
+            tier = 1 if any(t == 0 and lo_x < b and hi_x > a for a, b, t in placed) else 0
+            placed.append((lo_x, hi_x, tier))
+            ypos = _annotation_tier_y(top_ax, tier)
         top_ax.annotate(
             ann["label"], xy=(at, 1.0), xycoords=("data", "axes fraction"),
             xytext=(at, ypos), textcoords=("data", "axes fraction"),
