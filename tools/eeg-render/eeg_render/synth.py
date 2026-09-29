@@ -3862,6 +3862,10 @@ class Synthesizer:
             d = t - t0
             after = bool(e.get("aftergoing_slow", True))
             pp = poly[j]
+            if (pp is not None and self.spec_version >= 3 and fsel[j] is None
+                    and str(e["focus"]) == "generalized_frontocentral"):
+                rows += self._sed_poly_scatter(d, t0, int(i), pp, float(width), after, amp)
+                continue
             if pp is not None:
                 lags, gains, troughs = pp
                 k = -_polyspike_kernel(d, lags, gains, troughs, float(width), after)
@@ -3879,6 +3883,40 @@ class Synthesizer:
                 w = self._sed_field(str(e["focus"]) if fc is None else fc)
             rows += np.outer(w, k)
         return rows
+
+    #: r8 (research/eeg-atlas/generalized-review-20260928: Craig "too clean"; the audit found one polyspike scaled on
+    #: every electrode): a generalized polyspike reaches each electrode with its own lag (frontal first, up to ~8 ms
+    #: front to back, +-3 ms scatter), amplitude (+-10 %), per-spike height (+-25 %) and a per-discharge hemispheric
+    #: asymmetry (+-15 %), as generalized_v3's complexes do (REFERENCE_TARGETS s8: 5-15 ms field lag, per-spike
+    #: amplitude +-30 %, hemispheric gain +-25 %)
+    _SED_POLY_LEAD_S = 0.008
+    _SED_POLY_JIT, _SED_POLY_SPIKE_JIT, _SED_POLY_ASYM = 0.10, 0.25, 0.15
+
+    def _sed_poly_scatter(self, d: np.ndarray, t0: float, i: int, pp, width: float, after: bool,
+                          amp: float) -> np.ndarray:
+        lags, gains, troughs = pp
+        salt = (i * 7919 + int(round(float(t0) * 1000.0))) & 0x7FFFFFFF
+        n = self.n_elec
+        el = np.arange(n)
+        xy = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
+        front = (0.95 - np.clip(xy[:, 1], -0.95, 0.95)) / 1.9
+        uc = float(_cycle_noise(np.zeros(1), salt + 29)[0])
+        lag = self._SED_POLY_LEAD_S * (0.6 + 0.8 * uc) * front + 0.003 * (2 * _cycle_noise(el, salt + 17) - 1)
+        asym = self._SED_POLY_ASYM * (2 * float(_cycle_noise(np.zeros(1), salt + 41)[0]) - 1)
+        jit = (1.0 + self._SED_POLY_JIT * (2 * _cycle_noise(el, salt) - 1)) * (1.0 + asym * np.sign(xy[:, 0]))
+        w = self._sed_field("generalized_frontocentral") * jit
+        win = (d > -0.1) & (d < float(lags[-1]) + 0.55)
+        out = np.zeros((n, d.size))
+        if not win.any():
+            return out
+        scale = amp / max(self._sed_norm.get(int(i), 1.0), 1e-6)
+        for m in range(n):
+            if w[m] == 0.0:
+                continue
+            sj = 2 * _cycle_noise(np.arange(len(gains)), salt + 101 + 13 * m) - 1
+            g = gains * (1.0 + self._SED_POLY_SPIKE_JIT * sj)
+            out[m, win] = -w[m] * scale * _polyspike_kernel(d[win] - lag[m], lags, g, troughs, width, after)
+        return out
 
     # ---------------- P7 batch 5: pediatric normal variants ----------------
     _VAR_FIELD = {
@@ -4319,6 +4357,17 @@ class Synthesizer:
                 lag = 0.02 if spread == "generalized" else 0.18
                 phase_d, _, _, f_d = self._ictal_phase(inst, t - lag)
             psi_d = psi
+            if (self.spec_version >= 3 and inst.kind == "rhythmic_pattern" and inst.morph == "periodic"
+                    and inst.onset_region == "generalized"):
+                # r8 (research/eeg-atlas/generalized-review-20260928, Craig: GPD "frequency too regular; a little
+                # more period and amplitude jitter"): a whole-head per-cycle period warp (interval CV ~0.08,
+                # REFERENCE_TARGETS s8: 0.08-0.15, inside the ACNS <50 % cycle-to-cycle limit), a common per-cycle
+                # amplitude scatter +-18 % on top of the kernel's +-25 %, and a slow +-10 % drift (6-12 s)
+                phase = phase + 2 * np.pi * self._GPD_WARP * self._cycle_interp(phase / (2 * np.pi), base + 23)
+                dr = substream(self.seed, "gpd-r8", inst.index).uniform(0.0, 1.0, 2)
+                amp = amp * ((1.0 + self._GPD_AMP8 * self._cycle_interp(phase / (2 * np.pi), base + 29))
+                             * (1.0 + 0.10 * np.sin(2 * np.pi * (t - inst.t0) / (6.0 + 6.0 * dr[0])
+                                                    + 2 * np.pi * dr[1])))
             if v3run:
                 # 0.5.0 (feature review B4-02/C14/C18: harmonic comb on the CSA): per-cycle period and
                 # morphology jitter, keyed by the absolute cycle index so every window sees the same run
@@ -4600,6 +4649,9 @@ class Synthesizer:
     #: little more but halved the heuristic seizure-probability trend on B4-02 (median run max 0.92 -> 0.48);
     #: 0.08 keeps it at 0.77
     _CYCLE_WARP = 0.08
+    #: r8 generalized periodic discharges: per-cycle phase warp (cycles; interval CV ~0.8 x this) and common per-cycle
+    #: amplitude scatter
+    _GPD_WARP, _GPD_AMP8 = 0.10, 0.18
     _CYCLE_PSI = (0.0, 0.675, 1.2, 1.65)
 
     @staticmethod

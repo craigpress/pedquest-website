@@ -77,16 +77,19 @@ def gs(st, at=2.0, **kw):
 
 @pytest.mark.parametrize("seed", [26092606, 926206])
 def test_tonic_fast_activity_is_bisynchronous_and_monomorphic(seed):
-    """atlas-tonic-seizure-i/-ii: a continuous, monomorphic, bisynchronous 10-25 Hz rhythm under one crescendo.
-    Before r5 the per-electrode AM and frequency/phase scatter made packets and dephased homologous chains (displayed
-    10-25 Hz F3-C3/F4-C4 correlation 0.14-0.21, detrended envelope CV 0.18-0.20)."""
+    """atlas-tonic-seizure-i/-ii: a continuous, bisynchronous 10-25 Hz rhythm under one crescendo.  Before r5 the
+    per-electrode AM and frequency/phase scatter made packets and dephased homologous chains (displayed 10-25 Hz
+    F3-C3/F4-C4 correlation 0.14-0.21, detrended envelope CV 0.18-0.20).  r8 (generalized-review-20260928: "a little
+    more frequency jitter") adds a whole-head frequency wander and a 0.18 common amplitude modulation, so the
+    homologous chains stay in phase while the detrended envelope CV may rise to 0.30 (the r5 bound was 0.14)."""
     syn = Synthesizer(_spec(seed, "child", LGS_BG, [gs("tonic", at=2.05)]), 400.0)
-    t, s, n = _display(syn, 125.0, 130.0)
+    g = syn._gen.gpfa[0]
+    t, s, n = _display(syn, g["t0"] + 1.0, g["t0"] + 6.0)
     a, b = _bp(s[n.index("F3-C3")], 10, 25), _bp(s[n.index("F4-C4")], 10, 25)
     assert np.corrcoef(a, b)[0, 1] >= 0.9
     env = np.abs(sps.hilbert(a))
     rel = env / sps.savgol_filter(env, 129, 1)
-    assert np.std(rel) / np.mean(rel) <= 0.14
+    assert np.std(rel) / np.mean(rel) <= 0.30
 
 
 def test_myoclonic_tonic_fast_activity_is_bisynchronous():
@@ -156,19 +159,28 @@ def test_eyelid_closure_is_a_large_transient(seed):
 
 
 @pytest.mark.parametrize("seed", [26092610, 926210])
-def test_photoparoxysmal_response_is_irregular_and_posterior(seed):
-    """eegatlas-online eeg0066 and PMC8610539 Fig 1B: irregular polyspike-and-wave, posterior-predominant.  Before r5:
-    inter-complex interval CV 0.14-0.16 (a regular 3.5-Hz train) and a uniform field (P3-O1 0.70-0.99 of the top)."""
+def test_photoparoxysmal_response_is_generalized_spike_wave(seed):
+    """r8 rebuild (generalized-review-20260928: Craig rejected the r5 irregular posterior train; REFERENCE_TARGETS s3,
+    Waltz type 4): generalized 3-4 Hz spike-and-wave / polyspike-and-wave, frontal-to-occipital like spontaneous GSW,
+    not locked to the 15-Hz flashes.  Accept: spike-wave complexes at 2.5-4.5 Hz with an interval CV 0.05-0.20, every
+    parasagittal link carrying >= 35 % of the largest link, a frontal link (Fp-F, F-C, Fz-Cz) within 0.6x of it (the
+    accepted typical-absence field, whose steepest link is C3-P3), and the complexes' flash phases spread over the
+    flash cycle (circular resultant < 0.4)."""
     syn = Synthesizer(_spec(seed, "adolescent", CHILD, [gs("photoparoxysmal", at=2.0 + 2 / 60)]), 400.0)
     r = syn._gen.events()[0]
-    iv = np.diff([c["t"] for c in syn._gen.cx])
-    assert np.std(iv) / np.mean(iv) >= 0.22
-    assert 2 <= min(len(c["ps"][0]) for c in syn._gen.cx) and max(len(c["ps"][0]) for c in syn._gen.cx) <= 5
+    cx = syn._gen.cx
+    assert all(c["kind"] == "sw" and c["field"] == "gen" for c in cx)
+    iv = np.diff([c["t"] for c in cx])
+    assert 2.5 <= 1.0 / np.median(iv) <= 4.5
+    assert 0.05 <= np.std(iv) / np.mean(iv) <= 0.20
     t, s, n = _isolated(syn, r["t0"] + 0.5, r["t1"])
-    pp = {ch: np.ptp(s[n.index(ch)]) for ch in ("Fp1-F3", "F3-C3", "C3-P3", "P3-O1", "T5-O1", "Fz-Cz", "F7-T3")}
-    top2 = sorted(pp, key=pp.get)[-2:]
-    assert set(top2) == {"P3-O1", "T5-O1"}, pp
-    assert min(pp["P3-O1"], pp["T5-O1"]) >= 2.0 * max(pp["F3-C3"], pp["Fp1-F3"], pp["Fz-Cz"]), pp
+    pp = {ch: np.ptp(s[n.index(ch)]) for ch in n}
+    top = max(pp.values())
+    para = ("Fp1-F3", "F3-C3", "C3-P3", "P3-O1", "Fp2-F4", "F4-C4", "C4-P4", "P4-O2")
+    assert min(pp[c] for c in para) >= 0.35 * top, pp
+    assert max(pp[c] for c in ("Fp1-F3", "Fp2-F4", "F3-C3", "F4-C4", "Fz-Cz")) >= 0.6 * top, pp
+    ph = np.mod((np.array([c["t"] for c in cx]) - r["stimulus_onset_s"]) * r["stimulus_frequency_hz"], 1.0)
+    assert abs(np.mean(np.exp(2j * np.pi * ph))) < 0.4
 
 
 # ------------------------------------------------------------------ focal: spasm and occipital

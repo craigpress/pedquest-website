@@ -176,6 +176,31 @@ def k_sw(tau: np.ndarray, period: float, width: float = 1.0, double: bool = Fals
     return sp, 1.6 * _dome(tau, 0.55 * period, 0.29 * period)
 
 
+def k_sw_blend(tau: np.ndarray, period: float, width: float, double: bool,
+               blend: float) -> Tuple[np.ndarray, np.ndarray]:
+    """r8 ESES: spike-and-wave between the phase D kernel (Gaussian wave centred 0.45 x period, capped 0.12-0.22 s,
+    positive transient 0.35) and the current flat-topped dome; ``blend`` 0 = phase D, 1 = current."""
+    sp, dome = k_sw(tau, period, width, double)
+    tl = 0.045 * width + (0.048 * width if double else 0.0)
+    sp = sp - 0.10 * (1.0 - blend) * np.exp(-0.5 * ((tau - tl) / 0.020) ** 2)
+    c = min(max(0.45 * period, 0.12), 0.22)
+    s = min(max(0.18 * period, 0.045), 0.09)
+    return sp, blend * dome + (1.0 - blend) * 1.15 * np.exp(-0.5 * ((tau - c) / s) ** 2)
+
+
+def k_ssw8(tau: np.ndarray, period: float, width: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
+    """r8 slow spike-and-wave (atypical absence, LGS): Craig's review read the ``k_ssw`` sharp wave, riding the rising
+    slow wave on the same field, as a notched delta (Angelman-like).  Here a sharp wave (rise 26 / fall 42 ms, FWHM
+    ~80 ms) on the frontal spike field, a brief return toward baseline (positive notch ~110 ms), then one broad
+    surface-negative slow wave centred 0.14 + 0.30 x period (0.29 s at 2 Hz): a sharp-and-slow-wave complex, one per
+    cycle.  ``width`` scales the sharp wave and the notch (per-cycle morphology jitter)."""
+    sp = 0.75 * (_g(tau, 0.034 * width, 0.056 * width)
+                 - 0.22 * np.exp(-0.5 * ((tau - 0.140 * width) / 0.035) ** 2))
+    c = 0.15 + 0.30 * period
+    s = 0.08 + 0.14 * period          # FWHM ~0.34 s at 2 Hz (REFERENCE_TARGETS s4: a 300-500 ms wave)
+    return sp, 1.35 * _dome(tau, c, s, 2.4)
+
+
 def k_ssw(tau: np.ndarray, period: float, wave_gain: float = 1.3) -> Tuple[np.ndarray, np.ndarray]:
     """Slow spike-and-wave (LGS, atypical absence, atonic): a sharp wave (FWHM ~95 ms) running straight into one long
     slow wave, one sharp-then-slow unit per cycle (different-LGS-background-at-10uV).
@@ -191,15 +216,20 @@ def k_ssw(tau: np.ndarray, period: float, wave_gain: float = 1.3) -> Tuple[np.nd
     return sp, wave_gain * (1.2 / 1.3) * _dome(tau, c, s)
 
 
-def k_psw(tau: np.ndarray, period: float, lags, gains, troughs, wave_gain: float = 2.2) -> Tuple[np.ndarray, np.ndarray]:
+def k_psw(tau: np.ndarray, period: float, lags, gains, troughs, wave_gain: float = 2.2,
+          wave_s: Optional[Tuple[float, float]] = None) -> Tuple[np.ndarray, np.ndarray]:
     """Polyspike-and-wave: irregular spikes (each a sharp negative peak with a small, broad positive trough), then a
-    slow wave at least as large as the spikes (eeg0094_db1, myoclonic-jerk-examples/p1)."""
+    slow wave at least as large as the spikes (eeg0094_db1, myoclonic-jerk-examples/p1).  ``wave_s`` = (lag after the
+    last spike, sigma) of the slow wave in seconds (r8 GTC clonic: a slow wave that fills the lengthening interval)."""
     sp = np.zeros_like(tau)
     for c, g, tr in zip(lags, gains, troughs):
         x = tau - c
         sp = sp + g * (_g(x, 0.007, 0.010) - tr * np.exp(-0.5 * ((x - 0.032) / 0.022) ** 2))
-    wl = min(max(0.35 * period, 0.09), 0.18)
-    s = min(max(0.18 * period, 0.04), 0.09)
+    if wave_s is not None:
+        wl, s = wave_s
+    else:
+        wl = min(max(0.35 * period, 0.09), 0.18)
+        s = min(max(0.18 * period, 0.04), 0.09)
     return sp, wave_gain * np.exp(-0.5 * ((tau - float(lags[-1]) - wl) / s) ** 2)
 
 
@@ -290,21 +320,40 @@ class GeneralizedV3:
 
     def _add_cx(self, t: float, kind: str, amp: float, period: float, salt: int, *, field: str = "gen",
                 side: str = "both", width: float = 1.0, double: bool = False, ps=None, wave_gain: float = 1.3,
-                asym: float = 0.0, lead: float = 0.012, jitter: float = 0.12) -> None:
+                asym: float = 0.0, lead: float = 0.012, jitter: float = 0.12, x8: Optional[dict] = None) -> None:
         span = (float(ps[0][-1]) if ps is not None else 0.0) + 0.9
+        if x8 is not None:
+            span = max(span, float(x8.get("span", 0.0)))
         self.cx_t.append(float(t))
         self.cx.append(dict(t=float(t), kind=kind, amp=float(amp), period=float(period), salt=int(salt),
                             field=field, side=side, width=float(width), double=bool(double), ps=ps,
                             wave_gain=float(wave_gain), asym=float(asym), lead=float(lead), jitter=float(jitter),
-                            span=span))
+                            span=span, **({"x8": x8} if x8 is not None else {})))
 
     def _cx_fields(self, c: dict) -> Tuple[np.ndarray, np.ndarray]:
         sf, wf = self._field(c["field"], c["side"])
+        if c["kind"] == "ssw" and c.get("x8", {}).get("k") == "ssw8":
+            return sf, wf            # r8: the sharp wave on the frontal spike field, distinct from the slow wave
         # a slow spike-and-wave's sharp wave rides the slow wave's field (different-LGS-background: the sharp
         # component shows in every chain, not only centrally)
         return (wf, wf) if c["kind"] == "ssw" else (sf, wf)
 
     def _kernel(self, c: dict, tau: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        x8 = c.get("x8")
+        if x8 is not None:
+            k = x8.get("k")
+            if k == "ssw8":
+                sp, wv = k_ssw8(tau, c["period"], c["width"])
+            elif k == "sw_blend":
+                sp, wv = k_sw_blend(tau, c["period"], c["width"], c["double"], x8["blend"])
+            elif c["kind"] == "sw":
+                sp, wv = k_sw(tau, c["period"], c["width"], c["double"])
+            elif c["kind"] == "ssw":
+                sp, wv = k_ssw(tau, c["period"], c["wave_gain"])
+            else:
+                lags, gains, troughs = c["ps"]
+                sp, wv = k_psw(tau, c["period"], lags, gains, troughs, c["wave_gain"], x8.get("wave_s"))
+            return x8["sg"] * sp, x8["wg"] * wv
         if c["kind"] == "sw":
             return k_sw(tau, c["period"], c["width"], c["double"])
         if c["kind"] == "ssw":
@@ -313,10 +362,17 @@ class GeneralizedV3:
         return k_psw(tau, c["period"], lags, gains, troughs, c["wave_gain"])
 
     def _cx_norm(self, c: dict) -> float:
-        """Largest longitudinal-bipolar peak-to-peak of the unjittered unit complex (numerical, cached)."""
+        """Largest longitudinal-bipolar peak-to-peak of the unjittered unit complex (numerical, cached).  An r8
+        complex is normalized at its NOMINAL morphology (width, single spike, unit spike and wave gains), so the
+        per-cycle morphology draws change the displayed voltage as they would on a real record."""
+        x8 = c.get("x8")
+        if x8 is not None:
+            c = dict(c, width=x8["w0"], double=False, x8=dict(x8, sg=1.0, wg=1.0))
         ps = c["ps"]
         key = (c["kind"], round(c["period"], 4), round(c["width"], 4), c["double"], c["field"], c["side"],
                round(c["wave_gain"], 3), None if ps is None else tuple(np.round(np.concatenate(ps), 5)))
+        if x8 is not None:
+            key = key + ("x8", x8.get("k"), x8.get("blend"), x8.get("wave_s"))
         v = self._norm.get(key)
         if v is None:
             tau = np.arange(-0.2, c["span"], 1.0 / self.fs)
@@ -355,6 +411,60 @@ class GeneralizedV3:
             k += 1
         return k
 
+    #: r8 (research/eeg-atlas/generalized-review-20260928, Craig's review and JITTER_AUDIT.md): whole-head cycle
+    #: jitter.  Every draw belongs to the discharge, shared by all electrodes (the common source); per-electrode
+    #: scatter cancels in the bipolar chain (why r5 stripped it from tonic fast activity), so the existing small
+    #: per-electrode lag / amplitude / asymmetry stay as they are.
+    #:   ioi_cv / rho  log-period noise, AR(1): period sd ~ioi_cv, cycle-to-cycle change ~ioi_cv x sqrt(1 - rho)
+    #:   amp_cv        per-cycle lognormal amplitude sd;  drift  slow waxing / waning depth (two sinusoids, 2.5-6 s)
+    #:   morph_cv      per-cycle spike / sharp-wave width sd;  wave_cv  per-cycle slow-wave gain sd
+    #:   spk_cv        per-cycle spike gain sd;  p_double  per-cycle second spike
+    #:   p_drop        per-cycle probability that the spike is nearly absent (x0.25)
+    J8 = dict(ioi_cv=0.08, rho=0.3, amp_cv=0.13, drift=0.15, drift_s=(2.5, 6.0), morph_cv=0.12, wave_cv=0.10,
+              spk_cv=0.0, p_double=0.0, p_drop=0.0, w0=1.0, width_lim=(0.6, 1.6))
+    #: slow spike-and-wave (atypical absence, LGS): irregular (audit: CV 0.15-0.25), sharp wave +-20 %, wave +-15 %,
+    #: 10 % of cycles with the sharp component nearly absent
+    _J8_SSW = dict(ioi_cv=0.16, rho=0.3, amp_cv=0.15, drift=0.20, morph_cv=0.18, wave_cv=0.15, spk_cv=0.25,
+                   p_drop=0.10, width_lim=(0.6, 1.7))
+
+    def _train8(self, i: int, rng, t0: float, t1: float, f0: float, f1: float, amp: float, kind: str, *,
+                salt0: int, j8: dict, ramp_s: float = 0.0, ps_n: int = 0, ps_range: Tuple[int, int] = (2, 4),
+                ps_isi: Tuple[float, float, float] = (0.072, 0.045, 0.130), asym_amt: float = 0.08,
+                x8: Optional[dict] = None, ps_n_end: Optional[int] = None, **kw) -> int:
+        """``_train`` with the r8 whole-head jitter (``J8`` keys, overridden by ``j8``).  ``x8`` carries the kernel
+        choice (``k``: ssw8 / sw_blend / None) and fixed extras (``blend``, ``wave_s``, ``span``); ``ps_n_end`` lets
+        the polyspike count fall linearly across the run."""
+        J = dict(self.J8, **j8)
+        dur = max(t1 - t0, 1e-6)
+        am_f = rng.uniform(1.0 / J["drift_s"][1], 1.0 / J["drift_s"][0], 2)
+        am_p = rng.uniform(0.0, 2 * np.pi, 2)
+        rho = float(J["rho"])
+        e = float(rng.normal())
+        t, k = t0, 0
+        while t < t1:
+            u = (t - t0) / dur
+            e = rho * e + math.sqrt(1.0 - rho * rho) * float(rng.normal())
+            cv = float(J["ioi_cv"](u) if callable(J["ioi_cv"]) else J["ioi_cv"])
+            period = float(np.exp(cv * e)) / self._glide(f0, f1, u)
+            slow = 1.0 + 0.5 * J["drift"] * float(np.sum(np.sin(2 * np.pi * am_f * (t - t0) + am_p)))
+            a = amp * float(np.exp(rng.normal(0.0, J["amp_cv"]))) * slow
+            if ramp_s > 0:
+                a *= float(np.clip(min(t - t0, t1 - t) / ramp_s, 0.25, 1.0))
+            width = J["w0"] * float(np.clip(np.exp(rng.normal(0.0, J["morph_cv"])), *J["width_lim"]))
+            wg = float(np.exp(rng.normal(0.0, J["wave_cv"])))
+            sg = float(np.exp(rng.normal(0.0, J["spk_cv"]))) if J["spk_cv"] > 0 else 1.0
+            if rng.uniform() < J["p_drop"]:
+                sg *= 0.25
+            dbl = bool(rng.uniform() < J["p_double"])
+            n_ps = ps_n if ps_n_end is None else int(round(ps_n + (ps_n_end - ps_n) * u))
+            ps = polyspike_draw(rng, n_ps, lo=ps_range[0], hi=ps_range[1], isi=ps_isi) if ps_n else None
+            self._add_cx(t, kind, a, period, salt0 + k, width=width, double=dbl, ps=ps,
+                         asym=float(rng.uniform(-asym_amt, asym_amt)),
+                         x8=dict(x8 or {}, sg=sg, wg=wg, w0=J["w0"]), **kw)
+            t += period
+            k += 1
+        return k
+
     # ----------------------------------------------------------- seizures --
     def _sz_typical_absence(self, i, ev, rng):
         """Typical absence (atlas-absence-seizure / absence-seizure-at-20uV; eeg0087): generalized ~3-Hz
@@ -385,8 +495,11 @@ class GeneralizedV3:
         t1 = t0 + float(ev["duration_s"])
         f = float(ev["frequency_hz"])
         ramp = float(ev.get("ramp_s", 2.5))
-        n = self._train(i, rng, t0, t1, 1.05 * f, 0.9 * f, float(ev["amplitude_uv"]), "ssw", salt0=i * 1_000_003,
-                        jitter_f=0.12, ramp_s=ramp, asym_amt=0.2, side=str(ev.get("side") or "both"))
+        # r8 (Craig: "reads as notched delta, Angelman-like"): the sharp-and-slow-wave kernel on the frontal spike
+        # field, an irregular rate (AR(1) interval CV 0.16) and per-cycle sharp-wave width, height and slow-wave gain
+        n = self._train8(i, rng, t0, t1, 1.05 * f, 0.9 * f, float(ev["amplitude_uv"]), "ssw", salt0=i * 1_000_003,
+                         j8=self._J8_SSW, ramp_s=ramp, asym_amt=0.2, x8=dict(k="ssw8", span=1.3),
+                         side=str(ev.get("side") or "both"))
         self.gates.append((t0, t1))
         self.bg.append((t0, t1, 0.4, ramp, ramp))
         self._row("generalized_seizure", i, t0, t1, seizure_type="atypical_absence", start_hz=round(1.05 * f, 3),
@@ -452,15 +565,34 @@ class GeneralizedV3:
     _TONIC_FAST = dict(am=0.0, df_sd=0.0, dphi=0.05, field="gpfa")
 
     def _add_gpfa(self, i, rng, t0, t1, f0, f1, a0, a1, ramp=0.15, side="both", am=0.35, df_sd=0.6, dphi=0.7,
-                  field="gen"):
+                  field="gen", w8: Optional[dict] = None, off_s: float = 0.4):
         """``am`` per-electrode amplitude modulation depth, ``df_sd`` / ``dphi`` per-electrode frequency (Hz) and phase
-        (rad) scatter; the draw count does not depend on them."""
-        self.gpfa.append(dict(t0=float(t0), t1=float(t1), f0=float(f0), f1=float(f1), a0=float(a0), a1=float(a1),
-                              ramp=float(ramp), side=side, field=field, am=float(am),
-                              dphi=rng.uniform(-dphi, dphi, self.n_e),
-                              df=rng.normal(0.0, df_sd, self.n_e), am_f=rng.uniform(0.6, 1.6, self.n_e),
-                              am_p=rng.uniform(0, 2 * np.pi, self.n_e), psi=float(rng.uniform(0, 2 * np.pi)),
-                              lead=float(rng.uniform(0.004, 0.012))))
+        (rad) scatter; the draw count does not depend on them.
+
+        r8 ``w8`` (whole-head, shared by every electrode; drawn from its own stream so ``rng`` is untouched):
+        ``wander`` frequency wander sd as a fraction (sum of three sinusoids at ``nu`` Hz), ``cam`` common amplitude
+        modulation depth (three sinusoids at ``mu`` Hz), ``cyc`` per-cycle height scatter (+-, uniform), ``harm``
+        second-harmonic variation (morphology), ``hemi`` hemispheric gain sd.  ``off_s`` the offset taper (s)."""
+        g = dict(t0=float(t0), t1=float(t1), f0=float(f0), f1=float(f1), a0=float(a0), a1=float(a1),
+                 ramp=float(ramp), side=side, field=field, am=float(am),
+                 dphi=rng.uniform(-dphi, dphi, self.n_e),
+                 df=rng.normal(0.0, df_sd, self.n_e), am_f=rng.uniform(0.6, 1.6, self.n_e),
+                 am_p=rng.uniform(0, 2 * np.pi, self.n_e), psi=float(rng.uniform(0, 2 * np.pi)),
+                 lead=float(rng.uniform(0.004, 0.012)), off_s=float(off_s))
+        if w8 is not None:
+            r = substream(self.syn.seed, "gen-v3-r8-gpfa", i, int(round(t0 * 1000.0)))
+            n = 3
+            nu = r.uniform(*w8.get("nu", (0.2, 1.0)), n)
+            mu = r.uniform(*w8.get("mu", (0.3, 1.2)), n)
+            g["w8"] = dict(nu=nu, nu_p=r.uniform(0, 2 * np.pi, n),
+                           dfr=float(w8.get("wander", 0.0)) * math.sqrt(2.0 / n) * r.uniform(0.6, 1.4, n),
+                           mu=mu, mu_p=r.uniform(0, 2 * np.pi, n),
+                           cam=float(w8.get("cam", 0.0)) * math.sqrt(2.0 / n) * r.uniform(0.6, 1.4, n),
+                           harm=float(w8.get("harm", 0.0)), eta=float(r.uniform(0.4, 1.5)),
+                           eta_p=float(r.uniform(0, 2 * np.pi)),
+                           hemi=1.0 + float(w8.get("hemi", 0.0)) * float(r.normal()) * np.sign(self.x),
+                           cyc=float(w8.get("cyc", 0.0)), salt=int(r.integers(0, 2 ** 31)))
+        self.gpfa.append(g)
 
     def _sz_tonic(self, i, ev, rng):
         """Tonic seizure (atlas-tonic-seizure-i/-ii): diffuse electrodecrement, then generalized paroxysmal fast
@@ -470,9 +602,26 @@ class GeneralizedV3:
         t1 = t0 + float(ev["duration_s"])
         f0, f1 = float(ev.get("start_hz", 20.0)), float(ev.get("end_hz", 12.0))
         amp = float(ev["amplitude_uv"])
-        self.bg.append((t0, t1, float(ev.get("decrement_depth", 0.7)), 0.2, 1.0))
-        self._add_gpfa(i, rng, t0 + dec, t1, f0, f1, 0.3 * amp, amp, **self._TONIC_FAST)
-        self.emg.append((t0 + 0.3 * dec, t1, float(ev.get("emg_uv", 120.0)), 1.5, 0.6, "tonic"))
+        # r8 (Craig: "a larger delta or sharp-wave onset before the electrodecrement; a little more frequency
+        # jitter"): a generalized high-voltage sharp-and-slow wave (and, 60 %, a second slower delta wave) opens the
+        # seizure, the decrement follows it, and the fast activity wanders +-6 % in frequency with a 0.18 common
+        # amplitude modulation, still in phase across the head (r5 bisynchrony).  Drawn from a separate stream, so
+        # ``rng`` (the fast-activity draws) is unchanged.
+        r8 = substream(self.syn.seed, "gen-v3-r8-tonic", i)
+        a_on = float(ev.get("onset_uv", 3.5 * amp)) * float(np.exp(r8.normal(0.0, 0.12)))
+        self._add_cx(t0, "ssw", a_on, 0.7, i * 1_000_003 + 900_001, field="gen", jitter=0.08,
+                     asym=float(r8.uniform(-0.1, 0.1)), x8=dict(k="ssw8", sg=float(r8.uniform(0.7, 1.2)), wg=1.0,
+                                                               w0=1.0, span=1.3), width=float(r8.uniform(1.0, 1.4)))
+        pre = 0.55
+        if r8.uniform() < 0.6:
+            p2 = float(r8.uniform(0.6, 0.9))
+            self._add_cx(t0 + 0.7, "ssw", a_on * float(r8.uniform(0.45, 0.7)), p2, i * 1_000_003 + 900_002,
+                         field="gen", jitter=0.08, x8=dict(k="ssw8", sg=0.3, wg=1.0, w0=1.0, span=1.4))
+            pre = 0.7 + 0.6 * p2
+        self.bg.append((t0 + pre, t1, float(ev.get("decrement_depth", 0.7)), 0.2, 1.0))
+        self._add_gpfa(i, rng, t0 + pre + dec, t1, f0, f1, 0.3 * amp, amp, **self._TONIC_FAST,
+                       w8=dict(wander=0.06, nu=(0.2, 1.0), cam=0.18, mu=(0.3, 1.2), harm=0.4, hemi=0.08))
+        self.emg.append((t0 + pre + 0.3 * dec, t1, float(ev.get("emg_uv", 120.0)), 1.5, 0.6, "tonic"))
         self._row("generalized_seizure", i, t0, t1, seizure_type="tonic", start_hz=f0, end_hz=f1,
                   decrement_s=dec)
 
@@ -498,23 +647,68 @@ class GeneralizedV3:
         emg = float(ev.get("emg_uv", 300.0))
         tc, t1 = t0 + ton, t0 + ton + clo
         self.bg.append((t0, tc, 0.6, 0.3, 1.0))
-        self._add_gpfa(i, rng, t0, t0 + 1.5, 25.0, 22.0, 0.15 * amp, 0.25 * amp, ramp=0.2)
-        self._add_gpfa(i, rng, t0 + 1.2, tc, 11.0, 6.0, 0.3 * amp, 0.8 * amp, ramp=0.8)
-        self.emg.append((t0 + 0.5, tc, emg, 1.5, 0.3, "tonic"))
-        # clonic: bursts at ~3 Hz slowing to ~0.7 Hz; each burst a polyspike-and-wave with its own EMG burst
-        t, k = tc, 0
-        while t < t1:
-            u = (t - tc) / clo
-            period = 1.0 / self._glide(3.0, 0.7, u) * float(np.exp(rng.normal(0.0, 0.08)))
-            ps = polyspike_draw(rng, 3, lo=2, hi=5)
-            self._add_cx(t, "psw", amp * float(np.exp(rng.normal(0.0, 0.12))), period, i * 1_000_003 + k, ps=ps,
-                         wave_gain=1.8, asym=float(rng.uniform(-0.08, 0.08)))
-            self.emg.append((t, t + float(ps[0][-1]) + 0.08, emg * (1.0 - 0.4 * u), 0.01, 0.04, "burst"))
+        # r8 (Craig: GTC onset "too monomorphic"): whole-head frequency wander +-8 %, common amplitude modulation
+        # 0.25 and a varying second harmonic; the per-electrode scatter (which only dephased neighbours) reduced to
+        # AM 0.15 / 0.2 Hz / +-0.25 rad
+        gtc_fast = dict(am=0.15, df_sd=0.2, dphi=0.25)
+        self._add_gpfa(i, rng, t0, t0 + 1.5, 25.0, 22.0, 0.15 * amp, 0.25 * amp, ramp=0.2, **gtc_fast,
+                       w8=dict(wander=0.08, nu=(0.4, 1.5), cam=0.25, mu=(0.8, 2.5), harm=0.5))
+        self._add_gpfa(i, rng, t0 + 1.2, tc, 11.0, 6.0, 0.3 * amp, 0.8 * amp, ramp=0.8, **gtc_fast,
+                       w8=dict(wander=0.08, nu=(0.3, 1.2), cam=0.25, mu=(0.4, 1.5), harm=0.6, hemi=0.08))
+        # r8 (Craig's reference, researchgate 369381411 fig 3A-B: from ~3 s after onset the tonic phase is muscle in
+        # every derivation, continuous): tonic EMG 2x emg_uv
+        self.emg.append((t0 + 0.5, tc, 2.0 * emg, 1.5, 0.3, "tonic"))
+        # r8 clonic rebuild (Craig: "much more muscle and much larger EEG amplitude"; polyspike bursts separated by
+        # slow waves, progressively slowing; REFERENCE_TARGETS s1-2, Bauer 2017, AES f72): bursts from ~4 Hz, the
+        # interval growing exponentially to ~0.8 Hz with AR(1) lognormal scatter rising 0.10 -> 0.30, 2.5x the tonic
+        # voltage, 5 -> 2 spikes per burst, a slow wave that fills the lengthening interval, a near-flat inter-burst
+        # trace (background 0.9 suppressed, EMG silent), and an EMG burst 2.5x the tonic EMG locked to every polyspike,
+        # lengthening through the phase.  The last 3-5 discharges are full size, 1.2 -> 2.9 s apart (x1.25 each, with
+        # muscle), and either stop abruptly or (half of seizures, Craig's reference fig 3C) fade: each terminal discharge
+        # and its EMG smaller than the last, down to ~0.35x.
+        r8 = substream(self.syn.seed, "gen-v3-r8-clonic", i)
+        a_cl = float(ev.get("clonic_uv", 2.5 * amp))
+        fade = bool(r8.uniform() < 0.5)
+        n_term = int(r8.integers(3, 6))
+        gaps = [1.2 * 1.25 ** j * float(np.exp(r8.normal(0.0, 0.12))) for j in range(n_term - 1)]
+        t_term = t1 - 0.3 - float(np.sum(gaps))
+        t, k, e = tc, 0, float(r8.normal())
+        while t < t_term:
+            u = (t - tc) / max(t_term - tc, 1e-3)
+            e = 0.5 * e + math.sqrt(0.75) * float(r8.normal())
+            period = float(np.exp((0.10 + 0.20 * u) * e)) / self._glide(4.0, 0.8, u)
+            n_sp = int(round(5 - 3 * u))
+            ps = polyspike_draw(r8, n_sp, lo=2, hi=6, isi=(0.055, 0.035, 0.090))
+            wl = min(0.08 + 0.10 * period, 0.22)
+            ws = min(0.04 + 0.05 * period, 0.09)
+            a = a_cl * float(np.exp(r8.normal(0.0, 0.15)))
+            self._add_cx(t, "psw", a, period, i * 1_000_003 + k, ps=ps, wave_gain=1.4,
+                         asym=float(r8.uniform(-0.12, 0.12)),
+                         x8=dict(sg=1.0, wg=float(np.exp(r8.normal(0.0, 0.12))), w0=1.0, wave_s=(wl, ws),
+                                 span=float(ps[0][-1]) + wl + 3.5 * ws))
+            self.emg.append((t - 0.01, t + float(ps[0][-1]) + 0.06 + 0.10 * u + float(r8.uniform(0.0, 0.05)),
+                             2.5 * emg * (1.0 - 0.3 * u) * float(np.exp(r8.normal(0.0, 0.2))), 0.01, 0.04, "burst"))
             t += period
             k += 1
-        self.bg.append((tc, t1, 0.5, 0.5, 0.5))
-        self.bg.append((t1, t1 + post, 0.85, 0.3, 0.35 * post))
-        self.emg_loss.append((t1, t1 + post, 0.9))
+        t = max(t, t_term)
+        for j in range(n_term):
+            g = 1.0 - 0.65 * (j + 1) / n_term if fade else 1.0
+            ps = polyspike_draw(r8, 3, lo=2, hi=5, isi=(0.055, 0.035, 0.090))
+            self._add_cx(t, "psw", a_cl * g * float(np.exp(r8.normal(0.0, 0.15))), 1.5, i * 1_000_003 + k, ps=ps,
+                         wave_gain=1.4, asym=float(r8.uniform(-0.12, 0.12)),
+                         x8=dict(sg=1.0, wg=1.0, w0=1.0, wave_s=(0.22, 0.09), span=float(ps[0][-1]) + 0.6))
+            self.emg.append((t - 0.01, t + float(ps[0][-1]) + 0.18, 2.0 * emg * g, 0.01, 0.05, "burst"))
+            if j == n_term - 1:
+                # the seizure ends with its last discharge (the main run can overshoot t_term by one period)
+                t1 = max(t1, t + float(ps[0][-1]) + 0.3)
+            else:
+                t += gaps[j]
+            k += 1
+        self.bg.append((tc, t1, 0.9, 0.5, 0.5))
+        # r8: postictal generalized suppression below ~10 uV (REFERENCE_TARGETS s2, PGES; was 0.85), reached at once,
+        # low-level activity and some residual muscle kept (Craig's reference fig 3C: not a dead-flat line)
+        self.bg.append((t1, t1 + post, 0.88, 0.1, 0.35 * post))
+        self.emg_loss.append((t1, t1 + post, 0.75))
         self._row("generalized_seizure", i, t0, t1, seizure_type="gtc", tonic_end_s=round(tc, 3),
                   clonic_end_s=round(t1, 3), postictal_s=post, n_clonic_bursts=k)
 
@@ -523,13 +717,30 @@ class GeneralizedV3:
         generalized 3-6 Hz polyspike-and-wave burst starting within 0.5 s of the closure."""
         t0 = float(ev["onset_min"]) * 60.0
         dur = float(ev["duration_s"])
-        lat = float(rng.uniform(0.2, 0.5))
+        # r8 (REFERENCE_TARGETS s7: the discharge starts 0.5-2 s after the closure; was 0.2-0.5 s)
+        lat = float(rng.uniform(0.5, 1.2))
         f = float(ev["frequency_hz"])
-        self.eye.append(("closure", t0, t0 + dur + 0.5, float(ev.get("eye_uv", 150.0)), 0.0))
-        self.eye.append(("flutter", t0 + 0.1, t0 + 0.1 + min(2.0, dur), 0.35 * float(ev.get("eye_uv", 150.0)),
-                         float(rng.uniform(5.0, 6.0))))
-        n = self._train(i, rng, t0 + lat, t0 + lat + dur, 1.05 * f, 0.9 * f, float(ev["amplitude_uv"]), "psw",
-                        salt0=i * 1_000_003, jitter_f=0.10, ps_n=3, wave_gain=2.0, field="post")
+        eye = float(ev.get("eye_uv", 150.0))
+        fl_hz = float(rng.uniform(4.5, 6.0))
+        self.eye.append(("closure", t0, t0 + lat + dur + 0.5, eye, 0.0))
+        # r8 (Craig: start from the phase D version, frontocentral field; "more eyelid/blink artifact"): eyelid jerks
+        # from the closure through the whole discharge, cornea-positive Fp deflections at 0.6 x eye_uv decaying to
+        # 0.35 x (was a 0.35 x fixed-rate, fixed-height pulse train over 2 s), each with its own interval (CV 0.17) and
+        # height (sd 0.25); two ordinary blinks in the seconds around the event and one as the eyes reopen.  Drawn
+        # from a separate stream, so ``rng`` keeps its sequence.
+        r8 = substream(self.syn.seed, "gen-v3-r8-eyelid", i)
+        pulses, tp, t_end = [], t0 + 0.15, t0 + lat + dur + 0.2
+        while tp < t_end:
+            dec = 0.6 - 0.25 * (tp - t0) / (t_end - t0)
+            pulses.append((tp, dec * eye * float(np.exp(r8.normal(0.0, 0.25)))))
+            tp += float(np.exp(r8.normal(0.0, 0.17))) / fl_hz
+        self.eye.append(("flutter", t0 + 0.15, t_end, 0.6 * eye, fl_hz, pulses))
+        for tb in (t0 - float(r8.uniform(1.5, 3.5)), t_end + 0.3 + float(r8.uniform(0.0, 0.3)),
+                   t_end + float(r8.uniform(1.5, 3.0))):
+            self.eye.append(("blink", tb, tb + 0.4, float(r8.uniform(0.7, 1.0)) * self._closure_blink_uv, 0.0))
+        n = self._train8(i, rng, t0 + lat, t0 + lat + dur, 1.05 * f, 0.9 * f, float(ev["amplitude_uv"]), "psw",
+                         salt0=i * 1_000_003, j8=dict(ioi_cv=0.12, amp_cv=0.15, morph_cv=0.0, wave_cv=0.15),
+                         ps_n=3, wave_gain=2.0, field="fc")
         self._row("generalized_seizure", i, t0, t0 + lat + dur, seizure_type="eyelid_myoclonia",
                   closure_s=round(t0, 3), discharge_onset_s=round(t0 + lat, 3), n_complexes=n)
 
@@ -547,9 +758,14 @@ class GeneralizedV3:
         # r5 (generalized-independent: a regular 3.5-Hz train with a uniform field, read as an absence; eeg0066 and
         # PMC8610539 Fig 1B show irregular polyspikes, posterior-predominant): per-cycle rate jitter 0.15 -> 0.30,
         # complex amplitude scatter 0.10 -> 0.25, 2-5 spikes per complex, and the posterior (eyelid-myoclonia) field
-        n = self._train(i, rng, t0 + lat, t0 + stim + out, f, f, float(ev["amplitude_uv"]), "psw",
-                        salt0=i * 1_000_003, jitter_f=0.30, amp_sd=0.25, ps_n=3, ps_range=(2, 5), wave_gain=1.8,
-                        asym_amt=0.12, field="post")
+        # r8 rebuild (Craig: "should be generalized ~3-Hz spike-wave (photoparoxysmal response), not the current
+        # train"): generalized spike-and-wave / polyspike-and-wave on the absence field (frontal maximum, every chain),
+        # at the authored 3-4 Hz and NOT locked to the flashes, slowing a little across the run, with the r8
+        # whole-head jitter (interval CV 0.10, 40 % of complexes double-spiked)
+        n = self._train8(i, rng, t0 + lat, t0 + stim + out, 1.08 * f, 0.92 * f, float(ev["amplitude_uv"]), "sw",
+                         salt0=i * 1_000_003, j8=dict(ioi_cv=0.10, amp_cv=0.15, morph_cv=0.12, wave_cv=0.12,
+                                                      p_double=0.4),
+                         asym_amt=0.12, jitter=0.10)
         self._row("generalized_seizure", i, t0 + lat, t0 + stim + out, seizure_type="photoparoxysmal",
                   stimulus_onset_s=round(t0, 3), stimulus_offset_s=round(t0 + stim, 3), stimulus_frequency_hz=fl,
                   outlasting=bool(ev.get("outlasting")), n_complexes=n)
@@ -561,6 +777,8 @@ class GeneralizedV3:
         "slow_spike_wave": ("ssw", 2.0, 6.0, (2.0, 30.0)),
     }
     _BLOCK_S = 600.0
+    #: r8: fraction of the scheduled GPFA bursts dropped in N3 (REFERENCE_TARGETS s5: 0-1 per 15-s page)
+    _GPFA_N3_DROP = 0.5
 
     def _discharges(self, i, ev):
         pat = str(ev["pattern"])
@@ -585,11 +803,24 @@ class GeneralizedV3:
             rng = substream(self.syn.seed, "gen-v3-dis", i, blk)
             m = int(np.floor(rate_h * L / 3600.0 + rng.uniform()))
             times = np.sort(rng.uniform(0.0, L, m)) + a + blk * L
+            last = -np.inf
             for k, t0 in enumerate(times):
                 d = float(np.clip(med * np.exp(rng.normal(0.0, 0.45)), *clip))
                 fb = f * float(np.exp(rng.normal(0.0, 0.08)))
                 ab = amp * float(np.exp(rng.normal(0.0, 0.15)))
                 if t0 < a or t0 + d > b:
+                    continue
+                if kind == "ssw":
+                    if t0 < last + 0.5:
+                        continue            # r8: overlapping runs doubled the complex rate (draws already made)
+                    last = t0 + d
+                    # r8 (Craig: LGS slow spike-wave "frequency and morphology wrong: needs a clearer spike/sharp-and-
+                    # slow-wave complex"): the sharp-and-slow-wave kernel, 1.5-2.5 Hz, irregular, frontal
+                    n = self._train8(i, rng, t0, t0 + d, fb * 1.05, fb * 0.95, ab, kind,
+                                     salt0=(i * 1009 + blk) * 100_003 + k * 97, j8=self._J8_SSW, ramp_s=0.8,
+                                     asym_amt=0.2, side=side, x8=dict(k="ssw8", span=1.3), field="gen")
+                    self._row("generalized_discharge", i, t0 - 0.03, t0 + d, pattern=pat, frequency_hz=round(fb, 3),
+                              amplitude_uv=round(ab, 1), n_complexes=n)
                     continue
                 n = self._train(i, rng, t0, t0 + d, fb * 1.05, fb * 0.95, ab, kind,
                                 salt0=(i * 1009 + blk) * 100_003 + k * 97,
@@ -639,9 +870,16 @@ class GeneralizedV3:
                 run = float(np.clip(run_med * np.exp(rng.normal(0.0, 0.5)), 0.8, 60.0))
                 run = min(run, x1 - t)
                 fr = f * float(np.exp(rng.normal(0.0, 0.08)))
-                n = self._train(i, rng, t, t + run, fr, fr, amp * float(np.exp(rng.normal(0.0, 0.1))), "sw",
-                                salt0=(i * 7919 + int(round(x0 * 10))) * 1009 + k * 131, jitter_f=0.10,
-                                field="eses", side=side, width=1.5, asym_amt=0.05, lead=0.006)
+                # r8 (Craig: "between phase D and current"; frequency too regular, morphology identical each cycle):
+                # the kernel half-way between the phase D Gaussian wave and the current dome, AR(1) interval CV 0.12
+                # with a +-4 % glide per run, per-cycle spike width 1.5 x (sd 0.15, 1.1-2.1), slow-wave gain sd 0.12,
+                # spike height sd 0.18, 10 % double spikes, asymmetry +-0.2 (audit, REFERENCE_TARGETS s8).  Salt
+                # stride 1000 per run (the old 131 repeated salts inside long runs).
+                n = self._train8(i, rng, t, t + run, 1.04 * fr, 0.96 * fr, amp * float(np.exp(rng.normal(0.0, 0.1))),
+                                 "sw", salt0=(i * 7919 + int(round(x0 * 10))) * 100_003 + k * 1000,
+                                 j8=dict(ioi_cv=0.12, amp_cv=0.12, morph_cv=0.15, wave_cv=0.12, spk_cv=0.18,
+                                         p_double=0.10, w0=1.5, width_lim=(0.73, 1.4)),
+                                 x8=dict(k="sw_blend", blend=0.5), field="eses", side=side, asym_amt=0.2, lead=0.006)
                 self._row("generalized_discharge", i, t - 0.03, t + run, pattern="eses",
                           stage=self._stage_label(t + 0.5 * run), frequency_hz=round(fr, 3), n_complexes=n)
                 gap = run * (1.0 - c) / c * float(np.exp(rng.normal(0.0, 0.4)))
@@ -649,7 +887,7 @@ class GeneralizedV3:
                 k += 1
 
     def _gpfa_sleep(self, i, ev, a, b, amp, side):
-        """LGS generalized paroxysmal fast activity in NREM sleep: 1-6 s (median 3 s) bursts of 15-25 Hz, frontally
+        """LGS generalized paroxysmal fast activity in NREM sleep: 0.5-6 s (default median 1.5 s) bursts of 15-25 Hz, frontally
         predominant, abrupt onset, no EMG; ``rate_per_h`` applies inside the merged N2/N3 windows only
         (``Synthesizer.stage_intervals``), none awake or in REM.
 
@@ -659,7 +897,7 @@ class GeneralizedV3:
         attenuated under the burst (tonic-seizure-ii onset, ILAE LGS: abrupt, monomorphic, with attenuation)."""
         rate_h = float(ev["rate_per_h"])
         f = float(ev.get("frequency_hz") or 20.0)
-        med = float(ev.get("burst_s") or 3.0)
+        med = float(ev.get("burst_s") or 1.5)
         for x0, x1, _grp in self._stage_groups(a, b, (("N2", "N3"),)):
             # a Poisson walk forward from the window start (the gaps from one stream, each burst from its own keyed
             # stream), so a page synthesizer whose horizon cuts the window sees the same bursts as the whole record
@@ -672,15 +910,25 @@ class GeneralizedV3:
                     break
                 rng = substream(self.syn.seed, "gen-v3-gpfa-burst", i, key, k)
                 k += 1
-                d = float(np.clip(med * np.exp(rng.normal(0.0, 0.45)), 1.0, 6.0))
+                d = float(np.clip(med * np.exp(rng.normal(0.0, 0.45)), 0.5, 6.0))
                 if t0 + d > x1 or t0 < last + 1.0:
                     continue            # overlapping bursts beat against each other (waxing-waning): one at a time
+                # r8 (Craig: N3 "bursts may be too frequent"): half the N2 rate in N3 (the walk is unchanged)
+                if rng.uniform() < self._GPFA_N3_DROP and self._stage_label(t0 + 0.5 * d) == "N3":
+                    continue
                 last = t0 + d
                 fb = float(np.clip(f * np.exp(rng.normal(0.0, 0.15)), 15.0, 25.0))
-                ab = amp * float(np.exp(rng.normal(0.0, 0.15)))
-                self._add_gpfa(i, rng, t0, t0 + d, fb * 1.05, fb * 0.95, 0.9 * ab, ab, ramp=0.05, side=side,
-                               am=0.0, df_sd=0.0, dphi=0.05, field="gpfa")
-                self.bg.append((t0, t0 + d, 0.75, 0.05, 0.3))
+                ab = amp * float(np.exp(rng.normal(0.0, 0.30)))      # r8: burst-to-burst sd 0.30 (was 0.15)
+                # r8 (Craig: less spindle-like than phase D, somewhat more abrupt onset / offset, much more frequency
+                # and amplitude jitter, some evolution): in phase across the head as in r5, but a whole-head frequency
+                # wander +-10 % (0.5-2 Hz) on a 1.12 -> 0.88 glide, per-cycle height scatter +-40 % (jagged; a 1-4 Hz
+                # common modulation instead beaded the burst into spindle-like packets) and a slow 0.15 modulation on
+                # a 0.75 -> 1.0 crescendo, a varying second harmonic, 25-ms onset and 80-ms offset
+                self._add_gpfa(i, rng, t0, t0 + d, fb * 1.12, fb * 0.88, 0.75 * ab, ab, ramp=0.025, side=side,
+                               am=0.0, df_sd=0.0, dphi=0.05, field="gpfa", off_s=0.08,
+                               w8=dict(wander=0.10, nu=(0.5, 2.0), cam=0.15, mu=(0.3, 1.0), cyc=0.4, harm=0.6,
+                                       hemi=0.06))
+                self.bg.append((t0, t0 + d, 0.75, 0.03, 0.15))
                 self._row("generalized_discharge", i, t0, t0 + d, pattern="gpfa", stage=self._stage_label(t0 + 0.5 * d),
                           frequency_hz=round(fb, 2), amplitude_uv=round(ab, 1))
 
@@ -702,13 +950,39 @@ class GeneralizedV3:
             ph = 2 * np.pi * f0 * dur * (np.power(r, u) - 1.0) / math.log(r) + 2 * np.pi * f1 * np.maximum(tt - dur, 0.0)
             fi = f0 * np.power(r, u)
         env = (g["a0"] + (g["a1"] - g["a0"]) * u)
-        env = env * np.clip(tt / g["ramp"], 0.0, 1.0) * (1.0 - np.clip((tt - dur) / 0.4, 0.0, 1.0))
+        env = env * np.clip(tt / g["ramp"], 0.0, 1.0) * (1.0 - np.clip((tt - dur) / g["off_s"], 0.0, 1.0))
+        w8 = g.get("w8")
+        h2 = 0.25
+        if w8 is not None:
+            # r8 whole-head wander: a phase modulation whose derivative is the frequency deviation (a pure function of
+            # time since onset), a common amplitude modulation and a slowly varying second harmonic
+            fbar = math.sqrt(f0 * f1)
+            arg = 2 * np.pi * w8["nu"][:, None] * tt[None, :] + w8["nu_p"][:, None]
+            dev = (w8["dfr"][:, None] * np.cos(arg)).sum(0)
+            ph = ph + fbar * (w8["dfr"][:, None] / w8["nu"][:, None]
+                              * (np.sin(arg) - np.sin(w8["nu_p"])[:, None])).sum(0)
+            fi = fi * (1.0 + dev)
+            cm = 1.0 + (w8["cam"][:, None] * np.sin(2 * np.pi * w8["mu"][:, None] * tt[None, :]
+                                                     + w8["mu_p"][:, None])).sum(0)
+            env = env * np.clip(cm, 0.15, None)
+            if w8["cyc"] > 0:
+                # per-cycle height of the fast rhythm (keyed by the absolute cycle, smoothed across the cycle): a
+                # jagged, irregular burst rather than a modulation envelope
+                cyc = ph / (2 * np.pi)
+                kf = np.floor(cyc)
+                a_ = 2.0 * _cnoise(kf, w8["salt"]) - 1.0
+                b_ = 2.0 * _cnoise(kf + 1.0, w8["salt"]) - 1.0
+                x_ = cyc - kf
+                env = env * (1.0 + w8["cyc"] * (a_ + (b_ - a_) * x_ * x_ * (3.0 - 2.0 * x_)))
+            h2 = 0.25 * (1.0 + w8["harm"] * np.sin(2 * np.pi * w8["eta"] * tt + w8["eta_p"]))[None, :]
         _, wf = self._field(g["field"], g["side"])
         lag = g["lead"] * self.front
         P = (ph[None, :] - 2 * np.pi * fi[None, :] * lag[:, None] + g["dphi"][:, None]
              + 2 * np.pi * g["df"][:, None] * tt[None, :])
         am = 1.0 + g["am"] * np.sin(2 * np.pi * g["am_f"][:, None] * tt[None, :] + g["am_p"][:, None])
-        wave = (np.sin(P) + 0.25 * np.sin(2 * P + g["psi"])) * am
+        if w8 is not None:
+            am = am * w8["hemi"][:, None]
+        wave = (np.sin(P) + h2 * np.sin(2 * P + g["psi"])) * am
         key = (("gpfa", g["side"], round(g["lead"], 5)) if g["field"] == "gen"
                else ("gpfa", g["field"], g["side"], round(g["lead"], 5), tuple(np.round(g["dphi"], 5))))
         nv = self._norm.get(key)
@@ -754,10 +1028,19 @@ class GeneralizedV3:
         if not self.eye:
             return None
         prof = np.zeros(t.size)
-        for kind, e0, e1, amp, f in self.eye:
+        for kind, e0, e1, amp, f, *pulses in self.eye:
             if e1 + 1.0 < t[0] or e0 > t[-1]:
                 continue
             d = t - e0
+            if pulses:
+                # r8 eyelid jerks: one cornea-positive lid deflection per jerk (rise 30 / fall 55 ms)
+                for tp, ap in pulses[0]:
+                    if tp - 0.2 < t[-1] and tp + 0.4 > t[0]:
+                        prof += ap * _g(t - tp, 0.030, 0.055)
+                continue
+            if kind == "blink":
+                prof += amp * self.syn._blink_profile(t, np.array([e0]))
+                continue
             if kind == "closure":
                 # lids close in ~0.25 s, the eyes roll up (cornea-positive at Fp) and stay until reopening
                 prof += amp * np.clip(d / 0.25, 0.0, 1.0) * np.clip(1.0 - (t - e1) / 0.3, 0.0, 1.0)

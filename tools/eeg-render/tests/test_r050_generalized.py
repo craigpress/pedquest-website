@@ -268,11 +268,12 @@ def test_gtc_phases():
 # ------------------------------------------------------------------ eyelid myoclonia, PPR
 
 def test_eyelid_myoclonia_closure_then_discharge():
-    """Eyelid myoclonia (Jeavons): eye closure (cornea-positive Fp deflection, DOWN in Fp1-F3) followed within 0.5 s by
-    a brief generalized 3-6 Hz polyspike-and-wave burst (4-6-Hz-spike-and-waves-with-JME)."""
+    """Eyelid myoclonia (Jeavons): eye closure (cornea-positive Fp deflection, DOWN in Fp1-F3) followed by a brief
+    generalized 3-6 Hz polyspike-and-wave burst (4-6-Hz-spike-and-waves-with-JME).  r8: 0.5-1.2 s after the closure
+    (generalized-review-20260928 REFERENCE_TARGETS s7: 0.5-2 s; was 0.2-0.5 s)."""
     syn = Synthesizer(_spec(926209, "child", CHILD, [gs("eyelid_myoclonia")]), 400.0)
     r = _row(syn)[0]
-    assert 0.2 <= r["discharge_onset_s"] - r["closure_s"] <= 0.5
+    assert 0.5 <= r["discharge_onset_s"] - r["closure_s"] <= 1.2
     cx = np.array([c["t"] for c in syn._gen.cx])
     assert 3.0 <= 1.0 / np.median(np.diff(cx)) <= 6.0
     t0 = r["closure_s"]
@@ -343,12 +344,12 @@ def test_lgs_slow_spike_wave():
 
 
 def test_gpfa_only_in_nrem_and_visible():
-    """LGS generalized paroxysmal fast activity: 10-25 Hz bursts of 1-10 s in NREM sleep, frontally predominant."""
+    """LGS generalized paroxysmal fast activity: 10-25 Hz bursts of 0.5-10 s in NREM sleep, frontally predominant."""
     syn = Synthesizer(_spec(926214, "child", LGS_BG, SLEEP + [gd("gpfa", rate_per_h=200)], dur=60), 3600.0)
     rows = _row(syn, "generalized_discharge")
     assert rows and all(r["stage"] in ("N2", "N3") for r in rows)
-    assert all(10.0 <= r["frequency_hz"] <= 25.0 and 1.0 <= r["t1"] - r["t0"] <= 10.0 for r in rows)
-    r = next(r for r in rows if r["t1"] - r["t0"] >= 2.5 and r["t0"] > 300)
+    assert all(10.0 <= r["frequency_hz"] <= 25.0 and 0.5 <= r["t1"] - r["t0"] <= 10.0 for r in rows)
+    r = next(r for r in rows if r["t1"] - r["t0"] >= 2.0 and r["t0"] > 300)
     td, sd, nd = _display(syn, r["t0"] - 6.0, r["t1"])
     on, pre = (td > r["t0"] + 0.3), td < r["t0"] - 1.0
     for ch in ("F3-C3", "Fz-Cz"):
@@ -648,12 +649,14 @@ def test_gpfa_is_not_a_spindle_and_shows_in_n3():
     """tonic-seizure-ii onset and ILAE LGS: generalized paroxysmal fast activity is abrupt, monomorphic, ~15-25 Hz and
     in phase across the head, with the background attenuated.  Before: 12-19 Hz with per-electrode waxing-waning (read
     as a spindle in N2; homologous chains dephased) and 1.5x the N3 delta.  Accept: peak 15-25 Hz, F3-C3/F4-C4
-    correlation >= 0.8, 12-28 Hz envelope CV <= 0.2, onset 10->90 % <= 150 ms, bursts 1-6 s one at a time; in N3 the
-    15-25 Hz RMS >= 5x and the <3-Hz delta <= 0.7x the preceding 5 s (medians over bursts)."""
+    correlation >= 0.8, 12-28 Hz envelope CV <= 0.45 (r8 per-cycle height scatter; it was <= 0.2 for the monomorphic
+    r5 burst), onset 10->70 % <= 200 ms (REFERENCE_TARGETS s5: >= 70 % within 100-250 ms; with the per-cycle heights
+    scattered a 10->90 % rise ran ~0.2-0.3 s), bursts 0.5-6 s one at a time; in N3 the 15-25 Hz RMS >= 5x and the <3-Hz
+    delta <= 0.7x the preceding 5 s (medians over bursts)."""
     syn = Synthesizer(_spec(926214, "child", LGS_BG, SLEEP + [gd("gpfa")], dur=60), 3600.0)
     fs = syn.fs
     rows = _row(syn, "generalized_discharge")
-    assert rows and all(1.0 <= r["t1"] - r["t0"] <= 6.0 and 15.0 <= r["frequency_hz"] <= 25.0 for r in rows)
+    assert rows and all(0.5 <= r["t1"] - r["t0"] <= 6.0 and 15.0 <= r["frequency_hz"] <= 25.0 for r in rows)
     spans = sorted((r["t0"], r["t1"]) for r in rows)
     assert all(b[0] >= a[1] for a, b in zip(spans, spans[1:]))
     clean = [r for r in rows if r["t1"] - r["t0"] >= 2.0
@@ -666,7 +669,7 @@ def test_gpfa_is_not_a_spindle_and_shows_in_n3():
         assert np.corrcoef(a, b)[0, 1] >= 0.8
         env = np.abs(sps.hilbert(sps.sosfiltfilt(sps.butter(4, [12, 28], "bandpass", fs=fs, output="sos"), a)))
         env = np.convolve(env, np.ones(fs // 10) / (fs // 10), "same")[fs // 5:-fs // 5]
-        assert np.std(env) / np.mean(env) <= 0.2
+        assert np.std(env) / np.mean(env) <= 0.45
         fq, p = sps.welch(a, fs, nperseg=min(a.size, fs), nfft=4 * fs)
         assert 15.0 <= fq[np.argmax(p)] <= 25.0
         ti, si, ni = _isolated(syn, r["t0"] - 0.3, r["t0"] + 0.7)
@@ -674,7 +677,7 @@ def test_gpfa_is_not_a_spindle_and_shows_in_n3():
         w = int(0.05 * fs)
         e = np.array([e[max(0, k - w):k + 1].max() for k in range(e.size)])
         lvl = np.median(e[ti > r["t0"] + 0.3])
-        assert ti[np.argmax(e > 0.9 * lvl)] - ti[np.argmax(e > 0.1 * lvl)] <= 0.15
+        assert ti[np.argmax(e > 0.7 * lvl)] - ti[np.argmax(e > 0.1 * lvl)] <= 0.20
     fast, delta = [], []
     for r in n3:
         td, sd, nd = _display(syn, r["t0"] - 5.0, r["t1"])
@@ -697,10 +700,10 @@ def test_photoparoxysmal_page_carries_the_photic_marker():
     assert abs(1.0 / np.median(np.diff(fl)) - r["stimulus_frequency_hz"]) < 1e-6
 
 
-def test_eyelid_myoclonia_polyspikes_are_bioccipital():
-    """PMC8610539 Fig 1 E/F (Jeavons syndrome): the polyspikes after each eye closure are largest bioccipitally;
-    PMC12593124 Fig 2: generalized PSW after closure.  Before: frontocentral (F3-C3 / Fz-Cz 0.88-1.00, T5-O1 0.12-0.22).
-    Accept: the largest posterior link (P-O, T5/T6-O) >= 1.5x the largest frontal one (Fp-F, F-C, Fz-Cz)."""
+def test_eyelid_myoclonia_polyspikes_are_generalized_frontocentral():
+    """r8 (generalized-review-20260928: Craig chose the phase D eyelid myoclonia over the r5 bioccipital one): the
+    polyspike-and-wave is generalized with the frontocentral field (JME table) - the largest frontal link (Fp-F, F-C,
+    Fz-Cz) at least the largest posterior one (P-O, T5/T6-O), and every parasagittal link carrying >= 25 % of it."""
     for seed in (26092609, 926209):
         syn = Synthesizer(_spec(seed, "child", CHILD, [gs("eyelid_myoclonia", at=2.0 + 4 / 60)]), 400.0)
         r = _row(syn)[0]
@@ -708,7 +711,9 @@ def test_eyelid_myoclonia_polyspikes_are_bioccipital():
         pp = {ch: np.ptp(s[names.index(ch)]) for ch in CHAINS}
         post = max(pp[c] for c in ("P3-O1", "P4-O2", "T5-O1", "T6-O2"))
         front = max(pp[c] for c in ("Fp1-F3", "Fp2-F4", "F3-C3", "F4-C4", "Fz-Cz"))
-        assert post >= 1.5 * front, (seed, pp)
+        assert front >= post, (seed, pp)
+        para = ("Fp1-F3", "F3-C3", "C3-P3", "P3-O1", "Fp2-F4", "F4-C4", "C4-P4", "P4-O2")
+        assert min(pp[c] for c in para) >= 0.25 * front, (seed, pp)
 
 
 @pytest.mark.parametrize("case", ["gpfa", "atonic_emg"])
