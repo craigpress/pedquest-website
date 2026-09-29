@@ -1128,7 +1128,8 @@ GENERALIZED_SEIZURE_DEFAULTS = {
             "emg_uv": 300.0, "clinical_correlate": "generalized_tonic_clonic"},
     "eyelid_myoclonia": {"duration_s": 2.5, "frequency_hz": 4.0, "amplitude_uv": 250.0, "eye_uv": 150.0,
                          "provocation": "eye_closure"},
-    "photoparoxysmal": {"stimulus_s": 10.0, "stimulus_frequency_hz": 15.0, "frequency_hz": 3.5,
+    # r8 (REFERENCE_TARGETS s3, ILAE IPS 2012: 5-s trains, 15-18 Hz most epileptogenic; Craig 2026-09-29)
+    "photoparoxysmal": {"stimulus_s": 5.0, "stimulus_frequency_hz": 18.0, "frequency_hz": 3.5,
                         "amplitude_uv": 200.0, "outlasting": False, "driving_uv": 40.0, "provocation": "photic",
                         "clinical_correlate": "none"},
 }

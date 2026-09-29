@@ -107,6 +107,13 @@ _VTX_FIELD = {"Cz": 1.0, "C3": 0.80, "C4": 0.80, "Fz": 0.60, "Pz": 0.50, "F3": 0
 _GPFA_FIELD = {"F3": 1.0, "F4": 1.0, "Fz": 1.0, "Fp1": 0.60, "Fp2": 0.60, "F7": 0.60, "F8": 0.60, "C3": 0.55,
                "C4": 0.55, "Cz": 0.60, "T3": 0.35, "T4": 0.35, "P3": 0.30, "P4": 0.30, "Pz": 0.30, "T5": 0.20,
                "T6": 0.20, "O1": 0.10, "O2": 0.10}
+#: r8 GTC muscle (REFERENCE_TARGETS s1, PubMed 41830894: scalp EMG in bilateral tonic-clonic seizures is largest at T3/T4
+#: and "masks all derivations except those from the vertex"): temporal / frontal-pole maximum, the midline electrodes
+#: ~0.2 so Fz-Cz / Cz-Pz carry about 0.2-0.3x the temporal chains' muscle.  ``_EMG_FIELD`` stays as it is for the
+#: accepted myoclonic features.
+_EMG_FIELD_GTC = {"T3": 1.0, "T4": 1.0, "F7": 0.95, "F8": 0.95, "T5": 0.80, "T6": 0.80, "Fp1": 0.85, "Fp2": 0.85,
+                  "F3": 0.45, "F4": 0.45, "C3": 0.35, "C4": 0.35, "P3": 0.35, "P4": 0.35, "O1": 0.50, "O2": 0.50,
+                  "Fz": 0.20, "Cz": 0.15, "Pz": 0.20}
 _PHOTIC_FIELD = {"O1": 1.0, "O2": 1.0, "P3": 0.45, "P4": 0.45, "Pz": 0.40, "T5": 0.40, "T6": 0.40}
 #: broad scalp EMG of a convulsive seizure (atlas-gtc-at-20uv: every derivation saturated with muscle)
 _EMG_FIELD = {"T3": 1.0, "T4": 1.0, "F7": 0.95, "F8": 0.95, "T5": 0.75, "T6": 0.75, "Fp1": 0.85, "Fp2": 0.85,
@@ -278,6 +285,8 @@ class GeneralizedV3:
         self._fields: Dict[Tuple[str, str], Tuple[np.ndarray, np.ndarray]] = {}
         self._norm: Dict[tuple, float] = {}
         self.emg_field = np.array([_EMG_FIELD.get(e, 0.3) for e in self.el])
+        self.emg_field_gtc = np.array([_EMG_FIELD_GTC.get(e, 0.3) for e in self.el])
+        self.move: List[tuple] = []          # r8 GTC movement transients (t, sigma s, per-electrode uV)
         self.photic_field = np.array([_PHOTIC_FIELD.get(e, 0.03) for e in self.el])
         from .synth import BLINK_UV          # lazy: synth imports this module
         self._closure_blink_uv = float(syn.bg.get("blink_amplitude_uv", BLINK_UV))
@@ -657,7 +666,7 @@ class GeneralizedV3:
                        w8=dict(wander=0.08, nu=(0.3, 1.2), cam=0.25, mu=(0.4, 1.5), harm=0.6, hemi=0.08))
         # r8 (Craig's reference, researchgate 369381411 fig 3A-B: from ~3 s after onset the tonic phase is muscle in
         # every derivation, continuous): tonic EMG 2x emg_uv
-        self.emg.append((t0 + 0.5, tc, 2.0 * emg, 1.5, 0.3, "tonic"))
+        self.emg.append((t0 + 0.5, tc, 2.0 * emg, 1.5, 0.3, "gtc_tonic"))
         # r8 clonic rebuild (Craig: "much more muscle and much larger EEG amplitude"; polyspike bursts separated by
         # slow waves, progressively slowing; REFERENCE_TARGETS s1-2, Bauer 2017, AES f72): bursts from ~4 Hz, the
         # interval growing exponentially to ~0.8 Hz with AR(1) lognormal scatter rising 0.10 -> 0.30, 2.5x the tonic
@@ -687,7 +696,9 @@ class GeneralizedV3:
                          x8=dict(sg=1.0, wg=float(np.exp(r8.normal(0.0, 0.12))), w0=1.0, wave_s=(wl, ws),
                                  span=float(ps[0][-1]) + wl + 3.5 * ws))
             self.emg.append((t - 0.01, t + float(ps[0][-1]) + 0.06 + 0.10 * u + float(r8.uniform(0.0, 0.05)),
-                             2.5 * emg * (1.0 - 0.3 * u) * float(np.exp(r8.normal(0.0, 0.2))), 0.01, 0.04, "burst"))
+                             2.5 * emg * (1.0 - 0.3 * u) * float(np.exp(r8.normal(0.0, 0.2))), 0.01, 0.04,
+                             "gtc_burst"))
+            self._jerk_move(r8, t, 1.0 - 0.3 * u)
             t += period
             k += 1
         t = max(t, t_term)
@@ -697,7 +708,8 @@ class GeneralizedV3:
             self._add_cx(t, "psw", a_cl * g * float(np.exp(r8.normal(0.0, 0.15))), 1.5, i * 1_000_003 + k, ps=ps,
                          wave_gain=1.4, asym=float(r8.uniform(-0.12, 0.12)),
                          x8=dict(sg=1.0, wg=1.0, w0=1.0, wave_s=(0.22, 0.09), span=float(ps[0][-1]) + 0.6))
-            self.emg.append((t - 0.01, t + float(ps[0][-1]) + 0.18, 2.0 * emg * g, 0.01, 0.05, "burst"))
+            self.emg.append((t - 0.01, t + float(ps[0][-1]) + 0.18, 2.0 * emg * g, 0.01, 0.05, "gtc_burst"))
+            self._jerk_move(r8, t, g)
             if j == n_term - 1:
                 # the seizure ends with its last discharge (the main run can overshoot t_term by one period)
                 t1 = max(t1, t + float(ps[0][-1]) + 0.3)
@@ -711,6 +723,16 @@ class GeneralizedV3:
         self.emg_loss.append((t1, t1 + post, 0.75))
         self._row("generalized_seizure", i, t0, t1, seizure_type="gtc", tonic_end_s=round(tc, 3),
                   clonic_end_s=round(t1, 3), postictal_s=post, n_clonic_bursts=k)
+
+    def _jerk_move(self, r8, t: float, g: float) -> None:
+        """r8 (REFERENCE_TARGETS s1 [E], Craig: "muscle artifacts"): a clonic jerk tugs the electrodes - a slow
+        (0.15-0.35-s sigma) deflection of 50-150 uV, random sign, on 20-40 % of electrodes, 30-120 ms after the burst
+        onset.  Per electrode, so it survives the bipolar chain; drawn from the clonic stream in schedule order."""
+        k = int(r8.integers(max(1, int(0.2 * self.n_e)), max(2, int(0.4 * self.n_e)) + 1))
+        idx = r8.choice(self.n_e, size=k, replace=False)
+        w = np.zeros(self.n_e)
+        w[idx] = r8.uniform(50.0, 150.0, k) * np.where(r8.uniform(size=k) < 0.5, -1.0, 1.0) * g
+        self.move.append((t + float(r8.uniform(0.03, 0.12)), float(r8.uniform(0.15, 0.35)), w))
 
     def _sz_eyelid_myoclonia(self, i, ev, rng):
         """Eyelid myoclonia (Jeavons): eye closure, eyelid flutter at 5-6 Hz on the frontal poles, and a brief
@@ -999,17 +1021,34 @@ class GeneralizedV3:
         if not self.emg or t.size == 0:
             return None
         gain = np.zeros(t.size)
-        for e0, e1, p2p, rise, fall, _kind in self.emg:
+        gain_gtc = np.zeros(t.size)
+        for e0, e1, p2p, rise, fall, kind in self.emg:
             if e1 + fall * 3 < t[0] or e0 > t[-1]:
                 continue
             sh = np.clip((t - e0) / max(rise, 1e-3), 0.0, 1.0) * np.clip(1.0 - (t - e1) / max(fall, 1e-3), 0.0, 1.0)
-            gain = np.maximum(gain, sh * p2p)
-        if not gain.any():
+            if kind.startswith("gtc_"):
+                gain_gtc = np.maximum(gain_gtc, sh * p2p)
+            else:
+                gain = np.maximum(gain, sh * p2p)
+        if not gain.any() and not gain_gtc.any():
             return None
         n = t.size
         noise = self.syn._oa(self.syn.st_muscle, i0 + self.EMG_OFFSET, n, self.n_e)
         # independent realizations of unit RMS; a bipolar pair of them runs about 6 x sqrt(2) RMS peak-to-peak in 1 s
-        return noise * self.emg_field[:, None] * (gain / (6.0 * math.sqrt(2.0)))[None, :]
+        if not gain_gtc.any():
+            return noise * self.emg_field[:, None] * (gain / (6.0 * math.sqrt(2.0)))[None, :]
+        return noise * (self.emg_field[:, None] * gain[None, :]
+                        + self.emg_field_gtc[:, None] * gain_gtc[None, :]) / (6.0 * math.sqrt(2.0))
+
+    def _move_rows(self, t: np.ndarray) -> Optional[np.ndarray]:
+        out = None
+        for tm, sg, w in self.move:
+            if tm + 4 * sg < t[0] or tm - 4 * sg > t[-1]:
+                continue
+            x = (t - tm) / sg
+            r = w[:, None] * (np.exp(-0.5 * x ** 2) * (np.abs(x) < 4.0))[None, :]
+            out = r if out is None else out + r
+        return out
 
     def emg_channel(self, t: np.ndarray, i0: int) -> Optional[np.ndarray]:
         """Polygraphic EMG row (uV) for records with an atonic / myoclonic-atonic / myoclonic-tonic / tonic seizure:
@@ -1106,7 +1145,8 @@ class GeneralizedV3:
             r = self._gpfa_rows(g, t)
             if r is not None:
                 out[:, r[0]] += r[1]
-        for extra in ((self.emg_rows(t, i0), self._eye_rows(t), self._photic_rows(t)) if extras else ()):
+        for extra in ((self.emg_rows(t, i0), self._eye_rows(t), self._photic_rows(t), self._move_rows(t))
+                      if extras else ()):
             if extra is not None:
                 out += extra
         return out

@@ -175,7 +175,7 @@ def test_gtc_clonic_bursts_slow_with_muscle_and_silent_intervals(seed):
     iv = np.diff([c["t"] for c in cx])
     assert 1.0 / np.median(iv[:5]) >= 3.0 and 1.0 / np.median(iv[-8:]) <= 1.2
     assert all(c["ps"] is not None for c in cx)
-    bursts = [e for e in syn._gen.emg if e[5] == "burst"]
+    bursts = [e for e in syn._gen.emg if e[5] == "gtc_burst"]
     assert len(bursts) == len(cx)
     fs = syn.fs
     t, s, n = _display(syn, 100.0, r["clonic_end_s"])
@@ -212,10 +212,36 @@ def test_gtc_ends_with_full_size_discharges_then_suppression(seed):
     fading = amps[-1] < amps[-3] and np.min(amps[-3:]) >= 0.15 * mid
     assert full or fading, (amps[-3:], mid)
     assert r["clonic_end_s"] - cx[-1]["t"] <= 0.8
-    last = [e for e in syn._gen.emg if e[5] == "burst"][-1]
+    last = [e for e in syn._gen.emg if e[5] == "gtc_burst"][-1]
     assert last[0] >= cx[-1]["t"] - 0.05
     t, s, n = _display(syn, r["clonic_end_s"] + 3.0, r["clonic_end_s"] + 13.0)
     assert np.median(_p2p(s[n.index("F3-C3")], syn.fs)) < 10.0
+
+
+@pytest.mark.parametrize("seed", [26092608, 926208])
+def test_gtc_muscle_spares_the_vertex_and_jerks_move_the_electrodes(seed):
+    """REFERENCE_TARGETS s1 (PubMed 41830894; Craig 2026-09-29 "fix the EMG field, and muscle artifacts"): during the
+    tonic phase the 30-70 Hz muscle on Fz-Cz / Cz-Pz is <= 0.4x the temporal chains', and each clonic jerk adds a slow
+    per-electrode movement transient (50-150 uV on 20-40 % of electrodes) that shows on the bipolar chain."""
+    syn = Synthesizer(_spec(seed, "adolescent", CHILD, [gs("gtc")]), 400.0)
+    r = syn._gen.events()[0]
+    fs = syn.fs
+    i0 = int(round((r["t0"] + 5.0) * fs))
+    tt = (i0 + np.arange(5 * fs)) / fs
+    sig, names = _chain(syn, syn._gen.emg_rows(tt, i0))
+
+    def band(y):
+        return float(np.sqrt(np.mean(sps.sosfiltfilt(sps.butter(4, [30, 70], "bandpass", fs=fs, output="sos"), y) ** 2)))
+    mid = np.mean([band(sig[names.index(c)]) for c in ("Fz-Cz", "Cz-Pz")])
+    temp = np.mean([band(sig[names.index(c)]) for c in ("F7-T3", "T3-T5", "F8-T4", "T4-T6")])
+    assert mid <= 0.4 * temp, (mid, temp)
+    n_clonic = sum(e[5] == "gtc_burst" for e in syn._gen.emg)
+    assert len(syn._gen.move) == n_clonic
+    for tm, sg, w in syn._gen.move[:20]:
+        k = np.count_nonzero(w)
+        assert 0.2 * syn._gen.n_e - 1 <= k <= 0.4 * syn._gen.n_e + 1
+        assert 0.15 <= sg <= 0.35 and np.all((np.abs(w[w != 0]) >= 30.0) & (np.abs(w[w != 0]) <= 150.0))
+        assert np.any(w > 0) or np.any(w < 0)
 
 
 # ------------------------------------------------------------------ eyelid myoclonia

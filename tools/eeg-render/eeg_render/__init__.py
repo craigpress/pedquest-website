@@ -13,6 +13,9 @@ they are not drawn.
 # sleep staging / ACNS 2021 patterns / generalized and focal seizure types, key-vs-visible contracts, viewer montages.
 # spec_version 1 and 2 renders are byte-identical to 0.4.4/0.4.5.  The version string moves to 0.5.0 at rollout,
 # together with render-all / sidecar restamp (test_verify_sidecars pins committed sidecars to this string).
-RENDERER_VERSION = "0.5.0"
+# 0.5.1 (2026-09-29, research/eeg-atlas/generalized-review-20260928): generalized family round 8 - whole-head cycle
+# jitter, rebuilt GTC / photoparoxysmal / LGS slow spike-wave / GPFA, GTC EMG field and movement artifact, GPD
+# per-cycle jitter, generalized sporadic polyspike scatter (spec_version 3 only).
+RENDERER_VERSION = "0.5.1"
 
 __all__ = ["RENDERER_VERSION"]
