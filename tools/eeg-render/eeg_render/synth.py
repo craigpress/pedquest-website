@@ -2193,7 +2193,7 @@ class Synthesizer:
         direct = self.spec_version >= 3 and self.age == "neonate" and len(self._sed_t) <= 1
         ibi_max = float(bs["ibi_max_s"]) if direct and bs.get("ibi_max_s") else None
         burst_s0, ibi_s0 = float(bs["burst_s"]), float(bs["ibi_s"])
-        swc_ta = direct and self._swc_v3 is not None and self.bg["type"] == "continuous"
+        swc_ta = direct and self._swc_v3 is not None and self.bg["type"] == "continuous" and ibi_s0 <= 0.0
         if swc_ta:
             # r9: the quiet-sleep trace alternant of the aEEG sleep-wake cycle (term TA: 3-8 s bursts and 4-8 s
             # interbursts, as the state-cycle module draws it)

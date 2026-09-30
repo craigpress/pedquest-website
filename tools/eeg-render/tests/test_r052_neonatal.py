@@ -77,10 +77,13 @@ def test_interburst_voltage_by_maturity():
 
 
 def test_burst_content_defaults_are_capped_at_the_burst_voltage_and_authored_values_win():
+    """A brush / occipital-delta default (maximal derivation) may reach 1.6x the burst voltage (median derivation)."""
     ge = normalize(_page("discontinuous", 30.0))["spec"]["background"]["graphoelements"]
-    assert ge["delta_brush"]["amplitude_uv"] == pytest.approx(110.0)
-    assert ge["occipital_delta"]["amplitude_uv"] <= 110.0
-    ge = normalize(_page("discontinuous", 30.0, graphoelements={"delta_brush": {"amplitude_uv": 170}}))[
+    assert ge["delta_brush"]["amplitude_uv"] == pytest.approx(170.0)          # table value, under 1.6 x 110
+    ge = normalize(_page("discontinuous", 34.0, amplitude_uv=50.0))["spec"]["background"]["graphoelements"]
+    assert ge["delta_brush"]["amplitude_uv"] == pytest.approx(80.0)
+    assert ge["occipital_delta"]["amplitude_uv"] <= 80.0
+    ge = normalize(_page("discontinuous", 34.0, amplitude_uv=50.0, graphoelements={"delta_brush": {"amplitude_uv": 170}}))[
         "spec"]["background"]["graphoelements"]
     assert ge["delta_brush"]["amplitude_uv"] == 170.0
     # version 2 keeps the table
@@ -180,8 +183,8 @@ def test_immature_cycling_moves_the_lower_margin_of_a_discontinuous_record():
 
 def test_authored_state_cycle_and_version_2_keep_their_model():
     bg = {"type": "continuous", "pma_weeks": 40, "state_cycle": "term", "amplitude_uv": 25}
-    assert _aeeg(bg, "mature", hours=0.2)._swc_v3 is None
-    assert _aeeg({"type": "continuous", "amplitude_uv": 25}, "mature", hours=0.2, version=2)._swc_v3 is None
+    assert _aeeg(bg, "mature", hours=1.0)._swc_v3 is None
+    assert _aeeg({"type": "continuous", "amplitude_uv": 25}, "mature", hours=1.0, version=2)._swc_v3 is None
 
 
 # ------------------------------------------------------------------ ibi_floor_at_h validation
@@ -239,3 +242,9 @@ def test_composite_page_sensitivity_follows_the_page_content():
     assert sens({"at_min": 30.0}) == 7.0
     assert sens({"at_min": 126.0, "sensitivity_uv_mm": 7}) == 7.0
     assert sens({"at_min": 126.0}, v=2) == 7.0
+
+
+def test_ibi_floor_at_h_is_accepted_where_a_continuous_record_has_interbursts():
+    """PQ-B-020: a CNV aEEG with an authored burst_suppression.ibi_s and sleep-wake cycling keeps its curve."""
+    ok = _page("continuous", 40.0, ibi_floor_at_h=[[0, 1.0], [1, 0.6]], burst_suppression={"burst_s": 10, "ibi_s": 2})
+    normalize(ok)

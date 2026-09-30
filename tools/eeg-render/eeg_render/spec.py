@@ -267,9 +267,9 @@ DELTA_BRUSH_PMA_V3: List[Tuple[float, float, float]] = [
 ]
 DELTA_BRUSH_NO_PMA_V3 = {"rate_per_min": 2.0, "amplitude_uv": 150.0}
 #: r9: the graphoelements that ARE the burst's delta content (counted in its displayed voltage), and the largest
-#: fraction of a discontinuous / TA record's burst ``amplitude_uv`` their defaults may take
+#: multiple of a discontinuous / TA record's burst ``amplitude_uv`` their defaults may take
 BURST_CONTENT_GE_V3 = ("delta_brush", "occipital_delta")
-BRUSH_OF_BURST_V3 = 1.0
+BRUSH_OF_BURST_V3 = 1.6
 
 
 def delta_brush_defaults(pma: Optional[float], version: int = 1) -> Dict[str, float]:
@@ -712,13 +712,16 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bs["ibi_floor"] = min(1.0, max(0.005, float(bg["ibi_floor_uv"]) / float(bg["amplitude_uv"])))
         bg["ibi_floor_uv"] = float(bg["ibi_floor_uv"])
     bg["burst_suppression"] = {k: float(v) for k, v in bs.items()}
+    swc_on = kind == "aeeg" and s.get("sleep_wake_cycling", "immature") != "absent" and age == "neonate"
     if version >= 3 and bg.get("ibi_floor_at_h") and bg["type"] in ("continuous", "low_voltage", "suppressed") \
+            and float(bs.get("ibi_s", 0.0)) <= 0.0 and not swc_on \
             and not bg.get("state_cycle") and not any(
                 (e or {}).get("type") in ("sedation_change", "temperature_change") for e in (s.get("events") or [])):
         # r9 (gallery global item): the curve sets the INTERBURST voltage, and a continuous record has no interburst,
         # so it was silently ignored
         raise SpecError(f"background.ibi_floor_at_h has no effect on a {bg['type']} background: it sets the interburst "
-                        "voltage and this record has no interburst intervals. Use a discontinuous, "
+                        "voltage and this record has no interburst intervals (burst_suppression.ibi_s is 0, no "
+                        "sleep-wake cycling). Use a discontinuous, "
                         "excessively_discontinuous, trace_alternant or burst_suppression background, add state_cycle "
                         "(quiet-sleep trace alternant), or schedule a sedation_change / temperature_change that makes "
                         "the record discontinuous; to lower a continuous record's voltage over time use an "
@@ -742,8 +745,10 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
             "discontinuous", "excessively_discontinuous", "trace_alternant"):
         # r9: amplitude_uv of a burst background is the displayed burst voltage WITH the delta waves that make up the
         # burst, brushes and monorhythmic occipital delta (the synth calibration), so their defaults cannot outgrow the
-        # burst they belong to: at most the burst voltage itself (30 w: 110 uV, not the brush table's 170 or the
-        # occipital-delta table's 160).  An authored element amplitude wins (applied below).
+        # burst they belong to.  The element amplitude is read on its maximal derivation and the burst voltage on the
+        # median one (about 1.5-1.7x apart), so the cap is 1.6x the burst voltage: the PMA-table defaults pass (30 w:
+        # brush 170 under 176) and a lowered authored background takes its elements down with it (50 uV at 34 w:
+        # brush 80, not 175, which the burst calibration could not absorb).  An authored element amplitude wins.
         for name in BURST_CONTENT_GE_V3:
             if name in ge:
                 ge[name]["amplitude_uv"] = min(ge[name]["amplitude_uv"], BRUSH_OF_BURST_V3 * float(bg["amplitude_uv"]))
