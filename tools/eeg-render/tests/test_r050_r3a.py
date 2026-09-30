@@ -86,7 +86,12 @@ def test_keyed_brushes_are_on_the_page_and_in_the_whole_record(which):
         _, _, sig0, _, _ = page_signals(spec, bare)
         diff = sig - sig0
         ev = syn._ge_events["delta_brush"]
-        drawn = [(round(float(e[0]), 4), round(float(e[4]), 1)) for e in ev if t0 + 0.2 < e[0] < t0 + win - 1.8]
+        # 0.5.3: the key states the drug-scaled voltage the page draws (neonatal midazolam 1 - 0.5 q)
+        from eeg_render.synth import _piecewise
+        k = (lambda x: float(_piecewise(syn._sed_t, syn._sed_amp, np.array([x]))[0]) if len(syn._sed_t) > 1
+             else float(syn._sed_amp[0]))
+        drawn = [(round(float(e[0]), 4), round(float(e[4]) * k(float(e[0])), 1)) for e in ev
+                 if t0 + 0.2 < e[0] < t0 + win - 1.8]
         assert drawn == [(r[0], r[1]) for r in on_page], horizon
         covered = np.zeros(t.size, bool)
         for onset, amp, *_ in on_page:

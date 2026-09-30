@@ -484,6 +484,14 @@ _BACKGROUND = {
                 # gradient: scales with distance from the midline (0.3.x); hemispheric:
                 # full attenuation on every electrode of that side (0.4.0, Craig P5 C04)
                 "profile": {"enum": ["gradient", "hemispheric"]},
+                # 0.5.3 (spec_version 3): regional focal slowing - a named region (montage.REGION_FOCI, lateral ones)
+                # or an electrode list; the attenuation and polymorphic delta plateau over it and fall off around it
+                "region": {"anyOf": [
+                    {"enum": ["left_temporal", "right_temporal", "left_frontal", "right_frontal", "left_central",
+                              "right_central", "left_parietal", "right_parietal", "left_occipital", "right_occipital",
+                              "left_mesial_temporal", "right_mesial_temporal"]},
+                    {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 8},
+                ]},
             },
         },
         "burst_suppression": {

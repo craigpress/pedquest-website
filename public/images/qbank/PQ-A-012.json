@@ -50,8 +50,8 @@
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.5.2",
-  "spec_hash": "sha256:a25150dc6b6004e28b779ddf49a1852af06b563b84035e235a3bbcfaa563ec6b",
+  "renderer_version": "0.5.3",
+  "spec_hash": "sha256:d46b8c4fab477dfb9fc0659277caa41678e08169c54f81358a6d21a1b669c707",
   "db_ranges": {
     "fft_L": [
       -5.548,

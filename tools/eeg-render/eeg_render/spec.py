@@ -777,6 +777,15 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         # gradient: attenuation scales with distance from the midline (0.3.x);
         # hemispheric: every electrode of that side gets the full attenuation (0.4.0)
         asym.setdefault("profile", "hemispheric" if version >= 2 else "gradient")
+        if asym.get("region") is not None:
+            # 0.5.3: regional focal slowing is a spec_version 3 control
+            if version < 3:
+                raise SpecError("background.asymmetry.region needs spec_version 3")
+            from . import montage as _mt
+            names = _mt.REGION_FOCI[asym["region"]] if isinstance(asym["region"], str) else list(asym["region"])
+            bad = [e for e in names if e not in _mt.POSITIONS]
+            if bad:
+                raise SpecError(f"background.asymmetry.region: unknown electrodes {bad}")
         bg["asymmetry"] = asym
     else:
         bg["asymmetry"] = None

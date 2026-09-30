@@ -272,9 +272,14 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
     # carries the realized rate overall and by state.
     brushes = (getattr(synth, "_ge_events", None) or {}).get("delta_brush") if synth.spec_version >= 3 else None
     if brushes is not None and len(brushes):
+        from ..synth import _piecewise
+        sed_t, sed_amp = getattr(synth, "_sed_t", [0.0]), getattr(synth, "_sed_amp", [1.0])
         for t0, dur, f1, side, amp, _ in brushes:
             if t0 + dur < 0.0 or t0 > duration_s:
                 continue
+            # 0.5.3: the page draws a brush at the drug-scaled voltage (neonatal midazolam 1 - 0.5 q), so the key does too
+            k = float(_piecewise(sed_t, sed_amp, np.array([float(t0)]))[0]) if len(sed_t) > 1 else float(sed_amp[0])
+            amp = amp * k
             label = str(synth.state_at(np.array([float(t0)]))[0]) or None
             rows.append(_row("delta_brush", t0, t0 + dur, fs, duration_s,
                              side="right" if side > 0 else "left", amplitude_uv=round(float(amp), 1),

@@ -21,6 +21,8 @@ they are not drawn.
 # ACNS rates, fields and morphologies, status epilepticus variability, bilateral spread, mesial / posterior onsets,
 # spasm decrement, neonatal burst calibration and graphoelements, aEEG sleep-wake cycling, panel labels
 # (spec_version 3 only).
-RENDERER_VERSION = "0.5.2"
+# 0.5.3 (2026-09-30, Craig): background.asymmetry.region (regional focal slowing) and neonatal midazolam 1 - 0.5 q with
+# a damped sleep-wake cycle (spec_version 3 only). Bank PNGs byte-identical (no bank item uses either); restamped.
+RENDERER_VERSION = "0.5.3"
 
 __all__ = ["RENDERER_VERSION"]

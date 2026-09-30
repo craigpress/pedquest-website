@@ -986,7 +986,18 @@ class Synthesizer:
             slw = float(asym.get("slowing_hz", 0.0))
             sign = -1.0 if asym["side"] == "left" else 1.0
             hemispheric = asym.get("profile") == "hemispheric"
+            region = asym.get("region") if self.spec_version >= 3 else None
+            if region:
+                # 0.5.3 (gallery review: focal slowing could only be hemispheric): a plateau over the region's
+                # electrodes with the breach-style 0.3 falloff, so e.g. left temporal slowing stays in the temporal
+                # chain and the parasagittal chain keeps its background
+                names = mt.REGION_FOCI[region] if isinstance(region, str) else list(region)
+                plateau = self._breach_plateau({"focus": names[0], "region": names})
             for i, e in enumerate(ch):
+                if region:
+                    self.gain_asym[i] = 1.0 - att * plateau[i]
+                    self.slow_side[i] = plateau[i] * min(1.0, slw / 3.0)
+                    continue
                 x = mt.POSITIONS.get(e, (0.0, 0.0))[0]
                 # gradient (0.3.x): C3 at x~0.5 got half the attenuation, Fp1 a third, so a
                 # "40 %" request never read as 40 %; hemispheric (0.4.0, Craig P5 C04): every
@@ -1377,7 +1388,7 @@ class Synthesizer:
     #: waxing/waning benzodiazepine beta, ``barb`` barbiturate 13-16 Hz fast activity, ``gamma3`` ketamine 25-32 Hz gamma,
     #: ``keta`` depth of the ketamine slow-delta / gamma alternation
     #: 0.5.2: ``slow3`` anesthetic frontal slow waves (propofol)
-    _SED_V3_KEYS = ("loc", "pdr", "beta3", "barb", "gamma3", "keta", "slow3")
+    _SED_V3_KEYS = ("loc", "pdr", "beta3", "barb", "gamma3", "keta", "slow3", "swc")
     #: drug spindle packet weight (background-RMS units at the field maximum, per unit spindle level)
     _DRUG_SPINDLE_W = 3.5
     #: residual interburst floor (fraction of the background) under drug-induced burst suppression
@@ -1414,7 +1425,7 @@ class Synthesizer:
         2016 (S26, ketamine: theta up, alternating slow-delta and gamma); Barberio 2011 (S28, pentobarbital); Graversen
         2014 (S29, remifentanil volunteers stay awake).  Weights are authored, not dose conversions."""
         loc = float(smoothstep((q - 0.2) / 0.5))
-        v = {"loc": loc, "pdr": 1.0, "beta3": 0.0, "barb": 0.0, "gamma3": 0.0, "keta": 0.0, "slow3": 0.0}
+        v = {"loc": loc, "pdr": 1.0, "beta3": 0.0, "barb": 0.0, "gamma3": 0.0, "keta": 0.0, "slow3": 0.0, "swc": 1.0}
         if agent == "propofol":
             # 0.5.2 (gallery r9: frontal alpha without the large slow waves): propofol unconsciousness is frontal alpha
             # ON large 0.5-2 Hz slow waves (Purdon 2015 Fig 2), from loss of consciousness on
@@ -1425,7 +1436,9 @@ class Synthesizer:
                      spindle=q)
         elif agent == "midazolam":
             if self.age == "neonate":
-                v.update(loc=0.0, amp=1.0 - 0.3 * q, theta_scale=1.0 + 0.4 * q, delta=-0.15 * q)
+                # 0.5.3 (gallery review: the 0.7x drop was smaller than the r9 quiet-sleep swing of ~1.45x): amplitude
+                # 1 - 0.5 q, and the sleep-wake cycle damps with the drug (swc: its depth x (1 - 0.6 q))
+                v.update(loc=0.0, amp=1.0 - 0.5 * q, theta_scale=1.0 + 0.4 * q, delta=-0.15 * q, swc=1.0 - 0.6 * q)
             else:
                 v.update(pdr=1.0 - 0.75 * loc, emg_scale=1.0 - 0.8 * q, beta3=0.9 * q)
         elif agent == "ketamine":
@@ -2093,7 +2106,7 @@ class Synthesizer:
             return np.clip(v, 0.0, 1.0)
         v = _piecewise(self._state_t, self._state_v, t)
         if self._swc_v3 is not None:
-            v = v + self._swc_v3["depth"] * self._swc_cycle_v3(t)[0]
+            v = v + self._swc_v3["depth"] * self._sed_v3_at("swc", t, 1.0) * self._swc_cycle_v3(t)[0]
         else:
             v = v + self._swc_depth * 0.5 * (
                 1.0 - np.cos(2 * np.pi * (t / self._swc_period_s + self._swc_phase)))
@@ -2185,7 +2198,7 @@ class Synthesizer:
         if self._swc_v3 is not None and len(self._sed_t) <= 1:
             # r9: quiet sleep of the aEEG sleep-wake cycle: trace alternant on a continuous record, a longer interburst
             # on a discontinuous one (IBI x1.5 at full depth) against a shorter one (x0.65) in the active phase
-            d = self._swc_v3["depth"]
+            d = self._swc_v3["depth"] * self._sed_v3_at("swc", t, 1.0)
             q = self._swc_cycle_v3(t)[1]
             if self.bg["type"] == "continuous":
                 base = base + self._SWC_QS_SF_V3 * d * q
@@ -2913,7 +2926,7 @@ class Synthesizer:
             # a discontinuous one a flatter interburst in quiet sleep (x0.6 at full depth) and a fuller one in the
             # active phase (x1.6), so the lower margin swings with the cycle
             q = self._swc_cycle_v3(t)[1]
-            d = self._swc_v3["depth"]
+            d = self._swc_v3["depth"] * self._sed_v3_at("swc", t, 1.0)
             if self.bg["type"] == "continuous":
                 floor = floor + (self._SWC_QS_FLOOR_V3 - floor) * d * q
             else:
@@ -7010,7 +7023,7 @@ class Synthesizer:
                 "continuous", "discontinuous", "excessively_discontinuous", "trace_alternant"):
             # r9: quiet-sleep bursts carry the higher voltage that lifts the aEEG upper margin (band widening)
             k = self._SWC_QS_GAIN_V3[0 if self.bg["type"] == "continuous" else 1]
-            env = env * (1.0 + k * self._swc_v3["depth"] * self._swc_cycle_v3(t)[1])
+            env = env * (1.0 + k * self._swc_v3["depth"] * self._sed_v3_at("swc", t, 1.0) * self._swc_cycle_v3(t)[1])
         for at, dur, side, depth, ramp, delta_depth in self._atten:
             if at + dur < t[0] or at > t[-1]:
                 continue

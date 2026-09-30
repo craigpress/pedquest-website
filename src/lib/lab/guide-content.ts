@@ -373,10 +373,10 @@ const background: GuideSection = {
       names: ["bg:ap_gradient"],
     },
     {
-      id: "bg-asymmetry", name: "Hemispheric asymmetry", where: "advanced",
-      what: "Attenuation (percent) and/or slowing (Hz) of one hemisphere, applied across the whole side or graded with distance from the midline.",
-      defaultText: "None. When set, the whole hemisphere is affected.",
-      onPage: "Lower voltage or slower activity on the affected side throughout the recording.",
+      id: "bg-asymmetry", name: "Hemispheric or regional asymmetry", where: "advanced",
+      what: "Attenuation (percent) and/or slowing (Hz) of one hemisphere, applied across the whole side or graded with distance from the midline. Edition 3 also takes a region (for example left temporal, or a list of electrodes) to confine the attenuation and polymorphic delta to that region.",
+      defaultText: "None. When set without a region, the whole hemisphere is affected.",
+      onPage: "Lower voltage or slower activity on the affected side, or only in the chosen region's derivations, throughout the recording.",
       onTrends: "The asymmetry panels show a sustained deflection toward the affected side.",
       names: ["bg:asymmetry"],
     },
@@ -1028,7 +1028,7 @@ const sedation: GuideSection = {
       what: "The drug, which sets the EEG signature.",
       options: [
         o("propofol", "Propofol", "Frontal alpha appears as occipital alpha is lost, with more delta; burst suppression at high targets."),
-        o("midazolam", "Midazolam", "Diffuse waxing and waning beta; in neonates, lower voltage with more theta."),
+        o("midazolam", "Midazolam", "Diffuse waxing and waning beta; in neonates, clearly lower voltage (to about half) with more theta and damped sleep-wake cycling."),
         o("pentobarbital", "Pentobarbital", "13–16 Hz barbiturate fast activity, then burst suppression with genuine bursts."),
         o("dexmedetomidine", "Dexmedetomidine", "Sleep-like slow background with frontal 9–15 Hz spindles lasting 1–2 s at irregular intervals."),
         o("ketamine", "Ketamine", "More theta, and alternating slow-delta and 25–32 Hz gamma epochs."),
