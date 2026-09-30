@@ -941,6 +941,10 @@ class Synthesizer:
             self.st_theta_post = (self._mk("theta_post_b", band_shape(f, 5.0, 0.9, order=1.0),
                                            _profile(ch, _POST_THETA_FIELD_B, 0.1), common=0.3)
                                   if self.age in _POST_THETA_W_B else None)
+            # 0.5.2: propofol slow waves - coherent over the frontal head (shared 0.99; Fp as large as F, so the
+            # frontopolar difference is not blink-like), falling off behind the vertex
+            self.st_sed_slow = self._mk("sed_slow3", band_shape(f, 1.3, 0.9, order=1.0) * hp_lp_shape(f, 0.6, 60.0),
+                                        _profile(ch, self._SED_SLOW_FIELD, 0.2), common=0.99)
             self.st_barb = self._mk("sed_barb", band_shape(f, 14.5, 2.0), 0.6 * ant + 0.4 * near_uniform, common=0.35)
             # phase D (sedation-v3 S109-05): a Gaussian 25-32 Hz band (the super-Gaussian 2.6-Hz band drew
             # near-sinusoidal 28-Hz packets that read as fast spindles)
@@ -1367,6 +1371,9 @@ class Synthesizer:
     #: r3: barbiturate burst content scale.  2.5 x the stream drew bursts of 2.5 rows (bipolar max-chain median 184 uV)
     #: overrunning 2-3 neighbouring rows; the reference bursts are about 0.5-1.5 spacing
     _SED_BURST_SCALE_V3 = 0.6
+    _SED_SLOW_FIELD = {"Fp1": 1.0, "Fp2": 1.0, "F3": 1.0, "F4": 1.0, "Fz": 1.0, "F7": 0.8, "F8": 0.8, "C3": 0.3,
+                       "C4": 0.3, "Cz": 0.35, "T3": 0.3, "T4": 0.3, "P3": 0.1, "P4": 0.1, "Pz": 0.1, "T5": 0.1,
+                       "T6": 0.1, "O1": 0.05, "O2": 0.05}
     #: 0.5.2 propofol slow-wave weight (background-RMS units of the frontal 0.5-2 Hz slow-wave stream at full loss of
     #: consciousness)
     _SED_SLOW_W = 4.0
@@ -1708,7 +1715,10 @@ class Synthesizer:
         self._rem_step_t = np.array([s[0] for s in self._rem_steps])
         # phase B (variants-neonatal-r3 awake child: dense temporal EMG on every awake page, and in drowsiness): tonic
         # temporalis muscle comes and goes while awake / drowsy
-        child = self.age == "child"
+        # 0.5.2: the awake child's shorter, rarer bursts; generalized-seizure records keep the reviewed 0.5.0 timeline
+        # (the accepted absence / myoclonic / atonic pages are pinned byte for byte, test_r050_gen_r8)
+        child = self.age == "child" and not any(e["type"] in ("generalized_seizure", "generalized_discharges",
+                                                               "tonic_seizure") for e in spec["events"])
         self._emg_on = (sv3.emg_episodes(self.seed, dur, sv3.EMG_ON_S_CHILD, sv3.EMG_OFF_S_CHILD) if child
                         else sv3.emg_episodes(self.seed, dur))
         self._emg_levels = sv3.EMG_LEVELS_CHILD if child else (sv3.EMG_ON_LEVEL, sv3.EMG_OFF_LEVEL)
@@ -2771,7 +2781,7 @@ class Synthesizer:
             out = out * (1.0 - depth * phase_b)
         return out
 
-    _BS_IBI_RESIDUAL_V52 = 0.15
+    _BS_IBI_RESIDUAL_UV = 4.5
     #: 0.5.2 temperature: (PDR cut, delta gain) at 33 C (versions 1-2: 0.55, 0.70)
     _TEMP_SLOW_V52 = (0.30, 0.30)
 
@@ -2783,9 +2793,12 @@ class Synthesizer:
         floor = self._ibi_floor0 * (1.0 - deep) + (self._SED_IBI_FLOOR_V3 if self._sed_driven_bs() else 0.005) * deep
         if self.spec_version >= 3 and self.bg["type"] == "burst_suppression" and self.age != "neonate":
             # 0.5.2 (gallery r9: the non-drug interburst was a ruler line, 0.9 uV RMS): a suppression keeps a few uV of
-            # low-voltage irregular residual activity, as the drug-induced one does (about 2 uV RMS bipolar, still
-            # under the 10-uV p2p suppression criterion)
-            floor = np.maximum(floor, self._BS_IBI_RESIDUAL_V52)
+            # low-voltage irregular residual activity, as the drug-induced one does: a floor worth about
+            # ``_BS_IBI_RESIDUAL_UV`` of the authored voltage (about 1.3 uV RMS bipolar, 4 uV p2p), under the
+            # suppression criteria (10 uV p2p SR trend, 5 uV p2p raw)
+            # (not where a sedation target drives the suppression deeper: that keeps its 0.5.1 floor, PQ-A-003)
+            floor = np.maximum(floor, min(0.15, self._BS_IBI_RESIDUAL_UV / max(float(self.bg["amplitude_uv"]), 1.0))
+                               * (1.0 - deep))
         if self._state_intervals:
             # quiet sleep = trace alternant: interburst about 0.42 of the burst voltage (< 50 uV for
             # 100 uV bursts), a little lower in the first hours; other states have no interburst
@@ -5608,18 +5621,19 @@ class Synthesizer:
     #: (0.25 per link along every chain) so the rolling waves survive the parasagittal and midline chains as in
     #: Tongue-Artifact; the old table put 0.25 rows in C3-P3/P3-O1 and read as frontotemporal only
     #: 0.5.2 (gallery r9: the linear 0.25-per-link gradient drew the same voltage in every link, uniform back to
-    #: P3-O1, while Fp1 = F3 spared Fp1-F3): a field decaying exponentially from the anterior-inferior tongue dipole
-    #: (exp(-d / 0.6) from (+-0.6, 1.0), temporal row raised), so the anterior links carry the most and the posterior
-    #: links little (Fp1-F3 0.33, F3-C3 0.36, C3-P3 0.18, P3-O1 0.07; F7-T3 0.5, T3-T5 0.24, T5-O1 0.05)
-    _GLOSSO_FIELD = {"Fp1": 1.0, "Fp2": 1.0, "F7": 0.85, "F8": 0.85, "F3": 0.67, "F4": 0.67, "Fz": 0.44,
-                     "T3": 0.35, "T4": 0.35, "C3": 0.31, "C4": 0.31, "Cz": 0.23, "T5": 0.11, "T6": 0.11,
-                     "P3": 0.13, "P4": 0.13, "Pz": 0.11, "O1": 0.06, "O2": 0.06, "A1": 0.35, "A2": 0.35}
+    #: P3-O1, while Fp1 = F3 spared Fp1-F3): the tongue is a front-to-back dipole, so the field falls from the frontal
+    #: pole and reverses sign behind the vertex; each link is a little smaller than the one in front of it (anterior >
+    #: posterior) while the parasagittal and midline chains keep the rolling waves (Tongue-Artifact): Fp1-F3 0.33,
+    #: F3-C3 0.3, C3-P3 0.27, P3-O1 0.26; Fp1-F7 0.2, F7-T3 0.4, T3-T5 0.35, T5-O1 0.21; Fz-Cz 0.3, Cz-Pz 0.26
+    _GLOSSO_FIELD = {"Fp1": 1.0, "Fp2": 1.0, "F7": 0.8, "F8": 0.8, "F3": 0.67, "F4": 0.67, "Fz": 0.6,
+                     "T3": 0.4, "T4": 0.4, "C3": 0.37, "C4": 0.37, "Cz": 0.3, "T5": 0.05, "T6": 0.05,
+                     "P3": 0.1, "P4": 0.1, "Pz": 0.04, "O1": -0.16, "O2": -0.16, "A1": 0.4, "A2": 0.4}
     GAZE_UV = 75.0          # gaze-position scale at F7: saccade steps of 75-150 uV
     ROVING_UV = 55.0        # RMS of the slow roving drift at F7
     #: r3 (artifacts-sedation-r3 A110-11): 200 drew parasagittal 1.18 rows and temporal 1.4-1.65 rows, about 1.5x the
     #: Tongue-Artifact figure (parasagittal 0.5-0.8 spacing, temporal about 1)
-    #: 0.5.2: 100 with the exponential field keeps the r3 temporal-chain voltage (max link 0.5 x 100 = 0.35 x 140)
-    GLOSSO_UV = 100.0
+    #: 0.5.2: 140 with the dipolar field keeps the r3 parasagittal voltage (P3-O1 0.26 x 140, was 0.25 x 140)
+    GLOSSO_UV = 140.0
     CHEW_EMG_UV = 70.0      # phase D: 120 drew 4-6 rows at medium and 11 at high (C16)
     #: r3 (artifacts-sedation-r3 A110-04): at 45 the P3-O1 spike (29 uV) sat level with the 9-Hz PDR in its own 130-ms
     #: window (1.07x); in ECG-artifact-on-an-uncalibrated-screen the P3-O1/T5-O1 spikes stand 1.5-2x above it
@@ -6488,7 +6502,7 @@ class Synthesizer:
                 x += self._stream_signal(self.st_sed_beta, i0, n) * (beta3 * am)[None, :]
             slow3 = s3("slow3", 0.0)
             if slow3.any():
-                x += self._stream_signal(self.st_sws, i0 + 5171, n) * (self._SED_SLOW_W * slow3)[None, :]
+                x += self._stream_signal(self.st_sed_slow, i0, n) * (self._SED_SLOW_W * slow3)[None, :]
             barb = s3("barb", 0.0)
             if barb.any():
                 x += self._stream_signal(self.st_barb, i0, n) * barb[None, :]

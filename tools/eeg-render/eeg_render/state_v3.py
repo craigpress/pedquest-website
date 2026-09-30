@@ -156,11 +156,12 @@ EMG_ON_LEVEL, EMG_OFF_LEVEL = 1.4, 0.35
 
 
 #: 0.5.2 (gallery r9: frequent multi-second temporal muscle bursts on every awake child page competed with the
-#: feature): an awake child's tonic temporalis bursts are shorter and rarer (on about 15 % of the time, median 2 s)
-#: and lower when on; the off level rises a little so the minute-scale EMG stays near the old floor
+#: feature): an awake child's tonic temporalis bursts are shorter and rarer (on about 15 % of the time, median 2 s,
+#: was 40 % and 3.5 s) at the 0.5.1 on / off levels, so the minute-scale temporal EMG falls to about 0.5 of the
+#: floor (was 0.77) and stays intermittent (1-s RMS CV above 0.45, test_r050_sleep_fix)
 EMG_ON_S_CHILD = (2.0, 0.5)
 EMG_OFF_S_CHILD = (11.0, 0.6)
-EMG_LEVELS_CHILD = (1.0, 0.4)
+EMG_LEVELS_CHILD = (1.4, 0.35)
 
 
 def emg_episodes(seed: int, horizon: float, on_s=EMG_ON_S, off_s=EMG_OFF_S) -> np.ndarray:

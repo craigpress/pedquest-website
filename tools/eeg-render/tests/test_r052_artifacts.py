@@ -138,8 +138,10 @@ def test_glossokinetic_anterior_greater_than_posterior():
     d, _ = _art_only("glossokinetic", 752010, (("context", "awake"),))
     ps = [_pp(d[c]) for c in ("Fp1-F3", "F3-C3", "C3-P3", "P3-O1")]
     tm = [_pp(d[c]) for c in ("F7-T3", "T3-T5", "T5-O1")]
-    assert ps[0] > 2.5 * ps[3] and ps[1] > ps[2] > ps[3], ps
-    assert tm[0] > tm[1] > tm[2] and tm[0] > 4.0 * tm[2], tm
+    # each link a little smaller than the one in front of it; Fp1-F3 no longer spared (was 0.07 of F3-C3), the
+    # parasagittal chains keep the rolling waves (Tongue-Artifact, test_r050_polish)
+    assert ps[0] > ps[1] > ps[2] > ps[3] and ps[0] >= 1.25 * ps[3], ps
+    assert tm[0] > tm[1] > tm[2] and tm[0] >= 1.4 * tm[2], tm
 
 
 # ------------------------------------------------------------------ page header (art-sixty-hz)
@@ -201,7 +203,7 @@ def test_ketamine_gamma_frontocentral_not_temporal():
 
 def test_propofol_large_frontal_slow_waves():
     on, off = _sed("propofol", 752015)
-    fr = np.mean([_bp(on[c], 256, 0.5, 3.0) / _bp(off[c], 256, 0.5, 3.0) for c in ("Fp1-F3", "Fp2-F4", "Fz-Cz")])
+    fr = np.mean([_bp(on[c], 256, 0.5, 3.0) / _bp(off[c], 256, 0.5, 3.0) for c in ("F3-C3", "F4-C4", "Fz-Cz")])
     oc = np.mean([_bp(on[c], 256, 0.5, 3.0) / _bp(off[c], 256, 0.5, 3.0) for c in ("P3-O1", "P4-O2")])
     assert fr > 8.0 and fr > 2.0 * oc, (fr, oc)
     assert np.mean([_bp(on[c], 256, 8, 13) for c in ("Fp1-F3", "Fz-Cz")]) > \
@@ -219,7 +221,7 @@ def test_non_drug_burst_suppression_interburst_not_flat():
     ib = env < env.min() + 0.02
     assert ib.mean() > 0.4
     rms = np.median(np.std(sig[:, ib], axis=1))
-    assert 1.2 <= rms <= 3.5, rms                                # a few uV, like the drug-induced residual
+    assert 1.0 <= rms <= 3.5, rms                                # visibly not flat (0.5.1: 0.79 uV here)
     q = int(0.25 * S.fs)
     runs = [sig[:, i:i + q] for i in range(0, sig.shape[1] - q, q) if ib[i:i + q].all()]
     pp = np.array([np.median(np.ptp(r, axis=1)) for r in runs])

@@ -150,7 +150,9 @@ def _breach_measures(bg, seed):
     _, x = s.segment(240.0, 360.0)
     ref = s.derive(x, [("C3", None)])[0]
     pp = np.median(np.ptp(d[:, : 120 * FS].reshape(4, 120, FS), axis=2), axis=1)
-    return dict(pp=pp, r=float(np.corrcoef(d[0], d[1])[0, 1]), beta=_band_rms(ref, 13, 30), emg=_band_rms(ref, 30, 70))
+    # 0.5.2: muscle read at 45-70 Hz.  With the awake child's rarer tonic bursts (r9) the accentuated breach beta's
+    # Lorentzian tail dominated a 30-70 Hz band and read as "muscle amplified" (1.29-1.35) with no muscle gain at all
+    return dict(pp=pp, r=float(np.corrcoef(d[0], d[1])[0, 1]), beta=_band_rms(ref, 13, 30), emg=_band_rms(ref, 45, 70))
 
 
 @pytest.mark.parametrize("seed", [517203, 517204, 517205])
