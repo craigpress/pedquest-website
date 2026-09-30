@@ -16,6 +16,11 @@ they are not drawn.
 # 0.5.1 (2026-09-29, research/eeg-atlas/generalized-review-20260928): generalized family round 8 - whole-head cycle
 # jitter, rebuilt GTC / photoparoxysmal / LGS slow spike-wave / GPFA, GTC EMG field and movement artifact, GPD
 # per-cycle jitter, generalized sporadic polyspike scatter (spec_version 3 only).
-RENDERER_VERSION = "0.5.1"
+# 0.5.2 (2026-09-29, research/eeg-atlas/gallery-20260929/ISSUES.json): gallery review round r9 - artifact fields
+# (patting, chest PT, ECMO, blink, glossokinetic), less awake-child muscle, sedation / hypothermia / coma fixes,
+# ACNS rates, fields and morphologies, status epilepticus variability, bilateral spread, mesial / posterior onsets,
+# spasm decrement, neonatal burst calibration and graphoelements, aEEG sleep-wake cycling, panel labels
+# (spec_version 3 only).
+RENDERER_VERSION = "0.5.2"
 
 __all__ = ["RENDERER_VERSION"]

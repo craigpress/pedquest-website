@@ -756,7 +756,7 @@ const generalized: GuideSection = {
     {
       id: "spasm", name: "Epileptic spasms", where: "advanced",
       what: "A single spasm or a cluster: a generalized high-voltage slow wave with a brief muscle burst, then a diffuse electrodecrement carrying low-voltage fast activity. Clusters set the mean interval (2–300 s) and number of spasms; a spasm may be asymmetric.",
-      defaultText: "0.8 s slow wave, 3.5 s decrement removing about 60% of the background.",
+      defaultText: "0.8 s slow wave, 3.5 s decrement removing about 85% of the background, with low-voltage fast activity riding it.",
       onPage: "Repeated slow wave–decrement complexes, typically on waking, often from a hypsarrhythmic background.",
       names: ["event:spasm", "event:spasm_cluster"],
     },
