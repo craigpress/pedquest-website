@@ -186,6 +186,13 @@ GRAPHOELEMENT_PMA_V2: Dict[str, List[Tuple[float, float, float]]] = {
 #: reaches zero at 34.0 instead of 34.2.
 GRAPHOELEMENT_PMA_V3: Dict[str, List[Tuple[float, float, float]]] = {
     "temporal_alpha": [(32.6, 0.0, 0.0), (33.0, 2.5, 80.0), (33.6, 2.0, 80.0), (34.0, 0.0, 0.0)],
+    # r9 (gallery neo-stop-24w / neo-temporal-theta-29w: the elements stood out only over a lowered 45-uV background):
+    # version-3 amplitudes are the displayed peak-to-peak in the display derivation of largest field (synth
+    # ``_ge_display_diff``), set at or above the burst voltage of the same PMA row (130 uV at 24-26 w, 120 at 28 w,
+    # 110 at 30 w) so a default page shows them; within the atlas's 20-200 uV for neonatal theta transients (rec 2446).
+    # The v1/v2 35 uV STOP sat at a quarter of its bursts.
+    "temporal_theta": [(25.5, 0.0, 0.0), (26.0, 1.0, 110.0), (29.0, 3.0, 150.0), (32.0, 2.5, 130.0), (32.8, 0.0, 0.0)],
+    "stop": [(22.0, 2.0, 150.0), (25.0, 1.8, 150.0), (28.0, 0.5, 110.0), (31.0, 0.0, 0.0)],
 }
 
 #: 0.5.0: the longest ACCEPTABLE single interburst interval by PMA (learningeeg.com/neonatal: 60 s at 24 w, 40 s at
@@ -259,6 +266,10 @@ DELTA_BRUSH_PMA_V3: List[Tuple[float, float, float]] = [
     (35.0, 2.2, 160.0), (37.0, 0.9, 130.0), (38.0, 0.3, 110.0), (40.0, 0.15, 100.0), (41.0, 0.0, 0.0),
 ]
 DELTA_BRUSH_NO_PMA_V3 = {"rate_per_min": 2.0, "amplitude_uv": 150.0}
+#: r9: the graphoelements that ARE the burst's delta content (counted in its displayed voltage), and the largest
+#: multiple of a discontinuous / TA record's burst ``amplitude_uv`` their defaults may take
+BURST_CONTENT_GE_V3 = ("delta_brush", "occipital_delta")
+BRUSH_OF_BURST_V3 = 1.6
 
 
 def delta_brush_defaults(pma: Optional[float], version: int = 1) -> Dict[str, float]:
@@ -466,6 +477,10 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
                 for k in COMPOSITE_INHERIT:
                     if k not in child and k in panel_raw:
                         child[k] = panel_raw[k]
+            if (sub == "eeg_page" and "sensitivity_uv_mm" not in child and "qeeg_panel" in out
+                    and int(out["qeeg_panel"].get("spec_version") or 2) >= 3):
+                # r9 (gallery trd-composite-seizure: a 220-uV seizure page at the 7 uV/mm default was unreadable)
+                child["sensitivity_uv_mm"] = _composite_page_sensitivity(out["qeeg_panel"], child)
             out[sub] = _normalize_spec(sub, child)
         if "qeeg_panel" not in out and "eeg_page" not in out:
             raise SpecError("composite spec needs at least one of qeeg_panel / eeg_page")
@@ -697,6 +712,20 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bs["ibi_floor"] = min(1.0, max(0.005, float(bg["ibi_floor_uv"]) / float(bg["amplitude_uv"])))
         bg["ibi_floor_uv"] = float(bg["ibi_floor_uv"])
     bg["burst_suppression"] = {k: float(v) for k, v in bs.items()}
+    swc_on = kind == "aeeg" and s.get("sleep_wake_cycling", "immature") != "absent" and age == "neonate"
+    if version >= 3 and bg.get("ibi_floor_at_h") and bg["type"] in ("continuous", "low_voltage", "suppressed") \
+            and float(bs.get("ibi_s", 0.0)) <= 0.0 and not swc_on \
+            and not bg.get("state_cycle") and not any(
+                (e or {}).get("type") in ("sedation_change", "temperature_change") for e in (s.get("events") or [])):
+        # r9 (gallery global item): the curve sets the INTERBURST voltage, and a continuous record has no interburst,
+        # so it was silently ignored
+        raise SpecError(f"background.ibi_floor_at_h has no effect on a {bg['type']} background: it sets the interburst "
+                        "voltage and this record has no interburst intervals (burst_suppression.ibi_s is 0, no "
+                        "sleep-wake cycling). Use a discontinuous, "
+                        "excessively_discontinuous, trace_alternant or burst_suppression background, add state_cycle "
+                        "(quiet-sleep trace alternant), or schedule a sedation_change / temperature_change that makes "
+                        "the record discontinuous; to lower a continuous record's voltage over time use an "
+                        "attenuation_transient event instead.")
     # Neonatal graphoelements: defaults from the PMA table (all zero without a
     # PMA), each element's rate and amplitude overridable by the author.
     ge_in = dict(bg.get("graphoelements", {}) or {})
@@ -712,6 +741,17 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
                 ge[name]["rate_per_min"] = ge[name]["rate_per_min"] * k
         if "delta_brush" in ge and ge["delta_brush"]["rate_per_min"] < 0.6:
             ge["delta_brush"] = {"rate_per_min": 0.6, "amplitude_uv": max(ge["delta_brush"]["amplitude_uv"], 130.0)}
+    if version >= 3 and age == "neonate" and pma is not None and bg["type"] in (
+            "discontinuous", "excessively_discontinuous", "trace_alternant"):
+        # r9: amplitude_uv of a burst background is the displayed burst voltage WITH the delta waves that make up the
+        # burst, brushes and monorhythmic occipital delta (the synth calibration), so their defaults cannot outgrow the
+        # burst they belong to.  The element amplitude is read on its maximal derivation and the burst voltage on the
+        # median one (about 1.5-1.7x apart), so the cap is 1.6x the burst voltage: the PMA-table defaults pass (30 w:
+        # brush 170 under 176) and a lowered authored background takes its elements down with it (50 uV at 34 w:
+        # brush 80, not 175, which the burst calibration could not absorb).  An authored element amplitude wins.
+        for name in BURST_CONTENT_GE_V3:
+            if name in ge:
+                ge[name]["amplitude_uv"] = min(ge[name]["amplitude_uv"], BRUSH_OF_BURST_V3 * float(bg["amplitude_uv"]))
     # Transient sharp waves are part of the state-cycle neonatal module (P7 batch 1): without
     # ``state_cycle`` or an explicit author entry the element is dropped from the normalized spec,
     # so every existing version-2 spec (the bank) keeps its hash and its samples.
@@ -1037,6 +1077,40 @@ COMPOSITE_INHERIT = (
     "spec_version", "age_group", "sample_rate", "channels", "background", "events",
     "annotations", "montage", "source", "sedation", "neuromuscular_blockade",
 )
+
+#: r9: standard page sensitivities (uV/mm) a composite page picks from, and the tallest deflection (mm) it allows
+PAGE_SENSITIVITY_STEPS = (7.0, 10.0, 15.0, 20.0, 30.0, 50.0, 70.0, 100.0)
+PAGE_MAX_DEFLECTION_MM = 15.0
+_NON_CEREBRAL_EVENTS = ("artifact", "stimulation", "sedation_change", "temperature_change", "state_change",
+                        "attenuation_transient")
+
+
+def _composite_page_sensitivity(panel: Dict[str, Any], page: Dict[str, Any]) -> float:
+    """Spec_version 3 default sensitivity of a composite's raw page (only when the author gave none): the smallest
+    standard step at which the largest cerebral voltage in the page window - the background request or the amplitude
+    of a seizure / rhythmic / periodic event overlapping the window - stays within PAGE_MAX_DEFLECTION_MM.  A 50-uV
+    background keeps 7 uV/mm; a 220-uV seizure page gets 15."""
+    t0 = float(page.get("at_min", 0.0))
+    t1 = t0 + float(page.get("window_s", 15.0)) / 60.0
+    peak = float((panel.get("background") or {}).get("amplitude_uv") or 0.0)
+    for e in panel.get("events") or []:
+        if e.get("type") in _NON_CEREBRAL_EVENTS:
+            continue
+        a = e.get("onset_min", e.get("start_min", e.get("at_min")))
+        if a is None:
+            continue
+        inner = e.get("seizure") or {}
+        dur_min = float(e.get("duration_s", inner.get("duration_s", 60.0 * float(e.get("duration_min", 1.0))))) / 60.0
+        b = float(e["end_min"]) + dur_min if e.get("end_min") is not None else float(a) + dur_min
+        if b < t0 or float(a) > t1:
+            continue
+        ev = e.get("evolution") or inner.get("evolution") or {}
+        amps = [ev.get("amplitude_start_uv"), ev.get("amplitude_end_uv"), e.get("amplitude_uv")]
+        peak = max([peak] + [float(v) for v in amps if v is not None])
+    for step in PAGE_SENSITIVITY_STEPS:
+        if peak / step <= PAGE_MAX_DEFLECTION_MM:
+            return step
+    return PAGE_SENSITIVITY_STEPS[-1]
 
 
 SPORADIC_DEFAULTS = {"focus": "T3", "rate_per_h": 60.0, "amplitude_uv": 80.0, "morphology": "spike",
