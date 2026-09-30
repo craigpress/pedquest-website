@@ -4372,10 +4372,6 @@ class Synthesizer:
                 amp = amp * ((1.0 + self._GPD_AMP8 * self._cycle_interp(phase / (2 * np.pi), base + 29))
                              * (1.0 + 0.10 * np.sin(2 * np.pi * (t - inst.t0) / (6.0 + 6.0 * dr[0])
                                                     + 2 * np.pi * dr[1])))
-            elif self.spec_version >= 3 and inst.kind == "rhythmic_pattern" and inst.morph == "periodic":
-                # r9: lateralized PDs get a per-cycle interval scatter too (rpp3.LPD_WARP; metronomic 1-Hz LPDs drove
-                # the heuristic seizure trend to 0.8-1)
-                phase = phase + 2 * np.pi * rpp3.LPD_WARP * self._cycle_interp(phase / (2 * np.pi), base + 23)
             if v3run:
                 # 0.5.0 (feature review B4-02/C14/C18: harmonic comb on the CSA): per-cycle period and
                 # morphology jitter, keyed by the absolute cycle index so every window sees the same run
@@ -5067,6 +5063,13 @@ class Synthesizer:
             wander += a * np.sin(2 * np.pi * fq * (uu * dur) + p)
             f_inst = f_inst + a * fq * np.cos(2 * np.pi * fq * (uu * dur) + p)
         phase = phase + wander
+        if (self.spec_version >= 3 and inst.kind == "rhythmic_pattern" and inst.morph == "periodic"
+                and inst.onset_region != "generalized" and rpp3.LPD_WARP):
+            # r9: lateralized PDs get a per-cycle interval scatter (rpp3.LPD_WARP; metronomic 1-Hz LPDs drove the
+            # heuristic seizure trend to 0.8-1).  In the phase, so every generator and the scheduled discharge times
+            # agree; keyed by the absolute cycle
+            phase = phase + 2 * np.pi * rpp3.LPD_WARP * self._cycle_interp(
+                phase / (2 * np.pi), int(self.seed) * 31 + inst.index * 1009 + inst.ordinal * 101 + 23)
         se_am = None
         if self.spec_version >= 3 and inst.kind == "status_epilepticus" and inst.rpp is None:
             dph, dfq, se_am = self._status_var(inst, uu * dur, dur)

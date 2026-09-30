@@ -712,9 +712,6 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
             salt = base + (500_003 if sp else 0)
             gsalt = salt + 7919 * (gi + 1)
             if inst.morph == "periodic":
-                if region != "generalized" and LPD_WARP:
-                    # r9: per-cycle interval scatter, common to every generator (keyed by the absolute cycle)
-                    phase = phase + 2 * np.pi * LPD_WARP * syn._cycle_interp(phase / (2 * np.pi), base + 23)
                 wv = apply_polarity(polarity, discharge_train(phase, f_inst, cfg["shape"], cfg["width"], salt))
                 unit = _PERIODIC_PTP
             else:
