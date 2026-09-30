@@ -1,6 +1,6 @@
 {
- "rendererVersion": "0.5.2",
- "generated": "2026-09-30T03:35:06.855Z",
+ "rendererVersion": "0.5.3",
+ "generated": "2026-09-30T05:04:33.518Z",
  "items": [
   {
    "id": "nrm-term-neonate-awake",
@@ -1066,10 +1066,10 @@
   },
   {
    "id": "slw-focal-polymorphic",
-   "title": "Left hemispheric polymorphic delta slowing",
+   "title": "Focal polymorphic delta, left temporal",
    "category": "slowing",
    "subcategory": "Focal and lateralized",
-   "caption": "Irregular 1-3 Hz polymorphic delta without a dominant frequency over the left hemisphere, maximal in the left frontotemporal chains, with lower voltage and loss of faster frequencies on that side; the right hemisphere keeps its posterior rhythm. No rhythmic or periodic runs.",
+   "caption": "Irregular 1-3 Hz polymorphic delta confined to the left temporal chain (Fp1-F7, F7-T3, T3-T5) with the parasagittal chains and the right side preserved - a regional structural abnormality.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -1078,12 +1078,12 @@
     "acns": "Lateralized slowing"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:0214907b56243fcf47c1cc28612a12c41f806ef40bfec4d49fb4f1a31782d061",
+   "rendererVersion": "0.5.3",
+   "specHash": "sha256:8ed8ecd69d1079013f84b5f57cff138849d686f9849ec3426a410fb569b66aac",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-focal-polymorphic.png",
-   "thumbPath": "0.5.2/slw-focal-polymorphic.w800.webp"
+   "path": "0.5.3/slw-focal-polymorphic.png",
+   "thumbPath": "0.5.3/slw-focal-polymorphic.w800.webp"
   },
   {
    "id": "slw-generalized",
