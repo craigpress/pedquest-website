@@ -1,0 +1,44 @@
+[
+  {
+    "id": "A-current-awake",
+    "title": "A — Current awake model",
+    "file": "A-current-awake.edf",
+    "description": "Current 0.5.4 adult background: same seed, 180 s. Existing two-level muscle gate and spatial field.",
+    "sha256": "45b5974e700b7cfe0aa1432e3ef0ed5184c3002490140cc21df523cb9e9f9cc2"
+  },
+  {
+    "id": "B-graded-same-field",
+    "title": "B — Graded awake / same regional weights",
+    "file": "B-graded-same-field.edf",
+    "description": "Offline alternative: continuous positive, irregular multiscale envelope replaces only the current two-level gate, preserving the same carrier and remaining channel/time gains. Mean T3 component RMS matched to A.",
+    "sha256": "522200d0cd0fdaad6c589e2930672657463cde4dc0019f8a79f64db5df90f974"
+  },
+  {
+    "id": "C-graded-regional",
+    "title": "C — Independent regional muscle activity",
+    "file": "C-graded-regional.edf",
+    "description": "Offline alternative: independently varying left/right temporalis, frontal and posterior/nuchal proxy sources; 25% within-source shared variance. Candidate weights are authored, not measured clinical coefficients. T3 RMS matched to A.",
+    "sha256": "935631fd95dd6416194b324cfd1abaf55aa44d59e8d4259f93cdb3abc9cb009b"
+  },
+  {
+    "id": "D-bs-default-present",
+    "title": "D — Burst suppression / default reactivity present",
+    "file": "D-bs-default-present.edf",
+    "description": "Diagnostic control: authored BS pattern with reactivity changed to present, reproducing the guided-builder muscle eligibility. No seizure or explicit artifact. Tonic EMG grows with burst envelope.",
+    "sha256": "815362de7b8308d833e39864486a26a82cc15ff8a03b0ff2e0c66fcf12bd6399"
+  },
+  {
+    "id": "E-bs-tonic-removed",
+    "title": "E — Same burst suppression / tonic muscle removed",
+    "file": "E-bs-tonic-removed.edf",
+    "description": "Exact paired offline subtraction of the generated tonic component from D, after current calibration. All cerebral burst content retained. A candidate for the currently intended non-myoclonic teaching examples, not a universal clinical BS rule.",
+    "sha256": "d35983e773d4441e54b228d50378b39698ee487f41da27af6ed1e6e5c4583c9b"
+  },
+  {
+    "id": "F-bs-authored-absent",
+    "title": "F — Current authored unreactive BS control",
+    "file": "F-bs-authored-absent.edf",
+    "description": "Existing catalog configuration with absent reactivity already emits zero tonic EMG. Remaining fast activity is not evidence of muscle by itself. Separate calibration means F is not a pixel-matched counterpart to D/E.",
+    "sha256": "43f9dd22054d55a96db686a846b76830f39226a8e1d943cd65963238ba856f91"
+  }
+]
