@@ -90,10 +90,20 @@
 .dialog::backdrop { background: var(--scrim); }
 .viewer { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; height: 100%; padding: 24px 24px 24px 72px; box-sizing: border-box; }
 .stage { position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: auto; }
-.stageMat { background: var(--mat); border-radius: 6px; padding: 12px; max-width: 100%; }
-.stageMat img { display: block; max-width: 100%; max-height: calc(100dvh - 96px); width: auto; height: auto; object-fit: contain; }
+.stageMat { background: var(--mat); border-radius: 6px; padding: 12px; max-width: 100%; max-height: 100%; display: flex; flex-direction: column; }
+.stageMat img { display: block; max-width: 100%; max-height: calc(100dvh - 190px); min-height: 0; flex-shrink: 1; width: auto; height: auto; object-fit: contain; }
+.scaleLegend { flex-shrink: 0; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+.scaleHeading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.scaleHeading button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.scaleLegend p { display: inline; margin: 4px 0 0; }
+.scaleLegend p::after { content: " "; }
+.scaleHeading { margin-bottom: 4px; }
+.powerLegend { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.powerGradient { height: 16px; flex: 1; min-width: 80px; border: 1px solid var(--line); border-radius: 3px; }
 .zoomed { align-items: flex-start; justify-content: flex-start; }
-.zoomed .stageMat img { max-width: none; max-height: none; width: 1600px; }
+.zoomed .stageMat { max-width: none; max-height: none; }
+.zoomed .stageMat img { max-width: none; max-height: none; flex-shrink: 0; width: 1600px; }
+.zoomed .scaleLegend { position: sticky; left: 0; width: calc(100dvw - 484px); max-width: 100%; box-sizing: border-box; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; overflow-y: auto; min-height: 0; }
 .panel h2 { font-family: var(--heading-font); font-size: 1.35rem; font-weight: 600; margin: 4px 0 8px; }
 .panelCaption { font-size: .95rem; line-height: 1.6; color: var(--ink-2); margin: 10px 0 14px; }
@@ -123,7 +133,7 @@
 .present { position: fixed; inset: 0; z-index: 100; background: #000; display: grid; grid-template-rows: minmax(0, 1fr) auto; color: #e9f1f9; }
 .presentStage { display: flex; align-items: center; justify-content: center; min-height: 0; padding: 2vh 2vw 0; }
 .presentStage .stageMat { padding: 1.5vh; }
-.presentStage img { display: block; max-width: 96vw; max-height: calc(100dvh - 110px); object-fit: contain; }
+.presentStage img { display: block; max-width: 96vw; max-height: calc(100dvh - 215px); object-fit: contain; }
 .strip { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 3vw 16px; min-height: 72px; }
 .strip h2 { font-family: var(--heading-font); font-size: clamp(1.25rem, 1.8vw, 1.75rem); margin: 0; color: #e9f1f9; }
 .strip p { margin: 2px 0 0; font-size: .95rem; color: #aabfd3; }
@@ -142,6 +152,7 @@
 @media (max-width: 1099px) {
   .viewer { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 12px; padding: 60px 12px 12px; overflow-y: auto; }
   .stageMat { padding: 4px; }
+  .zoomed .scaleLegend { width: calc(100dvw - 40px); }
   .stageMat img { max-height: 60dvh; }
   .prev, .next { top: auto; bottom: 16px; transform: none; }
   .prev { left: 12px; }
@@ -160,7 +171,7 @@
 @media (orientation: landscape) and (max-height: 500px) {
   .viewer { grid-template-columns: minmax(0, 1fr); padding: 8px 56px; }
   .panel { display: none; }
-  .stageMat img { max-height: calc(100dvh - 24px); }
+  .stageMat img { max-height: calc(100dvh - 110px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .card, .present .ctl { transition: none; }

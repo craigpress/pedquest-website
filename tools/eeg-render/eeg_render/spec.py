@@ -1001,6 +1001,14 @@ def spec_warnings(image: Dict[str, Any]) -> List[str]:
     out = []
     age = spec.get("age_group")
     bg = spec.get("background") or {}
+    version = int(spec.get("spec_version") or 1)
+    if version < 3:
+        for key in ("spindle_topography", "k_complex_spindle_delay_s"):
+            if (spec.get("style") or {}).get(key) is not None:
+                out.append(f"style.{key} is accepted but not synthesized below spec_version 3")
+    posts = (bg.get("variants") or {}).get("posts") or {}
+    if version < 3 and isinstance(posts, dict) and posts.get("interval_s") is not None:
+        out.append("background.variants.posts.interval_s is accepted but not synthesized below spec_version 3")
     if age == "adult":
         out.append("age_group adult uses engineering presets (10 Hz, 30 uV) not yet validated against adult references")
     if age == "neonate" and bg.get("delta_brushes") is True:
@@ -1019,7 +1027,8 @@ def spec_warnings(image: Dict[str, Any]) -> List[str]:
             and bg.get("blink_rate_per_min") is None):
         out.append("spontaneous blinks stay at the 15/min awake default in a suppressed / low-voltage record; "
                    "set background.blink_rate_per_min: 0 for an unresponsive patient")
-    if age == "neonate" and bg.get("type") in ("suppressed", "burst_suppression"):
+    if (age == "neonate" and bg.get("type") in ("suppressed", "burst_suppression")
+            and (version < 3 or bg.get("type") == "suppressed")):
         ge = bg.get("graphoelements") or {}
         loud = [k for k, v in ge.items() if isinstance(v, dict) and v.get("enabled", True)
                 and float(v.get("amplitude_uv", 0) or 0) > 0 and float(v.get("rate_per_min", 0) or 0) > 0]
@@ -1029,6 +1038,9 @@ def spec_warnings(image: Dict[str, Any]) -> List[str]:
                        "set graphoelements.<name>.enabled: false if that is not intended")
     for i, ev in enumerate(spec.get("events") or []):
         t = ev.get("type")
+        key = "train_duration_s" if t == "normal_variant" else "centrotemporal_triphasic" if t == "sporadic_discharges" else None
+        if version < 3 and key is not None and ev.get(key) is not None:
+            out.append(f"events[{i}].{key} is accepted but not synthesized below spec_version 3")
         if t == "sporadic_discharges" and (ev.get("sleep_activation") is not None or ev.get("state_rates")
                                            or ev.get("foci")):
             if int(spec.get("spec_version") or 1) < 3:
@@ -1134,6 +1146,7 @@ VARIANT_DEFAULTS = {
 }
 
 AUTHORED_VARIANT_DEFAULTS = {
+    "midline_theta": {"frequency_hz": 6.0, "amplitude_uv": 55.0, "context": "awake"},
     "mu": {"frequency_hz": 10.0, "amplitude_uv": 35.0, "context": "movement"},
     "lambda": {"frequency_hz": 4.0, "amplitude_uv": 55.0, "context": "visual_scanning"},
     "wicket": {"frequency_hz": 8.0, "amplitude_uv": 70.0, "context": "drowsy"},

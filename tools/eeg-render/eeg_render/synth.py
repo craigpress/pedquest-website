@@ -1582,6 +1582,9 @@ class Synthesizer:
                              "Fz": 0.55, "T3": 0.55, "T4": 0.55, "T5": 0.7, "T6": 0.7, "F7": 0.3, "F8": 0.3,
                              "Fp1": 0.3, "Fp2": 0.3, "O1": 0.15, "O2": 0.15}
     _SPINDLE_LAG_RAD_PER_UNIT = 1.1
+    _SPINDLE_FIELD_CENTRAL = {"C3": 1.0, "C4": 1.0, "Cz": 1.0, "P3": 0.45, "P4": 0.45, "Pz": 0.5,
+                              "F3": 0.4, "F4": 0.4, "Fz": 0.45, "T3": 0.3, "T4": 0.3, "T5": 0.25, "T6": 0.25,
+                              "F7": 0.2, "F8": 0.2, "Fp1": 0.15, "Fp2": 0.15, "O1": 0.15, "O2": 0.15}
     #: phase D: infant spindles are high-voltage combs over a high-voltage background (learningeeg 4-month-old asleep:
     #: 100-200 uV in F3-C3 / C3-P3), so the 2.6 background-RMS packet weight is doubled for infants
     _SPINDLE_GAIN_V3D = {"infant": 2.2}
@@ -1725,12 +1728,21 @@ class Synthesizer:
         follow = np.array([tk + float(kr2.uniform(0.55, 0.9)) for tk in self._kc_t if kr2.random() < 0.6])
         self._sp_t = np.sort(np.concatenate([self._sp_t, follow])) if follow.size else self._sp_t
         self._sp = sv3.spindle_params(self.seed, self._sp_t.size, self.age, v3d=True)
+        delay = style.get("k_complex_spindle_delay_s")
+        if delay is not None:
+            for tk in self._kc_t:
+                overlap = (self._sp_t + self._sp["dur"] > tk - 0.4) & (self._sp_t < tk + float(delay))
+                self._sp_t[overlap] = tk + float(delay)
+            self._sp_t, keep = np.unique(self._sp_t, return_index=True)
+            self._sp = {key: value[keep] for key, value in self._sp.items()}
         vr = substream(self.seed, "vertex-shape")
         self._vx_a = np.exp(vr.normal(0.0, 0.25, self._vx_t.size))
         kr = substream(self.seed, "kcomplex-shape")
         self._kc_a = np.exp(kr.normal(0.0, 0.25, self._kc_t.size))
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
         fast_tab = self._SPINDLE_FIELD_FAST if self.age == "infant" else self._SPINDLE_FIELD_FAST_B
+        if style.get("spindle_topography") == "central":
+            fast_tab = self._SPINDLE_FIELD_CENTRAL
         self._sp_field = np.array([mt.table_value(fast_tab, e, 0.2) for e in self.electrodes])
         self._sp_field_drug = np.array([mt.table_value(self._SPINDLE_FIELD_V3, e, 0.2) for e in self.electrodes])
         self._sp_field_slow = np.array([mt.table_value(self._SPINDLE_FIELD_SLOW, e, 0.1) for e in self.electrodes])
@@ -2770,6 +2782,8 @@ class Synthesizer:
                 target += np.outer(self._ge_field(name, side if lat == "unilateral" else 0.0), sig)
         if bound.any():
             bound *= self.burst_envelope(t)[None, :]
+        if v3 and self.bg["type"] == "burst_suppression":
+            free *= self.burst_envelope(t)[None, :]
         return bound + free
 
     #: 0.5.0 (feature review B1-06(d): O1/T3/T5 at 1.0/0.85/0.8 cancelled in T3-O1 and T3-T5): one temporal maximum
@@ -3773,13 +3787,22 @@ class Synthesizer:
     _SED_FALLOFF = 0.60
 
     @staticmethod
-    def _sed_kernel(d: np.ndarray, morph: str, width: float, aftergoing: bool) -> np.ndarray:
+    def _sed_kernel(d: np.ndarray, morph: str, width: float, aftergoing: bool,
+                    centrotemporal_triphasic: bool = False) -> np.ndarray:
         """One surface-NEGATIVE interictal discharge; ``d`` is seconds from the (first) spike peak.
 
         Asymmetric spike (rise sigma 12 ms, fall 24 ms at width 1 -> FWHM ~42 ms), a small
         opposite overshoot, and an after-going slow wave of the same polarity (~220 ms later).
         A polyspike adds two further spikes 55 ms apart before the wave.
         """
+        if centrotemporal_triphasic:
+            q = width / 2.6
+            w = (0.30 * np.exp(-0.5 * ((d + 0.07 * q) / (0.025 * q)) ** 2)
+                 - np.exp(-0.5 * (d / np.where(d < 0, 0.025 * q, 0.04 * q)) ** 2)
+                 + 0.38 * np.exp(-0.5 * ((d - 0.10 * q) / (0.035 * q)) ** 2))
+            if aftergoing:
+                w -= 0.45 * np.exp(-0.5 * ((d - 0.28 * q) / (0.09 * q)) ** 2)
+            return w * (d > -0.3) * (d < 1.0)
         rise, fall = 0.012 * width, 0.024 * width
         def spk(c):
             return np.exp(-0.5 * ((d - c) / np.where(d < c, rise, fall)) ** 2)
@@ -3962,7 +3985,9 @@ class Synthesizer:
                 polys.extend([None] * m)
                 foci_l.extend([None] * m)
             grid = np.linspace(-0.3, 1.0, 2600)
-            k = self._sed_kernel(grid, morph, 1.0, bool(e.get("aftergoing_slow", True)))
+            k = self._sed_kernel(grid, morph, self._SED_WIDTH[morph] if v3 and e.get("centrotemporal_triphasic") else 1.0,
+                                 bool(e.get("aftergoing_slow", True)),
+                                 v3 and bool(e.get("centrotemporal_triphasic")))
             self._sed_norm[i] = float(np.ptp(k))
         if rows:
             allev = np.vstack(rows)
@@ -4026,6 +4051,8 @@ class Synthesizer:
                 row["synchrony"] = "independent"
             if self._sed_gated(e):
                 row["stage"] = str(self.stage_at(np.array([float(t0)]))[0])
+            if self.spec_version >= 3 and e.get("centrotemporal_triphasic"):
+                row["centrotemporal_triphasic"] = True
             if pp is not None:
                 # 0.5.0: the key spans every spike and the after-going wave
                 row["n_spikes"] = int(len(pp[0]))
@@ -4058,7 +4085,8 @@ class Synthesizer:
                 k = -_polyspike_kernel(d, lags, gains, troughs, float(width), after)
                 k *= (d > -0.1) & (d < float(lags[-1]) + 0.55)
             else:
-                k = self._sed_kernel(d, morph, float(width), after)
+                k = self._sed_kernel(d, morph, float(width), after,
+                                     self.spec_version >= 3 and bool(e.get("centrotemporal_triphasic")))
                 k *= (d > -0.3 * width) & (d < 0.9 * width + 0.35)
             k *= amp / max(self._sed_norm.get(int(i), 1.0), 1e-6)
             # a wider field than the pinned LPD one: first neighbours ~1/3, C3-like ~1/2 (Craig, P5: "no field to
@@ -4202,7 +4230,8 @@ class Synthesizer:
                 self._variants_v3.append(("hypnagogic_hypersynchrony", r))
         c = cfg.get("posts")
         if c and c.get("enabled", True) and float(c.get("amplitude_uv") or 0) > 0:
-            for r in vv3.posts_schedule(self.seed, merged(("N1", "N2")), float(c["amplitude_uv"])):
+            for r in vv3.posts_schedule(self.seed, merged(("N1", "N2")), float(c["amplitude_uv"]),
+                                       float(c.get("interval_s", 0.5))):
                 self._variants_v3.append(("posts", r))
         c = cfg.get("posterior_slow_waves_of_youth")
         if c and c.get("enabled", True) and float(c.get("rate_per_min") or 0) > 0:
@@ -4284,6 +4313,8 @@ class Synthesizer:
         return rows
 
     _AUTHORED_FIELDS = {
+        "midline_theta": {"Cz": 1.0, "Fz": 0.55, "Pz": 0.25, "C3": 0.12, "C4": 0.12,
+                          "F3": 0.06, "F4": 0.06, "P3": 0.05, "P4": 0.05},
         "mu": {"C3": 1.0, "C4": 1.0, "Cz": 0.8, "F3": 0.25, "F4": 0.25, "P3": 0.35, "P4": 0.35},
         "lambda": {"O1": 1.0, "O2": 1.0, "P3": 0.35, "P4": 0.35},
         "wicket": {"T3": 1.0, "T4": 1.0, "F7": 0.35, "F8": 0.35, "T5": 0.45, "T6": 0.45},
@@ -4310,6 +4341,14 @@ class Synthesizer:
         probes = np.linspace(start, end, max(3, int(np.ceil(end - start)) + 1))
         sleep = self._sleep_at(probes)
         context = ev["context"]
+        if kind == "midline_theta":
+            if ev.get("side", "both") != "both":
+                return False
+            if context == "awake":
+                return bool(np.all(sleep < 0.2))
+            if context == "drowsy":
+                return bool(np.all((sleep > 0.15) & (sleep < 0.75)))
+            return False
         required_context = {
             "mu": "movement", "lambda": "visual_scanning", "wicket": "drowsy",
             "fourteen_and_six": "light_sleep", "rmtd": "drowsy",
@@ -4358,6 +4397,8 @@ class Synthesizer:
                 "spec_event_index": index}
             if self.spec_version >= 3:
                 # 0.5.0: bursts / trains drawn once per event, each hemisphere on its own schedule
+                if ev.get("train_duration_s") is not None:
+                    run["train_duration_s"] = float(ev["train_duration_s"])
                 run["bursts"] = vv3.authored_schedule(self.seed, index, run)
             self._authored_variants.append(run)
         # 0.5.0: visual scanning and movement hold the eyes open (lambda, and mu is read with the PDR attenuated -
@@ -4375,7 +4416,7 @@ class Synthesizer:
     _LAMBDA_GAZE_UV = 70.0
 
     #: 0.5.0: kinds keyed per train (the key follows what is visible), not per authored window
-    _AV_TRAIN_KEYED = ("mu", "wicket", "fourteen_and_six", "rmtd", "frontal_arousal_rhythm")
+    _AV_TRAIN_KEYED = ("mu", "wicket", "fourteen_and_six", "rmtd", "frontal_arousal_rhythm", "midline_theta")
 
     def photic_flashes(self, t0: float, t1: float) -> np.ndarray:
         """Phase D: flash times of the authored photic stimulation trains inside [t0, t1) (spec_version 3)."""
@@ -7000,7 +7041,8 @@ class Synthesizer:
         # --- amplitude, asymmetry, envelopes ------------------------------
         x *= self.amp_rms
         x *= self.gain_asym[:, None]
-        x *= self.channel_am(t)
+        channel_mod = self.channel_am(t)
+        x *= channel_mod
 
         preset_scale = {
             "suppressed": 0.06, "low_voltage": 0.28,
@@ -7066,7 +7108,12 @@ class Synthesizer:
             env = env * self.gtc_bg_envelope(t)
         x *= burst_rows * env[None, :]
         if self.spec_version >= 3 and self.seizures:
-            x *= self.postictal_rows_v3(t)
+            focal_env = self.postictal_rows_v3(t)
+            x *= focal_env
+            muscle_scaled = muscle_term * self.amp_rms * self.gain_asym[:, None] * channel_mod
+            if not self.display_ref:
+                muscle_scaled *= preset_scale
+            x += muscle_scaled * burst_rows * env[None, :] * (1.0 - focal_env)
         # Head-wide envelope including the burst gate, for the blinks below.
         env = env * self.burst_envelope(t)
 

@@ -1,0 +1,113 @@
+items:
+- id: iid-selects-bilateral-bipolar
+  title: 'SeLECTS / BECTS: bilateral independent centrotemporal spikes (bipolar)'
+  category: interictal
+  subcategory: Central / rolandic
+  caption: Independent left and right centrotemporal discharges on the same normal
+    drowsy background. Negative peaks reverse at C3/T3 or C4/T4, with the frontal
+    positive pole of a transverse dipole and an after-going slow wave. Paired with
+    the referential view of this same recording and time window.
+  tags:
+    age: child
+    state: drowsy
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 10
+    acns: sporadic epileptiform discharges, abundant
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 30092621
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      background:
+        type: continuous
+        amplitude_uv: 45
+        dominant_hz: 9.0
+        slow_fraction: 0.2
+        reactivity: present
+        channel_gain_max: 1.5
+        blink_rate_per_min: 0
+      events:
+      - type: state_change
+        at_min: 2.0
+        to: sleep
+      - type: sporadic_discharges
+        focus: right_centrotemporal
+        rate_per_h: 300
+        amplitude_uv: 180
+        morphology: sharp_wave
+        aftergoing_slow: true
+        sleep_activation: 8
+        foci:
+        - left_centrotemporal
+        - right_centrotemporal
+        focus_weights:
+        - 0.5
+        - 0.5
+        synchrony: independent
+        centrotemporal_triphasic: true
+      at_min: 2.5
+      window_s: 20
+      sensitivity_uv_mm: 10
+      montage: longitudinal_bipolar
+- id: iid-selects-bilateral-referential
+  title: 'SeLECTS / BECTS: bilateral independent centrotemporal spikes (referential)'
+  category: interictal
+  subcategory: Central / rolandic
+  caption: The same recording and time window as the paired bipolar view, using average
+    reference as in the ILAE example. Centrotemporal negativity at C3/T3 or C4/T4
+    points upward; the simultaneous frontal positive pole points downward. The left
+    and right discharges occur independently on a normal drowsy background.
+  tags:
+    age: child
+    state: drowsy
+    montage: average
+    sensitivity_uv_mm: 10
+    acns: sporadic epileptiform discharges, abundant
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 30092621
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      background:
+        type: continuous
+        amplitude_uv: 45
+        dominant_hz: 9.0
+        slow_fraction: 0.2
+        reactivity: present
+        channel_gain_max: 1.5
+        blink_rate_per_min: 0
+      events:
+      - type: state_change
+        at_min: 2.0
+        to: sleep
+      - type: sporadic_discharges
+        focus: right_centrotemporal
+        rate_per_h: 300
+        amplitude_uv: 180
+        morphology: sharp_wave
+        aftergoing_slow: true
+        sleep_activation: 8
+        foci:
+        - left_centrotemporal
+        - right_centrotemporal
+        focus_weights:
+        - 0.5
+        - 0.5
+        synchrony: independent
+        centrotemporal_triphasic: true
+      at_min: 2.5
+      window_s: 20
+      sensitivity_uv_mm: 10
+      montage: average

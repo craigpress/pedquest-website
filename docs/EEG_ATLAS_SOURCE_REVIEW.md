@@ -4,6 +4,8 @@
 
 Machine-readable handoff: [source register](EEG_ATLAS_SOURCE_REGISTER.json). Private document assets: [research source folder](../../research/eeg-atlas/sources). Retrieval/audit scripts and request list are in its parent folder. These are document procurement tools, not generator code.
 
+For visual EEG examples, including ILAE EpilepsyDiagnosis.org syndrome EEG pages, use [EEG example references](EEG_EXAMPLE_REFERENCES.md).
+
 ## Supplied sources
 
 | ID | Source | Verified result | P2 use |

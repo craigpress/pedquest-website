@@ -66,6 +66,42 @@ test("strict validation adds the renderer schema: an unknown key is an error", (
   assert.deepEqual(ok.errors, []);
 });
 
+test("new variant and SeLECTS timing controls warn when the selected renderer version ignores them", () => {
+  const controls = {
+    background: { type: "continuous", dominant_hz: 8, amplitude_uv: 40, variants: { posts: { interval_s: 1.7 } } },
+    style: { spindle_topography: "central", k_complex_spindle_delay_s: 1.5 },
+    events: [
+      { type: "normal_variant", kind: "mu", at_min: 2, train_duration_s: 9 },
+      { type: "sporadic_discharges", focus: "right_centrotemporal", centrotemporal_triphasic: true },
+      { type: "normal_variant", kind: "midline_theta", at_min: 3 },
+    ],
+  };
+  for (const version of [1, 2]) {
+    const result = validateLabSpecStrict(base({ ...controls, spec_version: version }));
+    assert.deepEqual(result.errors, []);
+    for (const key of ["background.variants.posts.interval_s", "events[0].train_duration_s", "events[1].centrotemporal_triphasic",
+      "style.spindle_topography", "style.k_complex_spindle_delay_s"]) {
+      assert.ok(result.warnings.some((warning) => warning.includes(key) && warning.includes("not synthesized below spec_version 3")));
+    }
+    assert.ok(!result.warnings.some((warning) => warning.includes("midline_theta")), "Ciganek itself remains available to legacy specs");
+  }
+  const current = validateLabSpecStrict(base({ ...controls, spec_version: 3 }));
+  assert.deepEqual(current.errors, []);
+  assert.ok(!current.warnings.some((warning) => warning.includes("not synthesized below spec_version 3")));
+});
+
+test("optional spindle field and K-complex timing controls enforce their authoring bounds", () => {
+  for (const delay of [1, 5]) {
+    assert.ok(validateLabSpecStrict(base({ spec_version: 3, style: {
+      spindle_topography: "central", k_complex_spindle_delay_s: delay,
+    } })).ok);
+  }
+  for (const style of [{ spindle_topography: "temporal" }, { k_complex_spindle_delay_s: 0.5 },
+    { k_complex_spindle_delay_s: 5.5 }]) {
+    assert.ok(!validateLabSpecStrict(base({ spec_version: 3, style })).ok);
+  }
+});
+
 // Deliberate change (renderer 0.5.0 rollout, WORKER_MAX_SPEC_VERSION 3, bank migrating to v3): a NEW form starts
 // at spec_version 3, so a fresh child form shows the 90-uV awake default. This test used to require no
 // spec_version on a plain new form, written when the worker accepted only up to 2. A scenario without

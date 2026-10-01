@@ -136,6 +136,14 @@ follows the spread, not the electrographic onset.
   to: sleep | wake | arousal
 ```
 
+## Optional variant and sleep controls
+
+Version 3 normal-variant events also accept `kind: midline_theta` (Ciganek rhythm), strongest at Cz in awake or drowsy records, with `frequency_hz` and `amplitude_uv` controls. Mu events optionally accept `train_duration_s`; `background.variants.posts.interval_s` controls POSTS spacing. Omitting these timing controls preserves the existing schedules.
+
+For paired SeLECTS/BECTS teaching pages, use `sporadic_discharges` with independent `left_centrotemporal` and `right_centrotemporal` foci, `morphology: sharp_wave`, and optional version-3 `centrotemporal_triphasic: true`. Render the same seed and time window in `longitudinal_bipolar` and `average` montages to compare centrotemporal negativity with frontal positivity. Source examples: [ILAE SeLECTS EEG](https://www.epilepsydiagnosis.org/syndrome/ects-eeg.html).
+
+Version 3 optionally accepts `style.spindle_topography: central` for a central spindle field with smaller temporal shoulders. `centroparietal` retains the existing age-dependent field; omitting the control does the same. `style.k_complex_spindle_delay_s` (1–5 seconds) moves spindles overlapping a K-complex to start at the requested delay after it. This is an authoring choice for a teaching page, not a claim that all physiological K-complexes must precede spindles by that interval. Both controls retain the existing sleep-state gates and have no effect below version 3; defaults and timing remain unchanged when omitted.
+
 ## `annotations[]` — labels drawn on the time axis (what the bedside team recorded)
 
 ```yaml

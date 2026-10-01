@@ -75,6 +75,10 @@ export type GalleryItem = {
   height: number;
   path: string;             // object path in GALLERY_BUCKET (PNG)
   thumbPath: string;        // 800-px WebP
+  scaleLegend?: {
+    lines: string[];
+    power?: { range: [number, number]; colors: string[] };
+  };
 };
 
 export type GalleryManifest = { rendererVersion: string; generated: string; items: GalleryItem[] };

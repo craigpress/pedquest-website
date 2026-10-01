@@ -1,0 +1,16 @@
+# EEG review release gate — 2026-10-01
+
+Implemented in `eeg-normal-variants` from production base `5a0ca8d`; production remains on that base. Renderer code is 0.5.4. This is a technical and physiological review, with human clinical acceptance preserved separately.
+
+- All 163 deployed gallery originals matched local PNG hashes and were individually inspected before renderer changes. Final gallery: 166 examples, including Ciganek and paired bilateral-independent SeLECTS. Thirty new/revised image sets and 24 caption corrections; all final examples have reference-comparison evidence and limitations in the full review.
+- Sixty new/revised PNG/WebP objects are verified in the private gallery bucket. The new manifest is in this branch, not production. The original 89 notes and 51 review-state rows were unchanged at the preservation check; this work performed no review writes. Seven previously accepted generalized records remain unchanged.
+- All 52 bank examples were actually re-rendered at 0.5.4: 18 PNG changes, 34 byte-identical. All 52 image/sidecar pairs pass current schema/hash/dimension verification; the image cache-key manifest passes its 53-image check. Changed bank images were visually inspected. B023 retains its pre-existing weaker short raw-inset confirmation; no new migration regression was found.
+- Validation: 59 targeted waveform/partition/default-preservation tests; 16 final sidecar/guide/fidelity tests (overlapping coverage); 24 focused TypeScript tests; typecheck; Next 16.3.6 production webpack build, 148 pages; whitespace check. All passed. The earlier full renderer suite preceded the final changes and is not presented as final full-suite verification.
+- Next 16.3.6 and compatible transitive patches are locked; full and production npm audits report zero vulnerabilities. Dependencies were installed independently of the canonical dirty checkout.
+- Gallery card and image-signing work and homepage canvas work are reduced in controlled measurements. Actual production PageSpeed baselines and measurement limits are in the code/performance review. Post-change external timing is pending a deployed preview.
+
+## Coordinated rollout remaining
+
+Merge/deploy the reviewed branch together with renderer 0.5.4 on both export fleets and the Windows question-bank task, following `tools/eeglab-host/README.md`. Refresh existing bank database sidecars with `scripts/qbank-refresh-sidecars.mts` at the matching renderer version; do not use `qbank:import`, which can change review status. Verify the deployed gallery, worker versions, private asset access and external performance after rollout. Existing Lab recordings are not re-exported: Craig's September 30 decision to skip that work remains in force.
+
+Reproducible full gallery catalog and asset receipts: `research/eeg-atlas/gallery-20261001-review` in the outer project. Clinical references stay local; only original synthetic assets are published.

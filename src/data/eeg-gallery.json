@@ -1,6 +1,6 @@
 {
- "rendererVersion": "0.5.3",
- "generated": "2026-09-30T05:04:33.518Z",
+ "rendererVersion": "0.5.4",
+ "generated": "2026-10-01T04:02:12.373457+00:00",
  "items": [
   {
    "id": "nrm-term-neonate-awake",
@@ -67,7 +67,7 @@
    "title": "Child (8 years), eyes closed: posterior dominant rhythm",
    "category": "normal",
    "subcategory": "Awake background by age",
-   "caption": "Eight-year-old awake, eyes closed: an 8-9 Hz posterior dominant rhythm, symmetric in P3-O1 and P4-O2, with lower voltage in Fp1-F3 and Fp2-F4. Temporal muscle artifact from 7 s.",
+   "caption": "Eight-year-old awake, eyes closed: symmetric 8–9 Hz posterior dominant rhythm, with lower-voltage frontal activity and a brief burst of temporal muscle artifact.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -87,7 +87,7 @@
    "title": "Adolescent, awake",
    "category": "normal",
    "subcategory": "Awake background by age",
-   "caption": "Adolescent awake, eyes closed: a 9.5-10 Hz posterior dominant rhythm, waxing and waning in P3-O1, P4-O2, T5-O1 and T6-O2, with a clear anterior-posterior gradient. Brief frontotemporal muscle at 0-2 s and 9-11 s.",
+   "caption": "Adolescent awake, eyes closed: a 9.5–10 Hz posterior dominant rhythm, waxing and waning in the posterior derivations, with a clear anterior-posterior gradient.",
    "tags": {
     "age": "adolescent",
     "state": "awake",
@@ -107,7 +107,7 @@
    "title": "Adult, awake",
    "category": "normal",
    "subcategory": "Awake background by age",
-   "caption": "Adult awake, eyes closed: a low-voltage 10 Hz posterior dominant rhythm in P3-O1 and P4-O2 with little slow activity. Frontotemporal muscle at 5-7 s and 12-14 s.",
+   "caption": "Adult awake, eyes closed: a low-voltage 10 Hz posterior dominant rhythm in the posterior derivations with little slow activity.",
    "tags": {
     "age": "adult",
     "state": "awake",
@@ -127,7 +127,7 @@
    "title": "Posterior rhythm reactivity to eye opening",
    "category": "normal",
    "subcategory": "Reactivity",
-   "caption": "Child awake: the 8.5 Hz posterior rhythm in P3-O1, P4-O2, T5-O1 and T6-O2 attenuates when the eyes open at about 7.7 s (eye-opening deflection at Fp1 and Fp2, then blinks at 11 and 14 s). Reactive background.",
+   "caption": "Child awake: the 8.5 Hz posterior rhythm attenuates with the frontopolar eye-opening deflection near 8 s. Later blinks are visible; the background is reactive.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -175,19 +175,19 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:c81c59efa073e049b73de45348b7fb191d70a11dd9dcbabde6f0e061576eeafa",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:45f80c4793e2865a8c2aeee01972255a6b948aa6c8f5f3db6708fe3070aa7fa4",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-photic-driving.png",
-   "thumbPath": "0.5.2/nrm-photic-driving.w800.webp"
+   "path": "0.5.4/nrm-photic-driving.png",
+   "thumbPath": "0.5.4/nrm-photic-driving.w800.webp"
   },
   {
    "id": "slp-drowsiness",
    "title": "Drowsiness",
    "category": "sleep",
    "subcategory": "Drowsiness and N1",
-   "caption": "Child falling asleep: the posterior rhythm in P3-O1 and P4-O2 during the first 5 s drops out and gives way to lower-voltage mixed theta over 5-8 s (drowsiness, N1); a vertex wave at about 15 s.",
+   "caption": "Child falling asleep: the posterior rhythm visible early in the page becomes less prominent around 9–10 s and gives way to lower-voltage mixed theta as drowsiness develops.",
    "tags": {
     "age": "child",
     "state": "drowsy",
@@ -207,7 +207,7 @@
    "title": "N1: vertex waves",
    "category": "sleep",
    "subcategory": "Drowsiness and N1",
-   "caption": "Adolescent in N1: vertex waves at about 1.6, 7.8 and 13.2 s, sharply contoured and maximal at Cz, seen in Fz-Cz, Cz-Pz and the parasagittal chains (C3-P3, C4-P4), over low-voltage theta.",
+   "caption": "Adolescent in N1: sharply contoured vertex waves, maximal at Cz, with phase reversals in Fz-Cz/Cz-Pz and the central parasagittal chains, over low-voltage theta.",
    "tags": {
     "age": "adolescent",
     "state": "N1",
@@ -227,7 +227,7 @@
    "title": "N2: sleep spindles",
    "category": "sleep",
    "subcategory": "N2",
-   "caption": "Child in N2: sleep spindles at about 4, 7.5 and 9.5 s, 12-14 Hz and 1-2 s long, waxing and waning, bilateral and synchronous, largest in the centroparietal chains (C3-P3, C4-P4) with spread to P3-O1 and P4-O2.",
+   "caption": "Child in N2: bilateral waxing and waning sleep spindles at 12–14 Hz, lasting about 1–2 s, with centroparietal prominence and lower-voltage spread to the temporal chains.",
    "tags": {
     "age": "child",
     "state": "N2",
@@ -235,19 +235,19 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:b8796fcd93a853dc545a8746e00c5b610284e827d7430040afe757659f5d9cd5",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:4e5c1a45268080e707508858546c6258d34ec42bb798356c6db80ef1fc1ce131",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-n2-spindles.png",
-   "thumbPath": "0.5.2/slp-n2-spindles.w800.webp"
+   "path": "0.5.4/slp-n2-spindles.png",
+   "thumbPath": "0.5.4/slp-n2-spindles.w800.webp"
   },
   {
    "id": "slp-n2-k-complexes",
    "title": "N2: K-complexes",
    "category": "sleep",
    "subcategory": "N2",
-   "caption": "Adolescent in N2: K-complexes at about 8, 12.2 and 17.6 s, a sharp negative wave followed by a slower positive wave (at least 0.5 s), maximal frontocentrally (Fp1-F3, F3-C3, Fz-Cz); the first is followed by a spindle at 9 s.",
+   "caption": "Adolescent in N2: frontocentral K-complexes with an initial sharp negative wave followed by a slower positive wave. A central sleep spindle follows the first completed complex.",
    "tags": {
     "age": "adolescent",
     "state": "N2",
@@ -255,19 +255,19 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:556d74c531a5f05d014f96708249ce30251916346cbafeb4a6e2a35b6d84c333",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:de9aca2adafb09eff1d09931e9add72cc7caa8344cf6dfc4dab34436c850c1b5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-n2-k-complexes.png",
-   "thumbPath": "0.5.2/slp-n2-k-complexes.w800.webp"
+   "path": "0.5.4/slp-n2-k-complexes.png",
+   "thumbPath": "0.5.4/slp-n2-k-complexes.w800.webp"
   },
   {
    "id": "slp-infant-spindles",
    "title": "Infant N2: long asynchronous spindles",
    "category": "sleep",
    "subcategory": "N2",
-   "caption": "Six-month-old in N2: long spindle trains lasting several seconds, first over the left hemisphere (5.5-9 s) and then over the right (10-15 s). Asynchronous spindles are normal in the first year.",
+   "caption": "Six-month-old in N2: long spindle trains lasting several seconds, independently prominent over each hemisphere. Asynchronous and overlapping spindles are normal at this age.",
    "tags": {
     "age": "infant",
     "state": "N2",
@@ -287,7 +287,7 @@
    "title": "N3: slow-wave sleep",
    "category": "sleep",
    "subcategory": "N3",
-   "caption": "Child in N3: continuous high-voltage 0.5-2 Hz delta, largest in the frontal chains (Fp1-F7, Fp1-F3, Fp2-F4) and smaller posteriorly, with a brief spindle at 2-4 s.",
+   "caption": "Child in N3: diffuse high-voltage 0.5–2 Hz slow waves, prominent in the frontocentral chains and smaller posteriorly, on a mixed sleep background.",
    "tags": {
     "age": "child",
     "state": "N3",
@@ -307,7 +307,7 @@
    "title": "REM sleep",
    "category": "sleep",
    "subcategory": "REM",
-   "caption": "Adolescent in REM: low-voltage mixed-frequency activity with no spindles, vertex waves or K-complexes, and rapid eye movements at 6.5-8 s and 11-13.5 s, seen as sharp deflections in Fp1-F7, F7-T3, Fp2-F8 and F8-T4.",
+   "caption": "Adolescent in an authored REM interval: low-voltage mixed-frequency cerebral activity without spindles or K-complexes, with bursts of opposing frontotemporal rapid eye movement deflections.",
    "tags": {
     "age": "adolescent",
     "state": "REM",
@@ -327,7 +327,7 @@
    "title": "REM: sawtooth waves",
    "category": "sleep",
    "subcategory": "REM",
-   "caption": "Adult in REM (5 uV/mm): a short train of 2-4 Hz, sharply contoured sawtooth waves at 7-9 s, maximal at the vertex (Fz-Cz, Cz-Pz, C4-P4), just before a burst of rapid eye movements at 8.3-9.3 s.",
+   "caption": "Adult in an authored REM interval (5 uV/mm): a brief 2–4 Hz sawtooth train, maximal centrally and at the vertex, precedes a burst of opposing frontotemporal eye movements.",
    "tags": {
     "age": "adult",
     "state": "REM",
@@ -347,7 +347,7 @@
    "title": "Arousal from N2",
    "category": "sleep",
    "subcategory": "Arousal",
-   "caption": "Child arousal from N2: vertex waves and K-complexes in the first 6 s, then at 6 s an abrupt shift to faster activity with a burst of frontotemporal muscle and movement, and a posterior alpha rhythm returning in P3-O1 and P4-O2.",
+   "caption": "Child arousal from an authored N2 interval: a slower mixed sleep background and a frontocentral K-complex just before 6 s precede the shift to faster activity, frontotemporal muscle and movement.",
    "tags": {
     "age": "child",
     "state": "N2",
@@ -355,19 +355,19 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:9d3b3db8a7bc2d34ced755d449fd75ab6eb319cba6f2b09b36dcb7f03c5b490d",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:45572fdd41efe2aeced4de18dd4f91ac6ec925db9721be2ca9f7fdffe1e348e6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-arousal.png",
-   "thumbPath": "0.5.2/slp-arousal.w800.webp"
+   "path": "0.5.4/slp-arousal.png",
+   "thumbPath": "0.5.4/slp-arousal.w800.webp"
   },
   {
    "id": "var-mu",
    "title": "Mu rhythm",
    "category": "variants",
    "subcategory": "Awake variants",
-   "caption": "Mu rhythm with the eyes open (blinks in Fp1 and Fp2): 10 Hz trains in F3-C3 and C3-P3 and in F4-C4 and C4-P4, lasting 1-4 s, waxing and waning and often on one side at a time, absent from the occipital chains.",
+   "caption": "Right-predominant mu rhythm: sustained, waxing and waning 10 Hz arciform activity over the right sensorimotor region, mixed with the awake background; much smaller on the left. No ictal evolution or after-going slow wave.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -375,19 +375,19 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:a140f58739be4d8d8c91c63616eda9b1a48b60fb9a783b7840de042b49fff525",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:7539d35b8414467bf325614315b54ebe40dfcb9b884abe8ffe526d04d5edaaef",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-mu.png",
-   "thumbPath": "0.5.2/var-mu.w800.webp"
+   "path": "0.5.4/var-mu.png",
+   "thumbPath": "0.5.4/var-mu.w800.webp"
   },
   {
    "id": "var-lambda",
    "title": "Lambda waves",
    "category": "variants",
    "subcategory": "Awake variants",
-   "caption": "Lambda waves during visual scanning (eyes open, blinks at 2.3, 5.7 and 10.2 s): repeated surface-positive triangular transients at O1 and O2, seen in P3-O1, P4-O2, T5-O1 and T6-O2; no posterior dominant rhythm.",
+   "caption": "Lambda waves during visual scanning: repeated surface-positive, sail-like occipital transients in P3-O1, P4-O2, T5-O1 and T6-O2, with blinks and other evidence of wakefulness; no posterior dominant rhythm.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -407,7 +407,7 @@
    "title": "Posterior slow waves of youth",
    "category": "variants",
    "subcategory": "Awake variants",
-   "caption": "Posterior slow waves of youth, eyes closed: single 2.5-4 Hz waves fused with the 9 Hz posterior rhythm in P3-O1, P4-O2, T5-O1 and T6-O2 at about 4.5, 8 and 11 s. A normal finding in children and adolescents.",
+   "caption": "Posterior slow waves of youth, eyes closed: isolated 2.5–4 Hz waves fused with the 9 Hz posterior rhythm in the occipital derivations. A normal finding in children and adolescents.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -427,7 +427,7 @@
    "title": "Hypnagogic hypersynchrony",
    "category": "variants",
    "subcategory": "Drowsiness and sleep variants",
-   "caption": "Hypnagogic hypersynchrony at sleep onset (20 uV/mm): a run of high-voltage rhythmic 3-4 Hz delta-theta in every chain from 4 to 12.5 s, building over the first second and ending abruptly. Normal in young children; not an epileptiform discharge.",
+   "caption": "Hypnagogic hypersynchrony on a slower, higher-voltage drowsy background. The wider window shows the lead-in before the high-voltage frontocentral delta-theta burst, followed by return to the drowsy background.",
    "tags": {
     "age": "child",
     "state": "drowsy",
@@ -435,19 +435,19 @@
     "sensitivity_uv_mm": 20
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:39f40299cf182e2baaecdd63511e9b4fe7c3dcae525795967b6f11de803d2028",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:78e754880531d40ce32354ce410da8e14f541636bc33f42a2ab6bc21c46a5431",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-hypnagogic-hypersynchrony.png",
-   "thumbPath": "0.5.2/var-hypnagogic-hypersynchrony.w800.webp"
+   "path": "0.5.4/var-hypnagogic-hypersynchrony.png",
+   "thumbPath": "0.5.4/var-hypnagogic-hypersynchrony.w800.webp"
   },
   {
    "id": "var-posts",
    "title": "Positive occipital sharp transients of sleep (POSTS)",
    "category": "variants",
    "subcategory": "Drowsiness and sleep variants",
-   "caption": "POSTS in N2: repeated surface-positive, triangular sharp transients at O1 and O2, bilateral and roughly synchronous, upgoing in P3-O1, P4-O2, T5-O1 and T6-O2; a K-complex at 13 s.",
+   "caption": "Occasional surface-positive occipital sharp transients in N2, separated by irregular intervals rather than a nearly continuous train; a normal sleep finding.",
    "tags": {
     "age": "adolescent",
     "state": "N2",
@@ -455,19 +455,19 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:75aa28a08c029af9b15697f5f838dbc4f504e3db98b4d88adb83005bfbade042",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:1d2163d7532e343fe3b3441b4d8549a3d4f758201d3fd437f1c30cc0c42d9ad5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-posts.png",
-   "thumbPath": "0.5.2/var-posts.w800.webp"
+   "path": "0.5.4/var-posts.png",
+   "thumbPath": "0.5.4/var-posts.w800.webp"
   },
   {
    "id": "var-wicket",
    "title": "Wicket waves",
    "category": "variants",
    "subcategory": "Drowsiness and sleep variants",
-   "caption": "Wicket waves in drowsiness: 7-9 Hz arciform trains of 1-2 s and single waves over the temporal chains, on the left (F7-T3, T3-T5) at 4 and 6-7 s and on the right (F8-T4, T4-T6) at 4.5-5 and 7-9 s, with no after-going slow wave.",
+   "caption": "Low-amplitude 7-9 Hz arciform temporal runs and single wicket waves in drowsiness, with no after-going slow wave or ictal evolution.",
    "tags": {
     "age": "adult",
     "state": "drowsy",
@@ -475,19 +475,19 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:968ae4ef83925aa37185eee16131c7e436ca8a90c288b52da03497e8d8a273dc",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:ceb352f2b4ff82edebe9a7ea069774ca6e95cefa69719a5a0f13060da99bc26d",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-wicket.png",
-   "thumbPath": "0.5.2/var-wicket.w800.webp"
+   "path": "0.5.4/var-wicket.png",
+   "thumbPath": "0.5.4/var-wicket.w800.webp"
   },
   {
    "id": "var-rmtd",
    "title": "Rhythmic mid-temporal theta of drowsiness (RMTD)",
    "category": "variants",
    "subcategory": "Drowsiness and sleep variants",
-   "caption": "RMTD in drowsiness: runs of rhythmic, notched 5-6 Hz theta in the temporal chains, on the left (F7-T3, T3-T5) at 0-2 and 3-9 s and on the right (F8-T4, T4-T6) at 6-9 and 11-14 s, with no evolution in frequency or field.",
+   "caption": "RMTD in drowsiness: independent runs of rhythmic, notched 5–6 Hz theta over the left and right mid-temporal chains, without evolution in frequency or field.",
    "tags": {
     "age": "adolescent",
     "state": "drowsy",
@@ -507,7 +507,7 @@
    "title": "14 and 6 Hz positive bursts",
    "category": "variants",
    "subcategory": "Drowsiness and sleep variants",
-   "caption": "14 and 6 Hz positive bursts in light sleep (referential, ear reference): a 6-7 Hz burst at 1.4-1.9 s and a 14 Hz burst at 12.2-12.9 s, each under 1 s, maximal at T5, T6, P3, P4, O1 and O2.",
+   "caption": "14 and 6 Hz positive bursts in light sleep (ear reference): brief positive comb-like bursts, at 6–7 Hz on the left and 14 Hz on the right, with a posterior temporal/occipital maximum.",
    "tags": {
     "age": "adolescent",
     "state": "N1",
@@ -527,7 +527,7 @@
    "title": "Frontal arousal rhythm",
    "category": "variants",
    "subcategory": "Drowsiness and sleep variants",
-   "caption": "Frontal arousal rhythm: after a K-complex at 0.7 s and an arousal with muscle at 3 s, a run of rhythmic 8 Hz activity from 5 to 13 s in the frontocentral chains (F3-C3, F4-C4, Fz-Cz), about twice the background.",
+   "caption": "Child arousing from N2: a frontocentral K-complex near 2.2 s precedes arousal with frontotemporal muscle at 5 s. Independently waxing rhythmic 8 Hz trains follow in the frontal and frontocentral chains, with smaller posterior spread.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -535,19 +535,19 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:20eff99b2aa958a2913af3978048ffe998bf46039525d6556ebb348d0eead3c0",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:444e7f9fbb2600a9d74eeb9fad0071e6df9c527f4032db2d639b736bfff0545c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-frontal-arousal-rhythm.png",
-   "thumbPath": "0.5.2/var-frontal-arousal-rhythm.w800.webp"
+   "path": "0.5.4/var-frontal-arousal-rhythm.png",
+   "thumbPath": "0.5.4/var-frontal-arousal-rhythm.w800.webp"
   },
   {
    "id": "var-sreda",
    "title": "SREDA",
    "category": "variants",
    "subcategory": "Adult variants",
-   "caption": "SREDA onset in an awake adult: sharply contoured theta from 3 to 7 s builds into a sustained 5-6 Hz rhythm in all chains, largest posteriorly (T5-O1, T6-O2, P3-O1, P4-O2), while the patient stays alert (blinks). The full run lasts about a minute and ends abruptly.",
+   "caption": "SREDA onset in an authored awake adult interval: sharply contoured slowing builds into sustained 5–6 Hz activity with a posterior maximum and left predominance. This page shows the onset of a simulated 60-s run.",
    "tags": {
     "age": "adult",
     "state": "awake",
@@ -767,7 +767,7 @@
    "title": "Sweat artifact",
    "category": "artifacts",
    "subcategory": "Electrode and environment",
-   "caption": "Very slow (2-4 s) baseline sway of about one row in the right frontopolar chains (Fp2-F8, Fp2-F4, F4-C4), with the posterior chains unaffected; it survives the 1 Hz low-frequency filter.",
+   "caption": "Very slow (2-4 s) baseline sway in the right frontopolar chains (Fp2-F8, Fp2-F4, F4-C4), with the posterior chains unaffected; it remains visible with the 1 Hz low-frequency filter.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -1278,7 +1278,7 @@
    "title": "Spindle coma",
    "category": "slowing",
    "subcategory": "Coma and encephalopathy patterns",
-   "caption": "Frontocentral 12-14 Hz spindles, vertex waves and K-complexes (13-15 s and 19 s) in an unresponsive, unreactive child, with no sleep cycling or wakefulness.",
+   "caption": "Frontocentral 12-14 Hz spindles, vertex waves and K-complexes near 13 s and 19 s in an unresponsive child. Unreactivity and absent sleep-wake cycling are clinical and longer-record context for this synthetic example.",
    "tags": {
     "age": "child",
     "state": "unknown",
@@ -1328,12 +1328,46 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "composite",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:de8e9b0366c786b8561cc7537530f7195469c50b54e4bcf02dec4087f73ca77d",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:9e051bfbeec68bfe49d99d30584a3b7c55e50bb87a3ce8be7f059a8b80af6a52",
    "width": 1600,
    "height": 1400,
-   "path": "0.5.2/slw-hypothermia.png",
-   "thumbPath": "0.5.2/slw-hypothermia.w800.webp"
+   "path": "0.5.4/slw-hypothermia.png",
+   "thumbPath": "0.5.4/slw-hypothermia.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Alpha/delta ratio: unitless.",
+     "Raw EEG calibration bar: 50 µV vertical · 1 second horizontal.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "iid-left-temporal-spike-slow",
@@ -1445,7 +1479,7 @@
    "title": "Left central spike",
    "category": "interictal",
    "subcategory": "Central",
-   "caption": "Spikes maximal at C3, phase-reversing at C3 between F3-C3 and C3-P3 (2.7, 5.6, 8.3 and 12 s), with little involvement of the temporal chain, in N2 sleep.",
+   "caption": "Spikes maximal at C3, phase-reversing at C3 between F3-C3 and C3-P3 (several independent discharges across the page), with little involvement of the temporal chain, in N2 sleep.",
    "tags": {
     "age": "child",
     "state": "N2",
@@ -1613,7 +1647,7 @@
    "title": "Left mesial temporal seizure onset",
    "category": "seizures",
    "subcategory": "Temporal",
-   "caption": "Onset of a left mesial temporal seizure at 3 s: rhythmic 7 Hz theta that is present from the first second, maximal in Fp1-F7 and F7-T3 (anterior temporal), without a low-voltage fast onset, slowing slightly over the page.",
+   "caption": "Onset of a left mesial temporal seizure at 3 s: rhythmic 7 Hz theta that is present from the first ictal second, maximal in Fp1-F7 and F7-T3 (anterior temporal), without a low-voltage fast onset, slowing slightly over the page.",
    "tags": {
     "age": "child",
     "state": "N2",
@@ -1685,12 +1719,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ae63930f2bfad72702d878a864224959189c8707c753cb4ed24be58845d516bd",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:bf0c88d9b3ecd5f44393539d6a9a71046723f33947021439b41e0f093f27d01c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-frontal-left.png",
-   "thumbPath": "0.5.2/szf-frontal-left.w800.webp"
+   "path": "0.5.4/szf-frontal-left.png",
+   "thumbPath": "0.5.4/szf-frontal-left.w800.webp"
   },
   {
    "id": "szf-central-left",
@@ -1760,7 +1794,7 @@
    "title": "Focal to bilateral spread",
    "category": "seizures",
    "subcategory": "Spread",
-   "caption": "A right temporal seizure that takes over the right hemisphere first and then recruits the left side, becoming bilateral and larger with muscle artifact (focal to bilateral evolution).",
+   "caption": "A right temporal seizure already in progress recruits the right hemisphere and then the left, with increasing voltage and muscle artifact. This 30-second page spans the transition toward bilateral activity.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -1769,12 +1803,12 @@
     "acns": "electrographic seizure, hemispheric spread"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:2cafd0d43f4a83828fcdb93b8796d040664f28ecebab4d49ef3b4ca1632152f4",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:876024f1615086ea5b76b6ae605eb4878cea3dae7a1f210f8eb5e7ec3fb2dba9",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-hemispheric-spread.png",
-   "thumbPath": "0.5.2/szf-hemispheric-spread.w800.webp"
+   "path": "0.5.4/szf-hemispheric-spread.png",
+   "thumbPath": "0.5.4/szf-hemispheric-spread.w800.webp"
   },
   {
    "id": "szf-postictal-attenuation",
@@ -1837,7 +1871,42 @@
    "width": 1600,
    "height": 1000,
    "path": "0.5.2/szf-seizure-cluster-trend.png",
-   "thumbPath": "0.5.2/szf-seizure-cluster-trend.w800.webp"
+   "thumbPath": "0.5.2/szf-seizure-cluster-trend.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Rhythmicity: relative score; brighter colors mean stronger rhythmicity, not dB.",
+     "Seizure probability: heuristic score from 0 to 1.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -16.086,
+      20.234
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "szf-hypsarrhythmia",
@@ -1943,10 +2012,10 @@
   },
   {
    "id": "neo-34w-background",
-   "title": "34 weeks PMA: delta brushes on a near-continuous background",
+   "title": "34 weeks PMA: delta brushes on a continuous background",
    "category": "neonatal",
    "subcategory": "Background by PMA",
-   "caption": "34 weeks PMA: a nearly continuous, lower-voltage background on which delta brushes (a delta wave with riding 10-20 Hz fast activity) stand out, phase-reversing at T3 or T4 in the temporal chains.",
+   "caption": "34 weeks PMA, awake/active-sleep-like continuous background: lower-voltage mixed activity with temporal delta brushes, showing a slow wave with riding 10–20 Hz fast activity and phase reversal at T3 or T4.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -1954,12 +2023,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d21d0f951224b9a083d9250b8d9ae51063aaace2008c343082300ab096143d6d",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:d8a13ab1babbe472de5b7a6c897402f490208bf339d31374e01efb73756fe126",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-34w-background.png",
-   "thumbPath": "0.5.2/neo-34w-background.w800.webp"
+   "path": "0.5.4/neo-34w-background.png",
+   "thumbPath": "0.5.4/neo-34w-background.w800.webp"
   },
   {
    "id": "neo-term-continuous",
@@ -2086,7 +2155,7 @@
    "title": "Temporal theta (29 weeks)",
    "category": "neonatal",
    "subcategory": "Graphoelements",
-   "caption": "Temporal theta bursts at 29 weeks PMA: 4-6 Hz rhythmic runs of about 1 s at T3 (Fp1-T3, T3-O1, T3-C3) near 4 s and 7 s and at T4 near 10 s, riding on the bursts; typical of 26-32 weeks PMA.",
+   "caption": "Temporal theta bursts at 29 weeks PMA: brief 4–6 Hz rhythmic runs with a left temporal maximum at T3, riding within bursts of a discontinuous background; typical of 26–32 weeks PMA.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -2189,7 +2258,7 @@
    "title": "Neonatal burst suppression",
    "category": "neonatal",
    "subcategory": "Abnormal background",
-   "caption": "Term neonate with burst suppression: invariant high-voltage bursts separated by suppressed (<5 uV) periods, without state change or reactivity.",
+   "caption": "Term neonate with burst suppression: high-voltage abnormal bursts separated by very low-voltage intervals. On this page, the central interburst intervals measure under 5 uV peak-to-peak after display filtering. Normal neonatal graphoelements are absent; this excerpt does not establish full-record invariance.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -2198,19 +2267,19 @@
     "acns": "burst suppression"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:8d1a6ae96ce4d6bf46cd42995c16f806022f3d62d6e55ab68872932cd1f8ff07",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:03381b5498b0116a2d4ab10ffe9fe3d4e2eb2d4b8fa747949d528fb9785d2da4",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-burst-suppression.png",
-   "thumbPath": "0.5.2/neo-burst-suppression.w800.webp"
+   "path": "0.5.4/neo-burst-suppression-0fc8772318.png",
+   "thumbPath": "0.5.4/neo-burst-suppression-0fc8772318.w800.webp"
   },
   {
    "id": "neo-hypothermia-aeeg",
    "title": "aEEG during therapeutic hypothermia",
    "category": "neonatal",
    "subcategory": "Hypothermia",
-   "caption": "Six hours of aEEG in a term neonate with HIE cooled to 33.5 C: a discontinuous normal-voltage pattern (upper margin 25-50 uV, lower margin about 2 uV) without sleep-wake cycling.",
+   "caption": "Six hours of aEEG in an authored term-neonate HIE/cooling scenario: a discontinuous normal-voltage pattern, with an upper margin mostly 15–30 uV and intermittent higher peaks, a lower margin around 2 uV, and absent sleep-wake cycling.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -2224,7 +2293,13 @@
    "width": 1600,
    "height": 900,
    "path": "0.5.2/neo-hypothermia-aeeg.png",
-   "thumbPath": "0.5.2/neo-hypothermia-aeeg.w800.webp"
+   "thumbPath": "0.5.2/neo-hypothermia-aeeg.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ]
+   }
   },
   {
    "id": "acn-lpds-left-temporal",
@@ -2513,12 +2588,12 @@
     "acns": "LRDA, fluctuating"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:3b49ecfd4d50f94c1a6addf81aea9c77261288a4d69b76b115101c001271e2ac",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:313b076a30a9a6f15e286ddd0d348d747223efadc2e59571488c3c29e9b84988",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lrda-fluctuating.png",
-   "thumbPath": "0.5.2/acn-lrda-fluctuating.w800.webp"
+   "path": "0.5.4/acn-lrda-fluctuating.png",
+   "thumbPath": "0.5.4/acn-lrda-fluctuating.w800.webp"
   },
   {
    "id": "acn-grda-frontal",
@@ -2588,7 +2663,7 @@
    "title": "BIRDs, right temporal",
    "category": "acns",
    "subcategory": "Special patterns",
-   "caption": "A 6-second run of rhythmic activity at about 4.5 Hz over the right temporal chain (F8-T4, T4-T6), starting and stopping abruptly: under 10 s, so it is a brief potentially ictal rhythmic discharge (BIRDs), not a seizure.",
+   "caption": "A sharply contoured 6-second run of rhythmic activity above 4 Hz over the right temporal chain (F8-T4, T4-T6), starting and stopping abruptly. In the stated setting without a clinical correlate or a known benign rhythm, this illustrates possible BIRDs; brief duration alone does not define BIRDs.",
    "tags": {
     "age": "adolescent",
     "state": "unknown",
@@ -2672,7 +2747,7 @@
    "title": "Normal term aEEG with sleep-wake cycling",
    "category": "trends",
    "subcategory": "aEEG",
-   "caption": "Term neonatal aEEG (day 3), continuous normal voltage: the lower margin stays at or above 5 uV and the upper margin well above 10 uV. Sleep-wake cycling shows as recurring stretches of 15-30 minutes in which the band widens and its lower margin dips toward 5 uV (quiet sleep, trace alternant), alternating with narrower continuous stretches.",
+   "caption": "Term neonatal aEEG (day 3), predominantly continuous normal voltage: the lower margin is generally around or above 5 uV and the upper margin well above 10 uV, with brief lower-margin dips. Sleep-wake cycling appears as recurring 15-30-minute stretches of band widening and lower-margin dips toward 5 uV (quiet sleep, trace alternant), alternating with narrower continuous stretches.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -2685,14 +2760,20 @@
    "width": 1600,
    "height": 900,
    "path": "0.5.2/trd-aeeg-term-swc.png",
-   "thumbPath": "0.5.2/trd-aeeg-term-swc.w800.webp"
+   "thumbPath": "0.5.2/trd-aeeg-term-swc.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ]
+   }
   },
   {
    "id": "trd-aeeg-dnv",
    "title": "Discontinuous normal voltage aEEG",
    "category": "trends",
    "subcategory": "aEEG",
-   "caption": "Discontinuous normal voltage aEEG: the lower margin runs below 5 uV while the upper margin stays above 10 uV, a wider band than a continuous record, without clear sleep-wake cycling. The raw strip shows a low-voltage interburst interval followed by a burst.",
+   "caption": "Discontinuous normal voltage aEEG: the lower margin is predominantly below 5 uV while the upper margin stays above 10 uV, with a broad band and no clear mature sleep-wake cycling. The raw strip shows a burst followed by a lower-voltage interval.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -2705,7 +2786,14 @@
    "width": 1600,
    "height": 900,
    "path": "0.5.2/trd-aeeg-dnv.png",
-   "thumbPath": "0.5.2/trd-aeeg-dnv.w800.webp"
+   "thumbPath": "0.5.2/trd-aeeg-dnv.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Raw excerpt calibration bar: 50 µV vertical; its horizontal ruler is seconds.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ]
+   }
   },
   {
    "id": "trd-aeeg-burst-suppression",
@@ -2725,7 +2813,14 @@
    "width": 1600,
    "height": 900,
    "path": "0.5.2/trd-aeeg-burst-suppression.png",
-   "thumbPath": "0.5.2/trd-aeeg-burst-suppression.w800.webp"
+   "thumbPath": "0.5.2/trd-aeeg-burst-suppression.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Raw excerpt calibration bar: 50 µV vertical; its horizontal ruler is seconds.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ]
+   }
   },
   {
    "id": "trd-aeeg-seizures",
@@ -2745,7 +2840,14 @@
    "width": 1600,
    "height": 900,
    "path": "0.5.2/trd-aeeg-seizures.png",
-   "thumbPath": "0.5.2/trd-aeeg-seizures.w800.webp"
+   "thumbPath": "0.5.2/trd-aeeg-seizures.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Raw excerpt calibration bar: 50 µV vertical; its horizontal ruler is seconds.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ]
+   }
   },
   {
    "id": "trd-csa-seizures",
@@ -2760,12 +2862,45 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:545325826405b664abe7da87b3f2930861380c6b46453f80338dc0c728932194",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:692595cf9b9952a7cafc9a25a07b67f920c71dbc36e842353176bdf1185477c1",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/trd-csa-seizures.png",
-   "thumbPath": "0.5.2/trd-csa-seizures.w800.webp"
+   "path": "0.5.4/trd-csa-seizures.png",
+   "thumbPath": "0.5.4/trd-csa-seizures.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-seizure-probability",
@@ -2780,12 +2915,47 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ddb42a7fc8fefa849bd737db74a0c027e2222cc03904f6a5800503df18d4ccc9",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:8108f3ad5ad6a1a09f11a6b5899434c720627bd0be4466aab794ad384873c281",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/trd-seizure-probability.png",
-   "thumbPath": "0.5.2/trd-seizure-probability.w800.webp"
+   "path": "0.5.4/trd-seizure-probability.png",
+   "thumbPath": "0.5.4/trd-seizure-probability.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Rhythmicity: relative score; brighter colors mean stronger rhythmicity, not dB.",
+     "Suppression and asymmetry: percent; use each panel’s labeled limits.",
+     "Seizure probability: heuristic score from 0 to 1.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-lpds-vs-seizure",
@@ -2801,12 +2971,47 @@
     "acns": "LPDs, 1 Hz"
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:7e43f71b6109be60d4d8659857d3d93ed8c33d4557fb5c3318d85526376d7a1f",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:a3f4ccf46ef73b08b9d957fd5bde936fdcf55ddc020f9126d9f4661927088ed4",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/trd-lpds-vs-seizure.png",
-   "thumbPath": "0.5.2/trd-lpds-vs-seizure.w800.webp"
+   "path": "0.5.4/trd-lpds-vs-seizure.png",
+   "thumbPath": "0.5.4/trd-lpds-vs-seizure.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Rhythmicity: relative score; brighter colors mean stronger rhythmicity, not dB.",
+     "Seizure probability: heuristic score from 0 to 1.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-ese-trends",
@@ -2822,12 +3027,47 @@
     "acns": "ESE"
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:653891009b3990dd4da29ba2c3fde09ed44f3120b9d2bb3ba95b7a458d85c9be",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:16c8aa3361c6cfb655878e20cf9189dfe57ec26749db3229b1464d572957b259",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/trd-ese-trends.png",
-   "thumbPath": "0.5.2/trd-ese-trends.w800.webp"
+   "path": "0.5.4/trd-ese-trends.png",
+   "thumbPath": "0.5.4/trd-ese-trends.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Rhythmicity: relative score; brighter colors mean stronger rhythmicity, not dB.",
+     "Seizure probability: heuristic score from 0 to 1.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-asymmetry-index",
@@ -2842,12 +3082,45 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:97741501102d3eb0236fd9770dd94721ad437a55c89c0d5a7bb44b26c4278247",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:4a889031c2ce3da57157f96b52a0e9d4a50727ada3051fa2e44f3c4acc34d7a6",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/trd-asymmetry-index.png",
-   "thumbPath": "0.5.2/trd-asymmetry-index.w800.webp"
+   "path": "0.5.4/trd-asymmetry-index.png",
+   "thumbPath": "0.5.4/trd-asymmetry-index.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Suppression and asymmetry: percent; use each panel’s labeled limits.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-suppression-ratio",
@@ -2862,12 +3135,46 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:504aaa8dad561e851e14616fced4cd206aaf362b95b10d04f1a4459a65a2ca5c",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:861ea8c1d22208a6e659468feeb7ace825a2c3fe34b74efe0cadf5f8a2dff18b",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/trd-suppression-ratio.png",
-   "thumbPath": "0.5.2/trd-suppression-ratio.w800.webp"
+   "path": "0.5.4/trd-suppression-ratio.png",
+   "thumbPath": "0.5.4/trd-suppression-ratio.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Suppression and asymmetry: percent; use each panel’s labeled limits.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-sedation-power",
@@ -2882,12 +3189,45 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:e3f2166cfbf67bee70d469479274f2a4b2648123c9de77ce8d8192619ef43f3a",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:517aa660b484cdb208967a8faa77f26c1161b754dfdfe6427a12cc9848bce6a9",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/trd-sedation-power.png",
-   "thumbPath": "0.5.2/trd-sedation-power.w800.webp"
+   "path": "0.5.4/trd-sedation-power.png",
+   "thumbPath": "0.5.4/trd-sedation-power.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Alpha/delta ratio: unitless.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-composite-seizure",
@@ -2902,12 +3242,48 @@
     "sensitivity_uv_mm": 15
    },
    "kind": "composite",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:e658bdff2774ca3d93c2cd88cd325ad339dc178fc432333e84535120316591e3",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:c497b5806c98473ee9a898cbae2af580f1a98e2e31b391a1c8fec6909b89f713",
    "width": 1600,
    "height": 1400,
-   "path": "0.5.2/trd-composite-seizure.png",
-   "thumbPath": "0.5.2/trd-composite-seizure.w800.webp"
+   "path": "0.5.4/trd-composite-seizure.png",
+   "thumbPath": "0.5.4/trd-composite-seizure.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Rhythmicity: relative score; brighter colors mean stronger rhythmicity, not dB.",
+     "Seizure probability: heuristic score from 0 to 1.",
+     "Raw EEG calibration bar: 50 µV vertical · 1 second horizontal.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "trd-composite-burst-suppression",
@@ -2922,12 +3298,47 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "composite",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:a664d872f30d43f85f9d2b6eeb7104720c64b452e8fae7732e87d8c20faf1fac",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:875e7cd99f152e24371d63496efa12750c586e141b668dbab4cf5051e0fa02fd",
    "width": 1600,
    "height": 1400,
-   "path": "0.5.2/trd-composite-burst-suppression.png",
-   "thumbPath": "0.5.2/trd-composite-burst-suppression.w800.webp"
+   "path": "0.5.4/trd-composite-burst-suppression.png",
+   "thumbPath": "0.5.4/trd-composite-burst-suppression.w800.webp",
+   "scaleLegend": {
+    "lines": [
+     "FFT power: dB, using this image’s range and palette.",
+     "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
+     "Spectrogram vertical axes: frequency in Hz.",
+     "Suppression and asymmetry: percent; use each panel’s labeled limits.",
+     "Raw EEG calibration bar: 50 µV vertical · 1 second horizontal.",
+     "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
+    ],
+    "power": {
+     "range": [
+      -10,
+      30
+     ],
+     "colors": [
+      "#02040b",
+      "#0b0921",
+      "#130f36",
+      "#201448",
+      "#2f1958",
+      "#3d1e68",
+      "#50236c",
+      "#672867",
+      "#7e2d63",
+      "#96355d",
+      "#b14655",
+      "#cd574d",
+      "#e26d4b",
+      "#eb8d52",
+      "#f4ac59",
+      "#fad08c",
+      "#fff1bd"
+     ]
+    }
+   }
   },
   {
    "id": "gen-typical-absence",
@@ -2954,20 +3365,20 @@
    "title": "Atypical absence",
    "category": "generalized",
    "subcategory": "Absence seizures",
-   "caption": "Slow (<2.5 Hz), irregular sharp-and-slow-wave complexes with gradual onset and offset on a slow background; the sharp component precedes each slow wave.",
+   "caption": "Slow (<2.5 Hz), irregular sharp-and-slow-wave complexes with gradual onset and offset on a slow background; the sharp component precedes each slow wave. Average reference exposes the preceding sharp component in the frontocentral channels and the subsequent slower wave; the background is diffusely slow.",
    "tags": {
     "age": "child",
-    "montage": "longitudinal_bipolar",
+    "montage": "average",
     "sensitivity_uv_mm": 20,
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:8e940817a1002632a8f3c1eafb89affbe950889c71790c80ed9efcfc62c32065",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:a755634c991f0a8088477b7b298e3cb338532d701e152e4ea35bd2b0d4456e75",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-atypical-absence.png",
-   "thumbPath": "0.5.1/gen-atypical-absence.w800.webp"
+   "path": "0.5.4/gen-atypical-absence.png",
+   "thumbPath": "0.5.4/gen-atypical-absence.w800.webp"
   },
   {
    "id": "gen-myoclonic",
@@ -3042,12 +3453,12 @@
     "state": "unknown"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:4feb5de86a238b70272279799557158c04ba1f4dbd4ca5470552c23c77a4bd5e",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:2bda01f2d8281f8fa7a8994c8b2965819958611483c9fb81c268d817c367b579",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-tonic.png",
-   "thumbPath": "0.5.1/gen-tonic.w800.webp"
+   "path": "0.5.4/gen-tonic.png",
+   "thumbPath": "0.5.4/gen-tonic.w800.webp"
   },
   {
    "id": "gen-atonic",
@@ -3254,20 +3665,20 @@
    "title": "Slow spike-and-wave (Lennox-Gastaut)",
    "category": "generalized",
    "subcategory": "Epileptic encephalopathy",
-   "caption": "Irregular 1.5-2.5 Hz sharp-and-slow-wave complexes, frontal maximum, on a slow background.",
+   "caption": "Irregular 1.5-2.5 Hz sharp-and-slow-wave complexes, frontal maximum, on a slow background. Average reference exposes the preceding sharp component in the frontocentral channels and the subsequent slower wave; the background is diffusely slow.",
    "tags": {
     "age": "child",
-    "montage": "longitudinal_bipolar",
-    "sensitivity_uv_mm": 15,
+    "montage": "average",
+    "sensitivity_uv_mm": 20,
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:12cbc0ba7305ff0b99c2e7c7dda62bbb34aeb1b0ec4b0c94176aca76e291be26",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:6eb952c38b4e6d570215b3150d0d0cac41eb41c7ac077cd4d576d06e5ddd78e5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-lgs-slow-spike-wave.png",
-   "thumbPath": "0.5.1/gen-lgs-slow-spike-wave.w800.webp"
+   "path": "0.5.4/gen-lgs-slow-spike-wave.png",
+   "thumbPath": "0.5.4/gen-lgs-slow-spike-wave.w800.webp"
   },
   {
    "id": "gen-gpfa-n2",
@@ -3328,6 +3739,68 @@
    "height": 900,
    "path": "0.5.1/gen-eses.png",
    "thumbPath": "0.5.1/gen-eses.w800.webp"
+  },
+  {
+   "id": "iid-selects-bilateral-bipolar",
+   "title": "SeLECTS / BECTS: bilateral independent centrotemporal spikes (bipolar)",
+   "category": "interictal",
+   "subcategory": "Central / rolandic",
+   "caption": "Independent left and right centrotemporal discharges on the same normal drowsy background. Negative peaks reverse at C3/T3 or C4/T4, with the frontal positive pole of a transverse dipole and an after-going slow wave. Paired with the referential view of this same recording and time window.",
+   "tags": {
+    "age": "child",
+    "state": "drowsy",
+    "montage": "longitudinal_bipolar",
+    "sensitivity_uv_mm": 10,
+    "acns": "sporadic epileptiform discharges, abundant"
+   },
+   "kind": "eeg_page",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:930a84b90417c75d4b5a3a0c6ee979d340223269ab50e769c90591adb59a52ce",
+   "width": 1600,
+   "height": 900,
+   "path": "0.5.4/iid-selects-bilateral-bipolar.png",
+   "thumbPath": "0.5.4/iid-selects-bilateral-bipolar.w800.webp"
+  },
+  {
+   "id": "iid-selects-bilateral-referential",
+   "title": "SeLECTS / BECTS: bilateral independent centrotemporal spikes (referential)",
+   "category": "interictal",
+   "subcategory": "Central / rolandic",
+   "caption": "The same recording and time window as the paired bipolar view, using average reference as in the ILAE example. Centrotemporal negativity at C3/T3 or C4/T4 points upward; the simultaneous frontal positive pole points downward. The left and right discharges occur independently on a normal drowsy background.",
+   "tags": {
+    "age": "child",
+    "state": "drowsy",
+    "montage": "average",
+    "sensitivity_uv_mm": 10,
+    "acns": "sporadic epileptiform discharges, abundant"
+   },
+   "kind": "eeg_page",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:4ce349f3151f295f65f8b6daa763c1ded51c522f6e323fc38d2fff9480db60c8",
+   "width": 1600,
+   "height": 900,
+   "path": "0.5.4/iid-selects-bilateral-referential.png",
+   "thumbPath": "0.5.4/iid-selects-bilateral-referential.w800.webp"
+  },
+  {
+   "id": "var-ciganek",
+   "title": "Midline theta rhythm (Ciganek)",
+   "category": "variants",
+   "subcategory": "Awake variants",
+   "caption": "A waxing and waning 6 Hz midline theta train, maximal at Cz with Fz greater than Pz and only a small parasagittal field. Smooth rhythmic activity in an awake adult; a normal variant without ictal evolution.",
+   "tags": {
+    "age": "adult",
+    "state": "awake",
+    "montage": "longitudinal_bipolar",
+    "sensitivity_uv_mm": 7
+   },
+   "kind": "eeg_page",
+   "rendererVersion": "0.5.4",
+   "specHash": "sha256:e0a0a69a670811296b863a04cb4c89d87beee54031318b8865e62f463a4fcc69",
+   "width": 1600,
+   "height": 900,
+   "path": "0.5.4/var-ciganek.png",
+   "thumbPath": "0.5.4/var-ciganek.w800.webp"
   }
  ]
 }

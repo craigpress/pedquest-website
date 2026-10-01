@@ -329,7 +329,8 @@ export default function Navbar() {
               width={2113}
               height={744}
               sizes="(min-width: 1024px) 137px, 103px"
-              priority
+              loading="eager"
+              fetchPriority="high"
               className="h-9 lg:h-12 w-auto transition-opacity duration-300 group-hover:opacity-85"
             />
           </Link>

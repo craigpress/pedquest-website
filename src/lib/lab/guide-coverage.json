@@ -1,5 +1,5 @@
 {
-  "rendererVersion": "0.5.3",
+  "rendererVersion": "0.5.4",
   "eventTypes": [
     "seizure", "seizure_cluster", "status_epilepticus", "sedation_change", "attenuation_transient",
     "temperature_change", "stimulation", "artifact", "state_change", "rhythmic_pattern", "normal_variant",

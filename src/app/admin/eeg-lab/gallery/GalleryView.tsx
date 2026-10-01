@@ -5,7 +5,7 @@
 // (useRole, editors and admins); the data routes re-check the editor role. All view state lives in the URL
 // (?c= category, q= search, status=, age=, acns=, view=grid|one, item=<id>, present=1, queue=1).
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
@@ -28,6 +28,27 @@ type Params = {
 };
 
 const STATUSES: GalleryStatus[] = ["new", "needs_review", "accepted"];
+
+function ScaleLegend({ item, zoom, onZoom }: { item: GalleryItem; zoom?: boolean; onZoom?: () => void }) {
+  const lines = item.kind === "eeg_page"
+    ? ["Calibration bar: 50 µV vertical · 1 second horizontal. Grid lines: 1 second."]
+    : item.scaleLegend?.lines ?? ["Read amplitude and time from the labeled axes; frequency is in Hz."];
+  const power = item.scaleLegend?.power;
+  return (
+    <div className={styles.scaleLegend} aria-label="Image scale legend">
+      <div className={styles.scaleHeading}>
+        <strong>Scale &amp; units</strong>
+        {onZoom && <button type="button" onClick={onZoom}>{zoom ? "Fit image" : "1:1 image"}</button>}
+      </div>
+      {lines.map((line) => <p key={line}>{line}</p>)}
+      {power && <div className={styles.powerLegend}>
+        <span>{power.range[0]} dB</span>
+        <span className={styles.powerGradient} style={{ background: `linear-gradient(to right, ${power.colors.join(", ")})` }} />
+        <span>{power.range[1]} dB</span>
+      </div>}
+    </div>
+  );
+}
 
 function readParams(): Params {
   const p = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
@@ -117,6 +138,9 @@ export default function GalleryView() {
       return next;
     });
   }, []);
+  const openItem = useCallback((id: string) => update({ item: id, queue: false }, true), [update]);
+  const moveItem = useCallback((id: string) => update({ item: id }), [update]);
+  const reloadImages = useCallback(() => { void load(); }, [load]);
   useEffect(() => {
     const onPop = () => setP(readParams());
     window.addEventListener("popstate", onPop);
@@ -189,7 +213,7 @@ export default function GalleryView() {
   if (p.present) {
     return <Presentation items={ordered} urls={data?.urls ?? {}} startId={p.item}
       onExit={(id) => update({ present: false, item: null }, false)}
-      onMove={(id) => update({ item: id })} onError={() => void load()} />;
+      onMove={moveItem} onError={reloadImages} />;
   }
 
   const sections = CATEGORY_ORDER.filter((c) => ordered.some((i) => i.category === c));
@@ -326,8 +350,8 @@ export default function GalleryView() {
                     <div className={p.view === "one" ? styles.oneUp : styles.grid}>
                       {inCat.filter((i) => i.subcategory === s).map((it) => (
                         <Card key={it.id} it={it} status={statusOf(it)} thumb={data?.urls[it.id]?.thumb ?? null}
-                          notes={data?.noteCount[it.id] ?? 0} onOpen={() => update({ item: it.id, queue: false }, true)}
-                          onImgError={() => void load()} />
+                          notes={data?.noteCount[it.id] ?? 0} onOpen={openItem}
+                          onImgError={reloadImages} />
                       ))}
                     </div>
                   </div>
@@ -343,7 +367,7 @@ export default function GalleryView() {
           authHeaders={authHeaders}
           onClose={() => { const id = current.id; update({ item: null, queue: false }); requestAnimationFrame(() =>
             document.getElementById(`item-${id}`)?.focus()); }}
-          onMove={(id) => update({ item: id })}
+          onMove={moveItem}
           onStatus={(s) => void setStatus(current, s)}
           onPresent={() => update({ present: true })}
           onNoteAdded={() => setData((d) => d && ({ ...d, noteCount: { ...d.noteCount,
@@ -354,13 +378,13 @@ export default function GalleryView() {
   );
 }
 
-function Card({ it, status, thumb, notes, onOpen, onImgError }: {
-  it: GalleryItem; status: GalleryStatus; thumb: string | null; notes: number; onOpen: () => void;
+const Card = memo(function Card({ it, status, thumb, notes, onOpen, onImgError }: {
+  it: GalleryItem; status: GalleryStatus; thumb: string | null; notes: number; onOpen: (id: string) => void;
   onImgError: () => void;
 }) {
   const chips = paramChips(it);
   return (
-    <button type="button" id={`item-${it.id}`} className={styles.card} onClick={onOpen}
+    <button type="button" id={`item-${it.id}`} className={styles.card} onClick={() => onOpen(it.id)}
       aria-label={`${it.title}, ${STATUS_LABEL[status]}. Open the viewer.`}>
       <figure style={{ margin: 0 }}>
         <div className={styles.mat}>
@@ -385,7 +409,7 @@ function Card({ it, status, thumb, notes, onOpen, onImgError }: {
       </figure>
     </button>
   );
-}
+});
 
 function Viewer({ it, list, urls, status, queue, authHeaders, onClose, onMove, onStatus, onPresent, onNoteAdded,
   onImgError }: {
@@ -479,6 +503,7 @@ function Viewer({ it, list, urls, status, queue, authHeaders, onClose, onMove, o
             else if (dx < -60 && next) onMove(next.id);
           }}>
           <div className={styles.stageMat}>
+            <ScaleLegend item={it} zoom={zoom} onZoom={() => setZoom((z) => !z)} />
             {full
               ? <img src={full} alt={altText(it)} onClick={() => setZoom((z) => !z)} onError={onImgError}
                 style={{ cursor: zoom ? "zoom-out" : "zoom-in" }} />
@@ -529,6 +554,9 @@ function Viewer({ it, list, urls, status, queue, authHeaders, onClose, onMove, o
               </button>
             </div>
           </div>
+          <p className={styles.kbd}>
+            Use the time ruler and calibration bar. Screen millimeters change when the image is resized; the labeled seconds and µV remain valid.
+          </p>
           <p className={styles.kbd}>
             <kbd>←</kbd>/<kbd>→</kbd> previous / next · <kbd>Z</kbd> 1:1 · <kbd>A</kbd> accept · <kbd>N</kbd> needs
             review · <kbd>U</kbd> new · <kbd>C</kbd> note · <kbd>P</kbd> present · <kbd>Esc</kbd> close
@@ -627,6 +655,7 @@ function Presentation({ items, urls, startId, onExit, onMove, onError }: {
         <>
           <div className={styles.presentStage}>
             <div className={styles.stageMat}>
+              <ScaleLegend item={s.it} />
               {urls[s.it.id]?.full
                 ? <img src={urls[s.it.id].full!} alt={altText(s.it)} onError={onError} />
                 : <div className={styles.missing} style={{ width: "60vw" }}>Image unavailable</div>}

@@ -34,7 +34,7 @@ ARTIFACTS = [
     "lateral_eye", "slow_roving_eye", "rem_eye_movements", "pulse", "glossokinetic",
 ]
 AUTHORED_VARIANTS = [
-    "mu", "lambda", "wicket", "fourteen_and_six", "rmtd", "sreda",
+    "mu", "lambda", "wicket", "fourteen_and_six", "rmtd", "sreda", "midline_theta",
     "frontal_arousal_rhythm", "photic_driving", "hyperventilation_buildup",
 ]
 AGENTS = ["propofol", "midazolam", "pentobarbital", "dexmedetomidine", "ketamine", "remifentanil"]
@@ -335,6 +335,8 @@ _EVENT = {
                                "adult_teaching", "arousal", "photic", "hyperventilation", "rem"]},
         "block_at_min": _num,
         "block_duration_s": _pos,
+        "train_duration_s": _pos,
+        "centrotemporal_triphasic": {"type": "boolean"},
         "stimulus_frequency_hz": {"type": "number", "minimum": 1, "maximum": 30},
         "decay_s": {"type": "number", "minimum": 0.01, "maximum": 5},
         # state change
@@ -461,7 +463,8 @@ _BACKGROUND = {
                 name: {"type": ["object", "null"], "additionalProperties": False,
                        "properties": {"enabled": {"type": "boolean"},
                                       "amplitude_uv": {"type": "number", "minimum": 0, "maximum": 600},
-                                      "rate_per_min": {"type": "number", "minimum": 0, "maximum": 60}}}
+                                      "rate_per_min": {"type": "number", "minimum": 0, "maximum": 60},
+                                      **({"interval_s": _pos} if name == "posts" else {})}}
                 for name in ("hypnagogic_hypersynchrony", "posts", "posterior_slow_waves_of_youth")
             },
         },
@@ -581,6 +584,8 @@ _STYLE = {
         "spindle_train_s": {"type": "number", "minimum": 30, "maximum": 600},
         # 0.5.0 (spec_version 3): spindles per minute of N2 (N3 gets 0.35x); authored default 4
         "spindle_rate_per_min": {"type": "number", "minimum": 0, "maximum": 15},
+        "spindle_topography": {"enum": ["centroparietal", "central"]},
+        "k_complex_spindle_delay_s": {"type": "number", "minimum": 1.0, "maximum": 5.0},
         "seizure_onset_region_by_index": {"type": "array", "items": {"enum": REGIONS}},
         "show_detector_event_strip": {"type": "boolean"},
         "detector_marks_at_min": {"type": "array", "items": {"type": "number"}},

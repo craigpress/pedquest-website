@@ -11,11 +11,14 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { loadEnvLocal } from "./_env";
+import type { GalleryItem } from "../src/lib/eeg-gallery";
 
 type CatalogItem = {
   id: string; title: string; category: string; subcategory: string; caption: string;
   tags: Record<string, unknown>; kind: string; rendered: boolean; renderer_version?: string; spec_hash?: string;
   width?: number; height?: number;
+  scaleLegend?: GalleryItem["scaleLegend"];
+  path?: string; thumbPath?: string;
 };
 
 const BUCKET = "eeg-gallery";
@@ -41,7 +44,8 @@ async function main() {
         id: i.id, title: i.title, category: i.category, subcategory: i.subcategory, caption: i.caption,
         tags: i.tags ?? {}, kind: i.kind, rendererVersion: rv, specHash: i.spec_hash ?? "",
         width: i.width ?? 1600, height: i.height ?? 900,
-        path: `${rv}/${i.id}.png`, thumbPath: `${rv}/${i.id}.w800.webp`,
+        path: i.path ?? `${rv}/${i.id}.png`, thumbPath: i.thumbPath ?? `${rv}/${i.id}.w800.webp`,
+        ...(i.scaleLegend ? { scaleLegend: i.scaleLegend } : {}),
       };
     }),
   };

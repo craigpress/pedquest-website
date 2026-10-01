@@ -114,7 +114,7 @@ export const ARTIFACT_KINDS: LabArtifactKind[] = [
 
 /** `normal_variant` kinds (renderer AUTHORED_VARIANTS); `artifact` must not use them. */
 const AUTHORED_VARIANTS = [
-  "mu", "lambda", "wicket", "fourteen_and_six", "rmtd", "sreda",
+  "mu", "lambda", "wicket", "fourteen_and_six", "rmtd", "sreda", "midline_theta",
   "frontal_arousal_rhythm", "photic_driving", "hyperventilation_buildup",
 ];
 
@@ -665,6 +665,11 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
   }
   const needsV3 = (what: string) => errors.push(`${what} needs spec_version 3 (set "spec_version": 3).`);
   const ignoredBelowV3 = (what: string) => warnings.push(`${what} is accepted but not synthesized below spec_version 3.`);
+  if (version < 3 && isObj(spec.style)) {
+    for (const key of ["spindle_topography", "k_complex_spindle_delay_s"]) {
+      if (spec.style[key] !== undefined) ignoredBelowV3(`style.${key}`);
+    }
+  }
 
   const ageGroup = spec.age_group;
   if (typeof ageGroup !== "string" || !AGE_BANDS.some((a) => a.id === ageGroup)) {
@@ -735,6 +740,9 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
       for (const key of ["sleep_staging", "sleep_architecture", "coma_pattern"]) {
         if (bg[key] !== undefined) ignoredBelowV3(`background.${key}`);
       }
+      if (isObj(bg.variants) && isObj(bg.variants.posts) && bg.variants.posts.interval_s !== undefined) {
+        ignoredBelowV3("background.variants.posts.interval_s");
+      }
     }
   }
 
@@ -802,6 +810,9 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
     if (type === "normal_variant" && !AUTHORED_VARIANTS.includes(String(raw.kind))) {
       errors.push(`${where}.kind "${String(raw.kind)}" is not an authored normal variant (${AUTHORED_VARIANTS.join(", ")}).`);
     }
+    if (type === "normal_variant" && version < 3 && raw.train_duration_s !== undefined) {
+      ignoredBelowV3(`${where}.train_duration_s`);
+    }
 
     if (type === "generalized_seizure" && raw.seizure_type !== undefined
         && !GENERALIZED_SEIZURE_TYPES.some((t) => t.id === raw.seizure_type)) {
@@ -813,6 +824,9 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
     }
 
     if (type === "sporadic_discharges") {
+      if (version < 3 && raw.centrotemporal_triphasic !== undefined) {
+        ignoredBelowV3(`${where}.centrotemporal_triphasic`);
+      }
       if (Array.isArray(raw.foci) && Array.isArray(raw.focus_weights) && raw.foci.length !== raw.focus_weights.length) {
         errors.push(`${where}.focus_weights must match foci in length.`);
       }

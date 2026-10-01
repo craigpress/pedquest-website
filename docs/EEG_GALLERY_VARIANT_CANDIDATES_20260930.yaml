@@ -1,0 +1,454 @@
+# Final reviewed variant specifications; supersedes initial candidates.
+items:
+- id: var-mu
+  title: Mu rhythm
+  category: variants
+  subcategory: Awake variants
+  caption: 'Right-predominant mu rhythm: sustained, waxing and waning 10 Hz arciform
+    activity over the right sensorimotor region, mixed with the awake background;
+    much smaller on the left. No ictal evolution or after-going slow wave.'
+  tags:
+    age: child
+    state: awake
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268201
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 12.1
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 9.0
+        amplitude_uv: 65
+        slow_fraction: 0.3
+        reactivity: present
+      events:
+      - type: normal_variant
+        kind: mu
+        at_min: 12.0
+        duration_s: 30
+        context: movement
+        side: right
+        amplitude_uv: 32
+        train_duration_s: 9
+- id: var-lambda
+  title: Lambda waves
+  category: variants
+  subcategory: Awake variants
+  caption: 'Lambda waves during visual scanning: repeated surface-positive, sail-like
+    occipital transients in P3-O1, P4-O2, T5-O1 and T6-O2, with blinks and other evidence
+    of wakefulness; no posterior dominant rhythm.'
+  tags:
+    age: child
+    state: awake
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268202
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 12.05
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 9.0
+        amplitude_uv: 40
+        slow_fraction: 0.3
+        reactivity: present
+      events:
+      - type: normal_variant
+        kind: lambda
+        at_min: 12.0
+        duration_s: 20
+        context: visual_scanning
+- id: var-pswy
+  title: Posterior slow waves of youth
+  category: variants
+  subcategory: Awake variants
+  caption: 'Posterior slow waves of youth, eyes closed: isolated 2.5–4 Hz waves fused
+    with the 9 Hz posterior rhythm in the occipital derivations. A normal finding
+    in children and adolescents.'
+  tags:
+    age: child
+    state: awake
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 10
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268203
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 11.5
+      window_s: 15
+      sensitivity_uv_mm: 10
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 9.0
+        amplitude_uv: 90
+        slow_fraction: 0.2
+        reactivity: present
+        pdr_gain: 2.5
+        variants:
+          posterior_slow_waves_of_youth:
+            rate_per_min: 12
+            amplitude_uv: 160
+      events: []
+- id: var-hypnagogic-hypersynchrony
+  title: Hypnagogic hypersynchrony
+  category: variants
+  subcategory: Drowsiness and sleep variants
+  caption: Hypnagogic hypersynchrony on a slower, higher-voltage drowsy background.
+    The wider window shows the lead-in before the high-voltage frontocentral delta-theta
+    burst, followed by return to the drowsy background.
+  tags:
+    age: child
+    state: drowsy
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 20
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268204
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 60
+      at_min: 11.2
+      window_s: 20
+      sensitivity_uv_mm: 20
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 6.5
+        amplitude_uv: 90
+        slow_fraction: 0.65
+        reactivity: present
+        variants:
+          hypnagogic_hypersynchrony:
+            amplitude_uv: 270
+      events:
+      - type: state_change
+        at_min: 10.0
+        to: sleep
+- id: var-posts
+  title: Positive occipital sharp transients of sleep (POSTS)
+  category: variants
+  subcategory: Drowsiness and sleep variants
+  caption: Occasional surface-positive occipital sharp transients in N2, separated
+    by irregular intervals rather than a nearly continuous train; a normal sleep finding.
+  tags:
+    age: adolescent
+    state: N2
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268205
+      age_group: adolescent
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 60
+      at_min: 17.2833
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 10.0
+        amplitude_uv: 35
+        slow_fraction: 0.3
+        reactivity: present
+        variants:
+          posts:
+            interval_s: 1.7
+      events:
+      - type: state_change
+        at_min: 10.0
+        to: sleep
+- id: var-wicket
+  title: Wicket waves
+  category: variants
+  subcategory: Drowsiness and sleep variants
+  caption: Low-amplitude 7-9 Hz arciform temporal runs and single wicket waves in
+    drowsiness, with no after-going slow wave or ictal evolution.
+  tags:
+    age: adult
+    state: drowsy
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268206
+      age_group: adult
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 12.55
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 10.0
+        amplitude_uv: 30
+        slow_fraction: 0.25
+        reactivity: present
+      events:
+      - type: state_change
+        at_min: 12.0
+        to: sleep
+      - type: normal_variant
+        kind: wicket
+        at_min: 12.5
+        duration_s: 20
+        context: drowsy
+        amplitude_uv: 25
+- id: var-rmtd
+  title: Rhythmic mid-temporal theta of drowsiness (RMTD)
+  category: variants
+  subcategory: Drowsiness and sleep variants
+  caption: 'RMTD in drowsiness: independent runs of rhythmic, notched 5–6 Hz theta
+    over the left and right mid-temporal chains, without evolution in frequency or
+    field.'
+  tags:
+    age: adolescent
+    state: drowsy
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268207
+      age_group: adolescent
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 12.55
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 9.5
+        amplitude_uv: 40
+        slow_fraction: 0.3
+        reactivity: present
+      events:
+      - type: state_change
+        at_min: 12.0
+        to: sleep
+      - type: normal_variant
+        kind: rmtd
+        at_min: 12.5
+        duration_s: 20
+        context: drowsy
+- id: var-14-and-6
+  title: 14 and 6 Hz positive bursts
+  category: variants
+  subcategory: Drowsiness and sleep variants
+  caption: '14 and 6 Hz positive bursts in light sleep (ear reference): brief positive
+    comb-like bursts, at 6–7 Hz on the left and 14 Hz on the right, with a posterior
+    temporal/occipital maximum.'
+  tags:
+    age: adolescent
+    state: N1
+    montage: referential
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268208
+      age_group: adolescent
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 14.05
+      window_s: 15
+      sensitivity_uv_mm: 7
+      montage: referential
+      background:
+        type: continuous
+        dominant_hz: 9.5
+        amplitude_uv: 40
+        slow_fraction: 0.3
+        reactivity: present
+      events:
+      - type: state_change
+        at_min: 12.0
+        to: sleep
+      - type: normal_variant
+        kind: fourteen_and_six
+        at_min: 14.0
+        duration_s: 30
+        context: light_sleep
+- id: var-frontal-arousal-rhythm
+  title: Frontal arousal rhythm
+  category: variants
+  subcategory: Drowsiness and sleep variants
+  caption: 'Child arousing from N2: a frontocentral K-complex near 2.2 s precedes
+    arousal with frontotemporal muscle at 5 s. Independently waxing rhythmic 8 Hz
+    trains follow in the frontal and frontocentral chains, with smaller posterior
+    spread.'
+  tags:
+    age: child
+    state: awake
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268214
+      age_group: child
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 14.916666666666666
+      window_s: 20
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 9.0
+        amplitude_uv: 60
+        slow_fraction: 0.4
+        reactivity: present
+        blink_rate_per_min: 0
+        sleep_staging: static
+      events:
+      - type: state_change
+        at_min: 15.0
+        to: arousal
+      - type: normal_variant
+        kind: frontal_arousal_rhythm
+        at_min: 15.0
+        duration_s: 12
+        context: arousal
+        amplitude_uv: 60
+        frequency_hz: 8
+- id: var-sreda
+  title: SREDA
+  category: variants
+  subcategory: Adult variants
+  caption: 'SREDA onset in an authored awake adult interval: sharply contoured slowing
+    builds into sustained 5–6 Hz activity with a posterior maximum and left predominance.
+    This page shows the onset of a simulated 60-s run.'
+  tags:
+    age: adult
+    state: awake
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 29268210
+      age_group: adult
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 11.95
+      window_s: 20
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 10.0
+        amplitude_uv: 30
+        slow_fraction: 0.25
+        reactivity: present
+      events:
+      - type: normal_variant
+        kind: sreda
+        at_min: 12.0
+        duration_s: 60
+        context: adult_teaching
+- id: var-ciganek
+  title: Midline theta rhythm (Ciganek)
+  category: variants
+  subcategory: Awake variants
+  caption: A waxing and waning 6 Hz midline theta train, maximal at Cz with Fz greater
+    than Pz and only a small parasagittal field. Smooth rhythmic activity in an awake
+    adult; a normal variant without ictal evolution.
+  tags:
+    age: adult
+    state: awake
+    montage: longitudinal_bipolar
+    sensitivity_uv_mm: 7
+  image:
+    kind: eeg_page
+    license: synthetic-original
+    attribution: null
+    spec:
+      spec_version: 3
+      seed: 30092611
+      age_group: adult
+      sample_rate: 256
+      channels: standard_19
+      duration_min: 30
+      at_min: 12.0
+      window_s: 20
+      sensitivity_uv_mm: 7
+      montage: longitudinal_bipolar
+      background:
+        type: continuous
+        dominant_hz: 10
+        amplitude_uv: 35
+        slow_fraction: 0.25
+        reactivity: present
+      events:
+      - type: normal_variant
+        kind: midline_theta
+        at_min: 12
+        duration_s: 20
+        frequency_hz: 6
+        amplitude_uv: 55
+        context: awake

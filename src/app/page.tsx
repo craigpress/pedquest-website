@@ -48,6 +48,8 @@ function HeroEEG() {
     let t = 0;
     let raf = 0;
     let last = 0;
+    let lastDraw = 0;
+    let visible = false;
 
     function fit() {
       if (!cv) return;
@@ -176,24 +178,49 @@ function HeroEEG() {
     }
 
     function loop(ts: number) {
-      const dt = Math.min(0.05, (ts - last) / 1000 || 0);
+      raf = 0;
+      if (!visible || document.hidden) return;
+      const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0;
       last = ts;
       tick(dt);
-      draw();
+      if (!lastDraw || ts - lastDraw >= 1000 / 30 - 0.1) {
+        draw();
+        lastDraw = ts;
+      }
       raf = requestAnimationFrame(loop);
+    }
+
+    function syncAnimation() {
+      if (reduce) return;
+      if (!visible || document.hidden) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        last = 0;
+        lastDraw = 0;
+      } else if (!raf) {
+        raf = requestAnimationFrame(loop);
+      }
     }
 
     fit();
     const onResize = () => {
       fit();
       if (reduce) staticFrame();
+      else if (visible && !document.hidden) draw();
     };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      syncAnimation();
+    });
+    observer.observe(cv);
     window.addEventListener("resize", onResize);
+    document.addEventListener("visibilitychange", syncAnimation);
     if (reduce) staticFrame();
-    else raf = requestAnimationFrame(loop);
     return () => {
       cancelAnimationFrame(raf);
+      observer.disconnect();
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", syncAnimation);
     };
   }, []);
 

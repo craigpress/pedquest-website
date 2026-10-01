@@ -28,6 +28,8 @@ _MIRROR = {"Fp1": "Fp2", "F7": "F8", "F3": "F4", "T3": "T4", "C3": "C4", "T5": "
 _MIRROR.update({v: k for k, v in list(_MIRROR.items())})
 
 FIELDS_LEFT: Dict[str, Dict[str, float]] = {
+    "midline_theta": {"Cz": 1.0, "Fz": 0.55, "Pz": 0.25, "C3": 0.12, "C4": 0.12,
+                      "F3": 0.06, "F4": 0.06, "P3": 0.05, "P4": 0.05},
     # central: C3 max, reversal F3-C3 / C3-P3, some Cz, a little temporal (Mu-IV, very-nice-Mu)
     "mu": {"Fp1": 0.05, "F7": 0.08, "F3": 0.30, "Fz": 0.12, "T3": 0.30, "C3": 1.0, "Cz": 0.35, "T5": 0.10,
            "P3": 0.40, "Pz": 0.12, "O1": 0.05},
@@ -95,7 +97,7 @@ def side_field(kind: str, electrodes: Sequence[str], side: str) -> np.ndarray:
 
 #: kinds whose authored amplitude_uv (spec_version 3) is the peak-to-peak in the best longitudinal-bipolar
 #: derivation, the voltage a reader measures; 14 & 6 is read referentially and HV carries its own calibration
-DISPLAY_SCALED = ("mu", "wicket", "lambda", "rmtd", "sreda", "frontal_arousal_rhythm", "photic_driving")
+DISPLAY_SCALED = ("mu", "wicket", "lambda", "rmtd", "sreda", "frontal_arousal_rhythm", "photic_driving", "midline_theta")
 
 
 def bipolar_scale(kind: str, electrodes: Sequence[str]) -> float:
@@ -136,7 +138,12 @@ def authored_schedule(seed: int, index: int, run: Dict) -> List[Dict]:
     f, amp, side = float(run["frequency_hz"]), float(run["amplitude_uv"]), run.get("side", "both")
     out: List[Dict] = []
 
-    if kind in ("mu", "wicket", "rmtd", "frontal_arousal_rhythm"):
+    if kind == "midline_theta":
+        rng = substream(seed, "v3-authored", index, kind)
+        for t0, t1 in trains(rng, a, b, (9.0, 0.25, 5.0, 18.0), (3.0, 0.3, 1.5, 5.0)):
+            out.append({"t0": t0, "t1": t1, "hz": f, "amp": amp,
+                        "side": "left", "ph0": float(rng.uniform(0, 2 * np.pi))})
+    elif kind in ("mu", "wicket", "rmtd", "frontal_arousal_rhythm"):
         # independent trains per hemisphere (Mu-IV, Wickets_1, RMTD-on-the-right)
         prm = {"mu": ((1.6, 0.5, 0.5, 4.0), (1.2, 0.5, 0.5, 3.0), (-0.5, 0.5)),
                "wicket": ((1.2, 0.5, 0.3, 3.0), (1.8, 0.6, 0.5, 5.0), (-0.8, 0.8)),
@@ -145,6 +152,9 @@ def authored_schedule(seed: int, index: int, run: Dict) -> List[Dict]:
                # 3 s or more (White & Tharp 1974: prolonged 7-10 Hz frontal trains), starting after the arousal burst
                "frontal_arousal_rhythm": ((4.5, 0.35, 3.0, 9.0), (1.0, 0.4, 0.4, 2.5), (-0.5, 0.5))}[kind]
         on, off, dhz = prm
+        if kind == "mu" and run.get("train_duration_s") is not None:
+            length = float(run["train_duration_s"])
+            on = (length, 0.15, 0.8 * length, 1.2 * length)
         for k, sd in enumerate(("left", "right")):
             rng = substream(seed, "v3-authored", index, kind, sd)
             lead = (0.0, 1.5) if k == 0 else (0.5, 3.0)
@@ -263,6 +273,10 @@ def burst_wave(kind: str, burst: Dict, t: np.ndarray) -> np.ndarray:
     """One burst's waveform (uV at the field maximum of its side), zero outside the burst."""
     t0, t1, hz, amp = burst["t0"], burst["t1"], burst["hz"], burst["amp"]
     d = t - t0
+    if kind == "midline_theta":
+        ph = 2 * np.pi * hz * d + burst["ph0"]
+        env = _edge(t, t0, t1, 0.6) * (1.0 + 0.15 * np.sin(2 * np.pi * d / max(t1 - t0, 1.0)))
+        return 0.5 * amp * env * np.sin(ph)
     if kind in ("mu", "wicket", "rmtd", "frontal_arousal_rhythm", "fourteen_and_six"):
         live = (t >= t0) & (t < t1)
         if not live.any():
@@ -444,7 +458,7 @@ def hh_rows(run: Dict, t: np.ndarray, electrodes: Sequence[str], y: np.ndarray, 
     return rows
 
 
-def posts_schedule(seed: int, windows: Sequence[Tuple[float, float]], amp: float) -> List[Dict]:
+def posts_schedule(seed: int, windows: Sequence[Tuple[float, float]], amp: float, interval_s: float = 0.5) -> List[Dict]:
     """POSTS episodes through N1-N2 (10-60 s), each a train of discrete transients at lognormal intervals
     (median 0.5 s, CV about 0.4), bilateral with a per-transient left/right jitter."""
     rng = substream(seed, "v3-posts")
@@ -456,7 +470,7 @@ def posts_schedule(seed: int, windows: Sequence[Tuple[float, float]], amp: float
             times, s = [], t
             while s < t + d:
                 times.append(s)
-                s += _ln(rng, 0.5, 0.38, 0.22, 1.5)
+                s += _ln(rng, interval_s, 0.38, 0.44 * interval_s, 3.0 * interval_s)
             n = len(times)
             out.append({"t0": t, "t1": t + d, "times": times, "amp": amp,
                         "gl": np.exp(rng.normal(0, 0.2, n)).tolist(), "gr": np.exp(rng.normal(0, 0.2, n)).tolist(),

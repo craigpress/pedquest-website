@@ -1,0 +1,3108 @@
+review_date: '2026-10-01'
+renderer_version: 0.5.4
+gallery_items: 166
+revised_items: 54
+new_items: 3
+image_changes_or_new_items: 30
+canonical_catalog: C:\Users\craig\claude\PedQuest_website\research\eeg-atlas\gallery-20261001-review\catalog\all.yaml
+revisions:
+- id: nrm-child-eyes-closed-pdr
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: nrm-child-eyes-closed-pdr
+    title: 'Child (8 years), eyes closed: posterior dominant rhythm'
+    category: normal
+    subcategory: Awake background by age
+    caption: 'Eight-year-old awake, eyes closed: symmetric 8–9 Hz posterior dominant
+      rhythm, with lower-voltage frontal activity and a brief burst of temporal muscle
+      artifact.'
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268029
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.4892
+        window_s: 15
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 8.5
+          amplitude_uv: 90
+          slow_fraction: 0.35
+          reactivity: present
+        events: []
+- id: nrm-adolescent-awake
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: nrm-adolescent-awake
+    title: Adolescent, awake
+    category: normal
+    subcategory: Awake background by age
+    caption: 'Adolescent awake, eyes closed: a 9.5–10 Hz posterior dominant rhythm,
+      waxing and waning in the posterior derivations, with a clear anterior-posterior
+      gradient.'
+    tags:
+      age: adolescent
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268005
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 20.174
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.5
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+        events: []
+- id: nrm-adult-awake
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: nrm-adult-awake
+    title: Adult, awake
+    category: normal
+    subcategory: Awake background by age
+    caption: 'Adult awake, eyes closed: a low-voltage 10 Hz posterior dominant rhythm
+      in the posterior derivations with little slow activity.'
+    tags:
+      age: adult
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268006
+        age_group: adult
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 9.582
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 10.0
+          amplitude_uv: 30
+          slow_fraction: 0.25
+          reactivity: present
+        events: []
+- id: nrm-eyes-open-reactivity
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: nrm-eyes-open-reactivity
+    title: Posterior rhythm reactivity to eye opening
+    category: normal
+    subcategory: Reactivity
+    caption: 'Child awake: the 8.5 Hz posterior rhythm attenuates with the frontopolar
+      eye-opening deflection near 8 s. Later blinks are visible; the background is
+      reactive.'
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268007
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.6667
+        window_s: 20
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 8.5
+          amplitude_uv: 90
+          slow_fraction: 0.35
+          reactivity: present
+        events: []
+- id: nrm-photic-driving
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: nrm-photic-driving
+    title: Photic driving at 12 Hz
+    category: normal
+    subcategory: Activation
+    caption: 'Photic stimulation at 12 flashes per second (Photic channel, 3-13 s):
+      a 12 Hz occipital response time-locked to the flashes, symmetric and maximal
+      in P3-O1, P4-O2, T5-O1 and T6-O2, stopping with the train.'
+    tags:
+      age: adolescent
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268009
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.0
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        style:
+          show_photic_channel: true
+        background:
+          type: continuous
+          dominant_hz: 9.5
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+        events:
+        - type: normal_variant
+          kind: photic_driving
+          at_min: 12.05
+          duration_s: 10
+          context: photic
+          stimulus_frequency_hz: 12
+          amplitude_uv: 90
+- id: slp-drowsiness
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: slp-drowsiness
+    title: Drowsiness
+    category: sleep
+    subcategory: Drowsiness and N1
+    caption: 'Child falling asleep: the posterior rhythm visible early in the page
+      becomes less prominent around 9–10 s and gives way to lower-voltage mixed theta
+      as drowsiness develops.'
+    tags:
+      age: child
+      state: drowsy
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268101
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 9.3
+        window_s: 20
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 8.5
+          amplitude_uv: 90
+          slow_fraction: 0.35
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 9.5
+          to: sleep
+- id: slp-n1-vertex-waves
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: slp-n1-vertex-waves
+    title: 'N1: vertex waves'
+    category: sleep
+    subcategory: Drowsiness and N1
+    caption: 'Adolescent in N1: sharply contoured vertex waves, maximal at Cz, with
+      phase reversals in Fz-Cz/Cz-Pz and the central parasagittal chains, over low-voltage
+      theta.'
+    tags:
+      age: adolescent
+      state: N1
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268102
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 11.51
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.5
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: slp-n2-spindles
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: slp-n2-spindles
+    title: 'N2: sleep spindles'
+    category: sleep
+    subcategory: N2
+    caption: 'Child in N2: bilateral waxing and waning sleep spindles at 12–14 Hz,
+      lasting about 1–2 s, with centroparietal prominence and lower-voltage spread
+      to the temporal chains.'
+    tags:
+      age: child
+      state: N2
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268103
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 30.6
+        window_s: 15
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        style:
+          spindle_rate_per_min: 8
+          spindle_topography: central
+        background:
+          type: continuous
+          dominant_hz: 8.5
+          amplitude_uv: 90
+          slow_fraction: 0.35
+          reactivity: present
+          sleep_staging: static
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: slp-n2-k-complexes
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: slp-n2-k-complexes
+    title: 'N2: K-complexes'
+    category: sleep
+    subcategory: N2
+    caption: 'Adolescent in N2: frontocentral K-complexes with an initial sharp negative
+      wave followed by a slower positive wave. A central sleep spindle follows the
+      first completed complex.'
+    tags:
+      age: adolescent
+      state: N2
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268104
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 27.04
+        window_s: 20
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.5
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+          sleep_staging: static
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+        style:
+          spindle_topography: central
+          k_complex_spindle_delay_s: 1.3
+- id: slp-infant-spindles
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: slp-infant-spindles
+    title: 'Infant N2: long asynchronous spindles'
+    category: sleep
+    subcategory: N2
+    caption: 'Six-month-old in N2: long spindle trains lasting several seconds, independently
+      prominent over each hemisphere. Asynchronous and overlapping spindles are normal
+      at this age.'
+    tags:
+      age: infant
+      state: N2
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268105
+        age_group: infant
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 31.667
+        window_s: 15
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 5.5
+          amplitude_uv: 60
+          slow_fraction: 0.5
+          reactivity: present
+          sleep_staging: static
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: slp-n3-slow-wave-sleep
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: slp-n3-slow-wave-sleep
+    title: 'N3: slow-wave sleep'
+    category: sleep
+    subcategory: N3
+    caption: 'Child in N3: diffuse high-voltage 0.5–2 Hz slow waves, prominent in
+      the frontocentral chains and smaller posteriorly, on a mixed sleep background.'
+    tags:
+      age: child
+      state: N3
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 15
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268106
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 120
+        at_min: 40.0
+        window_s: 20
+        sensitivity_uv_mm: 15
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 8.5
+          amplitude_uv: 90
+          slow_fraction: 0.35
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: slp-rem
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: slp-rem
+    title: REM sleep
+    category: sleep
+    subcategory: REM
+    caption: 'Adolescent in an authored REM interval: low-voltage mixed-frequency
+      cerebral activity without spindles or K-complexes, with bursts of opposing frontotemporal
+      rapid eye movement deflections.'
+    tags:
+      age: adolescent
+      state: REM
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268107
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 150
+        at_min: 95.94
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.5
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: slp-rem-sawtooth
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: slp-rem-sawtooth
+    title: 'REM: sawtooth waves'
+    category: sleep
+    subcategory: REM
+    caption: 'Adult in an authored REM interval (5 uV/mm): a brief 2–4 Hz sawtooth
+      train, maximal centrally and at the vertex, precedes a burst of opposing frontotemporal
+      eye movements.'
+    tags:
+      age: adult
+      state: REM
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 5
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268108
+        age_group: adult
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 150
+        at_min: 87.4
+        window_s: 15
+        sensitivity_uv_mm: 5
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 10.0
+          amplitude_uv: 30
+          slow_fraction: 0.25
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: slp-arousal
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: slp-arousal
+    title: Arousal from N2
+    category: sleep
+    subcategory: Arousal
+    caption: 'Child arousal from an authored N2 interval: a slower mixed sleep background
+      and a frontocentral K-complex just before 6 s precede the shift to faster activity,
+      frontotemporal muscle and movement.'
+    tags:
+      age: child
+      state: N2
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268112
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 19.9
+        window_s: 20
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 8.5
+          amplitude_uv: 120
+          slow_fraction: 0.55
+          reactivity: present
+          sleep_staging: static
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+        - type: state_change
+          at_min: 20.0
+          to: arousal
+- id: var-mu
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: var-mu
+    title: Mu rhythm
+    category: variants
+    subcategory: Awake variants
+    caption: 'Right-predominant mu rhythm: sustained, waxing and waning 10 Hz arciform
+      activity over the right sensorimotor region, mixed with the awake background;
+      much smaller on the left. No ictal evolution or after-going slow wave.'
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268201
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.1
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.0
+          amplitude_uv: 65
+          slow_fraction: 0.3
+          reactivity: present
+        events:
+        - type: normal_variant
+          kind: mu
+          at_min: 12.0
+          duration_s: 30
+          context: movement
+          side: right
+          amplitude_uv: 32
+          train_duration_s: 9
+- id: var-lambda
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: var-lambda
+    title: Lambda waves
+    category: variants
+    subcategory: Awake variants
+    caption: 'Lambda waves during visual scanning: repeated surface-positive, sail-like
+      occipital transients in P3-O1, P4-O2, T5-O1 and T6-O2, with blinks and other
+      evidence of wakefulness; no posterior dominant rhythm.'
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268202
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.05
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.0
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+        events:
+        - type: normal_variant
+          kind: lambda
+          at_min: 12.0
+          duration_s: 20
+          context: visual_scanning
+- id: var-pswy
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: var-pswy
+    title: Posterior slow waves of youth
+    category: variants
+    subcategory: Awake variants
+    caption: 'Posterior slow waves of youth, eyes closed: isolated 2.5–4 Hz waves
+      fused with the 9 Hz posterior rhythm in the occipital derivations. A normal
+      finding in children and adolescents.'
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268203
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 11.5
+        window_s: 15
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.0
+          amplitude_uv: 90
+          slow_fraction: 0.2
+          reactivity: present
+          pdr_gain: 2.5
+          variants:
+            posterior_slow_waves_of_youth:
+              rate_per_min: 12
+              amplitude_uv: 160
+        events: []
+- id: var-hypnagogic-hypersynchrony
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: var-hypnagogic-hypersynchrony
+    title: Hypnagogic hypersynchrony
+    category: variants
+    subcategory: Drowsiness and sleep variants
+    caption: Hypnagogic hypersynchrony on a slower, higher-voltage drowsy background.
+      The wider window shows the lead-in before the high-voltage frontocentral delta-theta
+      burst, followed by return to the drowsy background.
+    tags:
+      age: child
+      state: drowsy
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 20
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268204
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 11.2
+        window_s: 20
+        sensitivity_uv_mm: 20
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 6.5
+          amplitude_uv: 90
+          slow_fraction: 0.65
+          reactivity: present
+          variants:
+            hypnagogic_hypersynchrony:
+              amplitude_uv: 270
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: var-posts
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: var-posts
+    title: Positive occipital sharp transients of sleep (POSTS)
+    category: variants
+    subcategory: Drowsiness and sleep variants
+    caption: Occasional surface-positive occipital sharp transients in N2, separated
+      by irregular intervals rather than a nearly continuous train; a normal sleep
+      finding.
+    tags:
+      age: adolescent
+      state: N2
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268205
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 60
+        at_min: 17.2833
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 10.0
+          amplitude_uv: 35
+          slow_fraction: 0.3
+          reactivity: present
+          variants:
+            posts:
+              interval_s: 1.7
+        events:
+        - type: state_change
+          at_min: 10.0
+          to: sleep
+- id: var-wicket
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: var-wicket
+    title: Wicket waves
+    category: variants
+    subcategory: Drowsiness and sleep variants
+    caption: Low-amplitude 7-9 Hz arciform temporal runs and single wicket waves in
+      drowsiness, with no after-going slow wave or ictal evolution.
+    tags:
+      age: adult
+      state: drowsy
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268206
+        age_group: adult
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.55
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 10.0
+          amplitude_uv: 30
+          slow_fraction: 0.25
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 12.0
+          to: sleep
+        - type: normal_variant
+          kind: wicket
+          at_min: 12.5
+          duration_s: 20
+          context: drowsy
+          amplitude_uv: 25
+- id: var-rmtd
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: var-rmtd
+    title: Rhythmic mid-temporal theta of drowsiness (RMTD)
+    category: variants
+    subcategory: Drowsiness and sleep variants
+    caption: 'RMTD in drowsiness: independent runs of rhythmic, notched 5–6 Hz theta
+      over the left and right mid-temporal chains, without evolution in frequency
+      or field.'
+    tags:
+      age: adolescent
+      state: drowsy
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268207
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.55
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.5
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 12.0
+          to: sleep
+        - type: normal_variant
+          kind: rmtd
+          at_min: 12.5
+          duration_s: 20
+          context: drowsy
+- id: var-14-and-6
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: var-14-and-6
+    title: 14 and 6 Hz positive bursts
+    category: variants
+    subcategory: Drowsiness and sleep variants
+    caption: '14 and 6 Hz positive bursts in light sleep (ear reference): brief positive
+      comb-like bursts, at 6–7 Hz on the left and 14 Hz on the right, with a posterior
+      temporal/occipital maximum.'
+    tags:
+      age: adolescent
+      state: N1
+      montage: referential
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268208
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 14.05
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: referential
+        background:
+          type: continuous
+          dominant_hz: 9.5
+          amplitude_uv: 40
+          slow_fraction: 0.3
+          reactivity: present
+        events:
+        - type: state_change
+          at_min: 12.0
+          to: sleep
+        - type: normal_variant
+          kind: fourteen_and_six
+          at_min: 14.0
+          duration_s: 30
+          context: light_sleep
+- id: var-frontal-arousal-rhythm
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: var-frontal-arousal-rhythm
+    title: Frontal arousal rhythm
+    category: variants
+    subcategory: Drowsiness and sleep variants
+    caption: 'Child arousing from N2: a frontocentral K-complex near 2.2 s precedes
+      arousal with frontotemporal muscle at 5 s. Independently waxing rhythmic 8 Hz
+      trains follow in the frontal and frontocentral chains, with smaller posterior
+      spread.'
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268214
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 14.916666666666666
+        window_s: 20
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 9.0
+          amplitude_uv: 60
+          slow_fraction: 0.4
+          reactivity: present
+          blink_rate_per_min: 0
+          sleep_staging: static
+        events:
+        - type: state_change
+          at_min: 15.0
+          to: arousal
+        - type: normal_variant
+          kind: frontal_arousal_rhythm
+          at_min: 15.0
+          duration_s: 12
+          context: arousal
+          amplitude_uv: 60
+          frequency_hz: 8
+- id: var-sreda
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: var-sreda
+    title: SREDA
+    category: variants
+    subcategory: Adult variants
+    caption: 'SREDA onset in an authored awake adult interval: sharply contoured slowing
+      builds into sustained 5–6 Hz activity with a posterior maximum and left predominance.
+      This page shows the onset of a simulated 60-s run.'
+    tags:
+      age: adult
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29268210
+        age_group: adult
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 11.95
+        window_s: 20
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 10.0
+          amplitude_uv: 30
+          slow_fraction: 0.25
+          reactivity: present
+        events:
+        - type: normal_variant
+          kind: sreda
+          at_min: 12.0
+          duration_s: 60
+          context: adult_teaching
+- id: art-sweat
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: art-sweat
+    title: Sweat artifact
+    category: artifacts
+    subcategory: Electrode and environment
+    caption: Very slow (2-4 s) baseline sway in the right frontopolar chains (Fp2-F8,
+      Fp2-F4, F4-C4), with the posterior chains unaffected; it remains visible with
+      the 1 Hz low-frequency filter.
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29261011
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 40
+          dominant_hz: 9
+          slow_fraction: 0.3
+          reactivity: present
+          blink_rate_per_min: 0
+          channel_gain_max: 1.5
+        events:
+        - type: artifact
+          kind: sweat
+          at_min: 9.9
+          duration_s: 42
+          intensity: high
+        at_min: 10.0
+        window_s: 30
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+- id: slw-spindle-coma
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: slw-spindle-coma
+    title: Spindle coma
+    category: slowing
+    subcategory: Coma and encephalopathy patterns
+    caption: Frontocentral 12-14 Hz spindles, vertex waves and K-complexes near 13
+      s and 19 s in an unresponsive child. Unreactivity and absent sleep-wake cycling
+      are clinical and longer-record context for this synthetic example.
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+      acns: Spindle coma
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29263012
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 50
+          dominant_hz: 4
+          slow_fraction: 0.7
+          blink_rate_per_min: 0
+          channel_gain_max: 1.5
+          coma_pattern: spindle
+        events: []
+        at_min: 10.0
+        window_s: 20
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+- id: slw-hypothermia
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: slw-hypothermia
+    title: Therapeutic hypothermia
+    category: slowing
+    subcategory: Temperature
+    caption: Cooling from 36.5 to 33 C between 10 and 30 minutes fades the alpha band
+      and the alpha/delta ratio falls from about 1 to 0.45. The page, at target temperature,
+      is lower in voltage and slower, with little posterior dominant rhythm.
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: composite
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29263016
+        layout: panel_over_page
+        qeeg_panel:
+          age_group: child
+          sample_rate: 256
+          channels: standard_19
+          duration_min: 60
+          background:
+            type: continuous
+            amplitude_uv: 40
+            dominant_hz: 9
+            slow_fraction: 0.3
+            pdr_gain: 3.0
+            reactivity: present
+            blink_rate_per_min: 0
+            channel_gain_max: 1.5
+          events:
+          - type: temperature_change
+            at_min: 10
+            from_c: 36.5
+            to_c: 33.0
+            over_min: 20
+          panels:
+          - fft_L
+          - fft_R
+          - alpha_delta_ratio
+          time_axis: elapsed
+          style:
+            show_colorbar: true
+            fft_db_range:
+            - -10
+            - 30
+        eeg_page:
+          at_min: 45.0
+          window_s: 15
+          sensitivity_uv_mm: 7
+          montage: longitudinal_bipolar
+- id: iid-left-central-spike
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: iid-left-central-spike
+    title: Left central spike
+    category: interictal
+    subcategory: Central
+    caption: Spikes maximal at C3, phase-reversing at C3 between F3-C3 and C3-P3 (several
+      independent discharges across the page), with little involvement of the temporal
+      chain, in N2 sleep.
+    tags:
+      age: child
+      state: N2
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+      acns: sporadic epileptiform discharges, abundant
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260106
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 50.0
+          dominant_hz: 9.0
+          slow_fraction: 0.35
+          reactivity: present
+          channel_gain_max: 1.5
+          blink_rate_per_min: 4
+          sleep_staging: static
+        events:
+        - type: state_change
+          at_min: 2.0
+          to: sleep
+        - type: sporadic_discharges
+          focus: C3
+          rate_per_h: 720
+          amplitude_uv: 180.0
+          morphology: spike
+          aftergoing_slow: true
+        at_min: 25.3667
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+- id: szf-mesial-temporal-left
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: szf-mesial-temporal-left
+    title: Left mesial temporal seizure onset
+    category: seizures
+    subcategory: Temporal
+    caption: 'Onset of a left mesial temporal seizure at 3 s: rhythmic 7 Hz theta
+      that is present from the first ictal second, maximal in Fp1-F7 and F7-T3 (anterior
+      temporal), without a low-voltage fast onset, slowing slightly over the page.'
+    tags:
+      age: child
+      state: N2
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+      acns: electrographic seizure
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260201
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 50.0
+          dominant_hz: 9.0
+          slow_fraction: 0.35
+          reactivity: present
+          channel_gain_max: 1.5
+          blink_rate_per_min: 4
+          sleep_staging: static
+        events:
+        - type: state_change
+          at_min: 2.0
+          to: sleep
+        - type: seizure
+          onset_min: 15.0
+          duration_s: 70
+          onset_region: left_mesial_temporal
+          spread: none
+          muscle: none
+          evolution:
+            start_hz: 7.0
+            end_hz: 3.0
+            amplitude_start_uv: 60
+            amplitude_end_uv: 160
+          clinical_correlate: behavioral_arrest
+        at_min: 14.95
+        window_s: 20
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+- id: szf-frontal-left
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: szf-frontal-left
+    title: Left frontal seizure onset
+    category: seizures
+    subcategory: Frontal
+    caption: 'Left frontal onset: at 5 s the left frontal region attenuates (electrodecrement)
+      and carries low-voltage fast activity in Fp1-F7, F7-T3 and F3-C3; at 9-10 s
+      high-voltage rhythmic activity builds over the left frontal and temporal chains.'
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+      acns: electrographic seizure
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260204
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 45.0
+          dominant_hz: 9.0
+          slow_fraction: 0.35
+          reactivity: present
+          channel_gain_max: 1.5
+          blink_rate_per_min: 4
+        events:
+        - type: seizure
+          onset_min: 15.0
+          duration_s: 40
+          onset_region: left_frontal
+          spread: none
+          muscle: none
+          evolution:
+            start_hz: 9.0
+            end_hz: 3.0
+            amplitude_start_uv: 50
+            amplitude_end_uv: 150
+        at_min: 14.9167
+        window_s: 15
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+- id: szf-hemispheric-spread
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: szf-hemispheric-spread
+    title: Focal to bilateral spread
+    category: seizures
+    subcategory: Spread
+    caption: A right temporal seizure already in progress recruits the right hemisphere
+      and then the left, with increasing voltage and muscle artifact. This 30-second
+      page spans the transition toward bilateral activity.
+    tags:
+      age: child
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+      acns: electrographic seizure, hemispheric spread
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260208
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 45.0
+          dominant_hz: 9.0
+          slow_fraction: 0.35
+          reactivity: present
+          channel_gain_max: 1.5
+          blink_rate_per_min: 4
+        events:
+        - type: seizure
+          onset_min: 15.0
+          duration_s: 110
+          onset_region: right_temporal
+          spread: generalized
+          muscle: modest
+          evolution:
+            start_hz: 6.0
+            end_hz: 2.0
+            amplitude_start_uv: 60
+            amplitude_end_uv: 260
+        at_min: 15.4
+        window_s: 30
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+- id: neo-34w-background
+  new: false
+  image_changed: true
+  changed_fields:
+  - title
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: neo-34w-background
+    title: '34 weeks PMA: delta brushes on a continuous background'
+    category: neonatal
+    subcategory: Background by PMA
+    caption: '34 weeks PMA, awake/active-sleep-like continuous background: lower-voltage
+      mixed activity with temporal delta brushes, showing a slow wave with riding
+      10–20 Hz fast activity and phase reversal at T3 or T4.'
+    tags:
+      age: neonate
+      state: unknown
+      montage: neonatal_reduced
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260303
+        age_group: neonate
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          pma_weeks: 34.0
+          dominant_hz: 2.0
+          slow_fraction: 0.8
+          reactivity: present
+          channel_gain_max: 1.5
+          delta_brushes: riding
+          amplitude_uv: 50
+          graphoelements:
+            delta_brush:
+              enabled: true
+              rate_per_min: 8
+              amplitude_uv: 80
+        events: []
+        at_min: 10.0
+        window_s: 30
+        sensitivity_uv_mm: 10
+        montage: neonatal_reduced
+        filters:
+          lf_hz: 0.5
+          hf_hz: 70.0
+          notch_hz: 60.0
+- id: neo-temporal-theta-29w
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: neo-temporal-theta-29w
+    title: Temporal theta (29 weeks)
+    category: neonatal
+    subcategory: Graphoelements
+    caption: 'Temporal theta bursts at 29 weeks PMA: brief 4–6 Hz rhythmic runs with
+      a left temporal maximum at T3, riding within bursts of a discontinuous background;
+      typical of 26–32 weeks PMA.'
+    tags:
+      age: neonate
+      state: unknown
+      montage: neonatal_reduced
+      sensitivity_uv_mm: 10
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260310
+        age_group: neonate
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: discontinuous
+          pma_weeks: 29.0
+          dominant_hz: 2.0
+          slow_fraction: 0.8
+          reactivity: present
+          channel_gain_max: 1.5
+          delta_brushes: riding
+          graphoelements:
+            temporal_theta:
+              rate_per_min: 10.0
+        events: []
+        at_min: 17.5167
+        window_s: 20
+        sensitivity_uv_mm: 10
+        montage: neonatal_reduced
+        filters:
+          lf_hz: 0.5
+          hf_hz: 70.0
+          notch_hz: 60.0
+- id: neo-burst-suppression
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: neo-burst-suppression
+    title: Neonatal burst suppression
+    category: neonatal
+    subcategory: Abnormal background
+    caption: 'Term neonate with burst suppression: high-voltage abnormal bursts separated
+      by very low-voltage intervals. On this page, the central interburst intervals
+      measure under 5 uV peak-to-peak after display filtering. Normal neonatal graphoelements
+      are absent; this excerpt does not establish full-record invariance.'
+    tags:
+      age: neonate
+      state: unknown
+      montage: neonatal_reduced
+      sensitivity_uv_mm: 7
+      acns: burst suppression
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260315
+        age_group: neonate
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: burst_suppression
+          pma_weeks: 40.0
+          dominant_hz: 2.0
+          slow_fraction: 0.8
+          reactivity: absent
+          channel_gain_max: 1.5
+          delta_brushes: riding
+          amplitude_uv: 100.0
+          ibi_floor_uv: 0.5
+          baseline_ecg_uv: 0.5
+          graphoelements:
+            occipital_delta:
+              enabled: false
+              rate_per_min: 0
+            temporal_theta:
+              enabled: false
+              rate_per_min: 0
+            temporal_alpha:
+              enabled: false
+              rate_per_min: 0
+            stop:
+              enabled: false
+              rate_per_min: 0
+            frontal_sharp:
+              enabled: false
+              rate_per_min: 0
+            anterior_slow:
+              enabled: false
+              rate_per_min: 0
+            midline_theta:
+              enabled: false
+              rate_per_min: 0
+            delta_brush:
+              enabled: false
+              rate_per_min: 0
+        events: []
+        at_min: 10.0
+        window_s: 30
+        sensitivity_uv_mm: 7
+        montage: neonatal_reduced
+        filters:
+          lf_hz: 0.5
+          hf_hz: 70.0
+          notch_hz: 60.0
+- id: neo-hypothermia-aeeg
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: neo-hypothermia-aeeg
+    title: aEEG during therapeutic hypothermia
+    category: neonatal
+    subcategory: Hypothermia
+    caption: 'Six hours of aEEG in an authored term-neonate HIE/cooling scenario:
+      a discontinuous normal-voltage pattern, with an upper margin mostly 15–30 uV
+      and intermittent higher peaks, a lower margin around 2 uV, and absent sleep-wake
+      cycling.'
+    tags:
+      age: neonate
+      state: unknown
+      montage: aEEG C3-P3/C4-P4
+      sensitivity_uv_mm: null
+      acns: null
+    image:
+      kind: aeeg
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29260317
+        age_group: neonate
+        sample_rate: 256
+        channels:
+        - C3-P3
+        - C4-P4
+        duration_h: 6
+        pattern: DNV
+        sleep_wake_cycling: absent
+        seizures: []
+        raw_strip_at_h: null
+        background:
+          type: discontinuous
+          pma_weeks: 40.0
+          dominant_hz: 1.5
+          amplitude_uv: 35
+          slow_fraction: 0.8
+          reactivity: present
+          ibi_floor_uv: 2.0
+          ibi_range_s:
+          - 4.0
+          - 10.0
+        events:
+        - type: temperature_change
+          at_min: 0
+          from_c: 33.5
+          to_c: 33.5
+          over_min: 360
+        style:
+          amplitude_axis: semilog
+          amplitude_gridlines_uv:
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+          time_axis: elapsed
+- id: acn-lrda-fluctuating
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: acn-lrda-fluctuating
+    title: LRDA, fluctuating
+    category: acns
+    subcategory: Rhythmic delta activity
+    caption: Left temporal LRDA whose frequency changes repeatedly by at least 0.5
+      Hz within the page, up and down, without a sustained trend (fluctuating, not
+      evolving). A 30-second page shows the changes.
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+      acns: LRDA, fluctuating
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29264014
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        montage: longitudinal_bipolar
+        at_min: 16.66
+        window_s: 30
+        sensitivity_uv_mm: 7
+        filters:
+          lf_hz: 1
+          hf_hz: 70
+          notch_hz: 60
+        background:
+          type: continuous
+          dominant_hz: 3.0
+          amplitude_uv: 20
+          slow_fraction: 0.8
+          reactivity: absent
+          blink_rate_per_min: 0
+          channel_gain_max: 1.5
+        events:
+        - type: rhythmic_pattern
+          pattern: LRDA
+          onset_min: 2
+          duration_min: 26
+          frequency_hz: 1.5
+          amplitude_uv: 100
+          onset_region: left_temporal
+          periodic: false
+          modifier: fluctuating
+          run_duration_s: 60
+- id: acn-birds
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: acn-birds
+    title: BIRDs, right temporal
+    category: acns
+    subcategory: Special patterns
+    caption: A sharply contoured 6-second run of rhythmic activity above 4 Hz over
+      the right temporal chain (F8-T4, T4-T6), starting and stopping abruptly. In
+      the stated setting without a clinical correlate or a known benign rhythm, this
+      illustrates possible BIRDs; brief duration alone does not define BIRDs.
+    tags:
+      age: adolescent
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+      acns: BIRDs
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29264018
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        montage: longitudinal_bipolar
+        at_min: 14.6
+        window_s: 15
+        sensitivity_uv_mm: 7
+        filters:
+          lf_hz: 1
+          hf_hz: 70
+          notch_hz: 60
+        background:
+          type: continuous
+          dominant_hz: 3.5
+          amplitude_uv: 22
+          slow_fraction: 0.75
+          reactivity: absent
+          blink_rate_per_min: 0
+          channel_gain_max: 1.5
+        events:
+        - type: rhythmic_pattern
+          pattern: BIRDs
+          onset_min: 2
+          duration_min: 26
+          frequency_hz: 4.5
+          amplitude_uv: 80
+          onset_region: right_temporal
+          run_duration_s: 7
+          prevalence: occasional
+- id: trd-aeeg-term-swc
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: trd-aeeg-term-swc
+    title: Normal term aEEG with sleep-wake cycling
+    category: trends
+    subcategory: aEEG
+    caption: 'Term neonatal aEEG (day 3), predominantly continuous normal voltage:
+      the lower margin is generally around or above 5 uV and the upper margin well
+      above 10 uV, with brief lower-margin dips. Sleep-wake cycling appears as recurring
+      15-30-minute stretches of band widening and lower-margin dips toward 5 uV (quiet
+      sleep, trace alternant), alternating with narrower continuous stretches.'
+    tags:
+      age: neonate
+      state: unknown
+      montage: C3-P3 / C4-P4
+      sensitivity_uv_mm: null
+    image:
+      kind: aeeg
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265001
+        age_group: neonate
+        sample_rate: 256
+        channels:
+        - C3-P3
+        - C4-P4
+        duration_h: 8
+        pattern: CNV
+        sleep_wake_cycling: mature
+        background:
+          type: continuous
+          pma_weeks: 40
+          dominant_hz: 2.5
+          amplitude_uv: 25
+          slow_fraction: 0.6
+          reactivity: present
+        seizures: []
+        raw_strip_at_h: null
+        time_axis: elapsed
+        style:
+          amplitude_axis: semilog
+          amplitude_gridlines_uv:
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+- id: trd-aeeg-dnv
+  new: false
+  image_changed: false
+  changed_fields:
+  - caption
+  item:
+    id: trd-aeeg-dnv
+    title: Discontinuous normal voltage aEEG
+    category: trends
+    subcategory: aEEG
+    caption: 'Discontinuous normal voltage aEEG: the lower margin is predominantly
+      below 5 uV while the upper margin stays above 10 uV, with a broad band and no
+      clear mature sleep-wake cycling. The raw strip shows a burst followed by a lower-voltage
+      interval.'
+    tags:
+      age: neonate
+      state: unknown
+      montage: C3-P3 / C4-P4
+      sensitivity_uv_mm: null
+    image:
+      kind: aeeg
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265002
+        age_group: neonate
+        sample_rate: 256
+        channels:
+        - C3-P3
+        - C4-P4
+        duration_h: 6
+        pattern: DNV
+        sleep_wake_cycling: immature
+        background:
+          type: discontinuous
+          dominant_hz: 2.0
+          amplitude_uv: 30
+          slow_fraction: 0.75
+          reactivity: present
+        seizures: []
+        raw_strip_at_h: 3.0
+        raw_strip_window_s: 15
+        time_axis: elapsed
+        style:
+          amplitude_axis: semilog
+          amplitude_gridlines_uv:
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+- id: trd-csa-seizures
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-csa-seizures
+    title: Left hemispheric seizures on CSA, aEEG and envelope
+    category: trends
+    subcategory: Spectrogram and amplitude trends
+    caption: 'Four hours of trends with three left hemispheric seizures: each shows
+      on the left FFT spectrogram as a bright streak sweeping down from about 4 Hz
+      to 1.5 Hz, with a matching rise of the left aEEG band and envelope and a brief
+      postictal dip. The right-sided trends change far less.'
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: null
+    image:
+      kind: qeeg_panel
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265005
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 240
+        background:
+          type: continuous
+          dominant_hz: 5.0
+          amplitude_uv: 60
+          slow_fraction: 0.6
+          reactivity: present
+        events:
+        - type: seizure
+          onset_min: 45
+          duration_s: 240
+          onset_region: left_hemisphere
+          spread: none
+          postictal_attenuation_s: 60
+          evolution:
+            start_hz: 4.0
+            end_hz: 1.5
+            amplitude_start_uv: 100
+            amplitude_end_uv: 250
+        - type: seizure
+          onset_min: 115
+          duration_s: 270
+          onset_region: left_hemisphere
+          spread: none
+          postictal_attenuation_s: 60
+          evolution:
+            start_hz: 4.0
+            end_hz: 1.5
+            amplitude_start_uv: 100
+            amplitude_end_uv: 250
+        - type: seizure
+          onset_min: 185
+          duration_s: 240
+          onset_region: left_hemisphere
+          spread: none
+          postictal_attenuation_s: 60
+          evolution:
+            start_hz: 4.0
+            end_hz: 1.5
+            amplitude_start_uv: 100
+            amplitude_end_uv: 250
+        panels:
+        - fft_L
+        - fft_R
+        - aeeg_L
+        - aeeg_R
+        - envelope_L
+        - envelope_R
+        time_axis: elapsed
+        style:
+          envelope_axis_uv:
+          - 0
+          - 200
+          aeeg_gridlines_uv:
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+          - 200
+          spectrogram_hz_range:
+          - 0
+          - 20
+          colorbar: black_blue_red_white
+          show_colorbar: true
+          fft_db_range:
+          - -10
+          - 30
+- id: trd-seizure-probability
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-seizure-probability
+    title: Rhythmicity and seizure probability with focal seizures
+    category: trends
+    subcategory: Rhythmicity and seizure detection
+    caption: Four right temporal seizures appear as seizure-probability peaks aligned
+      with brief streaks on the right rhythmicity and right FFT spectrograms; the
+      asymmetry index swings toward the right (+) with each one while the left trends
+      stay unchanged.
+    tags:
+      age: adolescent
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: null
+    image:
+      kind: qeeg_panel
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265006
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 240
+        background:
+          type: continuous
+          dominant_hz: 7.0
+          amplitude_uv: 45
+          slow_fraction: 0.45
+          reactivity: present
+        events:
+        - type: seizure
+          onset_min: 40
+          duration_s: 90
+          onset_region: right_temporal
+          spread: none
+          postictal_attenuation_s: 40
+          evolution:
+            start_hz: 6.0
+            end_hz: 2.5
+            amplitude_start_uv: 80
+            amplitude_end_uv: 200
+        - type: seizure
+          onset_min: 100
+          duration_s: 110
+          onset_region: right_temporal
+          spread: none
+          postictal_attenuation_s: 40
+          evolution:
+            start_hz: 6.0
+            end_hz: 2.5
+            amplitude_start_uv: 80
+            amplitude_end_uv: 200
+        - type: seizure
+          onset_min: 150
+          duration_s: 90
+          onset_region: right_temporal
+          spread: none
+          postictal_attenuation_s: 40
+          evolution:
+            start_hz: 6.0
+            end_hz: 2.5
+            amplitude_start_uv: 80
+            amplitude_end_uv: 200
+        - type: seizure
+          onset_min: 205
+          duration_s: 100
+          onset_region: right_temporal
+          spread: none
+          postictal_attenuation_s: 40
+          evolution:
+            start_hz: 6.0
+            end_hz: 2.5
+            amplitude_start_uv: 80
+            amplitude_end_uv: 200
+        panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - asymmetry_index
+        time_axis: elapsed
+        style:
+          rhythmicity_hz_range:
+          - 1
+          - 25
+          spectrogram_hz_range:
+          - 0
+          - 20
+          show_colorbar: true
+          fft_db_range:
+          - -10
+          - 30
+- id: trd-lpds-vs-seizure
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-lpds-vs-seizure
+    title: LPDs keep the seizure trends flat; a seizure does not
+    category: trends
+    subcategory: Rhythmicity and seizure detection
+    caption: Continuous left temporal LPDs at 1 Hz leave the seizure-probability trace
+      flat and add only a faint harmonic comb on the spectrogram; the real seizure
+      at 150 min stands out as a probability peak, a rhythmicity band and an evolving
+      CSA arc.
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: null
+      acns: LPDs, 1 Hz
+    image:
+      kind: qeeg_panel
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265007
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 240
+        background:
+          type: continuous
+          dominant_hz: 4.0
+          amplitude_uv: 45
+          slow_fraction: 0.7
+          reactivity: absent
+        events:
+        - type: rhythmic_pattern
+          pattern: LPDs
+          onset_min: 30
+          duration_min: 190
+          frequency_hz: 1.0
+          amplitude_uv: 100
+          onset_region: left_temporal
+          periodic: true
+          sharpness: sharp
+          prevalence: continuous
+        - type: seizure
+          onset_min: 150
+          duration_s: 120
+          onset_region: left_temporal
+          spread: none
+          postictal_attenuation_s: 60
+          evolution:
+            start_hz: 4.0
+            end_hz: 1.5
+            amplitude_start_uv: 100
+            amplitude_end_uv: 250
+        annotations:
+        - at_min: 30
+          label: LPDs begin
+        panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - aeeg_L
+        - aeeg_R
+        time_axis: elapsed
+        style:
+          rhythmicity_hz_range:
+          - 1
+          - 25
+          spectrogram_hz_range:
+          - 0
+          - 20
+          aeeg_gridlines_uv:
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+          - 200
+          show_colorbar: true
+          fft_db_range:
+          - -10
+          - 30
+- id: trd-ese-trends
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-ese-trends
+    title: Electrographic status epilepticus on trends
+    category: trends
+    subcategory: Rhythmicity and seizure detection
+    caption: 'Electrographic status epilepticus for 90 minutes: sustained rhythmicity
+      and a spectrogram band that wanders in frequency and waxes and wanes in power,
+      then slows, fragments and fades out over the last minutes rather than stopping
+      abruptly.'
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: null
+      acns: ESE
+    image:
+      kind: qeeg_panel
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265008
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 240
+        background:
+          type: continuous
+          dominant_hz: 4.0
+          amplitude_uv: 60
+          slow_fraction: 0.65
+          reactivity: present
+        events:
+        - type: status_epilepticus
+          onset_min: 50
+          duration_min: 90
+          onset_region: left_hemisphere
+          spread: none
+        annotations:
+        - at_min: 135
+          label: Midazolam bolus
+        panels:
+        - seizure_probability
+        - rhythmicity_L
+        - rhythmicity_R
+        - fft_L
+        - fft_R
+        - aeeg_L
+        - aeeg_R
+        time_axis: elapsed
+        style:
+          rhythmicity_hz_range:
+          - 1
+          - 25
+          spectrogram_hz_range:
+          - 0
+          - 20
+          aeeg_gridlines_uv:
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+          - 200
+          show_colorbar: true
+          fft_db_range:
+          - -10
+          - 30
+- id: trd-asymmetry-index
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-asymmetry-index
+    title: Asymmetry index for a right hemispheric attenuation
+    category: trends
+    subcategory: Asymmetry
+    caption: A persistent right hemispheric attenuation holds the asymmetry index
+      near -40 to -50% (left greater than right) for the whole record, and the relative
+      asymmetry spectrogram is blue (left-greater), most intensely in the delta-theta
+      band. The right FFT spectrogram is correspondingly dimmer than the left.
+    tags:
+      age: adolescent
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: null
+    image:
+      kind: qeeg_panel
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265009
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 180
+        background:
+          type: continuous
+          dominant_hz: 5.0
+          amplitude_uv: 45
+          slow_fraction: 0.55
+          reactivity: absent
+          asymmetry:
+            side: right
+            attenuation_pct: 40
+            slowing_hz: 0
+        events: []
+        panels:
+        - asymmetry_index
+        - asymmetry_relative
+        - fft_L
+        - fft_R
+        time_axis: elapsed
+        style:
+          asymmetry_index_axis_pct:
+          - -100
+          - 100
+          asymmetry_index_zero_line: true
+          asymmetry_spectrogram_hz_range:
+          - 0
+          - 20
+          asymmetry_colorbar: blue_left_red_right
+          spectrogram_hz_range:
+          - 0
+          - 20
+          show_colorbar: true
+          fft_db_range:
+          - -10
+          - 30
+- id: trd-suppression-ratio
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-suppression-ratio
+    title: Suppression ratio during pentobarbital titration
+    category: trends
+    subcategory: Suppression and burst suppression
+    caption: 'Burst suppression deepens in two steps after pentobarbital increases
+      at 40 and 95 min: the bilateral suppression ratio climbs from about 25% to 55%
+      and then to about 80%, the top of the shaded 60-80% target band. The aEEG lower
+      margin stays near 1 uV while the upper-margin excursions from bursts become
+      sparser.'
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: null
+    image:
+      kind: qeeg_panel
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265010
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 180
+        background:
+          type: burst_suppression
+          dominant_hz: 2.0
+          amplitude_uv: 90
+          slow_fraction: 0.6
+          reactivity: absent
+          burst_suppression:
+            burst_s: 7.5
+            ibi_s: 2.5
+        events:
+        - type: sedation_change
+          at_min: 40
+          direction: increase
+          agent: pentobarbital
+          effect:
+            suppression_ratio_target_pct: 55
+            ramp_min: 15
+        - type: sedation_change
+          at_min: 95
+          direction: increase
+          agent: pentobarbital
+          effect:
+            suppression_ratio_target_pct: 80
+            ramp_min: 15
+        annotations:
+        - at_min: 40
+          label: Pentobarbital rate increase
+        - at_min: 95
+          label: Pentobarbital rate increase
+        panels:
+        - suppression_ratio_L
+        - suppression_ratio_R
+        - aeeg_L
+        - aeeg_R
+        - fft_L
+        - fft_R
+        time_axis: elapsed
+        style:
+          suppression_threshold_uv: 5
+          suppression_ratio_axis_pct:
+          - 0
+          - 100
+          suppression_ratio_target_band_pct:
+          - 60
+          - 80
+          show_colorbar: true
+          fft_db_range:
+          - -10
+          - 30
+          aeeg_gridlines_uv:
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+          - 200
+- id: trd-sedation-power
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-sedation-power
+    title: Total power and alpha/delta ratio with sedation
+    category: trends
+    subcategory: Spectrogram and amplitude trends
+    caption: After a dexmedetomidine increase at 90 min, the alpha/delta ratio falls
+      on both sides together and a 12-16 Hz spindle-like band appears on both FFT
+      spectrograms, a symmetric, sleep-like drug effect rather than a focal change.
+      Total power changes little.
+    tags:
+      age: adolescent
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: null
+    image:
+      kind: qeeg_panel
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265011
+        age_group: adolescent
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 180
+        background:
+          type: continuous
+          dominant_hz: 7.0
+          amplitude_uv: 45
+          slow_fraction: 0.45
+          reactivity: present
+        events:
+        - type: sedation_change
+          at_min: 90
+          direction: increase
+          agent: dexmedetomidine
+          effect:
+            beta_boost: false
+            ramp_min: 20
+        annotations:
+        - at_min: 90
+          label: Dexmedetomidine increased
+        panels:
+        - total_power_L
+        - total_power_R
+        - alpha_delta_ratio_L
+        - alpha_delta_ratio_R
+        - fft_L
+        - fft_R
+        time_axis: elapsed
+        style:
+          spectrogram_hz_range:
+          - 0
+          - 20
+          show_colorbar: true
+          fft_db_range:
+          - -10
+          - 30
+- id: trd-composite-seizure
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-composite-seizure
+    title: Trend panel over the raw page at a seizure
+    category: trends
+    subcategory: Composite trend and page
+    caption: 'The trend panel (top) marks the time of the raw page (bottom): a left
+      temporal seizure seen on the trends as a seizure-probability peak and a streak
+      on the left rhythmicity and FFT spectrograms is, on the page, high-voltage rhythmic
+      delta at about 2 Hz over the left temporal chain, with the right temporal chain
+      spared.'
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 15
+    image:
+      kind: composite
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265012
+        layout: panel_over_page
+        qeeg_panel:
+          age_group: child
+          sample_rate: 256
+          channels: standard_19
+          duration_min: 180
+          background:
+            type: continuous
+            dominant_hz: 6.0
+            amplitude_uv: 50
+            slow_fraction: 0.5
+            reactivity: present
+          events:
+          - type: seizure
+            onset_min: 60
+            duration_s: 110
+            onset_region: left_temporal
+            spread: none
+            postictal_attenuation_s: 40
+            evolution:
+              start_hz: 6.0
+              end_hz: 2.5
+              amplitude_start_uv: 80
+              amplitude_end_uv: 220
+          - type: seizure
+            onset_min: 125
+            duration_s: 110
+            onset_region: left_temporal
+            spread: none
+            postictal_attenuation_s: 40
+            evolution:
+              start_hz: 6.0
+              end_hz: 2.5
+              amplitude_start_uv: 80
+              amplitude_end_uv: 220
+          panels:
+          - seizure_probability
+          - rhythmicity_L
+          - rhythmicity_R
+          - fft_L
+          - fft_R
+          - aeeg_L
+          - aeeg_R
+          time_axis: elapsed
+          style:
+            rhythmicity_hz_range:
+            - 1
+            - 25
+            spectrogram_hz_range:
+            - 0
+            - 20
+            aeeg_gridlines_uv:
+            - 5
+            - 10
+            - 25
+            - 50
+            - 100
+            - 200
+            show_colorbar: true
+            fft_db_range:
+            - -10
+            - 30
+        eeg_page:
+          at_min: 126.0
+          window_s: 15
+          montage: longitudinal_bipolar
+          filters:
+            lf_hz: 1
+            hf_hz: 70
+            notch_hz: 60
+          highlight: null
+- id: trd-composite-burst-suppression
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: trd-composite-burst-suppression
+    title: Suppression-ratio trend over a burst-suppression page
+    category: trends
+    subcategory: Composite trend and page
+    caption: A suppression ratio of about 60-70% on the trend (top) corresponds, on
+      the raw page (bottom), to generalized bursts of mixed-frequency activity lasting
+      1-4 s separated by suppressed intervals under 5 uV lasting up to about 10 s.
+    tags:
+      age: child
+      state: unknown
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: composite
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 29265013
+        layout: panel_over_page
+        qeeg_panel:
+          age_group: child
+          sample_rate: 256
+          channels: standard_19
+          duration_min: 180
+          background:
+            type: burst_suppression
+            dominant_hz: 2.0
+            amplitude_uv: 90
+            slow_fraction: 0.6
+            reactivity: absent
+            burst_suppression:
+              burst_s: 3.0
+              ibi_s: 6.0
+          events: []
+          panels:
+          - suppression_ratio_L
+          - suppression_ratio_R
+          - aeeg_L
+          - aeeg_R
+          - fft_L
+          - fft_R
+          time_axis: elapsed
+          style:
+            suppression_threshold_uv: 5
+            suppression_ratio_axis_pct:
+            - 0
+            - 100
+            suppression_ratio_target_band_pct:
+            - 60
+            - 80
+            show_colorbar: true
+            fft_db_range:
+            - -10
+            - 30
+            aeeg_gridlines_uv:
+            - 5
+            - 10
+            - 25
+            - 50
+            - 100
+            - 200
+        eeg_page:
+          at_min: 90
+          window_s: 20
+          sensitivity_uv_mm: 7
+          montage: longitudinal_bipolar
+          filters:
+            lf_hz: 1
+            hf_hz: 70
+            notch_hz: 60
+          highlight: null
+- id: gen-atypical-absence
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - tags
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: gen-atypical-absence
+    title: Atypical absence
+    category: generalized
+    subcategory: Absence seizures
+    caption: Slow (<2.5 Hz), irregular sharp-and-slow-wave complexes with gradual
+      onset and offset on a slow background; the sharp component precedes each slow
+      wave. Average reference exposes the preceding sharp component in the frontocentral
+      channels and the subsequent slower wave; the background is diffusely slow.
+    tags:
+      age: child
+      montage: average
+      sensitivity_uv_mm: 20
+      state: awake
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        spec_version: 3
+        seed: 26092602
+        age_group: child
+        background:
+          type: continuous
+          amplitude_uv: 100
+          dominant_hz: 4.0
+          slow_fraction: 0.85
+          reactivity: present
+          channel_gain_max: 1.5
+          pdr_gain: 0
+        events:
+        - type: generalized_seizure
+          seizure_type: atypical_absence
+          onset_min: 2.033333333333333
+          duration_s: 11.0
+        at_min: 2.0
+        window_s: 15.0
+        sensitivity_uv_mm: 20
+        montage: average
+- id: gen-tonic
+  new: false
+  image_changed: true
+  changed_fields:
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: gen-tonic
+    title: Tonic seizure
+    category: generalized
+    subcategory: Tonic and atonic
+    caption: A diffuse high-voltage sharp-and-slow wave, then electrodecrement and
+      bisynchronous 15-25 Hz paroxysmal fast activity building in voltage, frontally
+      predominant, with tonic EMG.
+    tags:
+      age: child
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 20.0
+      state: unknown
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        spec_version: 3
+        seed: 26092606
+        age_group: child
+        background:
+          type: continuous
+          amplitude_uv: 70.0
+          dominant_hz: 4.0
+          slow_fraction: 0.85
+          reactivity: present
+          channel_gain_max: 1.5
+          pdr_gain: 0.3
+        events:
+        - type: generalized_seizure
+          seizure_type: tonic
+          onset_min: 2.05
+          emg_uv: 270
+        at_min: 2.0
+        window_s: 15.0
+        sensitivity_uv_mm: 20.0
+        montage: longitudinal_bipolar
+- id: gen-lgs-slow-spike-wave
+  new: false
+  image_changed: true
+  changed_fields:
+  - caption
+  - tags
+  - rendererVersion
+  - specHash
+  - path
+  - thumbPath
+  item:
+    id: gen-lgs-slow-spike-wave
+    title: Slow spike-and-wave (Lennox-Gastaut)
+    category: generalized
+    subcategory: Epileptic encephalopathy
+    caption: Irregular 1.5-2.5 Hz sharp-and-slow-wave complexes, frontal maximum,
+      on a slow background. Average reference exposes the preceding sharp component
+      in the frontocentral channels and the subsequent slower wave; the background
+      is diffusely slow.
+    tags:
+      age: child
+      montage: average
+      sensitivity_uv_mm: 20
+      state: awake
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        spec_version: 3
+        seed: 26092613
+        age_group: child
+        background:
+          type: continuous
+          amplitude_uv: 100
+          dominant_hz: 4.0
+          slow_fraction: 0.85
+          reactivity: present
+          channel_gain_max: 1.5
+          pdr_gain: 0
+        events:
+        - type: generalized_discharges
+          pattern: slow_spike_wave
+          rate_per_h: 200
+        at_min: 1.0838414164018544
+        window_s: 15.0
+        sensitivity_uv_mm: 20
+        montage: average
+- id: iid-selects-bilateral-bipolar
+  new: true
+  image_changed: true
+  changed_fields:
+  - id
+  - title
+  - category
+  - subcategory
+  - caption
+  - tags
+  - kind
+  - rendererVersion
+  - specHash
+  - width
+  - height
+  - path
+  - thumbPath
+  item:
+    id: iid-selects-bilateral-bipolar
+    title: 'SeLECTS / BECTS: bilateral independent centrotemporal spikes (bipolar)'
+    category: interictal
+    subcategory: Central / rolandic
+    caption: Independent left and right centrotemporal discharges on the same normal
+      drowsy background. Negative peaks reverse at C3/T3 or C4/T4, with the frontal
+      positive pole of a transverse dipole and an after-going slow wave. Paired with
+      the referential view of this same recording and time window.
+    tags:
+      age: child
+      state: drowsy
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 10
+      acns: sporadic epileptiform discharges, abundant
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 30092621
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 45
+          dominant_hz: 9.0
+          slow_fraction: 0.2
+          reactivity: present
+          channel_gain_max: 1.5
+          blink_rate_per_min: 0
+        events:
+        - type: state_change
+          at_min: 2.0
+          to: sleep
+        - type: sporadic_discharges
+          focus: right_centrotemporal
+          rate_per_h: 300
+          amplitude_uv: 180
+          morphology: sharp_wave
+          aftergoing_slow: true
+          sleep_activation: 8
+          foci:
+          - left_centrotemporal
+          - right_centrotemporal
+          focus_weights:
+          - 0.5
+          - 0.5
+          synchrony: independent
+          centrotemporal_triphasic: true
+        at_min: 2.5
+        window_s: 20
+        sensitivity_uv_mm: 10
+        montage: longitudinal_bipolar
+- id: iid-selects-bilateral-referential
+  new: true
+  image_changed: true
+  changed_fields:
+  - id
+  - title
+  - category
+  - subcategory
+  - caption
+  - tags
+  - kind
+  - rendererVersion
+  - specHash
+  - width
+  - height
+  - path
+  - thumbPath
+  item:
+    id: iid-selects-bilateral-referential
+    title: 'SeLECTS / BECTS: bilateral independent centrotemporal spikes (referential)'
+    category: interictal
+    subcategory: Central / rolandic
+    caption: The same recording and time window as the paired bipolar view, using
+      average reference as in the ILAE example. Centrotemporal negativity at C3/T3
+      or C4/T4 points upward; the simultaneous frontal positive pole points downward.
+      The left and right discharges occur independently on a normal drowsy background.
+    tags:
+      age: child
+      state: drowsy
+      montage: average
+      sensitivity_uv_mm: 10
+      acns: sporadic epileptiform discharges, abundant
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 30092621
+        age_group: child
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        background:
+          type: continuous
+          amplitude_uv: 45
+          dominant_hz: 9.0
+          slow_fraction: 0.2
+          reactivity: present
+          channel_gain_max: 1.5
+          blink_rate_per_min: 0
+        events:
+        - type: state_change
+          at_min: 2.0
+          to: sleep
+        - type: sporadic_discharges
+          focus: right_centrotemporal
+          rate_per_h: 300
+          amplitude_uv: 180
+          morphology: sharp_wave
+          aftergoing_slow: true
+          sleep_activation: 8
+          foci:
+          - left_centrotemporal
+          - right_centrotemporal
+          focus_weights:
+          - 0.5
+          - 0.5
+          synchrony: independent
+          centrotemporal_triphasic: true
+        at_min: 2.5
+        window_s: 20
+        sensitivity_uv_mm: 10
+        montage: average
+- id: var-ciganek
+  new: true
+  image_changed: true
+  changed_fields:
+  - id
+  - title
+  - category
+  - subcategory
+  - caption
+  - tags
+  - kind
+  - rendererVersion
+  - specHash
+  - width
+  - height
+  - path
+  - thumbPath
+  item:
+    id: var-ciganek
+    title: Midline theta rhythm (Ciganek)
+    category: variants
+    subcategory: Awake variants
+    caption: A waxing and waning 6 Hz midline theta train, maximal at Cz with Fz greater
+      than Pz and only a small parasagittal field. Smooth rhythmic activity in an
+      awake adult; a normal variant without ictal evolution.
+    tags:
+      age: adult
+      state: awake
+      montage: longitudinal_bipolar
+      sensitivity_uv_mm: 7
+    image:
+      kind: eeg_page
+      license: synthetic-original
+      attribution: null
+      spec:
+        spec_version: 3
+        seed: 30092611
+        age_group: adult
+        sample_rate: 256
+        channels: standard_19
+        duration_min: 30
+        at_min: 12.0
+        window_s: 20
+        sensitivity_uv_mm: 7
+        montage: longitudinal_bipolar
+        background:
+          type: continuous
+          dominant_hz: 10
+          amplitude_uv: 35
+          slow_fraction: 0.25
+          reactivity: present
+        events:
+        - type: normal_variant
+          kind: midline_theta
+          at_min: 12
+          duration_s: 20
+          frequency_hz: 6
+          amplitude_uv: 55
+          context: awake
