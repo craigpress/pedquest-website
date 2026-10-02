@@ -83,6 +83,7 @@
 .chip_accepted { color: var(--good); background: var(--chip-ok-bg); border-color: var(--chip-ok-line); }
 .chip_needs_review { color: var(--warm); background: var(--chip-review-bg); border-color: var(--chip-review-line); }
 .chip_new { color: var(--accent); background: var(--accent-soft); border-color: var(--chip-new-line); }
+.prior { font-weight: 500; opacity: .8; }
 
 .empty { border: 1px dashed var(--border-strong); border-radius: 12px; padding: 28px; text-align: center; color: var(--text-secondary); }
 .skeleton { background: var(--skeleton, var(--surface-2)); border-radius: 12px; aspect-ratio: 16 / 11; }

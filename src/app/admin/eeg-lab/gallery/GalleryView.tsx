@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import {
-  CATEGORY_GROUPS, CATEGORY_LABEL, CATEGORY_ORDER, STATUS_LABEL, altText, effectiveStatus, isTrend, montageLabel,
+  CATEGORY_GROUPS, CATEGORY_LABEL, CATEGORY_ORDER, STATUS_LABEL, altText, effectiveStatus, priorStatusLabel, isTrend, montageLabel,
   paramChips, searchText,
   type GalleryItem, type GalleryManifest, type GalleryNote, type GalleryState, type GalleryStatus,
 } from "@/lib/eeg-gallery";
@@ -79,8 +79,12 @@ function acnsMain(tag?: string): string {
   return (tag || "").split(/[+\s,]/)[0].trim();
 }
 
-function Chip({ status }: { status: GalleryStatus }) {
-  return <span className={`${styles.chip} ${styles[`chip_${status}`]}`}>{STATUS_LABEL[status]}</span>;
+function Chip({ status, prior }: { status: GalleryStatus; prior?: string | null }) {
+  return (
+    <span className={`${styles.chip} ${styles[`chip_${status}`]}`} title={prior ? `Last set: ${prior}` : undefined}>
+      {STATUS_LABEL[status]}{prior && <small className={styles.prior}>was {prior}</small>}
+    </span>
+  );
 }
 
 function Icon({ d, label }: { d: string; label?: string }) {
@@ -355,7 +359,7 @@ export default function GalleryView() {
                     {subs.length > 1 && <h3 className={styles.sub}>{s}</h3>}
                     <div className={p.view === "one" ? styles.oneUp : styles.grid}>
                       {inCat.filter((i) => i.subcategory === s).map((it) => (
-                        <Card key={it.id} it={it} status={statusOf(it)} thumb={data?.urls[it.id]?.thumb ?? null}
+                        <Card key={it.id} it={it} status={statusOf(it)} prior={priorStatusLabel(it, data?.state[it.id])} thumb={data?.urls[it.id]?.thumb ?? null}
                           notes={data?.noteCount[it.id] ?? 0} onOpen={openItem}
                           onImgError={reloadImages} />
                       ))}
@@ -369,7 +373,8 @@ export default function GalleryView() {
       </div>
 
       {current && data && (
-        <Viewer it={current} list={nav} urls={data.urls} status={statusOf(current)} queue={p.queue}
+        <Viewer it={current} list={nav} urls={data.urls} status={statusOf(current)}
+          prior={priorStatusLabel(current, data.state[current.id])} queue={p.queue}
           authHeaders={authHeaders}
           onClose={() => { const id = current.id; update({ item: null, queue: false }); requestAnimationFrame(() =>
             document.getElementById(`item-${id}`)?.focus()); }}
@@ -384,8 +389,8 @@ export default function GalleryView() {
   );
 }
 
-const Card = memo(function Card({ it, status, thumb, notes, onOpen, onImgError }: {
-  it: GalleryItem; status: GalleryStatus; thumb: string | null; notes: number; onOpen: (id: string) => void;
+const Card = memo(function Card({ it, status, prior, thumb, notes, onOpen, onImgError }: {
+  it: GalleryItem; status: GalleryStatus; prior: string | null; thumb: string | null; notes: number; onOpen: (id: string) => void;
   onImgError: () => void;
 }) {
   const chips = paramChips(it);
@@ -402,7 +407,7 @@ const Card = memo(function Card({ it, status, thumb, notes, onOpen, onImgError }
         <figcaption className={styles.cardBody}>
           <div className={styles.cardTop}>
             <span className={styles.cardEyebrow}>{it.subcategory}</span>
-            <Chip status={status} />
+            <Chip status={status} prior={prior} />
           </div>
           <h4 className={styles.cardTitle}>{it.title}</h4>
           <p className={styles.cardCaption}>{it.caption}</p>
@@ -417,9 +422,9 @@ const Card = memo(function Card({ it, status, thumb, notes, onOpen, onImgError }
   );
 });
 
-function Viewer({ it, list, urls, status, queue, authHeaders, onClose, onMove, onStatus, onPresent, onNoteAdded,
+function Viewer({ it, list, urls, status, prior, queue, authHeaders, onClose, onMove, onStatus, onPresent, onNoteAdded,
   onImgError }: {
-  it: GalleryItem; list: GalleryItem[]; urls: Urls; status: GalleryStatus; queue: boolean;
+  it: GalleryItem; list: GalleryItem[]; urls: Urls; status: GalleryStatus; prior: string | null; queue: boolean;
   authHeaders: () => Promise<Record<string, string>>; onClose: () => void; onMove: (id: string) => void;
   onStatus: (s: GalleryStatus) => void; onPresent: () => void; onNoteAdded: () => void; onImgError: () => void;
 }) {
@@ -519,7 +524,7 @@ function Viewer({ it, list, urls, status, queue, authHeaders, onClose, onMove, o
         <aside className={styles.panel}>
           <span className={styles.eyebrow}>{CATEGORY_LABEL[it.category]} · {it.subcategory}</span>
           <h2 id="gallery-viewer-title">{it.title}</h2>
-          <Chip status={status} /> <span className={styles.pos}>{idx + 1} / {list.length}{queue ? " in queue" : ""}</span>
+          <Chip status={status} prior={prior} /> <span className={styles.pos}>{idx + 1} / {list.length}{queue ? " in queue" : ""}</span>
           <p className={styles.panelCaption}>{it.caption}</p>
           <dl className={styles.facts}>
             {t.age && <><dt>Age</dt><dd>{t.age.replace(/_/g, " ")}</dd></>}

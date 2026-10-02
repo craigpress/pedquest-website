@@ -16,6 +16,7 @@ import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, card, eyebrow, h1, meta, mini } from "@/lib/admin-ui";
 import { REGION_LABELS, annotationColor, describeTarget, formatClock } from "@/lib/eeg/annotations";
 import { type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask } from "@/lib/lab/scoring";
+import { resultsCsv } from "@/lib/lab/results-csv";
 import { SUBMISSION_COLORS, SUBMISSION_LABELS, type SubmissionState } from "@/lib/courses/types";
 
 interface Learner {
@@ -105,6 +106,16 @@ export default function ClassResultsPage() {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {data?.course && <Link href={`/courses/${data.course.id}`} style={mini}>← Course · {data.course.title}</Link>}
+          {data && (
+            <button type="button" style={mini} onClick={() => {
+              const csv = resultsCsv(data.tasks.map((t) => t.task), data.learners);
+              const a = document.createElement("a");
+              a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+              a.download = `class-results-${(data.job.title ?? jobId).replace(/[^\w.-]+/g, "_")}.csv`;
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+            }}>Download CSV</button>
+          )}
           <Link href={`/admin/eeg-lab/viewer?job=${jobId}`} style={mini}>Open in viewer</Link>
           <Link href={`/admin/eeg-lab/library/${jobId}`} style={mini}>Recording page</Link>
           <Link href="/admin/eeg-lab/library" style={mini}>← Library</Link>
