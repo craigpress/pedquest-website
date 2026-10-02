@@ -1058,7 +1058,7 @@ const sedation: GuideSection = {
       options: [
         o("propofol", "Propofol", "Frontal alpha appears as occipital alpha is lost, with more delta; burst suppression at high targets."),
         o("midazolam", "Midazolam", "Diffuse waxing and waning beta; in neonates, clearly lower voltage (to about half) with more theta and damped sleep-wake cycling."),
-        o("pentobarbital", "Pentobarbital", "13–16 Hz barbiturate fast activity, then burst suppression with genuine bursts."),
+        o("pentobarbital", "Pentobarbital", "18–23 Hz barbiturate fast activity, then burst suppression with genuine bursts."),
         o("dexmedetomidine", "Dexmedetomidine", "Sleep-like slow background with frontal 9–15 Hz spindles lasting 1–2 s at irregular intervals."),
         o("ketamine", "Ketamine", "More theta, and alternating slow-delta and 25–32 Hz gamma epochs."),
         o("remifentanil", "Remifentanil", "Little EEG change; patients remain awake."),

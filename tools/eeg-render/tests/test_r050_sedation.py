@@ -297,7 +297,7 @@ def test_barbiturate_bursts_are_short_high_voltage_slow_and_sharp(pento):
 
 
 def test_pentobarbital_trend_carries_the_drug(pento):
-    """Suppression builds with the authored ramp (5-10 min, target 60 %) and the barbiturate fast activity (13-16 Hz)
+    """Suppression builds with the authored ramp (5-10 min, target 60 %) and the barbiturate fast activity (18-23 Hz since 0.5.6)
     shows before any discontinuity, with occipital alpha gone (review: 'the spectrogram carries no drug signal').  The
     qEEG suppression-ratio trend (0.5 s epochs < 3 uV, 1 s sustained for drug bursts) reads it too."""
     from eeg_render.trends import compute_trends
@@ -311,7 +311,7 @@ def test_pentobarbital_trend_carries_the_drug(pento):
     assert 0.45 <= np.mean(sr[12:]) <= 0.7
     _, d0 = _disp(S0, 60, 240)
     pre = d[:, 60 * fs: 240 * fs]
-    assert _bp(pre, fs, 13, 16).mean() > 2.0 * _bp(d0, fs, 13, 16).mean()
+    assert _bp(pre, fs, 18, 23).mean() > 2.0 * _bp(d0, fs, 18, 23).mean()
     assert _bp(_rows(n, pre, OCC), fs, 8, 11).mean() < 0.3 * _bp(_rows(n, d0, OCC), fs, 8, 11).mean()
 
 

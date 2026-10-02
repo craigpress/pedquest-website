@@ -23,6 +23,9 @@ they are not drawn.
 # (spec_version 3 only).
 # 0.5.3 (2026-09-30, Craig): background.asymmetry.region (regional focal slowing) and neonatal midazolam 1 - 0.5 q with
 # a damped sleep-wake cycle (spec_version 3 only). Bank PNGs byte-identical (no bank item uses either); restamped.
-RENDERER_VERSION = "0.5.5"
+# 0.5.6 (2026-10-02, review-hub/fidelity PQW-112 audit; research/eeg-atlas/fidelity-fixes-20261002): Gaussian PDR band
+# centred on dominant_hz (non-child ages), PDs+F fast x2-3, triphasic phase 1, broader blunt PDs, 20.5-Hz barbiturate
+# beta, propofol interburst floor (spec_version 3 only).
+RENDERER_VERSION = "0.5.6"
 
 __all__ = ["RENDERER_VERSION"]

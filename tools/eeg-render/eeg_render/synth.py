@@ -881,6 +881,9 @@ class Synthesizer:
         self._norm_cache[keyb] = val
         return val
 
+    #: 0.5.6: v3 PDR band sigma (Hz), Gaussian
+    _PDR_SIGMA_V3 = 0.7
+
     def _mk(self, name: str, shape: np.ndarray, spatial: np.ndarray, common: float = 0.0) -> _Stream:
         return _Stream(name, shape, self._norm_for(shape), spatial, common)
 
@@ -916,7 +919,14 @@ class Synthesizer:
             # 0.5.0 (feature review: C3-P3 alpha 0.87-0.99 of P3-O1): occipital maximum with a steep parietal fall, so
             # longitudinal bipolar shows the PDR best in P3-O1 / T5-O1 and about half of it in C3-P3
             post_pdr = _profile(ch, _PDR_FIELD_V3, 0.03)
-        self.st_pdr = self._mk("pdr", band_shape(f, self.dominant_hz, 1.45), post_pdr, common=0.65)
+        # 0.5.6 (fidelity audit PQW-112: the flat-topped +/-1.45 Hz band put the realized O1 peak up to 0.75 Hz off
+        # dominant_hz; 23 % of 30 pages within +/-0.25 Hz): v3 draws a Gaussian band (sigma 0.7 Hz, FWHM 1.6 Hz)
+        # centred on dominant_hz, same RMS - 80 % within +/-0.25 Hz.  Not for the ages with posterior theta
+        # (_POST_THETA_W_B): the r5 child alpha / theta shares were calibrated on the flat band
+        # (test_awake_child_pdr_is_mixed_with_theta), so child pages keep it
+        gauss = self.spec_version >= 3 and self.age not in _POST_THETA_W_B
+        self.st_pdr = self._mk("pdr", band_shape(f, self.dominant_hz, self._PDR_SIGMA_V3, order=1.0) if gauss
+                               else band_shape(f, self.dominant_hz, 1.45), post_pdr, common=0.65)
         self.st_pdr_slow = self._mk(
             "pdrslow",
             band_shape(f, max(0.8, self.dominant_hz - float((self.bg.get("asymmetry") or {}).get("slowing_hz") or 2.0)), 1.1),
@@ -946,7 +956,10 @@ class Synthesizer:
             # frontopolar difference is not blink-like), falling off behind the vertex
             self.st_sed_slow = self._mk("sed_slow3", band_shape(f, 1.3, 0.9, order=1.0) * hp_lp_shape(f, 0.6, 60.0),
                                         _profile(ch, self._SED_SLOW_FIELD, 0.2), common=0.99)
-            self.st_barb = self._mk("sed_barb", band_shape(f, 14.5, 2.0), 0.6 * ant + 0.4 * near_uniform, common=0.35)
+            # 0.5.6 (fidelity audit PQW-112: Fp1-F3 peaked at 14 Hz; barbiturate beta is classically 18-26 Hz, Blume 2006):
+            # band centre 14.5 -> 20.5 Hz
+            self.st_barb = self._mk("sed_barb", band_shape(f, self._BARB_BETA_HZ, 2.0), 0.6 * ant + 0.4 * near_uniform,
+                                    common=0.35)
             # phase D (sedation-v3 S109-05): a Gaussian 25-32 Hz band (the super-Gaussian 2.6-Hz band drew
             # near-sinusoidal 28-Hz packets that read as fast spindles)
             # 0.5.2 (gallery r9: the broad, mostly independent near-uniform band read as temporal muscle): a narrower
@@ -1399,7 +1412,7 @@ class Synthesizer:
     # ---------------- 0.5.0 sedation (spec_version 3) ----------------
     #: v3-only sedation timelines, interpolated like the others (feature review 2026-09-26, sedation.md): ``loc`` loss of
     #: consciousness 0..1 (removes blinks and eye-state events), ``pdr`` posterior-rhythm multiplier, ``beta3`` diffuse
-    #: waxing/waning benzodiazepine beta, ``barb`` barbiturate 13-16 Hz fast activity, ``gamma3`` ketamine 25-32 Hz gamma,
+    #: waxing/waning benzodiazepine beta, ``barb`` barbiturate 18-23 Hz fast activity, ``gamma3`` ketamine 25-32 Hz gamma,
     #: ``keta`` depth of the ketamine slow-delta / gamma alternation
     #: 0.5.2: ``slow3`` anesthetic frontal slow waves (propofol)
     _SED_V3_KEYS = ("loc", "pdr", "beta3", "barb", "gamma3", "keta", "slow3", "swc")
@@ -1413,6 +1426,13 @@ class Synthesizer:
     #: burst-suppression figure shows a visibly non-flat interburst and R2/R3 a burst:interburst contrast of about
     #: 10-20:1, so the residual is about 2 uV RMS on the display (floor x the 0.6-scaled burst content)
     _SED_IBI_FLOOR_V3 = 0.12
+    #: 0.5.6 (fidelity audit PQW-112: the propofol interburst read 12 uV max-channel p2p and only 10 % of the page was
+    #: < 10 uV against its 60 % target - burst-attenuation, not suppression).  The floor is a fraction of the drug
+    #: background, and propofol's carries the frontal slow waves (_SED_SLOW_W), so the same 0.12 left it ~40 % above the
+    #: barbiturate interburst; propofol gets its own floor.  The barbiturate one stays (test_r050_r3a: 1.5-3 uV RMS)
+    _SED_IBI_FLOOR_PROPOFOL_V3 = 0.05
+    #: 0.5.6: barbiturate beta centre (Hz)
+    _BARB_BETA_HZ = 20.5
     #: r3: barbiturate burst content scale.  2.5 x the stream drew bursts of 2.5 rows (bipolar max-chain median 184 uV)
     #: overrunning 2-3 neighbouring rows; the reference bursts are about 0.5-1.5 spacing
     _SED_BURST_SCALE_V3 = 0.6
@@ -1470,6 +1490,14 @@ class Synthesizer:
         if not vals:
             return np.full(t.shape, neutral)
         return _piecewise(self._sed_t, vals, t) if len(self._sed_t) > 1 else np.full(t.shape, vals[0])
+
+    def _sed_bs_agent(self) -> Optional[str]:
+        """Agent of the last sedation_change that sets a suppression target (0.5.6)."""
+        agent = None
+        for ev in self.spec.get("events") or []:
+            if ev.get("type") == "sedation_change" and float((ev.get("effect") or {}).get("suppression_ratio_target_pct") or 0) > 0:
+                agent = str(ev.get("agent"))
+        return agent
 
     def _sed_driven_bs(self) -> bool:
         """Burst suppression that comes from a sedation_change target, not from ``background.type``."""
@@ -3022,7 +3050,11 @@ class Synthesizer:
         sed = _piecewise(self._sed_t, self._sed_sf, t) if len(self._sed_t) > 1 else np.zeros_like(t)
         deep = np.clip(sed / 0.25, 0.0, 1.0)
         # 0.5.0: a drug-induced suppression keeps low-voltage residual activity, not a dead line (sedation.md S109-06)
-        floor = self._ibi_floor0 * (1.0 - deep) + (self._SED_IBI_FLOOR_V3 if self._sed_driven_bs() else 0.005) * deep
+        if self._sed_driven_bs():
+            drug = self._SED_IBI_FLOOR_PROPOFOL_V3 if self._sed_bs_agent() == "propofol" else self._SED_IBI_FLOOR_V3
+        else:
+            drug = 0.005
+        floor = self._ibi_floor0 * (1.0 - deep) + drug * deep
         if self.spec_version >= 3 and self.bg["type"] == "burst_suppression" and self.age != "neonate":
             # 0.5.2 (gallery r9: the non-drug interburst was a ruler line, 0.9 uV RMS): a suppression keeps a few uV of
             # low-voltage irregular residual activity, as the drug-induced one does: a floor worth about

@@ -274,6 +274,13 @@ def add_dipole_pole(syn, region: str, wsum: np.ndarray, onset: np.ndarray) -> np
 
 # ------------------------------------------------------------------ kernels --
 
+#: triphasic phases: (gain, lead s, sigma s) of phase 1, (rise, fall sigma s) of the unit phase 2, (gain, lag s, sigma s)
+#: of phase 3, all x width
+#: 0.5.6 (fidelity audit PQW-112: median 2.5 phases above 20 % of the maximum on the page - phase 1 was lost): phase 1
+#: -0.32 at 70 ms (sigma 20) -> -0.40 at 80 ms (sigma 30), 3 phases on the page with phase 2 still dominant
+TRI_PHASES = ((-0.40, 0.080, 0.030), (0.030, 0.048), (-0.50, 0.175, 0.080))
+
+
 def tri_kernel(tau: np.ndarray, width: float | np.ndarray = 1.0) -> np.ndarray:
     """Triphasic discharge, ``tau`` seconds from the phase-2 (positive) peak; surface potential.
 
@@ -282,9 +289,10 @@ def tri_kernel(tau: np.ndarray, width: float | np.ndarray = 1.0) -> np.ndarray:
     periodic-triphasics: blunt 1.5-2 Hz complexes).
     """
     w = width
-    p1 = -0.32 * np.exp(-0.5 * ((tau + 0.070 * w) / (0.020 * w)) ** 2)
-    p2 = np.exp(-0.5 * (tau / np.where(tau < 0.0, 0.030 * w, 0.048 * w)) ** 2)
-    p3 = -0.50 * np.exp(-0.5 * ((tau - 0.175 * w) / (0.080 * w)) ** 2)
+    (g1, c1, s1), (r2, f2), (g3, c3, s3) = TRI_PHASES
+    p1 = g1 * np.exp(-0.5 * ((tau + c1 * w) / (s1 * w)) ** 2)
+    p2 = np.exp(-0.5 * (tau / np.where(tau < 0.0, r2 * w, f2 * w)) ** 2)
+    p3 = g3 * np.exp(-0.5 * ((tau - c3 * w) / (s3 * w)) ** 2)
     return p1 + p2 + p3
 
 
@@ -293,13 +301,19 @@ def _std_kernel(tau, width):
     return _pd_kernel(tau, width)
 
 
+#: blunt kernel Gaussian sigma (s) per unit width.  0.5.6 (fidelity audit PQW-112: main phase 195 ms on the page, at the
+#: ACNS 200-ms blunt boundary): 0.066 -> 0.082, about 240 ms; the r9 interval contract (complex < 0.5 s at 1 Hz,
+#: test_blunt_lpds_keep_an_interdischarge_interval) stops it short of 250 ms.  SHAPE_GAIN["blunt"] keeps the voltage
+BLUNT_SIGMA = 0.082
+
+
 def _blunt_kernel(tau, width):
     """Blunt (smooth, near-sinusoidal) discharge: a symmetric rounded wave with a shallow after-going trough.
 
     r9 (gallery-20260929 acn-lpds-blunt: at 1 Hz the 0.7-s complex left no interval and read as LRDA): the wave
     narrows to sigma 66 ms (dominant phase still > 200 ms at the baseline) and the trough follows closer, so the
     complex is over in about 0.45 s and the rest of the cycle is flat - blunt, but periodic."""
-    s = 0.066 * width
+    s = BLUNT_SIGMA * width
     return np.exp(-0.5 * (tau / s) ** 2) - 0.30 * np.exp(-0.5 * ((tau - 2.3 * s) / (1.2 * s)) ** 2)
 
 
@@ -327,7 +341,15 @@ def _spiky_kernel(tau, width):
 GEN_OFFSET_FRAC = {"spiky": 0.2}
 #: r9: 1 / (delivered / requested) on the max bipolar link of the spiky / blunt kernels (sharp: 1.02 with
 #: LAT_BIPOLAR_GAIN alone; 3 seeds, left temporal 1 Hz, ICU background)
-SHAPE_GAIN = {"spiky": 1.37, "blunt": 1.43}
+SHAPE_GAIN = {"spiky": 1.37, "blunt": 1.62}       # 0.5.6: blunt 1.43 -> 1.62 with BLUNT_SIGMA
+#: PDs+F superimposed fast activity: weight per unit discharge (lateralized / generalized) and the gate (centre and
+#: sigma in s from the discharge peak).  0.5.6 (fidelity audit PQW-112: LPDs+F fast 8-15 uV p2p, 12-30 Hz RMS 1.9 % of
+#: the discharge, about 1 mm at 7 uV/mm; GPDs+F 3.4 %): 0.60 / 0.60 at (0.06, 0.075) -> 1.2 / 0.9 at (0.08, 0.10), a
+#: 235-ms (FWHM) 14-Hz burst of 20-35 uV p2p on the LPD chains (in-burst RMS 9-16 % of the discharge) and twice the GPD
+#: fast activity
+PD_FAST_REL_LAT = 1.2
+PD_FAST_REL_GEN = 0.9
+PD_FAST_GATE = (0.08, 0.10)
 
 
 _KERNELS = {"standard": _std_kernel, "triphasic": tri_kernel, "blunt": _blunt_kernel, "spiky": _spiky_kernel}
@@ -478,7 +500,8 @@ def schedule(syn, ev: Dict, i: int) -> List:
         if edb:
             fast = {"mode": "brush", "hz": float(ev.get("fast_hz", 24.0)), "rel": 0.34}
         elif periodic:
-            fast = {"mode": "pd_burst", "hz": float(ev.get("fast_hz", 14.0)), "rel": 0.60}
+            fast = {"mode": "pd_burst", "hz": float(ev.get("fast_hz", 14.0)),
+                    "rel": PD_FAST_REL_GEN if ev["onset_region"] == "generalized" else PD_FAST_REL_LAT}
         else:
             fast = {"mode": "continuous", "hz": float(ev.get("fast_hz", 13.0)), "rel": 0.22}
     plus_r = None
@@ -724,7 +747,7 @@ def rows(syn, inst, t: np.ndarray) -> np.ndarray:
                 if fm["mode"] == "pd_burst":
                     cyc = phase / (2 * np.pi)
                     tau = (cyc - np.floor(cyc + 0.5)) / np.clip(f_inst, 0.2, 12.0)
-                    gate = np.exp(-0.5 * ((tau - 0.06) / 0.075) ** 2)
+                    gate = np.exp(-0.5 * ((tau - PD_FAST_GATE[0]) / PD_FAST_GATE[1]) ** 2)
                 elif fm["mode"] == "brush":
                     gate = ((1.0 - np.sin(phase + psi[0])) / 2.0) ** 2.5
                 else:
