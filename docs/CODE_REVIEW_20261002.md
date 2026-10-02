@@ -12,7 +12,7 @@ Prior reviews (`EEG_CODE_PERFORMANCE_REVIEW_20261001.md`, `EEG_RELEASE_REVIEW_20
 | `eslint .` | 14 errors, 58 warnings | 0 errors, 44 warnings (30 are `set-state-in-effect`, set to warn on purpose; the rest are in owned files or the orphaned admin citation feature, A4) |
 | Unit tests (`npm test`, new script) | 80/82 without the flag; the 2 `mock.module` files need `--experimental-test-module-mocks` | 93/93 (adds 3 switch-user tests and 1 secret-whitespace assertion) |
 | `next build --webpack` | — | pass, 149 pages |
-| Renderer `pytest` (847) | see commit message | no renderer code changed |
+| Renderer `pytest` | **4 failed**, ~855 passed, 1 skipped on unmodified `tools/` (pins match `requirements-runtime.txt`: numpy 2.4.4, scipy 1.17.1, matplotlib 3.10.8). See R2. | no renderer code changed on this branch |
 
 ## Findings
 
@@ -83,6 +83,7 @@ Every exported `/api/admin/*` handler was checked one by one. Each one calls `re
 | L3 | L | owned: `GalleryView.tsx:215` unused `id`, `publications/page.tsx:161` unused `uniqueConferences`, 3 `<img>` in gallery | — | Report only. |
 | L4 | L | 30 `react-hooks/set-state-in-effect` warnings | Deliberately set to warn in `eslint.config.mjs`. | No action until the React Compiler is adopted. |
 | T1 | M | tests | No tests cover `admin-auth.requireRole` (token → role → 401/403/503), `lab/visibility.canSeeRecording`/`canEditRecording`, the `/stream` HMAC route (forged, expired or wrong-artifact signatures), `cases/[id]/respond` grading and dedupe, `courses/server.requireCourse`, or the Authentik callback. | Rec: add these with the `mock.module` pattern used in `switch-user/route.test.ts`. They are the authorization core. |
+| R2 | H | `tools/eeg-render/tests/test_r052_artifacts.py::test_v1_v2_pages_byte_identical_to_0_5_1`, `test_sedation_controls.py::test_no_control_preserves_the_pre_pqw109_samples`, `::test_legacy_sedation_event_preserves_pre_pqw109_samples`, `test_variant_artifact_controls.py::test_absent_controls_preserve_stacked_base_samples` | All four default/back-compat preservation tests fail on main d984774. These are the tests that prove old specs render unchanged. Both the renderer and the hash test were last touched in 36c49bf. The 10-01 release review states the full suite was not re-run after its final changes. | Rec (renderer owner): bisect 36c49bf..eb2566f. Either restore v1/v2 and absent-control output, or, if the drift is intended, re-pin the hashes with a recorded decision and confirm no published v1/v2 image would change on re-render. Not changed here: synthesis is out of scope. |
 | R1 | — | `tools/` Python (47 files) | No bare `except:`, `shell=True`, `verify=False`, `eval`, unsafe YAML or pickle. Job claims use conditional PATCH (atomic). | OK. |
 
 ## Changes on this branch
