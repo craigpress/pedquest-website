@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { Publication } from "@/data/publications";
+import { getSupabase } from "@/lib/supabase";
 import type { ConferenceAbstract } from "@/data/abstracts";
 
 interface EducationEntry {
@@ -203,9 +204,11 @@ export default function CVImporter() {
     setImportedAbs(false);
 
     try {
+      const sb = getSupabase();
+      const token = sb ? (await sb.auth.getSession()).data.session?.access_token : null;
       const res = await fetch("/api/parse-cv", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ text: cvText }),
       });
       const data = await res.json();

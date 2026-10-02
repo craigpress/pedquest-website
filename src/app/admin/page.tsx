@@ -365,7 +365,7 @@ function AdminPageInner() {
     try {
       const isDoiLike = val.includes("/") || val.startsWith("10.");
       const param = isDoiLike ? `doi=${encodeURIComponent(val)}` : `pmid=${encodeURIComponent(val)}`;
-      const res = await fetch(`/api/pubmed?${param}`);
+      const res = await fetch(`/api/pubmed?${param}`, { headers: await authHeaders(false) });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to fetch");
@@ -459,7 +459,7 @@ function AdminPageInner() {
       const params = new URLSearchParams({ title: absTitle.trim() });
       if (absConference) params.set("conference", absConference);
       if (absYear) params.set("year", String(absYear));
-      const res = await fetch(`/api/abstract-search?${params}`);
+      const res = await fetch(`/api/abstract-search?${params}`, { headers: await authHeaders(false) });
       if (res.ok) {
         setAbsLinkResults(await res.json());
       }

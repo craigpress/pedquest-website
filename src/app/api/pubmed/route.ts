@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import {
   extractText,
   parseAuthors,
@@ -11,6 +12,8 @@ import {
 const EUTILS_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   const searchParams = request.nextUrl.searchParams;
   const pmid = searchParams.get("pmid");
   const doi = searchParams.get("doi");
