@@ -1,7 +1,7 @@
 """Round 8, generalized family (research/eeg-atlas/generalized-review-20260928: Craig's review, JITTER_AUDIT.md,
 REFERENCE_TARGETS.md).  Spec_version 3 only.
 
-- the seven features Craig accepted are byte-identical to renderer 0.5.0 (digests of the reviewed pages);
+- the seven accepted cerebral and authored motor components retain their renderer 0.5.0 digests;
 - the whole-head jitter is shared by every electrode (bisynchrony survives) and the rebuilt features meet the
   reference targets;
 - every rebuilt feature stays window and horizon independent.
@@ -17,7 +17,7 @@ from eeg_render.render_page import apply_filters, build_filters
 from eeg_render.spec import normalize
 from eeg_render.synth import Synthesizer
 
-from _gen_r8_digest import ACCEPTED, digest
+from _gen_r8_digest import ACCEPTED, accepted_synth, component_digests, digest
 
 CHILD = dict(type="continuous", amplitude_uv=40.0, dominant_hz=9.0, slow_fraction=0.4, reactivity="present",
              channel_gain_max=1.5)
@@ -26,15 +26,29 @@ LGS_BG = dict(type="continuous", amplitude_uv=70.0, dominant_hz=4.0, slow_fracti
 SLEEP = [{"type": "state_change", "at_min": 0.5, "to": "sleep"}]
 FILT = {"lf_hz": 1.0, "hf_hz": 70.0, "notch_hz": 60.0}
 
-#: renderer 0.5.0 (origin/main cb0e97b) digests of the accepted pages, research/eeg-atlas/generalized-review-20260928
+#: Isolated components verified equal at cb0e97b (0.5.0), a451ed0 (0.5.4), and the state/muscle revision.
 ACCEPTED_DIGESTS = {
-    "typical_absence": "976d352b08b63d88883a071d6a540de5146dba993f4e3b81eda98f497da1d800",
-    "myoclonic": "a12ea8442567c582ef7325de38a6054e4a86b6c26674b77e0f5dbbcc29c878f8",
-    "myoclonic_atonic": "f9352e39731a9671bba4ca7aef477ae99cdd19718d0bae95e5c51efbeffd48eb",
-    "myoclonic_tonic": "38a11001147c6960cd4530273e008574ccba1d67dd80a115916f6b311d215882",
-    "atonic": "3f568425720a1d882e9e02a1b743c3d0eb82a6fdf272982baa8c3dddb1b42652",
-    "interictal_gsw": "34ec2e9b3c18907fb040c674643d71a4740e8fde6383203cc263c0ff0daac939",
-    "interictal_psw_jme": "37e89bd3c64350d4d5bf7ca5a36ac883b60700f5c67304996b3fb6eb4e434576",
+    "typical_absence": {
+        "cerebral": "894b7805e142f474b98702065156c9a44244f73332ed4511a063ea763a08ca2a",
+        "motor": "c3a2e1432bc92353ce31f5050e760fff4693a72a0862638776b34fce4bd55365"},
+    "myoclonic": {
+        "cerebral": "33a46ba1600ecb172ab30a3b8605174265db6a88b20f3bec1c4fea28afdaabca",
+        "motor": "b1ad8125b475389a6913262c474d990e8cb58751e2d4f8a500c15ded7040ec51"},
+    "myoclonic_atonic": {
+        "cerebral": "f3985202c066ced694ce6da4062e6fe1cc7cc7e97b6d97628ed97e711d6cf528",
+        "motor": "8a99755c13df4b05fff6804afc016423dc2c1bc0bdacf124564ac419047b2120"},
+    "myoclonic_tonic": {
+        "cerebral": "035c589c28d6fc71c59da99c164dfeb0bd776cc7cc6181ad286af90ef1ef37e0",
+        "motor": "62cfc4a84c89e0e9a705d2a1673fe193dac2aa6c8c5f1e5d28b4f02ee92a5ddb"},
+    "atonic": {
+        "cerebral": "41325f1808c398e526c3831131801d6fb6456ad0f47456c22b3d4c991e94eccc",
+        "motor": "d69a55d9002d1c841bf9d7b26a85fdabea282a673ef0402d52ecf1f22ba918bd"},
+    "interictal_gsw": {
+        "cerebral": "d4b7bb9bc328c134ddbb9eeda7e2e253ca71a072e640b5024e2b12369a440e64",
+        "motor": "c3a2e1432bc92353ce31f5050e760fff4693a72a0862638776b34fce4bd55365"},
+    "interictal_psw_jme": {
+        "cerebral": "14e61d0a065cd99ed8c122df29f841804e175ad9490809f15c36218d6c945a76",
+        "motor": "c3a2e1432bc92353ce31f5050e760fff4693a72a0862638776b34fce4bd55365"},
 }
 
 
@@ -84,13 +98,36 @@ def _log_iv_sd(t):
     return float(np.std(np.log(np.diff(t))))
 
 
-# ------------------------------------------------------------------ accepted features: unchanged
+# ------------------------------------------------------------------ accepted feature components: unchanged
 
 @pytest.mark.parametrize("name", sorted(ACCEPTED))
 def test_accepted_generalized_features_are_unchanged(name):
-    """Craig accepted typical absence, myoclonic, myoclonic-atonic, myoclonic-tonic, atonic, interictal GSW and JME
-    polyspike-wave as they are: the whole reviewed page (every electrode, the EMG row) is byte-identical to 0.5.0."""
+    """Cerebral waveform/field and separately authored motor signals stay pinned;
+    the authorized tonic/background state changes are reviewed separately."""
     assert digest(name) == ACCEPTED_DIGESTS[name]
+
+
+def test_component_pins_ignore_tonic_background_but_detect_cerebral_changes():
+    syn = accepted_synth("myoclonic_atonic")
+    baseline = component_digests(syn)
+    def unrelated(*args):
+        raise AssertionError("Component digests must not sample the tonic background")
+    syn.segment = unrelated
+    syn._tonic_muscle_rows_v3 = unrelated
+    assert component_digests(syn) == baseline
+    syn._gen.cx[0]["amp"] *= 1.05
+    changed = component_digests(syn)
+    assert changed["cerebral"] != baseline["cerebral"]
+    assert changed["motor"] == baseline["motor"]
+
+
+def test_component_pins_detect_authored_motor_changes_independently():
+    syn = accepted_synth("myoclonic_atonic")
+    baseline = component_digests(syn)
+    syn._gen.EMG_ROW_REST_UV *= 1.05
+    changed = component_digests(syn)
+    assert changed["motor"] != baseline["motor"]
+    assert changed["cerebral"] == baseline["cerebral"]
 
 
 # ------------------------------------------------------------------ slow spike-and-wave (atypical absence, LGS)

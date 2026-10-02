@@ -126,6 +126,7 @@ image:
     channels: standard_19
     montage: longitudinal_bipolar
     background:
+      clinical_state: comatose
       type: continuous
       dominant_hz: 4.0
       amplitude_uv: 90

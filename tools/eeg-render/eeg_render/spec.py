@@ -546,6 +546,8 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
         bg.setdefault("type", _aeeg_pattern_background(pat))
         bg.setdefault("amplitude_uv", AEEG_PATTERN_AMPLITUDE_UV.get(pat, 75.0))
     bg.setdefault("type", ad["type"])
+    if bg.get("clinical_state") is not None and version < 3:
+        raise SpecError("background.clinical_state needs spec_version 3")
     ev_amp_scale = 1.0
     if (version >= 3 and age == "child" and "amplitude_uv" not in bg and bg["type"] == "continuous"
             and not bg.get("coma_pattern")):
@@ -576,7 +578,7 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     if version >= 2 and age == "neonate" and bg.get("pma_weeks") is not None and float(bg["pma_weeks"]) < 34.0:
         bg.setdefault("reactivity", "absent")
     if version >= 3 and bg.get("coma_pattern"):
-        bg.setdefault("reactivity", "absent")      # phase D: spindle / alpha coma are unreactive by definition
+        bg.setdefault("reactivity", "absent")
     bg.setdefault("reactivity", "present")
     bg.setdefault("delta_brushes", "riding" if (version >= 2 and age == "neonate") else bool(ad["delta_brushes"]))
     if version >= 2:
@@ -590,8 +592,9 @@ def _normalize_spec(kind: str, spec: Dict[str, Any]) -> Dict[str, Any]:
             # 0.5.0 (feature review, neonatal item 4: 15/min 160-uV bifrontal dips on every TD, encephalopathy and
             # seizure page): no blinks without a state cycle; with one, ~2/min and only while awake (the synth
             # gates them to the awake state).  Newborn spontaneous blinking is rare, typically < 2/min.
-            bg.setdefault("blink_rate_per_min", 0.0 if (unreactive or not bg.get("state_cycle")) else 2.0)
-        bg.setdefault("blink_rate_per_min", 0.0 if unreactive else (4.0 if (age == "neonate" and bg.get("state_cycle")) else 15.0))
+            bg.setdefault("blink_rate_per_min", 2.0 if (bg.get("state_cycle") or bg.get("clinical_state") == "awake") else 0.0)
+        bg.setdefault("blink_rate_per_min", 15.0 if version >= 3 else
+                      0.0 if unreactive else (4.0 if (age == "neonate" and bg.get("state_cycle")) else 15.0))
         if age != "neonate":
             bg.setdefault("pdr_gain", 2.5)
         if version >= 3 and age != "neonate":
@@ -1484,6 +1487,8 @@ def _normalize_event(ev: Dict[str, Any], version: int = 1, amp_scale: float = 1.
     elif kind == "state_change":
         e.setdefault("at_min", 0.0)
         e.setdefault("to", "sleep")
+        if e["to"] in ("drowsy", "sedated", "comatose") and version < 3:
+            raise SpecError(f"state_change.to {e['to']} needs spec_version 3")
     elif kind == "rhythmic_pattern":
         # An ACNS rhythmic / periodic pattern.  Explicitly NOT a seizure: no
         # frequency or amplitude evolution, no post-event attenuation, and a

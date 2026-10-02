@@ -122,6 +122,7 @@ image:
     channels: standard_19
     duration_min: 180
     background:
+      clinical_state: sedated
       type: continuous
       dominant_hz: 5.0
       amplitude_uv: 45

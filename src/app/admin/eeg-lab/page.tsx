@@ -9,7 +9,7 @@ import {
 } from "@/lib/admin-ui";
 import {
   ACNS_PATTERNS, ACNS_PLUS, ACNS_PREVALENCE, AGE_BANDS, ARTIFACT_KINDS, BACKGROUND_TYPES, CHANNEL_SETS,
-  DISCHARGE_FOCI, DISCHARGE_MORPHOLOGIES, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, DURATION_SEIZURE_TYPES,
+  CLINICAL_STATES, STATE_CHANGE_TARGETS, DISCHARGE_FOCI, DISCHARGE_MORPHOLOGIES, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, DURATION_SEIZURE_TYPES,
   EVENT_TYPE_LABELS, GENERALIZED_SEIZURE_TYPES, MONTAGES, MYOCLONIC_TYPES, ONSET_PATTERNS, PROVOCATIONS, REGIONS,
   SAMPLE_RATES, SEDATION_AGENTS, SPEC_VERSIONS, SPREADS, STIMULI, WORKER_MAX_SPEC_VERSION, defaultAnnotation,
   defaultEvent, defaultGuidedScenario, editBackgroundLevel, randomSeed, requiredSpecVersion, withBackgroundDefaults,
@@ -493,6 +493,13 @@ export default function AdminEegLabPage() {
             </div>
 
             <h2 style={{ ...h2, marginTop: 22 }}>Background</h2>
+            {guided.specVersion === 3 && (
+              <Pick label="Starting clinical state" value={guided.background.clinicalState ?? "awake"}
+                options={asOptions([...CLINICAL_STATES])} disabled={busyAny}
+                onChange={(v) => setGuided((g) => ({ ...g, background: {
+                  ...g.background, clinicalState: v as NonNullable<GuidedScenario["background"]["clinicalState"]>,
+                } }))} />
+            )}
             <div className="lab-grid4" style={{ marginTop: 12 }}>
               <Pick
                 label="Type" value={guided.background.type} disabled={busyAny}
@@ -691,7 +698,7 @@ export default function AdminEegLabPage() {
                   <div className="lab-grid2">
                     <Num label="At min" value={event.atMin} min={0} max={durationMin} disabled={busyAny}
                       onChange={(v) => patchEvent(event.id, { atMin: v })} />
-                    <Pick label="To" value={event.to} options={asOptions(["sleep", "wake", "arousal", "rem"])} disabled={busyAny}
+                    <Pick label="To" value={event.to} options={asOptions(guided.specVersion === 3 ? [...STATE_CHANGE_TARGETS] : ["sleep", "wake", "arousal", "rem"])} disabled={busyAny}
                       onChange={(v) => patchEvent(event.id, { to: v })} />
                   </div>
                 )}

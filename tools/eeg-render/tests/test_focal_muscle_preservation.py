@@ -12,15 +12,14 @@ def test_neural_focal_attenuation_preserves_existing_muscle_floor():
                                   "onset_region": "left_frontal", "onset_pattern": "electrodecrement",
                                   "muscle": "none", "spread": "none"}]}}
     syn = Synthesizer(normalize(image)["spec"], 300)
-    original_stream = syn._stream_signal
+    original_muscle = syn._tonic_muscle_rows_v3
     original_attenuation = syn.postictal_rows_v3
 
     def floor(attenuated):
         syn.postictal_rows_v3 = original_attenuation if attenuated else lambda t: np.ones((syn.n_elec, t.size))
-        syn._stream_signal = original_stream
+        syn._tonic_muscle_rows_v3 = original_muscle
         with_muscle = syn.segment(119, 128)[1]
-        syn._stream_signal = lambda stream, i, n: (np.zeros((syn.n_elec, n)) if stream is syn.st_muscle
-                                                  else original_stream(stream, i, n))
+        syn._tonic_muscle_rows_v3 = lambda t, *args: np.zeros((syn.n_elec, t.size))
         return with_muscle - syn.segment(119, 128)[1]
 
     attenuated = floor(True)

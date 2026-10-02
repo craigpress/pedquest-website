@@ -262,9 +262,11 @@ def cects():
 
 
 def _rate_by_stage(syn):
-    rows = syn.sporadic_events()
+    rows = [r for r in syn.sporadic_events() if 0 <= r['t0'] < syn.duration_s]
     cnt = Counter(r["stage"] for r in rows)
-    sec = _stage_seconds(syn, syn.duration_s)
+    sec = Counter()
+    for a, b, st in syn._natural_hypnogram():
+        sec[st] += max(0.0, min(b, syn.duration_s) - max(a, 0.0))
     return {st: cnt.get(st, 0) / (s / 3600.0) for st, s in sec.items() if s > 600}
 
 

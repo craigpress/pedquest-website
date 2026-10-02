@@ -36,24 +36,24 @@
   ],
   "license": "synthetic-original",
   "attribution": null,
-  "renderer_version": "0.5.4",
-  "spec_hash": "sha256:e4f68bedbff991b9be5821868b102f2fb5e55edd16d11ee96a671bbea89e93e3",
+  "renderer_version": "0.5.5",
+  "spec_hash": "sha256:dc26ff5f27efddbd0a084fecbf8ffa833f87385f782c04acfc3a6a0822091465",
   "db_ranges": {
     "fft_LL": [
-      -4.285,
-      27.768
+      -3.769,
+      27.748
     ],
     "fft_LP": [
-      -4.285,
-      27.768
+      -3.769,
+      27.748
     ],
     "fft_RP": [
-      -4.285,
-      27.768
+      -3.769,
+      27.748
     ],
     "fft_RL": [
-      -4.285,
-      27.768
+      -3.769,
+      27.748
     ]
   },
   "path": "public/images/qbank/PQ-C-001.png"

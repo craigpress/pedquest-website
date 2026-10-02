@@ -171,16 +171,13 @@ def test_header_notch_off_has_no_unit():
 
 # ------------------------------------------------------------------ awake child EMG (art-lateral-eye / slw-generalized)
 
-def test_awake_child_emg_bursts_short_and_rare():
+def test_legacy_child_emg_episode_sampler():
     ep = sv3.emg_episodes(752012, 1800.0, sv3.EMG_ON_S_CHILD, sv3.EMG_OFF_S_CHILD)
     dur = ep[:, 1] - ep[:, 0]
     duty = dur.sum() / (ep[-1, 1] - ep[0, 0])
     assert duty < 0.25 and np.median(dur) < 2.5
     old = sv3.emg_episodes(752012, 1800.0)
     assert (old[:, 1] - old[:, 0]).sum() / (old[-1, 1] - old[0, 0]) > 0.35      # other ages keep the old gate
-    S = Synthesizer(_spec([], 752013), 300.0)
-    assert S._emg_levels == sv3.EMG_LEVELS_CHILD
-    assert Synthesizer(_spec([], 752013, age="adolescent"), 300.0)._emg_levels == (sv3.EMG_ON_LEVEL, sv3.EMG_OFF_LEVEL)
 
 
 # ------------------------------------------------------------------ sedation

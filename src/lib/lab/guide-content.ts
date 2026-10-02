@@ -11,7 +11,7 @@ import coverage from "./guide-coverage.json";
 import type { LabAgeBand } from "./types";
 
 export const GUIDE_RENDERER_VERSION: string = coverage.rendererVersion;
-export const GUIDE_UPDATED = "27 September 2026";
+export const GUIDE_UPDATED = "1 October 2026";
 
 export interface GuideOption {
   value: string;
@@ -321,12 +321,26 @@ const background: GuideSection = {
       what: "Whether the background changes after stimulation.",
       options: [
         o("present", "Present", "A timed stimulation produces a visible background change (by default an increase in voltage and faster activity)."),
-        o("absent", "Absent", "No change after stimulation; no spontaneous blinks; sleep architecture is absent unless set otherwise."),
+        o("absent", "Absent", "No cerebral change after stimulation. Clinical state, sleep architecture and scalp muscle are separate state-dependent features."),
         o("unknown", "Unknown / unclear (Expert mode)", "Drawn as no response and recorded as such."),
       ],
       defaultText: "Present, except absent for neonates under 34 weeks postmenstrual age and for coma patterns.",
       onPage: "Only visible where a stimulation event is placed.",
       names: ["bg:reactivity"],
+    },
+    {
+      id: "bg-clinical-state", name: "Starting clinical state", formLabel: "Starting clinical state", where: "form", optionSet: "CLINICAL_STATES",
+      what: "The patient's clinical state at the start, independent of EEG reactivity and sleep architecture. Requires edition 3.",
+      options: [
+        o("awake", "Awake", "Wakefulness; age-appropriate awake features are eligible."),
+        o("drowsy", "Drowsy", "Natural N1-like drowsiness, before established sleep."),
+        o("asleep", "Asleep", "Natural sleep, with age-appropriate staging or neonatal state features."),
+        o("sedated", "Sedated", "Drug-related altered consciousness; natural sleep staging and normal sleep variants are excluded. The drug profile is authored separately."),
+        o("comatose", "Comatose", "Coma; natural sleep activation is excluded. A separate coma pattern can preserve spindle-like or alpha morphology."),
+      ],
+      defaultText: "Awake for a new guided scenario. In Expert mode a coma pattern starts comatose unless an explicit clinical state is supplied. Without a known state, absent reactivity leaves behavior indeterminate until a state is authored. Neonatal behavioral state is indeterminate without an authored state or cycle.",
+      onPage: "Keeps natural sleep features distinct from anesthetic rhythms and coma patterns. Drug loss of consciousness also suppresses natural sleep eligibility.",
+      names: ["bg:clinical_state"],
     },
     {
       id: "bg-burst", name: "Burst length and interburst interval", formLabel: "Burst length s / Interburst interval s", where: "form",
@@ -421,13 +435,13 @@ const background: GuideSection = {
     },
     {
       id: "bg-coma", name: "Coma pattern", where: "advanced",
-      what: "An unreactive coma background.",
+      what: "A coma EEG morphology, distinct from ordinary sleep.",
       options: [
         o("spindle", "Spindle coma", "Continuous N2-like spindles, vertex waves and K-complexes without sleep cycling."),
         o("alpha", "Alpha coma", "Diffuse, frontally predominant, monotonous alpha with no posterior dominant rhythm."),
       ],
-      defaultText: "None. Reactivity becomes absent when set.",
-      onPage: "Sleep-like or alpha activity that does not vary or react.",
+      defaultText: "None. A coma pattern defaults to absent reactivity, but an explicitly reactive coma pattern remains reactive.",
+      onPage: "Spindle-like or diffuse alpha activity during coma; these patterns do not establish natural NREM sleep.",
       names: ["bg:coma_pattern"],
     },
     {
@@ -447,7 +461,7 @@ const sleep: GuideSection = {
   summary: "Falling asleep, sleep stages, arousals and the pediatric variants tied to state.",
   intro: [
     "Awake recordings alternate eyes-open and eyes-closed periods: the posterior rhythm attenuates with eyes open and is best just after a blink. When the patient falls asleep, stages cycle through N1, N2, N3 and REM with age-appropriate cycle lengths (about 55 minutes in infants, 75 in children, 90 in adolescents and adults, with more N3 early).",
-    "Each stage owns its transients: vertex waves in N1 and N2, spindles and K-complexes in N2 (fewer in N3), high-voltage slow waves in N3, and in REM low-voltage mixed activity with rapid eye movements and loss of muscle. The posterior rhythm, blinks and muscle fade with sleep.",
+    "Natural sleep stages own their transients: vertex waves in N1 and N2, spindles and K-complexes in N2 (fewer in N3), high-voltage slow waves in N3, and in REM low-voltage mixed activity with rapid eye movements and reduced tonic muscle. The posterior rhythm and spontaneous blinks fade with natural sleep. Scalp muscle is regional and irregular, with stronger peripheral fields; tonic muscle is absent in non-myoclonic burst suppression, independently of cerebral reactivity. Authored motor events remain separate.",
   ],
   controls: [
     {
@@ -456,10 +470,13 @@ const sleep: GuideSection = {
       options: [
         o("sleep", "Sleep", "Falls asleep: drowsiness, then cycling stages with their transients."),
         o("wake", "Wake", "Wakes: posterior rhythm, blinks and muscle return."),
-        o("arousal", "Arousal", "A brief arousal from sleep."),
+        o("arousal", "Arousal", "Wakes from an authored period of natural sleep; does not create a preceding sleep interval."),
         o("rem", "REM", "REM sleep: low-voltage mixed activity, rapid eye movements, muscle atonia."),
+        o("drowsy", "Drowsy", "Natural N1-like drowsiness."),
+        o("sedated", "Sedated", "Clinical sedation; drug choice and intensity remain separately authored."),
+        o("comatose", "Comatose", "Clinical coma; excludes natural sleep features and NREM activation."),
       ],
-      defaultText: "The recording starts awake (neonates follow their own sleep–wake cycle when it is on).",
+      defaultText: "The starting clinical state is authored separately. Neonates follow their native behavioral cycle when it is on.",
       onPage: "Drowsiness and sleep transients appear after the change.",
       onTrends: "Sleep raises delta power and the aEEG, and spindles add a sigma band on the spectrogram.",
       names: ["event:state_change"],
@@ -482,8 +499,8 @@ const sleep: GuideSection = {
         o("normal", "Normal", "Stages and their transients."),
         o("absent", "Absent", "State changes still happen but without cycling, spindles, vertex waves, K-complexes, slow waves or REM (encephalopathy)."),
       ],
-      defaultText: "Normal when reactive; absent when the background is unreactive.",
-      onPage: "Absent architecture is a teaching sign of encephalopathy.",
+      defaultText: "Natural architecture is independent of reactivity; coma and deep sedation suppress it, with a specific spindle-coma exception.",
+      onPage: "Absent or obscured architecture may accompany encephalopathy or DEE-SWAS; genuine authored NREM sleep can still activate epileptiform discharges.",
       names: ["bg:sleep_architecture"],
     },
     {
@@ -1147,7 +1164,7 @@ const artifacts: GuideSection = {
   title: "Artifacts",
   summary: "Physiological and environmental artifacts, and baseline blinks and ECG.",
   intro: [
-    "Artifacts are added to the recorded voltages, so they can also move the trends and illustrate false detections. Blinks are drawn from reference recordings: a fast rise and slightly slower fall, maximal at Fp1/Fp2, varying blink to blink; they stop in sleep, in unresponsive patients and under deep sedation.",
+    "Artifacts are added to the recorded voltages, so they can also move the trends and illustrate false detections. Blinks are drawn from reference recordings: a fast rise and slightly slower fall, maximal at Fp1/Fp2, varying blink to blink. Spontaneous blinks stop during natural sleep, clinical coma and sedation, and when behavior is indeterminate. Absent cerebral reactivity alone does not suppress blinks in an explicitly awake patient.",
   ],
   controls: [
     {
@@ -1195,7 +1212,7 @@ const artifacts: GuideSection = {
       id: "baseline-blinks", name: "Background blinks", where: "advanced",
       what: "Spontaneous blinks throughout wakefulness: rate per minute and voltage at Fp.",
       range: "0–60 per minute; 0–500 µV.",
-      defaultText: "15 per minute awake (0 when unreactive; neonates about 2 per minute and only with a sleep–wake cycle). 250 µV for children and infants, 300 µV for adults.",
+      defaultText: "Edition 3: 15 per minute when awake; about 2 per minute for neonates with a known awake state or sleep–wake cycle, emitted only while awake. Clinical state and drug effects gate spontaneous blinks. Earlier editions retain their original reactivity-based defaults. 250 µV for children and infants, 300 µV for adults.",
       onPage: "Downward deflections in Fp1–F3 and Fp2–F4 about 3–5 times the background; the posterior rhythm is best just after a blink.",
       names: ["bg:blink_rate_per_min", "bg:blink_amplitude_uv"],
     },

@@ -1,5 +1,5 @@
 {
-  "rendererVersion": "0.5.4",
+  "rendererVersion": "0.5.5",
   "eventTypes": [
     "seizure", "seizure_cluster", "status_epilepticus", "sedation_change", "attenuation_transient",
     "temperature_change", "stimulation", "artifact", "state_change", "rhythmic_pattern", "normal_variant",
@@ -8,7 +8,7 @@
   ],
   "backgroundFields": [
     "type", "dominant_hz", "amplitude_uv", "slow_fraction", "amplitude_gain_at_h", "ibi_floor_at_h", "reactivity",
-    "blink_rate_per_min", "sleep_staging", "sleep_architecture", "coma_pattern", "blink_amplitude_uv",
+    "blink_rate_per_min", "sleep_staging", "sleep_architecture", "coma_pattern", "clinical_state", "blink_amplitude_uv",
     "amplitude_reference", "pdr_field", "ibi_range_s", "ibi_floor_uv", "pdr_gain", "channel_gain_max",
     "delta_brushes", "baseline_ecg_uv", "pma_weeks", "state_cycle", "hours_of_life", "dysmature_pma_weeks",
     "ap_gradient", "cape", "breach", "graphoelements", "synchrony", "variants", "multifocal_spikes", "asymmetry",

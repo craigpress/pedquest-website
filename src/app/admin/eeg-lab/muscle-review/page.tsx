@@ -52,15 +52,15 @@ export default function MuscleReviewPage() {
 
   if (roleLoading) return <div style={adminShellWide}>Loading…</div>;
   if (!isEditor) return <div style={adminShellWide}>
-    <h1 style={h1}>EEG muscle comparison</h1>
+    <h1 style={h1}>EEG state and muscle review</h1>
     <p>Sign in with your PedQuEST editor account to review these experimental recordings.</p>
     <Link href="/login">Sign in</Link>
   </div>;
 
   return <div style={{ ...adminShellWide, maxWidth: "none", paddingTop: 16 }}>
     <style>{`.muscle-review-viewer { height: calc(100dvh - 320px); min-height: 560px; } @media (max-width: 900px) { .muscle-review-viewer { height: auto; min-height: 0; } }`}</style>
-    <h1 style={{ ...h1, fontSize: 24 }}>EEG muscle comparison</h1>
-    <p style={{ color: "var(--text-muted)", margin: "8px 0" }}>Experimental synthetic recordings · 3 minutes each · renderer changes pending review</p>
+    <h1 style={{ ...h1, fontSize: 24 }}>EEG state and muscle review</h1>
+    <p style={{ color: "var(--text-muted)", margin: "8px 0" }}>Synthetic recordings · current renderer examples and earlier experimental comparisons</p>
     <label style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
       Recording
       <select value={selected} disabled={opening} onChange={(event) => setSelected(event.target.value)}

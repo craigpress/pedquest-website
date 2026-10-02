@@ -49,6 +49,7 @@ from . import state_v3 as sv3
 from . import variants_v3 as vv3
 from . import rpp_v3 as rpp3
 from . import generalized_v3 as gv3
+from .muscle_v3 import RegionalMuscle
 
 FRAME_S = 32.0          # overlap-add frame length
 
@@ -92,10 +93,10 @@ CH_GAIN_LOG_SD_HI = 0.50
 #: 0.12 a typical homologous pair differs 1.13x, the 95th percentile 1.3x.
 CH_GAIN_ASYM_LOG_SD = 0.12
 
-#: Weight of the continuous muscle floor, awake.  NOT microvolts: this term is
+#: Legacy muscle-stream weight (v1/v2 floor and v3 authored ictal increment). NOT microvolts: this term is
 #: mixed in before ``x *= self.amp_rms``, so it scales with the record's own
-#: background amplitude - which is right, since muscle and cerebral amplitude
-#: both ride the same electrode gain. It is also inside the burst envelope, so
+#: background amplitude. The v3 automatic tonic source instead uses physical units and independent regional fields.
+#: This legacy path is also inside the burst envelope, so
 #: a suppressed interval stays suppressed.
 #:
 #: Set against CHB-MIT: at 0.0 our 1-40 Hz spectral slope was -2.65 against a
@@ -1166,7 +1167,11 @@ class Synthesizer:
 
         # state --------------------------------------------------------
         st_times: List[float] = [0.0]
-        st_sleep: List[float] = [0.0 if self.age != "neonate" else 0.35]
+        initial_state = self.bg.get("clinical_state", "comatose" if self.bg.get("coma_pattern") else
+                                    "indeterminate" if self.bg.get("reactivity") == "absent" else "awake") if self.spec_version >= 3 else "awake"
+        initial_sleep = {"asleep": 1.0, "drowsy": 0.35}.get(initial_state, 0.0)
+        st_sleep: List[float] = [initial_sleep if self.age != "neonate" else 0.35]
+        self._clinical_changes = [(0.0, initial_state)]
         st_arousal: List[Tuple[float, float]] = []
         rem_starts: List[float] = []
         rem_intervals: List[Tuple[float, float]] = []
@@ -1177,7 +1182,16 @@ class Synthesizer:
             t = float(ev["at_min"]) * 60.0
             if ev["to"] == "arousal":
                 st_arousal.append((t, 30.0))
+                if self.spec_version >= 3:
+                    self._sleep_keys.append((t, False))
+                    self._clinical_changes.append((t, "awake"))
+                    for start in rem_starts:
+                        rem_intervals.append((start, t))
+                    rem_starts = []
+                    st_times += [t]
+                    st_sleep += [0.0]
                 continue
+            self._clinical_changes.append((t, {"sleep": "asleep", "rem": "asleep", "wake": "awake"}.get(ev["to"], ev["to"])))
             self._sleep_keys.append((t, ev["to"] in ("sleep", "rem")))
             if ev["to"] == "rem":
                 rem_starts.append(t)
@@ -1186,7 +1200,7 @@ class Synthesizer:
                 for start in rem_starts:
                     rem_intervals.append((start, t))
                 rem_starts = []
-                target = 1.0 if ev["to"] == "sleep" else 0.0
+                target = 1.0 if ev["to"] == "sleep" else 0.35 if ev["to"] == "drowsy" else 0.0
             st_times += [max(0.0, t - 30.0), t + 90.0]
             st_sleep += [st_sleep[-1], target]
         rem_intervals.extend((start, dur) for start in rem_starts)
@@ -1652,10 +1666,10 @@ class Synthesizer:
         asleep = _piecewise(self._state_t, self._state_v, grid) >= 0.5
         staged = (self.bg.get("sleep_staging") or "cycling") == "cycling"
         sp = sv3.spans(grid, asleep)
-        if self._sleep_keys:
+        if self._sleep_keys or self.bg.get("clinical_state") == "asleep":
             # phase D (key vs visible, B2-07 / B5-07): the drawn sleep starts and ends at the KEYED state change,
             # not where the 2-min voltage ramp crosses half way (30 s late)
-            sp, start = [], None
+            sp, start = [], 0.0 if self.bg.get("clinical_state") == "asleep" else None
             for tk, to in sorted(self._sleep_keys):
                 if to and start is None:
                     start = max(0.0, tk)
@@ -1665,24 +1679,17 @@ class Synthesizer:
             if start is not None:
                 sp.append((start, dur + 1.0))
             sp = [(a, b) for a, b in sp if b > a]
-        # phase D: frontal arousal rhythm is read on arousal FROM sleep (normal-variants re-review V110-08): an
-        # authored arousal with no sleep before it gets 4 min of N1 -> N2 ahead of it and wakes at the arousal
         forced = []
-        for at, _w in self._arousals:
-            if at > 60.0 and not any(a <= at <= b for a, b in sp):
-                sp.append((max(0.0, at - 240.0), at))
-                forced.append((max(0.0, at - 150.0), at, "N2"))
+        changes = sorted(self._clinical_changes)
+        for index, (at, state) in enumerate(changes):
+            if state == "drowsy":
+                end = changes[index + 1][0] if index + 1 < len(changes) else dur + 120.0
+                forced.append((at, end, "N1"))
         sp = sorted(sp)
         if self._arch_absent():
             staged = False              # phase D: encephalopathy - a state change but no cycling stages
         coma = self.bg.get("coma_pattern")
-        if coma:
-            # phase D: spindle / alpha coma - one unreactive state all record, no cycling, no arousals, no eyes
-            sp = []
-            staged = False
-        if coma:
-            hyp = [(-120.0, dur + 120.0, "N2" if coma == "spindle" else "W")]
-        elif staged:
+        if staged:
             hyp = sv3.build_hypnogram(self.seed, sp, self.age, dur)
         else:
             hyp, prev = [], -120.0
@@ -1690,6 +1697,11 @@ class Synthesizer:
                 hyp += [(prev, a, "W"), (a, b, "N2")]
                 prev = b
             hyp.append((prev, dur + 120.0, "W"))
+        if coma:
+            for index, (at, state) in enumerate(changes):
+                if state == "comatose":
+                    end = changes[index + 1][0] if index + 1 < len(changes) else dur + 120.0
+                    forced.append((at if at > 0 else -120.0, end, "N2" if coma == "spindle" else "W"))
         for a, b, stage in [(a, b, "R") for a, b in self._rem_intervals] + forced:
             # authored REM overrides the drawn stage; so does the N2 ahead of an authored arousal from sleep
             cut = []
@@ -1703,10 +1715,11 @@ class Synthesizer:
                     cut.append((b, x1, st))
             hyp = sorted(cut + [(a, b, stage)])
         self._hypno = [iv for iv in hyp if iv[1] > iv[0]]
-        self._arousals_v3 = (([] if coma or self._arch_absent() else sv3.build_arousals(self.seed, self._hypno))
-                             + [(a, w) for a, w in self._arousals])
-        eyes_on = (self.bg.get("reactivity") == "present" and float(self.bg.get("blink_rate_per_min") or 0.0) > 0
-                   and not coma)
+        self._arousals_v3 = (([] if self._arch_absent() else sv3.build_arousals(self.seed, self._hypno))
+                            + [(a, w) for a, w in self._arousals])
+        self._arousals_v3 = [(a, w) for a, w in self._arousals_v3
+                             if self.natural_sleep_eligible(np.array([a - 1.0]))[0]]
+        eyes_on = float(self.bg.get("blink_rate_per_min") or 0.0) > 0
         self._eyes = sv3.build_eye_timeline(self.seed, self._hypno) if eyes_on else []
         style = spec.get("style") or {}
         # 0.5.2 (gallery r9: no clear spindles at the N2 default): spindle coma defaults to 10 spindles / min
@@ -1758,15 +1771,6 @@ class Synthesizer:
         self._saw_field = np.array([mt.table_value(self._SAWTOOTH_FIELD, e, 0.1) for e in self.electrodes])
         self._rem_steps = sv3.rem_saccades(self.seed, self._hypno, self._saw["t"])
         self._rem_step_t = np.array([s[0] for s in self._rem_steps])
-        # phase B (variants-neonatal-r3 awake child: dense temporal EMG on every awake page, and in drowsiness): tonic
-        # temporalis muscle comes and goes while awake / drowsy
-        # 0.5.2: the awake child's shorter, rarer bursts; generalized-seizure records keep the reviewed 0.5.0 timeline
-        # (the accepted absence / myoclonic / atonic pages are pinned byte for byte, test_r050_gen_r8)
-        child = self.age == "child" and not any(e["type"] in ("generalized_seizure", "generalized_discharges",
-                                                               "tonic_seizure") for e in spec["events"])
-        self._emg_on = (sv3.emg_episodes(self.seed, dur, sv3.EMG_ON_S_CHILD, sv3.EMG_OFF_S_CHILD) if child
-                        else sv3.emg_episodes(self.seed, dur))
-        self._emg_levels = sv3.EMG_LEVELS_CHILD if child else (sv3.EMG_ON_LEVEL, sv3.EMG_OFF_LEVEL)
 
     def _finish_state_v3(self) -> None:
         """Phase B (sleep-fix): steps that need the sedation timelines, run once they exist.
@@ -1799,9 +1803,11 @@ class Synthesizer:
                     else:
                         merged.append(iv)
                 self._hypno = [iv for iv in merged if iv[1] > iv[0]]
-                authored = set(self._arousals)
-                self._arousals_v3 = [(a, w) for a, w in self._arousals_v3 if (a, w) in authored
-                                     or self._arch_w(np.array([a]), self._sed_v3_at("loc", np.array([a]), 0.0))[0] >= 0.5]
+                self._arousals_v3 = [(a, w) for a, w in self._arousals_v3
+                                     if self.natural_sleep_eligible(np.array([a]))[0]
+                                     and self._arch_w(np.array([a]), self._sed_v3_at("loc", np.array([a]), 0.0))[0] >= 0.5]
+        self._arousals_v3 = [(a, w) for a, w in self._arousals_v3
+                             if self.natural_sleep_eligible(np.array([a]))[0]]
         rng = substream(self.seed, "arousal-burst")
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
         self._aro_burst = []
@@ -1874,40 +1880,144 @@ class Synthesizer:
     def sleep_stage_summary(self, duration_s: float) -> List[Dict]:
         """Phase D answer-key rows: each drawn sleep stage with the natural transients realized in it (counted only
         where sleep architecture is preserved), plus the drawn arousals."""
-        if not self._hypno or (len(self._hypno) == 1 and self._hypno[0][2] == "W" and not self.bg.get("coma_pattern")):
+        if not self._hypno:
             return []
-        if all(st == "W" for _a, _b, st in self._hypno) and not self.bg.get("coma_pattern"):
+        bounds = self._clinical_boundaries()
+        if (all(st == "W" for _a, _b, st in self._hypno)
+                and all(self.clinical_state_at(np.array([(a + b) / 2]))[0] == "awake"
+                        for a, b in zip(bounds, bounds[1:]))):
             return []
 
         def kept(times: np.ndarray) -> np.ndarray:
             times = np.asarray(times, float)
             if not times.size:
                 return times
-            return times[self._arch_w(times, self._sed_v3_at("loc", times, 0.0)) > 0.5]
+            weight = self._arch_w(times, self._sed_v3_at("loc", times, 0.0))
+            weight *= 1.0 - sv3.arousal_gate(times, self._arousals_v3)
+            return times[weight > 0.5]
         sp, vx, kc = kept(self._sp_t), kept(self._vx_t), kept(self._kc_t)
         sw, saw = kept(self._sws["t"]), kept(self._saw["t"])
         rem = kept(np.array([s0 for s0, _r, _p0, p1 in self._rem_steps if p1 != 0.0]))
         out = []
-        for a, b, st in self._hypno:
+        for a, b in zip(bounds, bounds[1:]):
             a2, b2 = max(a, 0.0), min(b, duration_s)
             if b2 <= a2:
                 continue
             n = lambda x: int(((x >= a2) & (x < b2)).sum())  # noqa: E731
-            label = f"{self.bg['coma_pattern']}_coma" if self.bg.get("coma_pattern") else st
+            sample = np.array([(a2 + b2) / 2])
+            clinical = str(self.clinical_state_at(sample)[0])
+            st = str(self.stage_at(sample)[0])
+            coma_here = clinical == "comatose" and self.bg.get("coma_pattern")
+            if st == "NONE" and not coma_here:
+                continue
+            label = f"{self.bg['coma_pattern']}_coma" if coma_here else st
             out.append({"kind": "sleep_stage", "t0": a2, "t1": b2, "label": label, "spindles": n(sp),
                         "vertex_waves": n(vx), "k_complexes": n(kc), "slow_waves": n(sw), "sawtooth_trains": n(saw),
-                        "rapid_eye_movements": n(rem), "coma_pattern": self.bg.get("coma_pattern"),
-                        "sleep_architecture": "absent" if self._arch_absent() else "present"})
+                        "rapid_eye_movements": n(rem), "coma_pattern": self.bg.get("coma_pattern") if coma_here else None,
+                        "clinical_state": clinical,
+                        "sleep_architecture": "absent" if self._arch_w(sample, self._sed_v3_at("loc", sample, 0.0))[0] < 0.5 else "present"})
         for a, w in self._arousals_v3:
-            if 0.0 <= a < duration_s:
+            if 0.0 <= a < duration_s and self.natural_sleep_eligible(np.array([a]))[0]:
                 out.append({"kind": "arousal", "t0": a, "t1": min(a + w, duration_s)})
         return out
 
     def stage_at(self, t: np.ndarray) -> np.ndarray:
-        """Sleep stage label per sample (spec_version 3, non-neonatal); '' otherwise."""
+        """Natural sleep stage; NONE during clinical coma or sedation."""
+        if self.spec_version >= 3:
+            return self.natural_stage_at(t)
+        return self._morphology_stage_at(t)
+
+    def _morphology_stage_at(self, t: np.ndarray) -> np.ndarray:
         out = np.full(t.shape, "", dtype=object)
         for a, b, st in self._hypno:
             out[(t >= a) & (t < b)] = st
+        return out
+
+    def clinical_state_at(self, t: np.ndarray) -> np.ndarray:
+        t = np.asarray(t, float)
+        stages = self._morphology_stage_at(t)
+        out = np.full(t.shape, "indeterminate" if self.age == "neonate" else "awake", dtype=object)
+        out[stages == "N1"] = "drowsy"
+        out[np.isin(stages, ("N2", "N3", "R"))] = "asleep"
+        for a, b, state in getattr(self, "_state_intervals", []):
+            out[(t >= a) & (t < b)] = ("awake" if state == "awake" else
+                                      "indeterminate" if state == "indeterminate" else "asleep")
+        changes = sorted(getattr(self, "_clinical_changes", []))
+        for index, (at, state) in enumerate(changes):
+            if state == "indeterminate":
+                end = changes[index + 1][0] if index + 1 < len(changes) else np.inf
+                mask = (t >= at) & (t < end) & np.isin(stages, ("W", ""))
+                if self.age == "neonate":
+                    mask &= self.state_at(t) == ""
+                out[mask] = "indeterminate"
+                continue
+            if state not in ("sedated", "comatose") and not (self.age == "neonate" and (index > 0 or self.bg.get("clinical_state") is not None)):
+                continue
+            end = changes[index + 1][0] if index + 1 < len(changes) else np.inf
+            out[(t >= at) & (t < end)] = state
+        for at, width in getattr(self, "_arousals_v3", []):
+            out[(t >= at) & (t < at + width) & ~np.isin(out, ("sedated", "comatose"))] = "awake"
+        if hasattr(self, "_sed_v3") and not self._calibrating:
+            out[(self._sed_v3_at("loc", t, 0.0) >= 0.5) & (out != "comatose")] = "sedated"
+        return out
+
+    def natural_sleep_eligible(self, t: np.ndarray) -> np.ndarray:
+        return np.isin(self.clinical_state_at(t), ("awake", "drowsy", "asleep"))
+
+    def natural_stage_at(self, t: np.ndarray) -> np.ndarray:
+        if self.age == "neonate":
+            return np.full(np.asarray(t).shape, "", dtype=object)
+        out = self._morphology_stage_at(np.asarray(t, float))
+        clinical = self.clinical_state_at(t)
+        out[clinical == "awake"] = "W"
+        out[~self.natural_sleep_eligible(t)] = "NONE"
+        return out
+
+    def _clinical_boundaries(self) -> List[float]:
+        cached = getattr(self, "_clinical_boundaries_cache", None)
+        if cached is not None:
+            return cached
+        bounds = {0.0, self.duration_s}
+        bounds.update(float(at) for at, _state in self._clinical_changes)
+        bounds.update(float(v) for a, b, _stage in self._hypno for v in (a, b))
+        bounds.update(float(v) for a, b, _state in getattr(self, "_state_intervals", []) for v in (a, b))
+        bounds.update(float(v) for a, width in getattr(self, "_arousals_v3", []) for v in (a, a + width))
+        if hasattr(self, "_sed_v3"):
+            bounds.update(self._sed_t)
+            loc = self._sed_v3.get("loc", [])
+            for index in range(len(self._sed_t) - 1):
+                if (loc[index] < 0.5 <= loc[index + 1]) or (loc[index + 1] < 0.5 <= loc[index]):
+                    bounds.add(self._sed_t[index] + (self._sed_t[index + 1] - self._sed_t[index])
+                               * (0.5 - loc[index]) / (loc[index + 1] - loc[index]))
+        out = sorted(v for v in bounds if 0.0 <= v <= self.duration_s)
+        if hasattr(self, "_sed_v3") and not self._calibrating:
+            self._clinical_boundaries_cache = out
+        return out
+
+    def clinical_state_intervals(self, states: Sequence[str]) -> List[Tuple[float, float]]:
+        key = tuple(sorted(states))
+        cache = self.__dict__.setdefault("_clinical_interval_cache", {})
+        if key in cache:
+            return cache[key]
+        bounds = self._clinical_boundaries()
+        out = sv3.merge_intervals([(a, b) for a, b in zip(bounds, bounds[1:])
+                                  if b > a and self.clinical_state_at(np.array([(a + b) / 2]))[0] in states])
+        if hasattr(self, "_sed_v3") and not self._calibrating:
+            cache[key] = out
+        return out
+
+    def _natural_hypnogram(self) -> List[Tuple[float, float, str]]:
+        cached = getattr(self, "_natural_hypno_cache", None)
+        if cached is not None:
+            return cached
+        bounds = self._clinical_boundaries()
+        out = []
+        for a, b in zip(bounds, bounds[1:]):
+            stage = str(self.natural_stage_at(np.array([(a + b) / 2]))[0])
+            if b > a and stage not in ("NONE", ""):
+                out.append((a, b, stage))
+        if hasattr(self, "_sed_v3"):
+            self._natural_hypno_cache = out
         return out
 
     def _eye_factor(self, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -1989,15 +2099,15 @@ class Synthesizer:
         unreactive background) and under a hypnotic (1 - loss of consciousness); dexmedetomidine spindles are added
         separately.  Spindle coma keeps its spindles (the defining feature)."""
         if self.bg.get("coma_pattern") == "spindle":
-            return np.ones(t.size)
+            coma = self.clinical_state_at(t) == "comatose"
+            return np.where(coma, 1.0, np.clip(1.0 - sed_loc, 0.0, 1.0) * self.natural_sleep_eligible(t))
         if self._arch_absent():
             return np.zeros(t.size)
-        return np.clip(1.0 - sed_loc, 0.0, 1.0)
+        return np.clip(1.0 - sed_loc, 0.0, 1.0) * self.natural_sleep_eligible(t)
 
     def _arch_absent(self) -> bool:
         arch = self.bg.get("sleep_architecture")
-        return arch == "absent" or (arch is None and self.bg.get("reactivity") == "absent"
-                                    and not self.bg.get("coma_pattern"))
+        return arch == "absent"
 
     def _slow_wave_rows(self, t: np.ndarray) -> np.ndarray:
         """Phase D: N3 slow waves, each a surface-negative half-wave (0.25-0.75 s) and a smaller positive rebound,
@@ -2110,7 +2220,7 @@ class Synthesizer:
     def _sleep_at(self, t: np.ndarray) -> np.ndarray:
         if self._hypno:
             v = sv3.weight(t, self._hypno, sv3.DEPTH)
-            return np.clip(v * (1.0 - 0.9 * sv3.arousal_gate(t, self._arousals_v3)), 0.0, 1.0)
+            return np.clip(v * (1.0 - 0.9 * sv3.arousal_gate(t, self._arousals_v3)), 0.0, 1.0) * self.natural_sleep_eligible(t)
         if self._state_intervals:
             v = self._state_lookup(t, self._STATE_SLEEP, np.zeros_like(t, dtype=float))
             for at, width in self._arousals:
@@ -3951,7 +4061,7 @@ class Synthesizer:
                     keep = (times >= a) & (times < b)
                     if gated:
                         u = substream(self.seed, "sporadic-state", i, k_blk).uniform(size=m)
-                        keep &= u < sv3.rate_at(times, self._hypno, table, rate_h) / max(r_max, 1e-9)
+                        keep &= u < self.stage_rate(times, rate_h, e.get("sleep_activation"), e.get("state_rates")) / max(r_max, 1e-9)
                     if foci is None:
                         fsel = [None] * m
                     elif e.get("synchrony") == "bisynchronous":
@@ -4022,12 +4132,15 @@ class Synthesizer:
         ``state_v3.NREM_ACTIVATION`` and ``state_rates`` overrides named stages.  Crossfaded across stage
         boundaries (20 s).  Without a v3 hypnogram (spec_version < 3 or neonate) it is ``base`` everywhere."""
         table = sv3.stage_rate_table(base, sleep_activation, state_rates)
-        return sv3.rate_at(t, self._hypno, table, base)
+        hyp = self._natural_hypnogram() if self.spec_version >= 3 else self._hypno
+        rates = sv3.rate_at(t, hyp, table, base)
+        return np.where(self.natural_sleep_eligible(t), rates, base) if self.spec_version >= 3 else rates
 
     def stage_intervals(self, stages: Sequence[str] = sv3.NREM_STAGES) -> List[Tuple[float, float]]:
         """0.5.0 phase D state-gating hook: (start, end) runs of ``stages`` in the record's hypnogram (merged).
         Empty without a v3 hypnogram.  For continuous NREM patterns (ESES / DEE-SWAS) to live in."""
-        return sv3.stage_intervals(self._hypno, stages)
+        hyp = self._natural_hypnogram() if self.spec_version >= 3 else self._hypno
+        return sv3.stage_intervals(hyp, stages)
 
     def sporadic_events(self) -> List[Dict]:
         """Realized discharges (for the answer key): dicts with t0, event index, width, amplitude."""
@@ -4252,9 +4365,14 @@ class Synthesizer:
 
     def variant_runs(self) -> List[Dict]:
         if getattr(self, "_variants_v3", None):
-            return [{"t0": r["t0"], "t1": r["t1"], "variant": nm, "frequency_hz": float(r.get("hz", 0.0)),
-                     "amplitude_uv": float(r["amp"]), "count": int(len(r["times"]) if nm == "posts" else r.get("count", 0))}
-                    for nm, r in self._variants_v3]
+            out = []
+            for nm, r in self._variants_v3:
+                for a, b in self.allowed_feature_intervals(nm, r["t0"], r["t1"]):
+                    times = np.asarray(r.get("times", ()))
+                    count = int(np.sum((times >= a) & (times < b))) if nm == "posts" else int(r.get("count", 0))
+                    out.append({"t0": a, "t1": b, "variant": nm, "frequency_hz": float(r.get("hz", 0.0)),
+                                "amplitude_uv": float(r["amp"]), "count": count})
+            return out
         return [{"t0": a, "t1": b, "variant": nm, "frequency_hz": f, "amplitude_uv": amp, "count": cnt}
                 for a, b, nm, f, amp, asym, cnt in getattr(self, "_variants", [])]
 
@@ -4264,14 +4382,15 @@ class Synthesizer:
             if r["t1"] < t[0] - 0.5 or r["t0"] > t[-1] + 0.5:
                 continue
             if nm == "hypnagogic_hypersynchrony":
-                rows += vv3.hh_rows(r, t, self.electrodes, self._var_y, self._var_xs)
+                part = vv3.hh_rows(r, t, self.electrodes, self._var_y, self._var_xs)
             elif nm == "posts":
-                rows += vv3.posts_rows(r, t, vv3.side_field("posts", self.electrodes, "left"),
-                                       vv3.side_field("posts", self.electrodes, "right"))
+                part = vv3.posts_rows(r, t, vv3.side_field("posts", self.electrodes, "left"),
+                                     vv3.side_field("posts", self.electrodes, "right"))
             else:
                 w = vv3.pswy_wave(r, t)
-                rows += np.outer(vv3.side_field(nm, self.electrodes, "left") * r["gl"]
-                                 + vv3.side_field(nm, self.electrodes, "right") * r["gr"], w)
+                part = np.outer(vv3.side_field(nm, self.electrodes, "left") * r["gl"]
+                                + vv3.side_field(nm, self.electrodes, "right") * r["gr"], w)
+            rows += part * self.feature_state_mask(nm, t)[None, :]
         return rows
 
     def _variant_rows(self, t: np.ndarray) -> np.ndarray:
@@ -4327,7 +4446,76 @@ class Synthesizer:
                                       "P3": 0.65, "P4": 0.65, "O1": 0.45, "O2": 0.45},
     }
 
+    def feature_state_mask(self, feature: str, t: np.ndarray, context: Optional[str] = None) -> np.ndarray:
+        if not t.size:
+            return np.zeros(t.shape, dtype=bool)
+        return vv3.interval_mask(t, self.allowed_feature_intervals(feature, float(t[0]),
+                                                                 float(t[-1]) + 1.0 / self.fs, context))
+
+    def allowed_feature_intervals(self, feature: str, start: float, end: float,
+                                  context: Optional[str] = None) -> List[Tuple[float, float]]:
+        """Natural EEG feature support, distinct from drug oscillations and coma mimics.
+
+        The common authored drowsy context is N1/N2 for wickets/RMTD; their documented relaxed-wake occurrence is
+        allowed when no narrower context is requested. SREDA has documented natural NREM/REM occurrences.
+        """
+        if end <= start or self.age == "neonate":
+            return []
+        stages = {
+            "mu": ("W", "N1"), "lambda": ("W",), "photic_driving": ("W",),
+            "hyperventilation_buildup": ("W",), "posterior_slow_waves_of_youth": ("W",),
+            "midline_theta": ("W", "N1"), "wicket": ("W", "N1", "N2"),
+            "rmtd": ("W", "N1", "N2"), "fourteen_and_six": ("N1", "N2"),
+            "posts": ("N1", "N2"), "hypnagogic_hypersynchrony": ("N1",),
+            "sreda": ("W", "N1", "N2", "N3", "R"), "frontal_arousal_rhythm": ("W", "N1", "N2", "N3"),
+        }[feature]
+        if feature == "midline_theta":
+            stages = ("W",) if context == "awake" else ("N1",) if context == "drowsy" else stages
+        elif feature in ("wicket", "rmtd") and context == "drowsy":
+            stages = ("N1", "N2")
+        elif feature in ("wicket", "rmtd") and context == "awake":
+            stages = ("W",)
+        allowed = vv3.intersect_intervals([(start, end)], self.stage_intervals(stages))
+        allowed = vv3.intersect_intervals(allowed, self.clinical_state_intervals(("awake", "drowsy", "asleep")))
+        if feature in ("frontal_arousal_rhythm", "hypnagogic_hypersynchrony"):
+            genuine = []
+            for at, width in self._arousals_v3:
+                before = self.natural_stage_at(np.array([at - 1.0]))[0]
+                if before in ("N1", "N2", "N3"):
+                    genuine.append((at, at + width))
+            if feature == "frontal_arousal_rhythm":
+                allowed = vv3.intersect_intervals(allowed, genuine)
+            else:
+                awakening = vv3.intersect_intervals([(start, end)], genuine)
+                awakening = vv3.intersect_intervals(awakening, self.clinical_state_intervals(("awake", "drowsy", "asleep")))
+                allowed = vv3.intersect_intervals(allowed + awakening, [(start, end)])
+        if feature == "posterior_slow_waves_of_youth":
+            closed = [(a, b) for a, b, state in self._eyes if state == "closed"] if self._eyes else [(start, end)]
+            for a, b, state in getattr(self, "_eye_force", ()):
+                if state == "open":
+                    closed = [(x, min(y, a)) for x, y in closed if x < a] + [(max(x, b), y) for x, y in closed if y > b]
+            allowed = vv3.intersect_intervals(allowed, closed)
+        return allowed
+
     def _authored_variant_eligible(self, ev: Dict) -> bool:
+        if self.spec_version < 3:
+            return self._authored_variant_eligible_legacy(ev)
+        kind, context = str(ev["kind"]), ev["context"]
+        if self.age == "neonate" or (kind == "sreda" and self.age != "adult"):
+            return False
+        if kind == "frontal_arousal_rhythm" and self.age not in ("infant", "child"):
+            return False
+        if kind == "midline_theta":
+            return ev.get("side", "both") == "both" and context in ("awake", "drowsy")
+        if kind in ("wicket", "rmtd"):
+            return context in ("awake", "drowsy")
+        return context == {
+            "mu": "movement", "lambda": "visual_scanning", "wicket": "drowsy", "fourteen_and_six": "light_sleep",
+            "rmtd": "drowsy", "sreda": "adult_teaching", "frontal_arousal_rhythm": "arousal",
+            "photic_driving": "photic", "hyperventilation_buildup": "hyperventilation",
+        }[kind]
+
+    def _authored_variant_eligible_legacy(self, ev: Dict) -> bool:
         """Authored teaching policy plus state checks over the emitted interval."""
         kind = str(ev["kind"])
         if kind == "sreda" and self.age != "adult":
@@ -4400,12 +4588,16 @@ class Synthesizer:
                 if ev.get("train_duration_s") is not None:
                     run["train_duration_s"] = float(ev["train_duration_s"])
                 run["bursts"] = vv3.authored_schedule(self.seed, index, run)
+                run["eligible_intervals"] = self.allowed_feature_intervals(ev["kind"], a, b, ev["context"])
+                if not run["eligible_intervals"]:
+                    continue
             self._authored_variants.append(run)
         # 0.5.0: visual scanning and movement hold the eyes open (lambda, and mu is read with the PDR attenuated -
         # Mu-IV, very-nice-Mu); photic stimulation holds them closed
-        self._eye_force = [(r["t0"], r["t1"], "closed" if r["context"] == "photic" else "open")
+        self._eye_force = [(a, b, "closed" if r["context"] == "photic" else "open")
                            for r in self._authored_variants
-                           if self.spec_version >= 3 and r["context"] in ("visual_scanning", "movement", "photic")]
+                           if self.spec_version >= 3 and r["context"] in ("visual_scanning", "movement", "photic")
+                           for a, b in r["eligible_intervals"]]
         pos = np.array([mt.POSITIONS.get(e, (0.0, 0.0)) for e in self.electrodes])
         self._av_y = pos[:, 1]
 
@@ -4428,6 +4620,7 @@ class Synthesizer:
                 continue
             k = np.arange(int(np.floor((run["t1"] - run["t0"]) * run["frequency_hz"])) + 1)
             f = run["t0"] + k / run["frequency_hz"]
+            f = f[vv3.interval_mask(f, run.get("eligible_intervals", [(run["t0"], run["t1"])]))]
             out.append(f[(f >= t0) & (f < t1) & (f < run["t1"])])
         # independent generalized re-review: the photoparoxysmal response's own trains (generalized_v3 ``photic``), so
         # the Photic marker row shows on a PPR page
@@ -4460,6 +4653,8 @@ class Synthesizer:
             for ba, bb in run["blocks"]:
                 intervals = [(a, min(b, ba)) for a, b in intervals if a < ba] + \
                             [(max(a, bb), b) for a, b in intervals if b > bb]
+            if self.spec_version >= 3:
+                intervals = vv3.intersect_intervals(intervals, run["eligible_intervals"])
             for a, b in intervals:
                 if b > a:
                     out.append({**run, "t0": a, "t1": b})
@@ -4492,6 +4687,7 @@ class Synthesizer:
                 part += np.outer(lat, self._LAMBDA_GAZE_UV * gaze)
             for ba, bb in run["blocks"]:
                 part[:, (t >= ba) & (t < bb)] = 0.0
+            part *= self.feature_state_mask(kind, t, run["context"])[None, :]
             rows += part
         return rows
 
@@ -5623,7 +5819,11 @@ class Synthesizer:
     def _neo_emg_v3(self, t: np.ndarray):
         if self.spec_version < 3:
             return 1.0
-        return self._state_lookup(t, self._NEO_EMG_V3, np.full(t.shape, 0.15))
+        out = self._state_lookup(t, self._NEO_EMG_V3, np.zeros(t.shape))
+        clinical = self.clinical_state_at(t)
+        out[clinical == "awake"] = self._NEO_EMG_V3["awake"]
+        out[~self.natural_sleep_eligible(t)] = 0.0
+        return out
 
     def _postictal_diffuse(self, inst) -> bool:
         return (inst.onset_region == "generalized" or inst.spread in ("generalized", "bilateral")
@@ -6057,6 +6257,39 @@ class Synthesizer:
     SWEAT_UV = 80.0
     VENT_UV = 120.0
     SIXTY_UV = 25.0
+
+    def _tonic_muscle_rows_v3(self, t, i0, n, sed_emg, temp, dec, gen):
+        if self.spec.get("neuromuscular_blockade") == "complete" or self.bg["type"] == "burst_suppression":
+            return np.zeros((self.n_elec, n))
+        clinical = self.clinical_state_at(t)
+        stage = self.natural_stage_at(t)
+        gain = np.zeros(n)
+        for state, level in {"awake": 1.0, "drowsy": 0.6, "asleep": 0.25, "sedated": 0.15}.items():
+            gain[clinical == state] = level
+        for state, level in sv3.EMG.items():
+            gain[(clinical == "asleep") & (stage == state)] = level
+        gain += self._arousal_emg(t) * self.natural_sleep_eligible(t)
+        if self.age == "neonate":
+            gain *= self._neo_emg_v3(t)
+        elif self.age == "infant":
+            gain *= 0.45
+        gain *= sed_emg * smoothstep((temp - 34.0) / 2.0) * self._hyps_emg_scale()
+        gain *= dec * (1.0 - ABSENCE_EMG_DROP * self.absence_gate(t))
+        if gen is not None:
+            gain *= gen.emg_factor(t)
+        if self._sed_driven_bs():
+            gain *= _piecewise(self._sed_t, self._sed_sf, t) <= 0.1
+        if not np.any(gain):
+            return np.zeros((self.n_elec, n))
+        if not hasattr(self, "_regional_muscle"):
+            self._regional_muscle = RegionalMuscle(self.seed, self.electrodes, self.duration_s, posterior=True)
+        scale = EMG_FLOOR_W * min(float(self.bg["amplitude_uv"]), CHILD_EMG_REF_UV
+                                if self.age == "child" else float(self.bg["amplitude_uv"])) / 6.4
+        def noise(band, count):
+            lo, hi = self._regional_muscle.bands[band]
+            stream = self._art_stream("regional-muscle-" + band, hp_lp_shape(self._freqs, lo, hi))
+            return self._oa(stream, i0, n, count)
+        return self._regional_muscle.sample(t, noise) * (scale * gain)[None, :]
 
     def _art_stream(self, name: str, shape: np.ndarray) -> _Stream:
         cache = self.__dict__.setdefault("_art_streams", {})
@@ -6821,7 +7054,8 @@ class Synthesizer:
         v3state = bool(self._hypno)
         if v3state:
             aro = sv3.arousal_gate(t, self._arousals_v3)
-            stage_pdr = sv3.weight(t, self._hypno, sv3.PDR)
+            arch = self._arch_w(t, sed_loc) * (1.0 - aro)
+            stage_pdr = sv3.weight(t, self._hypno, sv3.PDR) * self.natural_sleep_eligible(t)
             eye_pdr, eye_blink = self._eye_factor(t)
             aro_pdr = self._AROUSAL_PDR_W.get(self.age, 0.6)
             pdr_w = np.maximum(stage_pdr * eye_pdr, aro_pdr * aro) * (1.0 - t_pdr * temp_slow)
@@ -6834,9 +7068,10 @@ class Synthesizer:
         if coma:
             # phase D: coma patterns have no posterior dominant rhythm.  Alpha coma: diffuse, frontally predominant,
             # monotonous, unreactive 8-12 Hz activity (Westmoreland 1975; Kaplan 1999 J Clin Neurophysiol 16:341)
-            pdr_w = np.zeros(n)
+            coma_active = self.clinical_state_at(t) == "comatose"
+            pdr_w = np.where(coma_active, 0.0, pdr_w)
             if coma == "alpha":
-                x += self._stream_signal(self.st_sed_alpha, i0 + 9091, n) * 1.4
+                x += self._stream_signal(self.st_sed_alpha, i0 + 9091, n) * (1.4 * coma_active)[None, :]
         if self.age != "neonate":
             post_theta = v3 and getattr(self, "st_theta_post", None) is not None
             # r5: where the child's posterior theta is drawn, part of the PDR's share goes to it (the posterior voltage
@@ -6901,10 +7136,10 @@ class Synthesizer:
                   * (self._CAPE_SPECTRUM[1] * (0.30 + 0.25 * sleep) * sed_theta * cape_b)[None, :])
         if v3state:
             # phase B (sleep-fix): less continuous delta in N2 (children's N2 scored as N3), none held under an arousal
-            delta_w = delta_w - self._N2_DELTA_CUT.get(self.age, 0.0) * sv3.weight(t, self._hypno, {"N2": 1.0}) * (1.0 - aro)
+            delta_w = delta_w - self._N2_DELTA_CUT.get(self.age, 0.0) * sv3.weight(t, self._hypno, {"N2": 1.0}) * (1.0 - aro) * self.natural_sleep_eligible(t)
         x += self._stream_signal(self.st_delta, i0, n) * delta_w[None, :]
         if v3state and self.st_sws is not None:
-            x += self._stream_signal(self.st_sws, i0, n) * (self._SWS_W_V3.get(self.age, 1.2) * sv3.weight(t, self._hypno, {"N3": 1.0, "N2": 0.12}) * (1.0 - aro))[None, :]
+            x += self._stream_signal(self.st_sws, i0, n) * (self._SWS_W_V3.get(self.age, 1.2) * sv3.weight(t, self._hypno, {"N3": 1.0, "N2": 0.12}) * arch)[None, :]
         x += self._stream_signal(self.st_beta, i0, n) * beta_w[None, :] * self._breach_fast[:, None]
         x += self._stream_signal(self.st_sed_alpha, i0, n) * np.maximum(sed_alpha, 0.0)[None, :]
         x += self._stream_signal(self.st_sed_gamma, i0, n) * sed_gamma[None, :]
@@ -6967,17 +7202,7 @@ class Synthesizer:
         # paralysed, post-anoxic - has no tonic muscle, inside bursts included.  Version 2 only.
         unreactive = self.spec_version >= 2 and self.bg.get("reactivity") == "absent"
         blocked = self.spec.get("neuromuscular_blockade") == "complete"
-        if v3state:
-            # phase B (sleep-fix): tonic temporalis EMG comes and goes in wake / N1 (``sv3.emg_gate``), and an arousal
-            # brings an abrupt EMG burst above the waking floor (``_arousal_emg``; learningeeg arousal)
-            wake_w = sv3.weight(t, self._hypno, {"W": 1.0, "N1": 1.0})
-            gate = sv3.emg_gate(t, self._emg_on, levels=self._emg_levels)
-            hold = self._emg_hold(t)
-            gate = gate + (1.0 - gate) * hold          # a seizure keeps the continuous floor its EMG is read against
-            stage_emg = sv3.weight(t, self._hypno, sv3.EMG) * (1.0 + wake_w * (gate - 1.0))
-            sleep_emg = np.maximum(stage_emg, 0.8 * aro) + self._arousal_emg(t)
-        else:
-            sleep_emg = 1.0 - 0.75 * sleep
+        sleep_emg = 1.0 - 0.75 * sleep
         emg_w = ((0.0 if unreactive or blocked else EMG_FLOOR_W * self.emg_uv_scale) * sed_emg * sleep_emg
                  * self.burst_envelope(t)
                  * (1.0 + self.ictal_gate(t))
@@ -6989,7 +7214,13 @@ class Synthesizer:
                  * self._hyps_emg_scale()
                  # 0.5.2: a cooled patient is sedated and usually paralysed - no scalp muscle below about 34 C
                  * (smoothstep((temp - 34.0) / 2.0) if v3 else 1.0))
-        muscle_term = self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
+        if v3:
+            motor_gate = self.ictal_gate(t)
+            motor_w = emg_w * motor_gate / (1.0 + motor_gate)
+            muscle_term = (self._stream_signal(self.st_muscle, i0, n) * motor_w[None, :]
+                           if np.any(motor_w) else np.zeros((self.n_elec, n)))
+        else:
+            muscle_term = self._stream_signal(self.st_muscle, i0, n) * emg_w[None, :]
         if self._breach_gain is None:
             x += muscle_term
 
@@ -7152,6 +7383,8 @@ class Synthesizer:
                   * (self.amp_rms * 0.55 * shape)[None, :])
 
         # --- ictal activity (not scaled by the background envelope) -------
+        if v3:
+            x += self._tonic_muscle_rows_v3(t, i0, n, sed_emg, temp, dec, gen)
         if self._calibrating:
             return t, x            # background only: what the display calibration measures
         x += self._seizure_block(t)
@@ -7198,7 +7431,7 @@ class Synthesizer:
         # A staring absence does not blink; see ABSENCE_EMG_DROP.
         # 0.5.0: an unconscious patient does not blink or open the eyes, and under complete neuromuscular blockade the
         # lids and extraocular muscles are paralysed too (sedation.md S109-01..06, S109-09)
-        eyes = (np.zeros(n) if blocked or (v3state and self.bg.get("coma_pattern")) else 1.0 - sed_loc) if v3 else 1.0
+        eyes = (np.zeros(n) if blocked else (1.0 - sed_loc) * self.natural_sleep_eligible(t)) if v3 else 1.0
         if v3state:
             gate = sv3.weight(t, self._hypno, sv3.BLINK) * eye_blink * env * (1.0 - self.absence_gate(t)) * eyes
             x += self.blink_rows(t, gate)
@@ -7216,9 +7449,8 @@ class Synthesizer:
                 x += self._gaze_field()[:, None] * (self._oa(st, i0, n, 1)[0] * 0.6 * self.ROVING_UV * n1 * arch * eyes)[None, :]
         elif self.spec_version >= 3 and self.age == "neonate":
             # 0.5.0: a neonate blinks only while awake (feature review, neonatal item 4), never in active sleep
-            awake = self._state_lookup(t, {"awake": 1.0, "active_sleep": 0.0, "indeterminate": 0.0, "quiet_sleep": 0.0},
-                                       1.0 - sleep)
-            x += self.blink_rows(t, awake * env * (1.0 - self.absence_gate(t)))
+            awake = (self.clinical_state_at(t) == "awake").astype(float)
+            x += self.blink_rows(t, awake * eyes * env * (1.0 - self.absence_gate(t)))
         else:
             x += self.blink_rows(t, (1.0 - sleep) * env * (1.0 - self.absence_gate(t)) * eyes)
         # Neonatal graphoelements (microvolts; burst-bound ones gated inside).

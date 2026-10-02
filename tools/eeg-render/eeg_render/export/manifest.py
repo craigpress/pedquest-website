@@ -363,7 +363,19 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
             continue
         rows.append(_row("cape_cycle", a, b, fs, duration_s, depth=round(float(depth), 3)))
     hyp = getattr(synth, "_hypno", None)
-    if hyp and any(e.get("type") == "state_change" for e in synth.spec.get("events", [])):
+    clinical_v3 = int(getattr(synth, "spec_version", 1)) >= 3
+    if clinical_v3:
+        bounds = synth._clinical_boundaries()
+        merged = []
+        for a, b in zip(bounds, bounds[1:]):
+            label = str(synth.clinical_state_at(np.array([(a + b) / 2]))[0])
+            if merged and merged[-1][2] == label and abs(merged[-1][1] - a) < 1e-9:
+                merged[-1][1] = b
+            else:
+                merged.append([a, b, label])
+        for a, b, label in merged:
+            rows.append(_row("state", a, b, fs, duration_s, label=label, clinical_state=label))
+    elif hyp and any(e.get("type") == "state_change" for e in synth.spec.get("events", [])):
         # phase D (key vs visible, B2-07 / B5-07): at spec_version 3 the awake/sleep rows follow the drawn hypnogram,
         # which starts at the keyed state change (the ramp breakpoints put "sleep" 90 s late)
         merged: List[List] = []
@@ -394,17 +406,32 @@ def realized_events(synth: Synthesizer, duration_s: float) -> List[Dict]:
     for t0, t1, label in getattr(synth, "_state_intervals", []) or []:
         if t1 < 0.0 or t0 > duration_s:
             continue
-        rows.append(_row("state", t0, t1, fs, duration_s, label=label))
+        if not clinical_v3:
+            rows.append(_row("state", t0, t1, fs, duration_s, label=label))
+        else:
+            states = ("awake",) if label == "awake" else ("asleep",)
+            for a, b in synth.clinical_state_intervals(states):
+                start, end = max(t0, a), min(t1, b)
+                if end > start:
+                    rows.append(_row("state_detail", start, end, fs, duration_s, label=label))
     # phase D: the high-voltage-slow opening of each term quiet-sleep epoch (the rest is tracé alternant)
     for t0, t1 in getattr(synth, "_hvs", []) or []:
         if t1 < 0.0 or t0 > duration_s:
             continue
-        rows.append(_row("state_detail", t0, t1, fs, duration_s, label="quiet_sleep_high_voltage_slow"))
+        intervals = synth.clinical_state_intervals(("asleep",)) if clinical_v3 else [(t0, t1)]
+        for a, b in intervals:
+            start, end = max(t0, a), min(t1, b)
+            if end > start:
+                rows.append(_row("state_detail", start, end, fs, duration_s, label="quiet_sleep_high_voltage_slow"))
     # phase B: the low-voltage-irregular stretch of each term active-sleep epoch (the rest is mixed activity)
     for t0, t1 in getattr(synth, "_lvi", []) or []:
         if t1 < 0.0 or t0 > duration_s:
             continue
-        rows.append(_row("state_detail", t0, t1, fs, duration_s, label="active_sleep_low_voltage_irregular"))
+        intervals = synth.clinical_state_intervals(("asleep",)) if clinical_v3 else [(t0, t1)]
+        for a, b in intervals:
+            start, end = max(t0, a), min(t1, b)
+            if end > start:
+                rows.append(_row("state_detail", start, end, fs, duration_s, label="active_sleep_low_voltage_irregular"))
 
     for ann in synth.spec.get("annotations") or []:
         at = float(ann["at_min"]) * 60.0

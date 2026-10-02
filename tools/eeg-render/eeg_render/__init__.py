@@ -23,6 +23,6 @@ they are not drawn.
 # (spec_version 3 only).
 # 0.5.3 (2026-09-30, Craig): background.asymmetry.region (regional focal slowing) and neonatal midazolam 1 - 0.5 q with
 # a damped sleep-wake cycle (spec_version 3 only). Bank PNGs byte-identical (no bank item uses either); restamped.
-RENDERER_VERSION = "0.5.4"
+RENDERER_VERSION = "0.5.5"
 
 __all__ = ["RENDERER_VERSION"]

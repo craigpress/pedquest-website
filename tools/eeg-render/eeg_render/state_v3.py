@@ -292,6 +292,18 @@ NREM_ACTIVATION = {"W": 0.0, "N1": 0.6, "N2": 1.0, "N3": 1.0, "R": 0.1}
 NREM_STAGES = ("N1", "N2", "N3")
 
 
+def merge_intervals(intervals: Sequence[Tuple[float, float]]) -> List[Tuple[float, float]]:
+    out = []
+    for a, b in sorted(intervals):
+        if b <= a:
+            continue
+        if out and a <= out[-1][1] + 1e-9:
+            out[-1] = (out[-1][0], max(b, out[-1][1]))
+        else:
+            out.append((a, b))
+    return out
+
+
 def stage_rate_table(base: float, sleep_activation: "float | None" = None,
                      state_rates: "Dict[str, float] | None" = None) -> Dict[str, float]:
     """Rate per stage: ``base x (1 + (activation - 1) x NREM_ACTIVATION[stage])``, then any explicit

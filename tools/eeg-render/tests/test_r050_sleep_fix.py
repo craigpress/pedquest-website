@@ -233,8 +233,11 @@ def test_frontal_arousal_rhythm_follows_a_marked_arousal_and_differs_from_spindl
     """variants-neonatal-r3 V110-08: FAR read as the spindles before it (1.3-2 s frontal trains, 1.3x by eye) and the
     arousal onset was unmarked.  White & Tharp 1974: 7-10 Hz frontal trains after an arousal from sleep; r3 target: at
     least 2x background, trains of 3 s or more, an abrupt arousal (EMG / movement burst) at onset."""
-    S = _vsyn(611008, [{"type": "state_change", "at_min": 5.0, "to": "arousal"},
-                       _var("frontal_arousal_rhythm", 5.0, 15.0, context="arousal")])
+    S = _vsyn(611008, [{"type": "state_change", "at_min": 1.0, "to": "sleep"},
+                       {"type": "state_change", "at_min": 5.0, "to": "arousal"},
+                       _var("frontal_arousal_rhythm", 5.0, 15.0, context="arousal")],
+              background={"sleep_staging": "static"})
+    assert S.natural_stage_at(np.array([298.0, 301.0])).tolist() == ["N2", "W"]
     run = S._authored_variants[0]
     trains = [b for b in run["bursts"] if b["amp"] > 0.3 * run["amplitude_uv"]]
     assert np.median([b["t1"] - b["t0"] for b in trains]) >= 3.0
@@ -288,11 +291,12 @@ def _awake_child():
     return Synthesizer(normalize(img)["spec"], 600.0)
 
 
-def test_awake_child_background_is_polyrhythmic_with_intermittent_muscle():
+def test_awake_child_background_is_polyrhythmic_with_irregular_regional_muscle():
     """variants-neonatal-r3 awake child vs learningeeg 5yo-F-posterior-slow-wave-of-youth-2 / posterior-slow-waves-of-
     youth-again: the PDR is broken up by theta, theta runs through the midline (pixel theta share 0.41-0.46), and fast
     activity is intermittent.  Before: eyes-closed P-O alpha 0.72 and midline theta 0.18 of 1-30 Hz power, temporal EMG
-    continuous (1-s RMS CV 0.25)."""
+    continuous (1-s RMS CV 0.25). Regional muscle now retains a continuous low floor with irregular waxing and
+    waning rather than discrete on/off episodes; it remains independent of cerebral gain."""
     S = _awake_child()
     closed = [(a + 1.0, b - 0.5) for a, b, st in S._eyes if st == "closed" and b - a > 4.0 and a > 20.0][:6]
     po, mid = [], []
@@ -310,7 +314,17 @@ def test_awake_child_background_is_polyrhythmic_with_intermittent_muscle():
     names, d = _disp(S, 120.0, 300.0)
     e = sps.sosfiltfilt(_sos(30, 70), d[names.index("F7-T3")])
     w = np.array([_rms(e[i:i + FS]) for i in range(0, e.size - FS, FS)])
-    assert w.std() / w.mean() >= 0.45, w.std() / w.mean()
+    assert np.percentile(w, 90) >= 1.7 * np.percentile(w, 10)
+    t = np.arange(120 * FS, 300 * FS) / FS
+    muscle_args = (t, 120 * FS, t.size, np.ones(t.size), np.full(t.size, 37.0), np.ones(t.size), None)
+    muscle = S._tonic_muscle_rows_v3(*muscle_args)
+    temporal = muscle[S._idx["T3"]]
+    assert _rms(temporal) > 3 * _rms(muscle[S._idx["Cz"]])
+    assert abs(np.corrcoef(temporal, muscle[S._idx["T4"]])[0, 1]) < 0.25
+    assert min(_rms(temporal[i:i + FS]) for i in range(0, temporal.size - FS, FS)) > 0
+    S.amp_rms *= 3
+    S.gain_asym *= 0.1
+    np.testing.assert_array_equal(muscle, S._tonic_muscle_rows_v3(*muscle_args))
     _, x1 = S.segment(200.0, 210.0)
     _, x2 = S.segment(193.7, 215.0)
     k = int(round(6.3 * FS))
