@@ -168,10 +168,6 @@ export interface CoursePerson {
   isTest: boolean;
 }
 
-export function isSubmissionStatus(v: unknown): v is SubmissionStatus {
-  return v === "not_started" || v === "in_progress" || v === "submitted" || v === "returned";
-}
-
 export function isDone(s: SubmissionStatus): boolean {
   return s === "submitted" || s === "returned";
 }

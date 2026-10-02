@@ -15,7 +15,7 @@ import {
   type ImagePanel,
 } from "@/lib/cases";
 import {
-  adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, h2, inp, meta, mini, STATUS_COLORS,
+  adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, inp, meta, mini, STATUS_COLORS,
 } from "@/lib/admin-ui";
 
 const LICENSES = [

@@ -4,17 +4,23 @@
 import { createServerClient } from "@/lib/supabase";
 import { isRole, type Role, type RoleRow } from "@/lib/roles";
 
-/** Read the stored role for an email. Returns null when there is no row. */
-export async function getRoleForEmail(email: string): Promise<Role | null> {
+/**
+ * The Supabase Auth user id for an email, or null. GoTrue's admin API has no
+ * lookup by email, so this pages through listUsers (200 per page, at most 10
+ * pages); an unpaged listUsers() sees only the first 50 users.
+ */
+export async function findAuthUserIdByEmail(email: string): Promise<string | null> {
   const supabase = createServerClient();
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("email", email.toLowerCase())
-    .maybeSingle();
-  if (error || !data) return null;
-  return isRole(data.role) ? data.role : null;
+  const lower = email.toLowerCase();
+  for (let page = 1; page <= 10; page++) {
+    const { data } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+    const users = data?.users ?? [];
+    const id = users.find((u) => u.email?.toLowerCase() === lower)?.id;
+    if (id) return id;
+    if (users.length < 200) break;
+  }
+  return null;
 }
 
 /**
@@ -100,19 +106,6 @@ export async function ensureRoleRow(email: string, userId: string): Promise<Role
     });
     data.user_id = userId;
   }
-  return rowToRoleRow(data);
-}
-
-/** The full role row for an email (role, test flag, display name), or null when there is none. */
-export async function getRoleRow(email: string): Promise<RoleRow | null> {
-  const supabase = createServerClient();
-  if (!supabase) return null;
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("email,role,user_id,is_test,display_name")
-    .eq("email", email.toLowerCase())
-    .maybeSingle();
-  if (error || !data) return null;
   return rowToRoleRow(data);
 }
 

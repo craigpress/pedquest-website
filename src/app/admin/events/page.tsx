@@ -85,7 +85,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminEventsPage() {
   // Role comes from the server (/api/me -> user_roles), never a hardcoded list.
-  const { user, isAdmin, loading: userLoading } = useRole();
+  const { isAdmin, loading: userLoading } = useRole();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);

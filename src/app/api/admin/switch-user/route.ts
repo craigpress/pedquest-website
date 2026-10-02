@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
-import { isRole, type Role } from "@/lib/roles";
+import { hasRole, isRole, type Role } from "@/lib/roles";
+import { findAuthUserIdByEmail } from "@/lib/roles-server";
 import { isValidEmail } from "@/lib/validation";
 
 // Admin / editor -> test account session handoff.
@@ -44,14 +45,14 @@ export async function POST(request: NextRequest) {
   if (!row || row.is_test !== true) {
     return NextResponse.json({ error: "Only test accounts can be switched into." }, { status: 403 });
   }
-
-  let userId: string | null = null;
-  for (let page = 1; page <= 10 && !userId; page++) {
-    const { data } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
-    const users = data?.users ?? [];
-    userId = users.find((u) => u.email?.toLowerCase() === email)?.id ?? null;
-    if (users.length < 200) break;
+  // A switch must never raise the caller's privilege: an editor switching into
+  // a test row that an admin promoted to `admin` would hold an admin session.
+  const targetRole: Role = isRole(row.role) ? row.role : "member";
+  if (!hasRole(auth.role, targetRole)) {
+    return NextResponse.json({ error: "You cannot switch into an account with a higher role than your own." }, { status: 403 });
   }
+
+  const userId = await findAuthUserIdByEmail(email);
   if (!userId) {
     return NextResponse.json({ error: "That test account has no Supabase user yet." }, { status: 404 });
   }
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
       success: true,
       tokenHash: linkData.properties.hashed_token,
       email,
-      role: (isRole(row.role) ? row.role : "member") as Role,
+      role: targetRole,
       displayName: (row.display_name as string | null) ?? null,
     },
     { headers: { "Cache-Control": "no-store" } },

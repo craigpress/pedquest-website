@@ -11,7 +11,7 @@ test("invalid sidecar preflight stops import before Supabase access", () => {
   writeFileSync(verifier, "@echo invalid sidecar 1>&2\r\n@exit /b 1\r\n");
   chmodSync(verifier, 0o755);
 
-  let error: any;
+  let error: { status?: number; stdout?: string; stderr?: string } | undefined;
   try {
     execFileSync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/qbank-import.ts", "--only", "PQ-A-001"], {
       encoding: "utf8",
@@ -19,7 +19,7 @@ test("invalid sidecar preflight stops import before Supabase access", () => {
       stdio: "pipe",
     });
   } catch (caught) {
-    error = caught;
+    error = caught as typeof error;
   }
   assert.equal(error?.status, 1);
   assert.match(`${error?.stdout ?? ""}${error?.stderr ?? ""}`, /Image verification failed/);
