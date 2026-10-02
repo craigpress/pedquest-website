@@ -401,7 +401,8 @@ export default function AboutPage() {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          margin-top: 1.2rem;
+          margin-top: 0.6rem;
+          min-height: 44px;
           font-size: 0.88rem;
           font-weight: 600;
           color: var(--accent);

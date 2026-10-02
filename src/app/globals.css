@@ -315,7 +315,7 @@ a:hover {
   color: var(--ink); letter-spacing: -0.02em;
 }
 .stat-key {
-  font-family: var(--mono-font); font-size: 0.72rem; letter-spacing: 0.1em;
+  font-family: var(--mono-font); font-size: 0.75rem; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--muted); margin-top: 0.15rem;
 }
 .stat-note { font-size: 0.82rem; color: var(--ink-2); margin-top: 0.5rem; }
@@ -417,5 +417,5 @@ a:hover {
 @media (max-width: 560px) {
   .impact-stats { grid-template-columns: repeat(2, 1fr); }
   .pub-row { grid-template-columns: 3rem 1fr; }
-  .pub-row-cite { grid-column: 2; justify-self: start; }
+  .pub-row-cite { grid-column: 2; justify-self: start; min-height: 40px; }
 }

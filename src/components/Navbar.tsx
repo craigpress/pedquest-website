@@ -308,7 +308,7 @@ export default function Navbar() {
           {/* Logo / Brand */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 no-underline shrink-0 group"
+            className="flex items-center gap-2.5 no-underline shrink-0 group min-h-11"
             onClick={() => setMobileOpen(false)}
           >
             {/* PedQuEST brand — qEEG-brain symbol + flame wordmark (2026) */}
@@ -316,8 +316,8 @@ export default function Navbar() {
               src="/images/pedquest-symbol-brain-2026.png"
               alt=""
               aria-hidden="true"
-              width={1254}
-              height={1254}
+              width={44}
+              height={44}
               sizes="(min-width: 1024px) 44px, 36px"
               priority
               className="h-9 w-9 lg:h-11 lg:w-11"
@@ -326,8 +326,8 @@ export default function Navbar() {
             <Image
               src="/images/pedquest-wordmark-flame-darknav-2026.png"
               alt="PedQuEST"
-              width={2113}
-              height={744}
+              width={137}
+              height={48}
               sizes="(min-width: 1024px) 137px, 103px"
               loading="eager"
               fetchPriority="high"
@@ -424,6 +424,7 @@ export default function Navbar() {
                     alt={member.name}
                     width={34}
                     height={34}
+                    sizes="34px"
                     style={{
                       width: 34,
                       height: 34,

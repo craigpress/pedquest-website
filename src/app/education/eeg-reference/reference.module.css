@@ -15,7 +15,8 @@
 .search input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); border-radius: 9px; font: inherit; }
 .reference :is(button, input, a, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .resultHeader { display: flex; justify-content: space-between; margin: 16px 0 10px; color: var(--text-secondary); font-size: .8rem; }
-.resultHeader button, .empty button { color: var(--accent); cursor: pointer; }
+.resultHeader { align-items: center; }
+.resultHeader button, .empty button { color: var(--accent); cursor: pointer; min-height: 44px; }
 .entry { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin-bottom: 10px; overflow: hidden; }
 .entry > summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 20px; cursor: pointer; list-style: none; }
 .entry > summary::-webkit-details-marker { display: none; }
@@ -35,14 +36,14 @@
 .detailContent dd { margin: 0; }
 .pitfalls { border-left: 2px solid var(--warm); padding-left: 14px; margin-top: 20px; }
 .sourceBar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; border-top: 1px solid var(--border); margin-top: 20px; padding-top: 14px; }
-.sourceBar a { display: inline-block; margin-top: 3px; text-decoration: underline; text-underline-offset: 3px; }
+.sourceBar a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }
 .technical { margin-top: 16px; color: var(--text-secondary); }
 .technical summary { cursor: pointer; }
 .draft { color: var(--text-secondary); font-size: .72rem; margin-top: 14px; }
-.permalink { display: inline-block; font-size: .8rem; margin: 0 20px 16px; }
+.permalink { display: inline-flex; align-items: center; min-height: 44px; font-size: .8rem; margin: 0 20px 8px; }
 .single { max-width: 1160px; }
 .single .detailContent { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
-.back { display: inline-block; font-size: .85rem; margin-bottom: 18px; }
+.back { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; margin-bottom: 8px; }
 .empty { padding: 32px 20px; border: 1px dashed var(--border); border-radius: 10px; }
 .empty h2 { font-size: 1.1rem; }
 .empty p { margin: 8px 0 16px; }
