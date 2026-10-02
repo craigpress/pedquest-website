@@ -359,13 +359,8 @@ CREATE POLICY "Anyone can view member files"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'member-files');
 
-CREATE POLICY "Authenticated users can upload member files"
-  ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'member-files' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Users can update their own files"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'member-files' AND auth.role() = 'authenticated');
+-- Writes are owner-scoped (or admin); see
+-- migrations/20261002000002_member_files_owner_write.sql for the policies.
 
 -- ============================================================
 -- Updated_at trigger
