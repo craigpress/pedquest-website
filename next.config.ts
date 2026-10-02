@@ -43,6 +43,13 @@ const nextConfig: NextConfig = {
     // 'unsafe-inline' on script-src is required by Next's inline hydration
     // bootstrap unless a per-request nonce is added via middleware; style-src
     // needs it for styled-jsx and Next's inlined critical CSS.
+    // The lab viewer loads signed recordings straight from the homelab store
+    // (EEG_LAB_BASE_URL), so its origin must be allowed when CSP is enforced.
+    let eeglabOrigin = "";
+    try {
+      const base = (process.env.EEG_LAB_BASE_URL ?? "").trim();
+      if (base) eeglabOrigin = new URL(base).origin;
+    } catch { /* malformed URL: leave it out */ }
     const csp = [
       "default-src 'self'",
       "base-uri 'self'",
@@ -53,10 +60,11 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline'",
       // Supabase storage (case/member images) + OpenStreetMap tiles for MemberMap.
-      "img-src 'self' data: blob: https://*.supabase.co https://*.tile.openstreetmap.org",
+      `img-src 'self' data: blob: https://*.supabase.co https://*.tile.openstreetmap.org${eeglabOrigin ? ` ${eeglabOrigin}` : ""}`,
       "font-src 'self' data:",
-      // Supabase REST/realtime, Vercel Analytics beacons, Authentik sign-in.
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.vercel-insights.com https://va.vercel-scripts.com https://auth.presshome.net",
+      // Supabase REST/realtime, Vercel Analytics beacons, Authentik sign-in,
+      // and the homelab recording store.
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.vercel-insights.com https://va.vercel-scripts.com https://auth.presshome.net${eeglabOrigin ? ` ${eeglabOrigin}` : ""}`,
       // Ignored by browsers in a report-only policy, so only emit it when enforcing.
       ...(process.env.CSP_ENFORCE === "1" ? ["upgrade-insecure-requests"] : []),
     ].join("; ");
