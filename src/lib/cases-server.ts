@@ -32,11 +32,6 @@ export async function getCaseById(id: string): Promise<EegCase | null> {
   return loadCaseRow((q) => q.eq("id", id).limit(1));
 }
 
-/** Look a bank item up by its permanent content ID (e.g. PQ-A-007). */
-export async function getCaseByQbankId(qbankId: string): Promise<EegCase | null> {
-  return loadCaseRow((q) => q.eq("qbank_id", qbankId).limit(1));
-}
-
 /** Citations for one case, ordered as the writer arranged them. */
 export async function getCaseReferences(caseId: string): Promise<CaseReference[]> {
   const supabase = createServerClient();
@@ -67,6 +62,27 @@ export async function getPublicCaseById(id: string): Promise<PublicCase | null> 
 export function toVersionedPublicCase(c: EegCase): PublicCase {
   const pc = toPublicCase(c);
   return { ...pc, imageUrl: versionedImageUrl(pc.imageUrl, c.updatedAt) };
+}
+
+/**
+ * Response count per case id. Uses the eeg_response_counts RPC (one row per
+ * case); if that function is not deployed yet, falls back to counting fetched
+ * rows, which PostgREST caps at 1000.
+ */
+export async function getResponseCounts(
+  supabase: NonNullable<ReturnType<typeof createServerClient>>,
+  caseIds: string[],
+): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {};
+  if (!caseIds.length) return counts;
+  const { data, error } = await supabase.rpc("eeg_response_counts", { case_ids: caseIds });
+  if (!error && Array.isArray(data)) {
+    for (const r of data as any[]) counts[r.case_id] = Number(r.response_count) || 0;
+    return counts;
+  }
+  const { data: rows } = await supabase.from("eeg_responses").select("case_id").in("case_id", caseIds);
+  for (const r of (rows ?? []) as any[]) counts[r.case_id] = (counts[r.case_id] || 0) + 1;
+  return counts;
 }
 
 /** Archive list (published + archived), lightweight. */

@@ -417,7 +417,7 @@ function drawRegion(ctx: CanvasRenderingContext2D, region: Region | null, w: num
   } else if (region.kind === "circle") {
     ctx.arc(region.cx * w, region.cy * h, region.r * w, 0, Math.PI * 2);
   } else if (region.kind === "poly") {
-    region.points.forEach(([px, py], i) => { const X = px * w, Y = py * h; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+    region.points.forEach(([px, py], i) => { const X = px * w, Y = py * h; if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); });
     ctx.closePath();
   }
   ctx.fill(); ctx.stroke();

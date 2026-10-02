@@ -10,6 +10,7 @@ import {
   type AnnotationRegion, type AnnotationTarget,
   type ViewerAnnotation, type ViewerAnnotationInput, type ViewerAnnotationKind,
 } from "@/lib/eeg/annotations";
+import { isGradedKind } from "@/lib/lab/scoring";
 import { trendRowLabel } from "./TrendStrip";
 
 export interface Draft extends AnnotationTarget {
@@ -117,6 +118,9 @@ export default function AnnotationPanel({
             <select value={draft.kind} style={inp} onChange={(e) => onDraftChange({ ...draft, kind: e.target.value as ViewerAnnotationKind })}>
               {ANNOTATION_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
             </select>
+            <span style={{ display: "block", marginTop: 4, fontSize: 12, color: "var(--text-muted)" }}>
+              {ANNOTATION_KINDS.find((k) => k.id === draft.kind)?.hint}
+            </span>
           </label>
           <div style={{ display: "grid", gridTemplateColumns: draft.pane === "trend" ? "1fr 1fr" : "1fr", gap: 8 }}>
             <label>
@@ -227,7 +231,7 @@ export default function AnnotationPanel({
                   id: a.id, onsetS: a.onsetS, durationS: a.durationS, kind: a.kind, label: a.label, note: a.note,
                   pane: a.pane, trendRow: a.trendRow, channels: a.channels, region: a.region, viewSpanS: a.viewSpanS,
                 })}>edit</button>
-                {onPromote && ["seizure", "seizure_onset", "discharge"].includes(a.kind) && (
+                {onPromote && isGradedKind(a.kind) && (
                   <button type="button" style={{ ...mini, color: "var(--accent-primary)" }} onClick={() => onPromote(a)}>
                     promote to key
                   </button>

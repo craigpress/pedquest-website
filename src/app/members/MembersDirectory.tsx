@@ -14,6 +14,8 @@ const MemberMap = dynamic(() => import("@/components/MemberMap"), {
   ),
 });
 
+const PAGE_SIZE = 24;
+
 export default function MembersDirectory({ members }: { members: Member[] }) {
   const [search, setSearch] = useState("");
   const [filterInstitution, setFilterInstitution] = useState("");
@@ -41,6 +43,15 @@ export default function MembersDirectory({ members }: { members: Member[] }) {
       })
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [members, search, filterInstitution, filterCountry]);
+
+  // "Show more" grows the list for the current query only; a new search or
+  // filter starts again from the first page.
+  const listKey = [search, filterInstitution, filterCountry].join("|");
+  const [extra, setExtra] = useState<{ key: string; n: number }>({ key: "", n: 0 });
+  const visibleCount = PAGE_SIZE + (extra.key === listKey ? extra.n : 0);
+  const hiddenCount = Math.max(0, filtered.length - visibleCount);
+  const showMore = (n: number) =>
+    setExtra((e) => ({ key: listKey, n: (e.key === listKey ? e.n : 0) + n }));
 
   return (
     <main>
@@ -140,26 +151,39 @@ export default function MembersDirectory({ members }: { members: Member[] }) {
         <section>
           <div className="mem-count">
             <b>{filtered.length}</b> of {members.length} members
+            {hiddenCount > 0 && <> · first {filtered.length - hiddenCount} listed</>}
           </div>
           {filtered.length === 0 ? (
             <p className="mem-empty">No members match your search or filters.</p>
           ) : (
             <div className="mem-grid">
-              {filtered.map((member) => (
+              {filtered.slice(0, visibleCount).map((member) => (
                 <Link key={member.id} href={`/members/${member.id}`} className="mem-card">
-                  <MemberAvatar name={member.name} size="lg" photoUrl={member.photoUrl} />
-                  <h3 className="mem-name">
-                    {member.name}, {member.title}
-                  </h3>
-                  {member.role && <span className="mem-role">{member.role}</span>}
-                  <p className="mem-inst">{member.institution}</p>
-                  <div className="mem-tags">
-                    {member.interests.slice(0, 3).map((interest) => (
-                      <span key={interest} className="mem-tag">{interest}</span>
-                    ))}
+                  <MemberAvatar name={member.name} size="lg" photoUrl={member.photoUrl} className="mem-av" />
+                  <div className="mem-text">
+                    <h3 className="mem-name">
+                      {member.name}, {member.title}
+                    </h3>
+                    {member.role && <span className="mem-role">{member.role}</span>}
+                    <p className="mem-inst">{member.institution}</p>
+                    <div className="mem-tags">
+                      {member.interests.slice(0, 3).map((interest) => (
+                        <span key={interest} className="mem-tag">{interest}</span>
+                      ))}
+                    </div>
                   </div>
                 </Link>
               ))}
+            </div>
+          )}
+          {hiddenCount > 0 && (
+            <div className="mem-more">
+              <button type="button" className="mem-more-btn" onClick={() => showMore(PAGE_SIZE)}>
+                Show {Math.min(PAGE_SIZE, hiddenCount)} more
+              </button>
+              <button type="button" className="mem-more-all" onClick={() => showMore(hiddenCount)}>
+                show all {filtered.length}
+              </button>
             </div>
           )}
         </section>
@@ -259,6 +283,42 @@ export default function MembersDirectory({ members }: { members: Member[] }) {
           font-family: var(--mono-font); font-size: 0.66rem; letter-spacing: 0.04em;
           text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
           border-radius: 999px; padding: 0.2rem 0.6rem;
+        }
+
+        .mem-more { display: flex; gap: 1rem; align-items: center; justify-content: center; margin-top: 1.5rem; }
+        .mem-more-btn {
+          font-family: var(--body-font); font-size: 0.9rem; font-weight: 600; color: var(--accent);
+          background: var(--accent-soft); border: 1px solid transparent; border-radius: 10px;
+          padding: 0.7rem 1.2rem; min-height: 44px; cursor: pointer;
+        }
+        .mem-more-btn:hover { border-color: var(--accent); }
+        .mem-more-all {
+          font-family: var(--mono-font); font-size: 0.75rem; color: var(--muted);
+          text-decoration: underline; background: none; border: none; cursor: pointer;
+          min-height: 44px; padding: 0 0.5rem;
+        }
+
+        /* Phones: compact one-line-per-member rows instead of tall cards */
+        @media (max-width: 600px) {
+          .mem-hero { padding: 3rem 1.25rem 1.75rem; }
+          .mem-hero-sub { font-size: 1rem; }
+          .mem-body { padding: 0 1.25rem 3rem; }
+          .mem-grid { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+          .mem-card {
+            display: flex; align-items: center; gap: 0.85rem;
+            padding: 0.7rem 0.9rem; border-radius: 12px;
+          }
+          .mem-card:hover { transform: none; }
+          .mem-card > :first-child { margin-bottom: 0; }
+          .mem-card .mem-av { width: 44px !important; height: 44px !important; font-size: 1rem !important; }
+          .mem-text { min-width: 0; }
+          .mem-name { font-size: 0.95rem; margin-bottom: 0.1rem; }
+          .mem-role { font-size: 0.62rem; margin-bottom: 0.1rem; }
+          .mem-inst {
+            font-size: 0.8rem; margin-bottom: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          }
+          .mem-tags { display: none; }
         }
       `}</style>
     </main>

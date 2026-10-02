@@ -4,7 +4,7 @@
 import coreWebVitals from "eslint-config-next/core-web-vitals";
 import typescript from "eslint-config-next/typescript";
 
-export default [
+const config = [
   {
     ignores: [
       ".next/**",
@@ -32,6 +32,10 @@ export default [
       // warning rather than failing the build. Revisit if the app adopts the
       // React Compiler.
       "react-hooks/set-state-in-effect": "warn",
+      // `const { omitted: _omitted, ...rest } = obj` is the omit idiom here.
+      "@typescript-eslint/no-unused-vars": ["warn", { ignoreRestSiblings: true }],
     },
   },
 ];
+
+export default config;

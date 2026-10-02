@@ -105,6 +105,12 @@ export function effectiveStatus(item: GalleryItem, st: GalleryState | undefined)
   return st.status;
 }
 
+/** "Accepted at 0.5.1" when the item's last status was set against an older render; null otherwise. */
+export function priorStatusLabel(item: GalleryItem, st: GalleryState | undefined): string | null {
+  if (!st || st.rendererVersion === item.rendererVersion || st.status === "new") return null;
+  return `${STATUS_LABEL[st.status]} at ${st.rendererVersion}`;
+}
+
 const MONTAGE_SHORT: Record<string, string> = {
   longitudinal_bipolar: "Longitudinal bipolar", transverse_bipolar: "Transverse bipolar",
   referential: "Referential", average: "Average reference", laplacian: "Laplacian",

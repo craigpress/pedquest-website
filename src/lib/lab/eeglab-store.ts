@@ -29,7 +29,9 @@ function encodeUri(rel: string): string {
 
 export function signEeglabUrl(path: string, ttlS: number, now = Date.now()): string {
   const base = (process.env.EEG_LAB_BASE_URL ?? "").trim().replace(/\/+$/, "");
-  const secret = process.env.EEG_LAB_URL_SECRET ?? "";
+  // Trimmed like the base: a pasted env value with a trailing CR/LF would
+  // otherwise sign with a secret nginx does not hold, and every link 403s.
+  const secret = (process.env.EEG_LAB_URL_SECRET ?? "").trim();
   if (!base || !secret) throw new Error("EEG_LAB_BASE_URL / EEG_LAB_URL_SECRET are not set.");
   const uri = encodeUri(path.slice(EEGLAB_SCHEME.length));
   const expires = Math.floor(now / 1000) + ttlS;

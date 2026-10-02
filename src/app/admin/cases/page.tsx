@@ -62,7 +62,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminCasesPage() {
   // Role comes from the server (/api/me -> user_roles), never a hardcoded list.
-  const { user, isAdmin, loading: userLoading } = useRole();
+  const { isAdmin, loading: userLoading } = useRole();
   const [cases, setCases] = useState<AdminCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);

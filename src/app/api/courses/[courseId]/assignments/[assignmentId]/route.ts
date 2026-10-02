@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { getAssignmentForViewer, requireCourse, UUID_RE } from "@/lib/courses/server";
+import { markTaskById } from "@/lib/lab/scoring";
 
 export const runtime = "nodejs";
 
 // One assignment.
 //   GET    → { assignment, my: SubmissionState, course: {id,title}, canManage }  (any member; the viewer header)
-//   PATCH  → title / instructions / dueAt / published / sortOrder                 (managers)
+//   PATCH  → title / instructions / dueAt / published / sortOrder / taskId        (managers)
 //   DELETE → remove the assignment and its submissions                             (managers)
 
 const NO_STORE = { headers: { "Cache-Control": "no-store, private" } };
@@ -35,7 +36,7 @@ export async function PATCH(request: NextRequest, ctx: Params) {
   if (typeof body.instructions === "string") patch.instructions = body.instructions.trim().slice(0, 4000);
   if (typeof body.published === "boolean") patch.published = body.published;
   if (typeof body.sortOrder === "number" && Number.isInteger(body.sortOrder)) patch.sort_order = body.sortOrder;
-  if (body.taskId === "seizure" || body.taskId === "discharge") patch.task_id = body.taskId;
+  if (typeof body.taskId === "string" && markTaskById(body.taskId)) patch.task_id = body.taskId;
   if (body.dueAt === null || body.dueAt === "") patch.due_at = null;
   else if (typeof body.dueAt === "string") {
     if (!Number.isFinite(Date.parse(body.dueAt))) return NextResponse.json({ error: "dueAt is not a date." }, { status: 400 });

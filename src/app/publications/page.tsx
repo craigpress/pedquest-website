@@ -11,7 +11,7 @@ type Tab = "articles" | "abstracts";
 // The full record is ~330 papers; rendering every card put ~11,800 DOM nodes
 // on a phone. Show a page at a time — search, filters and export still work
 // over the whole list.
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 20;
 type Sort = "new" | "old" | "az";
 
 function highlightMemberAuthors(authorList: string[], memberAuthorIds: string[]) {
@@ -841,6 +841,33 @@ export default function PublicationsPage() {
           }
           .pubs-facets { display: none; margin-bottom: 0.5rem; }
           .pubs-facets.open { display: flex; }
+        }
+
+        /* Touch: every chip and action is a full-size tap target */
+        @media (max-width: 900px), (pointer: coarse) {
+          .topic-pill, .atag, .act, .pub-abs-toggle, .clear-tags, .fbtn, .pubs-tab, .pubs-more-btn {
+            min-height: 40px; display: inline-flex; align-items: center;
+          }
+          .fbtn { display: flex; }
+          .topic-pill { padding: 0 12px; border-radius: 20px; }
+          .act { padding: 0 12px; }
+          .clear-tags { padding: 0 0.4rem; }
+          .pub-actions { flex-wrap: wrap; }
+        }
+
+        /* Phones: a shorter hero so the first result sits near the fold */
+        @media (max-width: 600px) {
+          .pubs-wrap { padding: 0 1.25rem; }
+          .pubs-head { padding-top: 1.75rem; }
+          .pubs-h1 { font-size: 1.6rem; margin: 0.5rem 0 0.4rem; }
+          .pubs-sub { display: none; }
+          .pubs-kpis { gap: 0.4rem 1rem; margin-top: 0.6rem; font-size: 0.75rem; }
+          .pubs-tabs { margin-top: 0.8rem; }
+          .pubs-tab { padding: 0.5rem 0.7rem; }
+          .pubs-filter-toggle { margin-top: 0.9rem !important; }
+          .pubs-layout { padding-top: 1rem; }
+          .pubs-search { min-width: 0; flex-basis: 100%; }
+          .pub { padding: 1rem; }
         }
       `}</style>
     </main>

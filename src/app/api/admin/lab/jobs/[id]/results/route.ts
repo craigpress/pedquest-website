@@ -40,12 +40,15 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
   const students = gate.members.filter((m) => m.role === "student");
   const ids = await identitiesByEmail(students.map((s) => s.email));
   const userIds = students.map((s) => s.user_id ?? ids.get(s.email)?.userId ?? null).filter((x): x is string => !!x);
-  const out = await computeJobResults(id, { userId: gate.caller.userId, role: gate.caller.role }, { onlyUserIds: new Set(userIds) });
+  // the assignment(s) on this recording in this course: their tasks are always graded
+  const supabase = createServerClient()!;
+  const { data: asg } = await supabase.from("eeg_course_assignments").select("id,due_at,task_id").eq("course_id", courseId).eq("job_id", id);
+  const out = await computeJobResults(id, { userId: gate.caller.userId, role: gate.caller.role }, {
+    onlyUserIds: new Set(userIds), taskIds: (asg ?? []).map((a: any) => a.task_id as string),
+  });
   if (!out.ok) return NextResponse.json({ error: out.error }, { status: out.status });
 
-  // submission state per learner for the assignment(s) on this recording in this course
-  const supabase = createServerClient()!;
-  const { data: asg } = await supabase.from("eeg_course_assignments").select("id,due_at").eq("course_id", courseId).eq("job_id", id);
+  // submission state per learner for those assignments
   const asgIds = (asg ?? []).map((a: any) => a.id as string);
   const dueAt = (asg ?? [])[0]?.due_at ?? null;
   const { data: subs } = asgIds.length

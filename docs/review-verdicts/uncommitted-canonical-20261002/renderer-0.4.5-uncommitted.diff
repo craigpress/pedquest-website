@@ -1,0 +1,56 @@
+diff --git a/tools/eeg-render/eeg_render/__init__.py b/tools/eeg-render/eeg_render/__init__.py
+index 6e907b2..46769c5 100644
+--- a/tools/eeg-render/eeg_render/__init__.py
++++ b/tools/eeg-render/eeg_render/__init__.py
+@@ -9,6 +9,6 @@ they are not drawn.
+ # 0.3.10 gives hypsarrhythmia six asynchronous focal generators that reuse the
+ # lower-voltage LPD sharp-slow morphology. Existing qbank PNGs are byte-identical
+ # to 0.3.9; their sidecars were restamped after representative render checks.
+-RENDERER_VERSION = "0.4.4"
++RENDERER_VERSION = "0.4.5"
+ 
+ __all__ = ["RENDERER_VERSION"]
+diff --git a/tools/eeg-render/eeg_render/render_page.py b/tools/eeg-render/eeg_render/render_page.py
+index 9a6f0c9..939806e 100644
+--- a/tools/eeg-render/eeg_render/render_page.py
++++ b/tools/eeg-render/eeg_render/render_page.py
+@@ -208,8 +208,11 @@ def render_eeg_page(
+         # --- grid ----------------------------------------------------------
+         for k in range(int(np.floor(win)) + 1):
+             ax.axvline(t0 + k, color=PAGE_GRID, linewidth=0.7, zorder=0)
+-        for k in np.arange(0, win + 1e-9, 0.2):
+-            ax.axvline(t0 + k, color=PAGE_GRID_MINOR, linewidth=0.35, zorder=0)
++        # 0.4.5 (Craig, P7 batch 2): clinical paper shows the 1 s rule only; the 200 ms minor rule is
++        # version-1 legacy or an explicit ``grid_minor: true``
++        if int(spec.get("spec_version") or 1) < 2 or bool(spec.get("grid_minor")):
++            for k in np.arange(0, win + 1e-9, 0.2):
++                ax.axvline(t0 + k, color=PAGE_GRID_MINOR, linewidth=0.35, zorder=0)
+ 
+         # --- traces ----------------------------------------------------------
+         polarity = page_polarity(spec)
+diff --git a/tools/eeg-render/eeg_render/schema.py b/tools/eeg-render/eeg_render/schema.py
+index bc81c0a..241dd98 100644
+--- a/tools/eeg-render/eeg_render/schema.py
++++ b/tools/eeg-render/eeg_render/schema.py
+@@ -503,6 +503,8 @@ _EEG_PAGE_SPEC = {
+         **_COMMON,
+         "at_min": {"type": "number", "minimum": 0},
+         "window_s": {"type": "number", "minimum": 5, "maximum": 30},
++        # 0.4.5: draw the 200 ms minor rule (version-2 pages show the 1 s rule only)
++        "grid_minor": {"type": "boolean"},
+         "sensitivity_uv_mm": {"type": "number", "minimum": 1, "maximum": 100},
+         "filters": {
+             "type": "object",
+diff --git a/tools/eeg-render/pyproject.toml b/tools/eeg-render/pyproject.toml
+index e3c75bd..5e4d89b 100644
+--- a/tools/eeg-render/pyproject.toml
++++ b/tools/eeg-render/pyproject.toml
+@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
+ 
+ [project]
+ name = "eeg-render"
+-version = "0.4.4"
++version = "0.4.5"
+ description = "Deterministic renderer for PedQuEST qEEG question-bank images (image.spec DSL -> PNG + JSON sidecar)"
+ requires-python = ">=3.10"
+ dependencies = [

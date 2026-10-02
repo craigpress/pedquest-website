@@ -37,7 +37,7 @@ function trace(baseY, amp, freq, rand, opts = {}) {
   return pts.join(" ");
 }
 
-function svg({ title, seizure = null, asymmetry = false, region = null }) {
+function svg({ title, seizure = null, asymmetry = false }) {
   const rowH = (H - 2 * PAD) / (CH - 1);
   let body = "";
   // faint EEG-paper grid

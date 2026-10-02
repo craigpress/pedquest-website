@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 interface CVSection {
   name: string;
@@ -348,6 +349,8 @@ function extractInterests(content: string[]): string[] {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     const body = await request.json();
     const { text } = body;

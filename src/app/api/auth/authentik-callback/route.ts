@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { ensureUserRole } from "@/lib/roles-server";
+import { ensureUserRole, findAuthUserIdByEmail } from "@/lib/roles-server";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -72,12 +72,12 @@ export async function GET(request: NextRequest) {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Ensure user exists in Supabase
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find((u) => u.email === email);
-    let supabaseUserId = existingUser?.id ?? null;
+    // Ensure user exists in Supabase. Paged lookup: an unpaged listUsers()
+    // returns only the first 50 users, so later users were "not found" and a
+    // createUser for an existing email failed silently, leaving user_id unset.
+    let supabaseUserId = await findAuthUserIdByEmail(email);
 
-    if (!existingUser) {
+    if (!supabaseUserId) {
       const { data: created } = await supabaseAdmin.auth.admin.createUser({
         email,
         email_confirm: true,

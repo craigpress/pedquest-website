@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
-export async function GET(request: Request) {
+export async function GET() {
   // Vercel cron jobs automatically send the CRON_SECRET in the Authorization header.
   // For a simple keepalive that only reads from the database, we don't need strict auth.
 

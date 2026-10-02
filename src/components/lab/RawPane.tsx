@@ -110,7 +110,6 @@ export default function RawPane({
   useEffect(() => {
     const a = autoRef.current, d = dragRef.current;
     if (a && d) setDrag({ a: d.t0, b: a.side > 0 ? t0 + pageS : t0 });
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- the selection end follows the page while auto-scrolling
   }, [t0, pageS]);
 
   // ── size ────────────────────────────────────────────────────────────────

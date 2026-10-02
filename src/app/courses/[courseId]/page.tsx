@@ -17,6 +17,7 @@ import {
   adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, inp, meta, mini,
 } from "@/lib/admin-ui";
 import { displayTitle, humanDuration, type LibraryEntry } from "@/lib/lab/library";
+import { MARK_TASKS } from "@/lib/lab/scoring";
 import {
   COURSE_STATUS_LABELS, SUBMISSION_COLORS, SUBMISSION_LABELS, isDone, teacherNames,
   type CourseAssignment, type CourseDetail, type CourseDetailStudent, type CourseDetailTeacher,
@@ -214,6 +215,7 @@ function TeacherView({ course, courseId, authHeaders, reload }: {
   const [aInstructions, setAInstructions] = useState("");
   const [aDue, setADue] = useState("");
   const [aPublished, setAPublished] = useState(true);
+  const [aTask, setATask] = useState("seizure");
 
   // add-students panel
   const [addOpen, setAddOpen] = useState(false);
@@ -303,11 +305,12 @@ function TeacherView({ course, courseId, authHeaders, reload }: {
     setAInstructions(a.instructions);
     setADue(dateValue(a.dueAt));
     setAPublished(a.published);
+    setATask(a.taskId);
   }
 
   async function saveAssignment(id: string) {
     const r = await call(`/api/courses/${courseId}/assignments/${id}`, "PATCH", {
-      title: aTitle.trim(), instructions: aInstructions, dueAt: aDue || null, published: aPublished,
+      title: aTitle.trim(), instructions: aInstructions, dueAt: aDue || null, published: aPublished, taskId: aTask,
     });
     if (r) { setEditAssignment(null); await reload(); }
   }
@@ -542,6 +545,12 @@ function TeacherView({ course, courseId, authHeaders, reload }: {
                           <div style={{ minWidth: 160 }}>
                             <label style={fieldLabel} htmlFor={`cd-ad-${a.id}`}>Due</label>
                             <input id={`cd-ad-${a.id}`} type="date" style={inp} value={aDue} onChange={(e) => setADue(e.target.value)} />
+                          </div>
+                          <div style={{ minWidth: 220, flex: 1 }}>
+                            <label style={fieldLabel} htmlFor={`cd-ak-${a.id}`}>Graded task</label>
+                            <select id={`cd-ak-${a.id}`} style={inp} value={aTask} onChange={(e) => setATask(e.target.value)}>
+                              {MARK_TASKS.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                            </select>
                           </div>
                           <label style={{ ...meta, display: "inline-flex", alignItems: "center", gap: 7, paddingBottom: 9 }}>
                             <input type="checkbox" checked={aPublished} onChange={(e) => setAPublished(e.target.checked)} />

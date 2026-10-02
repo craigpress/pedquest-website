@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireRole } from "@/lib/admin-auth";
-import { countAdmins } from "@/lib/roles-server";
+import { countAdmins, findAuthUserIdByEmail } from "@/lib/roles-server";
 import { isRole, type Role } from "@/lib/roles";
 import { isValidEmail } from "@/lib/validation";
 
@@ -157,13 +157,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Resolve the auth user id so the row is linked even for a first grant.
-  let userId: string | null = null;
-  for (let page = 1; page <= 10 && !userId; page++) {
-    const { data } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
-    const users = data?.users ?? [];
-    userId = users.find((u) => u.email?.toLowerCase() === email)?.id ?? null;
-    if (users.length < 200) break;
-  }
+  const userId = await findAuthUserIdByEmail(email);
 
   // ON CONFLICT DO UPDATE only touches the columns present in the payload, so
   // is_test and display_name survive a role change made from this screen.

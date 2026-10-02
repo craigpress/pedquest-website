@@ -267,7 +267,6 @@ export async function getCourseDetail(gate: Extract<CourseGate, { ok: true }>): 
   // user ids: the membership row when linked, else user_roles (signed in but never opened a course)
   const userIdOf = (m: MemberRow) => m.user_id ?? identities.get(m.email)?.userId ?? null;
   const studentIds = students.map(userIdOf).filter((x): x is string => !!x);
-  const idToEmail = new Map(students.map((m) => [userIdOf(m), m.email] as const).filter(([id]) => id) as [string, string][]);
 
   const asgIds = assignmentsAll.map((a) => a.id);
   const jobIds = [...new Set(assignmentsAll.map((a) => a.job_id))];
@@ -309,7 +308,7 @@ export async function getCourseDetail(gate: Extract<CourseGate, { ok: true }>): 
     const m = new Map<string, { score: number | null; sensitivity: number | null; falseAlarms: number | null; medianLatencyS: number | null }>();
     scoresByAssignment.set(a.id, m);
     if (!studentIds.length) return;
-    const out = await computeJobResults(a.jobId, { userId: caller.userId, role: caller.role }, { onlyUserIds: new Set(studentIds) });
+    const out = await computeJobResults(a.jobId, { userId: caller.userId, role: caller.role }, { onlyUserIds: new Set(studentIds), taskIds: [a.taskId] });
     if (!out.ok || !out.results.job.hasAnswerKey) return;
     for (const l of out.results.learners) {
       const s = l.scores[a.taskId] ?? l.scores.seizure;

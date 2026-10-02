@@ -11,16 +11,21 @@
 // compares against the answer key.
 
 export type ViewerAnnotationKind =
-  | "seizure" | "seizure_onset" | "discharge" | "artifact" | "state_change" | "medication" | "note";
+  | "seizure" | "seizure_onset" | "discharge" | "rhythmic_periodic" | "normal_variant" | "background_change"
+  | "artifact" | "state_change" | "medication" | "note";
 
-export const ANNOTATION_KINDS: { id: ViewerAnnotationKind; label: string; color: string }[] = [
-  { id: "seizure", label: "Seizure", color: "#e5484d" },
-  { id: "seizure_onset", label: "Seizure onset", color: "#f76b15" },
-  { id: "discharge", label: "Sharp / spike", color: "#c2298a" },
-  { id: "artifact", label: "Artifact", color: "#8e8e93" },
-  { id: "state_change", label: "State change", color: "#3e63dd" },
-  { id: "medication", label: "Medication", color: "#30a46c" },
-  { id: "note", label: "Note", color: "#ab6400" },
+/** `hint` is the one-line helper under the kind picker; medication and note are never graded. */
+export const ANNOTATION_KINDS: { id: ViewerAnnotationKind; label: string; color: string; hint: string }[] = [
+  { id: "seizure", label: "Seizure", color: "#e5484d", hint: "Drag from onset to offset; name the region or channels." },
+  { id: "seizure_onset", label: "Seizure onset", color: "#f76b15", hint: "The instant a seizure starts; graded with seizures." },
+  { id: "discharge", label: "Sharp / spike", color: "#c2298a", hint: "One interictal discharge; tag the channel it is maximal in." },
+  { id: "rhythmic_periodic", label: "Rhythmic / periodic", color: "#d6409f", hint: "An LPD/GPD/LRDA/BIRD run that is not a seizure; mark the run and its region." },
+  { id: "normal_variant", label: "Normal variant", color: "#29a383", hint: "A benign variant or activation response (wicket, POSTS, photic driving…)." },
+  { id: "background_change", label: "Background change", color: "#0090ff", hint: "Attenuation, suppression or slowing; mark the span and the side." },
+  { id: "artifact", label: "Artifact", color: "#8e8e93", hint: "Non-cerebral signal (movement, electrode pop, EMG); mark the span." },
+  { id: "state_change", label: "State change", color: "#3e63dd", hint: "The moment of a wake/sleep or stage transition, or an arousal." },
+  { id: "medication", label: "Medication", color: "#30a46c", hint: "A dose given — your own record, not graded." },
+  { id: "note", label: "Note", color: "#ab6400", hint: "Anything else — not graded." },
 ];
 
 export function annotationColor(kind: string): string {

@@ -8,7 +8,7 @@ import {
   type CaseReference, type Difficulty, type EegCase, type PublicCase,
   type QbankDomain, type QbankPopulation, type QbankSetting,
 } from "@/lib/cases";
-import { toVersionedPublicCase } from "@/lib/cases-server";
+import { getResponseCounts, toVersionedPublicCase } from "@/lib/cases-server";
 import { versionedImageUrl } from "@/lib/image-version";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -288,7 +288,7 @@ export async function listEditorQueue(filters: EditorQueueFilters = {}): Promise
 
   const ids = data.map((r: any) => r.id);
   const refCounts: Record<string, { total: number; verified: number }> = {};
-  const responseCounts: Record<string, number> = {};
+  let responseCounts: Record<string, number> = {};
   if (ids.length) {
     const { data: refs } = await supabase
       .from("eeg_case_references").select("case_id,verified").in("case_id", ids);
@@ -297,11 +297,7 @@ export async function listEditorQueue(filters: EditorQueueFilters = {}): Promise
       bucket.total++;
       if (r.verified) bucket.verified++;
     }
-    const { data: resp } = await supabase
-      .from("eeg_responses").select("case_id").in("case_id", ids);
-    for (const r of (resp ?? []) as any[]) {
-      responseCounts[r.case_id] = (responseCounts[r.case_id] || 0) + 1;
-    }
+    responseCounts = await getResponseCounts(supabase, ids);
   }
 
   return data.map((r: any) => ({

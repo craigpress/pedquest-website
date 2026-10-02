@@ -70,7 +70,7 @@ export interface CourseAssignment {
   /** shown to students; defaults to the recording's title */
   title: string;
   instructions: string;
-  /** scoring task id, see SEIZURE_TASK / DISCHARGE_TASK */
+  /** scoring task id, one of MARK_TASKS (src/lib/lab/scoring.ts) */
   taskId: string;
   dueAt: string | null;
   sortOrder: number;
@@ -166,10 +166,6 @@ export interface CoursePerson {
   institution: string | null;
   hasAccount: boolean;
   isTest: boolean;
-}
-
-export function isSubmissionStatus(v: unknown): v is SubmissionStatus {
-  return v === "not_started" || v === "in_progress" || v === "submitted" || v === "returned";
 }
 
 export function isDone(s: SubmissionStatus): boolean {

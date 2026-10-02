@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { publications, publicationCategories } from "@/data/publications";
 import { conferenceAbstracts, abstractCategories } from "@/data/abstracts";
 import { educationResources } from "@/data/education";
@@ -10,7 +11,7 @@ import type { ConferenceAbstract } from "@/data/abstracts";
 import { useRole } from "@/lib/auth";
 import { members, type Member } from "@/data/members";
 import { supabase, getSupabase } from "@/lib/supabase";
-import { MEMBER_NAME_MAP, MEMBER_DISPLAY_NAMES, matchMemberAuthors } from "@/lib/memberMatch";
+import { MEMBER_DISPLAY_NAMES, matchMemberAuthors } from "@/lib/memberMatch";
 
 const CVImporter = dynamic(() => import("./CVImporter"), {
   ssr: false,
@@ -364,7 +365,7 @@ function AdminPageInner() {
     try {
       const isDoiLike = val.includes("/") || val.startsWith("10.");
       const param = isDoiLike ? `doi=${encodeURIComponent(val)}` : `pmid=${encodeURIComponent(val)}`;
-      const res = await fetch(`/api/pubmed?${param}`);
+      const res = await fetch(`/api/pubmed?${param}`, { headers: await authHeaders(false) });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to fetch");
@@ -458,7 +459,7 @@ function AdminPageInner() {
       const params = new URLSearchParams({ title: absTitle.trim() });
       if (absConference) params.set("conference", absConference);
       if (absYear) params.set("year", String(absYear));
-      const res = await fetch(`/api/abstract-search?${params}`);
+      const res = await fetch(`/api/abstract-search?${params}`, { headers: await authHeaders(false) });
       if (res.ok) {
         setAbsLinkResults(await res.json());
       }
@@ -646,30 +647,30 @@ function AdminPageInner() {
               {item.label}
             </button>
           ))}
-          <a href="/admin/cases">
+          <Link href="/admin/cases">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10 12 5 2 10l10 5 10-5ZM6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5" /></svg>
             Education · Cases
-          </a>
-          <a href="/admin/qbank">
+          </Link>
+          <Link href="/admin/qbank">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" /></svg>
             Question bank · Review
-          </a>
-          <a href="/admin/eeg-lab">
+          </Link>
+          <Link href="/admin/eeg-lab">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h3l2-6 3 12 3-9 2 5 2-2h5" /></svg>
             EEG Lab · Console
-          </a>
-          <a href="/admin/eeg-lab/library">
+          </Link>
+          <Link href="/admin/eeg-lab/library">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v15M9 6h7M9 10h7" /></svg>
             EEG Lab · Library
-          </a>
-          <a href="/admin/eeg-lab/viewer">
+          </Link>
+          <Link href="/admin/eeg-lab/viewer">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="14" rx="2" /><path d="M8 21h8M12 18v3M5 12h3l2-4 3 7 2-4h4" /></svg>
             EEG Lab · Viewer
-          </a>
-          <a href="/admin/events">
+          </Link>
+          <Link href="/admin/events">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
             Events
-          </a>
+          </Link>
         </nav>
         <div className="adm-who">
           <span className="adm-av">{(user?.email ?? "?").slice(0, 2).toUpperCase()}</span>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { resolveCaller } from "@/lib/admin-auth";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { checkOrigin, truncate } from "@/lib/validation";
 import { getCaseById, getCaseStats, getCaseReferences } from "@/lib/cases-server";
@@ -31,14 +32,9 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   const references = await getCaseReferences(id);
 
   // ----- resolve responder (member if a valid token is sent, else anonymous session) -----
-  let userId: string | null = null;
-  let memberEmail: string | null = null;
-  const authHeader = request.headers.get("authorization") || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  if (token) {
-    const { data } = await supabase.auth.getUser(token);
-    if (data?.user) { userId = data.user.id; memberEmail = data.user.email ?? null; }
-  }
+  const caller = await resolveCaller(request);
+  const userId = caller?.userId ?? null;
+  const memberEmail = caller?.email ?? null;
   const sessionId = userId ? null : truncate(String(body.sessionId || "").trim(), 100) || null;
   if (!userId && !sessionId) {
     return NextResponse.json({ error: "Missing session identifier." }, { status: 400 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireCourse, UUID_RE } from "@/lib/courses/server";
 import { canSeeRecording } from "@/lib/lab/visibility";
+import { markTaskById } from "@/lib/lab/scoring";
 
 export const runtime = "nodejs";
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ course
       job_id: jobId,
       title: typeof body.title === "string" ? body.title.trim().slice(0, 200) : "",
       instructions: typeof body.instructions === "string" ? body.instructions.trim().slice(0, 4000) : DEFAULT_INSTRUCTIONS,
-      task_id: body.taskId === "discharge" ? "discharge" : "seizure",
+      task_id: typeof body.taskId === "string" && markTaskById(body.taskId) ? body.taskId : "seizure",
       due_at: dueAt,
       sort_order: ((last?.[0] as any)?.sort_order ?? -1) + 1,
       created_by: gate.caller.userId,
