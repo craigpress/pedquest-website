@@ -77,9 +77,11 @@ export function categoryOf(kind: string, detail: KeyDetail = {}): KeyCategory {
   const acns = str(detail.acns_classification);
   if (kind === "rhythmic_pattern") return acns === "IIC" || acns.startsWith("BIRDs") ? "iic" : "rpp";
   if (kind === "brd") return "iic";
+  // learner kinds too, so a mark promoted into the key (or a hand-added row) grades like a rendered one
+  if (kind === "rhythmic_periodic") return "rpp";
   if ((DISCHARGE_KINDS as readonly string[]).includes(kind)) return "interictal";
   if (["normal_variant", "activation_response", "arousal_pattern_pending_review", "delta_brush"].includes(kind)) return "normal";
-  if (["attenuation_transient", "cape_cycle"].includes(kind)) return "background";
+  if (["attenuation_transient", "cape_cycle", "background_change"].includes(kind)) return "background";
   if (kind === "artifact") return "artifact";
   if (["sleep_stage", "arousal", "state", "state_detail", "state_change"].includes(kind)) return "state";
   return "context";

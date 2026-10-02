@@ -2,8 +2,9 @@
 
 // Class results for one lab recording — teachers and up.
 //
-// One timeline (answer key on top, one row per learner), a per-event table
-// (who caught which seizure, how late), and a per-learner table with the
+// A per-task overview (every scoring task the recording has key rows or marks
+// for), then for the picked task: one timeline (answer key on top, one row per
+// learner), a per-event table (who caught which event, how late), and a per-learner table with the
 // scoring from src/lib/lab/scoring.ts. Instructors' own marks are shown in a
 // separate strip and never counted in the class numbers.
 
@@ -14,7 +15,7 @@ import { useRole } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { adminShellWide, card, eyebrow, h1, meta, mini } from "@/lib/admin-ui";
 import { REGION_LABELS, annotationColor, describeTarget, formatClock } from "@/lib/eeg/annotations";
-import { taskGradesKey, type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask } from "@/lib/lab/scoring";
+import { type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask } from "@/lib/lab/scoring";
 import { SUBMISSION_COLORS, SUBMISSION_LABELS, type SubmissionState } from "@/lib/courses/types";
 
 interface Learner {
@@ -116,14 +117,32 @@ export default function ClassResultsPage() {
 
       {data && task && (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* ── one row per graded task; pick one for the detail below ── */}
           {data.tasks.length > 1 && (
-            <div style={{ display: "flex", gap: 8 }}>
-              {data.tasks.map((t) => (
-                <button key={t.task.id} type="button" style={{ ...mini, fontWeight: t.task.id === task.task.id ? 700 : 400 }} onClick={() => setTaskId(t.task.id)}>
-                  {t.task.title}
-                </button>
-              ))}
-            </div>
+            <section style={{ ...card, padding: 16, overflowX: "auto" }}>
+              <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>Tasks</h2>
+              <table style={tbl}>
+                <thead><tr><th style={th}>Task</th><th style={th}>Key events</th><th style={th}>Mean sensitivity</th><th style={th}>False alarms / learner</th><th style={th}>Median score</th></tr></thead>
+                <tbody>
+                  {data.tasks.map((t) => {
+                    const on = t.task.id === task.task.id;
+                    return (
+                      <tr key={t.task.id} onClick={() => setTaskId(t.task.id)} style={{ cursor: "pointer", background: on ? "var(--bg-subtle, transparent)" : undefined }}>
+                        <td style={{ ...td, fontWeight: on ? 700 : 400 }}>
+                          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: annotationColor(t.task.learnerKinds[0]), marginRight: 6, verticalAlign: "middle" }} />
+                          {t.task.title}
+                        </td>
+                        <td style={td}>{t.summary.keyCount}</td>
+                        <td style={td}>{pct(t.summary.meanSensitivity)}</td>
+                        <td style={td}>{t.summary.meanFalseAlarms === null ? "—" : t.summary.meanFalseAlarms.toFixed(1)}</td>
+                        <td style={td}>{t.summary.medianComposite ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p style={{ ...meta, marginTop: 8 }}>Medication and note marks are the learner&apos;s own record and are never graded.</p>
+            </section>
           )}
 
           {/* ── summary tiles ── */}
@@ -139,7 +158,8 @@ export default function ClassResultsPage() {
           {/* ── timeline ── */}
           <section style={{ ...card, padding: 16 }}>
             <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>Timeline</h2>
-            <Timeline durationS={data.job.durationS} keyEvents={data.key} task={task.task} learners={learners} instructors={instructors} onPick={setOpen} />
+            <Timeline durationS={data.job.durationS} keyEvents={data.key} task={task.task} graded={new Set(task.summary.perKeyEvent.map((k) => k.keyIndex))}
+              learners={learners} instructors={instructors} onPick={setOpen} />
             <p style={{ ...meta, marginTop: 8 }}>
               Top row: answer key. Solid blocks are marks that matched a key event; hollow blocks did not; triangles are instantaneous marks.
               Colours follow the mark kind. Tolerance for a detection: ±{task.task.toleranceS} s around each key event.
@@ -208,7 +228,7 @@ export default function ClassResultsPage() {
               <p style={{ ...meta, marginTop: 10 }}>
                 <b>Localization</b> = match · partial · miss · not stated: what the learner said about <i>where</i> (their named region,
                 else the channels they tagged, else a left/right trend row) against the key&apos;s onset region. Partial = same
-                hemisphere but a different lobe, or hemisphere-level only. Not stated is never counted as wrong.{" "}
+                hemisphere but a different lobe, or hemisphere-level only. Not stated scores like a miss; a key event with no region is not graded for localization.{" "}
                 <b>Pane</b> = how many of their marks were placed on the raw EEG versus on a trend row; a trend-first reader
                 usually shows up as later onsets and longer durations. <b>Score</b> = 50 % detection (F1), 30 % timing, 20 % localization.
                 Click a row for the mark-by-mark detail.
@@ -311,8 +331,11 @@ function LearnerRows({ jobId, learner: l, score: s, keyEvents, isOpen, submissio
   );
 }
 
-function Timeline({ durationS, keyEvents, task, learners, instructors, onPick }: {
-  durationS: number; keyEvents: KeyEvent[]; task: MarkTask; learners: Learner[]; instructors: Learner[]; onPick: (userId: string) => void;
+function Timeline({ durationS, keyEvents, task, graded: gradedIdx, learners, instructors, onPick }: {
+  durationS: number; keyEvents: KeyEvent[]; task: MarkTask;
+  /** indexes into `keyEvents` this task grades */
+  graded: Set<number>;
+  learners: Learner[]; instructors: Learner[]; onPick: (userId: string) => void;
 }) {
   const LABEL_W = 150, ROW_H = 22, PAD = 6;
   const rows = [...learners, ...instructors];
@@ -338,10 +361,10 @@ function Timeline({ durationS, keyEvents, task, learners, instructors, onPick }:
         {/* answer key row */}
         <text x={0} y={PAD + ROW_H / 2 + 4} fontSize={12} fontWeight={700} fill="var(--text)">Answer key</text>
         {keyEvents.map((k, i) => {
-          const graded = taskGradesKey(task, k);
+          const graded = gradedIdx.has(i);
           return (
-            <rect key={i} x={x(k.onsetS)} y={PAD + 3} width={Math.max(2, x(k.offsetS) - x(k.onsetS))} height={ROW_H - 6}
-              fill={graded ? annotationColor("seizure") : "var(--text-muted)"} opacity={graded ? 0.9 : 0.4} rx={2}>
+            <rect key={i} x={x(k.onsetS)} y={PAD + 3} width={task.transitions && graded ? 2 : Math.max(2, x(k.offsetS) - x(k.onsetS))} height={ROW_H - 6}
+              fill={graded ? annotationColor(task.learnerKinds[0]) : "var(--text-muted)"} opacity={graded ? 0.9 : 0.4} rx={2}>
               <title>{`${k.label || k.kind} ${formatClock(k.onsetS)} – ${formatClock(k.offsetS)}${k.region ? ` · ${REGION_LABELS[k.region]}` : ""}`}</title>
             </rect>
           );

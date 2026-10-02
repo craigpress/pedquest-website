@@ -18,7 +18,7 @@ import { getRoleRowsByUserIds } from "@/lib/roles-server";
 import { hasRole, type Role } from "@/lib/roles";
 import { DEFAULT_TARGET, isAnnotationRegion } from "@/lib/eeg/annotations";
 import {
-  DISCHARGE_TASK, SEIZURE_TASK, parseAnswerKey, scoreLearner, summariseClass, taskGradesKey,
+  MARK_TASKS, SEIZURE_TASK, parseAnswerKey, scoreLearner, summariseClass, taskGradesKey,
   type ClassSummary, type KeyEvent, type LearnerMark, type LearnerScore, type MarkTask,
 } from "@/lib/lab/scoring";
 import { answerKeyCacheIdentity, applyAnswerOverrides, type AnswerOverrideRow } from "@/lib/lab/answer-overrides";
@@ -113,12 +113,13 @@ async function fetchAnswerKey(answersPath: string): Promise<{ key: KeyEvent[]; e
  * `viewer` must already be teacher+ (or a course manager): it is used only for
  * the recording-visibility check. `onlyUserIds` restricts the learners to a
  * roster (course view); instructors' marks are still returned, flagged, and
- * never counted in the class summary.
+ * never counted in the class summary. `taskIds` are always graded (an
+ * assignment's task), even on a recording with nothing for them yet.
  */
 export async function computeJobResults(
   jobId: string,
   viewer: { userId: string; role: Role },
-  opts: { onlyUserIds?: Set<string> } = {},
+  opts: { onlyUserIds?: Set<string>; taskIds?: string[] } = {},
 ): Promise<JobResultsOutcome> {
   const supabase = createServerClient();
   if (!supabase) return { ok: false, status: 503, error: "Supabase is not configured." };
@@ -150,9 +151,10 @@ export async function computeJobResults(
   for (const r of rows) byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), r]);
   const roleRows = await getRoleRowsByUserIds([...byUser.keys()]);
 
-  // seizures always (that is what these recordings are for); discharges only when the key or a learner has them
-  const tasks: MarkTask[] = [SEIZURE_TASK];
-  if (key.some((k) => taskGradesKey(DISCHARGE_TASK, k)) || rows.some((r) => r.kind === "discharge")) tasks.push(DISCHARGE_TASK);
+  // seizures always (that is what these recordings are for); every other task when the key or a learner has
+  // something for it, or a course assignment grades it
+  const tasks: MarkTask[] = MARK_TASKS.filter((t) => t === SEIZURE_TASK || opts.taskIds?.includes(t.id)
+    || key.some((k) => taskGradesKey(t, k)) || rows.some((r) => t.learnerKinds.includes(r.kind)));
 
   const learners: ResultsLearner[] = [...byUser.entries()].map(([userId, list]) => {
     const roleRow = roleRows.get(userId);

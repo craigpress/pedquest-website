@@ -309,7 +309,7 @@ export async function getCourseDetail(gate: Extract<CourseGate, { ok: true }>): 
     const m = new Map<string, { score: number | null; sensitivity: number | null; falseAlarms: number | null; medianLatencyS: number | null }>();
     scoresByAssignment.set(a.id, m);
     if (!studentIds.length) return;
-    const out = await computeJobResults(a.jobId, { userId: caller.userId, role: caller.role }, { onlyUserIds: new Set(studentIds) });
+    const out = await computeJobResults(a.jobId, { userId: caller.userId, role: caller.role }, { onlyUserIds: new Set(studentIds), taskIds: [a.taskId] });
     if (!out.ok || !out.results.job.hasAnswerKey) return;
     for (const l of out.results.learners) {
       const s = l.scores[a.taskId] ?? l.scores.seizure;
