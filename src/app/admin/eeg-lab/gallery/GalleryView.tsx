@@ -230,6 +230,12 @@ export default function GalleryView() {
             patterns, seizures, ACNS critical-care terminology, neonatal records and trends. Click a page to read it
             at full size, set its review status and leave notes.
           </p>
+          <p className={styles.statusKey}>
+            <b>New</b>: not yet reviewed at this renderer version; any earlier status is kept but shows as New
+            after a re-render. <b>Needs review</b>: looked at and something is wrong or uncertain; say what in a
+            note. <b>Accepted</b>: clinically acceptable as drawn. In the page viewer, <kbd>A</kbd> accepts and{" "}
+            <kbd>N</kbd> marks needs review.
+          </p>
         </div>
         {data && (
           <div className={styles.progress} role="status">

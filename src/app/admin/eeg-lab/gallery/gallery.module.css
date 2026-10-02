@@ -13,6 +13,8 @@
 .header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 18px; }
 .header h1 { font-family: var(--heading-font); font-size: clamp(1.8rem, 3vw, 2.5rem); margin: 4px 0 6px; }
 .header p { color: var(--text-secondary); max-width: 760px; margin: 0; font-size: .95rem; }
+.header p.statusKey { margin-top: 8px; font-size: .82rem; }
+.statusKey kbd { font-family: var(--mono-font); font-size: .75rem; padding: 0 4px; border: 1px solid var(--border, currentColor); border-radius: 3px; }
 .eyebrow { display: block; font-family: var(--mono-font); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-primary); font-weight: 600; }
 .progress { font-family: var(--mono-font); font-size: .78rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 .progress b { color: var(--ink); font-weight: 600; }
