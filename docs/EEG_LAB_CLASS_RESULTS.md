@@ -29,7 +29,7 @@ Teachers see the published library like a member (no recording page, no review q
 | column | meaning |
 |---|---|
 | `onset_s`, `duration_s` | span; `duration_s = 0` is an instantaneous mark |
-| `kind` | seizure · seizure_onset · discharge (sharp/spike) · artifact · state_change · medication · note |
+| `kind` | seizure · seizure_onset · discharge (sharp/spike) · rhythmic_periodic · normal_variant · background_change · artifact · state_change · medication · note (the last two are never graded; the kind picker shows a one-line hint per kind). The three middle kinds were added 2026-10-02, migration `20261002000001_annotation_kinds_rpp_variant_background.sql` widens `eeg_lab_annotations_kind_check` |
 | `pane` | `raw` or `trend` — where the learner made the mark |
 | `trend_row` | `psd_right`, `aeeg_left`, … when `pane = trend` |
 | `channels` | electrode or derivation labels the learner points at (`{C4}`, `{C4-P4}`); empty = not stated |
@@ -41,11 +41,24 @@ This is what lets one recording carry different question types: "mark the seizur
 
 ## Scoring (`src/lib/lab/scoring.ts`)
 
-A **task** says what was asked and how to grade: `type` (span · point · channel_point · trend_point), which learner kinds count, which key kinds they are graded against, and a time tolerance. `SEIZURE_TASK` (tolerance ±30 s) always runs; `DISCHARGE_TASK` (±2 s) runs when the key or a learner has discharges.
+A **task** says what was asked and how to grade: `type` (span · point · channel_point · trend_point), which learner kinds count, which key kinds — or key categories (`categoryOf`, `src/lib/lab/key-kinds.ts`) — they are graded against, and a raw-pane time tolerance (trend marks widen it by view resolution). `MARK_TASKS`:
+
+| key category | learner kind | task id | type · tolerance | graded |
+|---|---|---|---|---|
+| ictal (incl. ACNS runs classified ESz) | seizure, seizure_onset | `seizure` | span · ±10 s | detection, onset, duration, region |
+| interictal | discharge | `discharge` | channel_point · ±2 s | detection, onset, channel/region |
+| rpp + iic (IIC, BIRDs, interictal RPP) | rhythmic_periodic | `rhythmic_periodic` | span · ±10 s | detection, onset, duration, region |
+| normal (not delta brushes, not the pending frontal arousal rhythm) | normal_variant | `normal_variant` | point · ±5 s | detection, onset (region if keyed) |
+| background (attenuation, CAPE) | background_change | `background_change` | span · ±30 s | detection, onset, duration, side (from the row's `side`) |
+| artifact | artifact | `artifact` | span · ±5 s | detection, onset, duration (no region keyed) |
+| state (state, sleep_stage, arousal; not state_detail) | state_change | `state_change` | point · ±30 s, transitions | detection, onset |
+| context | — | — | not graded | |
+
+A *transitions* task grades each key row at its onset only, skips rows that start at 0 s, and collapses rows starting within the tolerance of an earlier one (a state row and the stage row that begin together). `seizure` always runs; every other task runs when the key or a learner has something for it, or a course assignment uses it (assignments pick any `MARK_TASKS` id; the course page's assignment editor has a *Graded task* select). The results page opens with a per-task table (key events, mean sensitivity, false alarms, median score); clicking a task shows its timeline, per-event and per-learner tables.
 
 Matching is one-to-one, greedy by best temporal fit (IoU for spans, distance-to-onset for points). Per learner: detected / key events (sensitivity), false alarms (unmatched marks), precision, F1, median onset latency (+ = late), median duration error, mean overlap, localization tally, pane split, and a **composite 0–100** = 50 % F1 + 30 % timing (1 − |latency|/tolerance) + 20 % localization (when the learner localized at least once; otherwise the 20 % folds into F1).
 
-**Localization** compares what the learner said about *where* with the key's `onset_region`: the stated `region` wins; else regions inferred from `channels` (electrode → region table, derivations contribute both ends); else a `_left`/`_right` trend row gives hemisphere-level. Grades: `match` (same region), `partial` (same hemisphere / hemisphere-vs-lobe / lateralized answer to a generalized key), `miss` (wrong side), `not_stated`. Not stated is never counted as wrong.
+**Localization** compares what the learner said about *where* with the key's `onset_region`: the stated `region` wins; else regions inferred from `channels` (electrode → region table, derivations contribute both ends); else a `_left`/`_right` trend row gives hemisphere-level. Grades: `match` (same region), `partial` (same hemisphere / hemisphere-vs-lobe / lateralized answer to a generalized key), `miss` (wrong side), `not_stated` (scored 0, like a miss — Craig, 2026-09-16); a key row with no region is `ungraded`.
 
 Class roll-up: per key event, who detected it and the median latency; mean sensitivity, mean false alarms per learner, median composite. Instructors' (teacher+) own marks are listed but excluded from every class number.
 

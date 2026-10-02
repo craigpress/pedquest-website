@@ -7,7 +7,9 @@
 // A "task" says what the learner was asked to mark and how to grade it. The
 // same recording can carry several: a seizure task grades spans/points against
 // the ictal events, a discharge task grades channel-tagged points against the
-// key's discharges, a trend task grades points on a named trend row. All of
+// key's discharges, a trend task grades points on a named trend row; the
+// rhythmic/periodic, normal-variant, background, artifact and state tasks grade
+// by answer-key category (`categoryOf`, key-kinds.ts). `MARK_TASKS` lists them. All of
 // them share one matching core: one-to-one assignment of marks to key events
 // by best temporal overlap, then per-match timing and localization.
 //
@@ -78,6 +80,10 @@ export function parseAnswerKey(manifest: unknown): KeyEvent[] {
       if (!region && typeof e.focus === "string") {
         region = e.focus.startsWith("generalized") ? "generalized" : regionsOfChannels(channels)[0] ?? null;
       }
+      // a lateralized attenuation names only its side; that is what the background-change task localizes against
+      if (!region && (e.side === "left" || e.side === "right") && categoryOf(kind, detail) === "background") {
+        region = e.side === "left" ? "left_hemisphere" : "right_hemisphere";
+      }
       return { id: `original:${originalIndex}`, kind, onsetS, offsetS, region, channels, label: describeKeyRow(kind, detail), detail };
     })
     .sort((a, b) => a.onsetS - b.onsetS);
@@ -120,6 +126,16 @@ export interface MarkTask {
   keyKinds: string[];
   /** also grade against any row `isIctal` accepts (an ACNS run classified as an electrographic seizure) */
   keyIctal?: boolean;
+  /** also grade against every row whose `categoryOf` is one of these */
+  keyCategories?: KeyCategory[];
+  /** rows of these kinds are never graded by this task, whatever their category */
+  keyExcludeKinds?: string[];
+  /**
+   * The key rows are state transitions: each is graded at its onset only (a stage row's span is not the
+   * answer), a row starting at the recording start is skipped (nothing changed there), and a row starting
+   * within the tolerance of an earlier one collapses into it (a state row and the stage row that begin together).
+   */
+  transitions?: boolean;
   /** a RAW-pane mark starting within this many seconds of a key event (before or after) still counts as detecting it; trend marks widen this by view resolution (`toleranceFor`) */
   toleranceS: number;
   /** trend_point: the row the learner was told to use; null = any trend row */
@@ -148,10 +164,98 @@ export const DISCHARGE_TASK: MarkTask = {
   toleranceS: 2,
 };
 
-/** Whether a task grades against this key row. */
-export function taskGradesKey(task: MarkTask, key: Pick<KeyEvent, "kind" | "detail">): boolean {
-  return task.keyKinds.includes(key.kind) || (task.keyIctal === true && isIctal(key));
+/** ACNS rhythmic/periodic runs the renderer did NOT classify as a seizure (those belong to SEIZURE_TASK), IIC and BIRDs included. */
+export const RHYTHMIC_PERIODIC_TASK: MarkTask = {
+  id: "rhythmic_periodic",
+  title: "Mark each rhythmic or periodic pattern that is not a seizure (LPDs, GPDs, LRDA, BIRDs) and its region",
+  type: "span",
+  learnerKinds: ["rhythmic_periodic"],
+  keyKinds: [],
+  keyCategories: ["rpp", "iic"],
+  toleranceS: 10,
+};
+
+/** Delta brushes are keyed one row per brush (several a minute) and the frontal arousal rhythm awaits review, so neither is asked for. */
+export const NORMAL_VARIANT_TASK: MarkTask = {
+  id: "normal_variant",
+  title: "Mark each normal variant or activation response",
+  type: "point",
+  learnerKinds: ["normal_variant"],
+  keyKinds: [],
+  keyCategories: ["normal"],
+  keyExcludeKinds: ["delta_brush", "arousal_pattern_pending_review"],
+  toleranceS: 5,
+};
+
+/** Attenuations ramp in over tens of seconds, hence the wider tolerance. */
+export const BACKGROUND_TASK: MarkTask = {
+  id: "background_change",
+  title: "Mark each background change (attenuation, suppression) and its side",
+  type: "span",
+  learnerKinds: ["background_change"],
+  keyKinds: [],
+  keyCategories: ["background"],
+  toleranceS: 30,
+};
+
+export const ARTIFACT_TASK: MarkTask = {
+  id: "artifact",
+  title: "Mark each artifact",
+  type: "span",
+  learnerKinds: ["artifact"],
+  keyKinds: [],
+  keyCategories: ["artifact"],
+  toleranceS: 5,
+};
+
+/** One staging epoch of tolerance; `state_detail` rows describe the morphology inside a state, not a change. */
+export const STATE_TASK: MarkTask = {
+  id: "state_change",
+  title: "Mark each change of state (wake, sleep stage, arousal)",
+  type: "point",
+  learnerKinds: ["state_change"],
+  keyKinds: [],
+  keyCategories: ["state"],
+  keyExcludeKinds: ["state_detail"],
+  transitions: true,
+  toleranceS: 30,
+};
+
+/** Every gradable task, in the order the class-results page lists them. Medication and note marks are never graded. */
+export const MARK_TASKS: MarkTask[] = [
+  SEIZURE_TASK, DISCHARGE_TASK, RHYTHMIC_PERIODIC_TASK, NORMAL_VARIANT_TASK, BACKGROUND_TASK, ARTIFACT_TASK, STATE_TASK,
+];
+
+export function markTaskById(id: string): MarkTask | null {
+  return MARK_TASKS.find((t) => t.id === id) ?? null;
 }
+
+/** Whether some task grades marks of this learner kind. */
+export function isGradedKind(kind: string): boolean {
+  return MARK_TASKS.some((t) => t.learnerKinds.includes(kind));
+}
+
+/** Whether a task grades against this key row. */
+export function taskGradesKey(task: MarkTask, key: Pick<KeyEvent, "kind" | "detail" | "onsetS">): boolean {
+  if (task.keyExcludeKinds?.includes(key.kind)) return false;
+  if (task.transitions && key.onsetS <= 0) return false;
+  return task.keyKinds.includes(key.kind) || (task.keyIctal === true && isIctal(key))
+    || (task.keyCategories?.includes(keyCategory(key)) ?? false);
+}
+
+/** The key rows a task grades, in key order (transition rows collapsed, see `MarkTask.transitions`). */
+export function gradedKeys(task: MarkTask, keyAll: KeyEvent[]): KeyEvent[] {
+  const out: KeyEvent[] = [];
+  for (const k of keyAll) {
+    if (!taskGradesKey(task, k)) continue;
+    if (task.transitions && out.some((o) => Math.abs(o.onsetS - k.onsetS) <= task.toleranceS)) continue;
+    out.push(k);
+  }
+  return out;
+}
+
+/** End of the stretch a key row is graded on: its offset, or its onset for a transition. */
+const keyEnd = (task: MarkTask, key: KeyEvent): number => (task.transitions ? key.onsetS : key.offsetS);
 
 // ── time tolerance by view ─────────────────────────────────────────────────
 
@@ -287,12 +391,13 @@ function overlapIoU(a0: number, a1: number, b0: number, b1: number): number {
 /** How well a mark fits a key event on [0,1]; 0 = does not count as detecting it. */
 function fit(mark: LearnerMark, key: KeyEvent, task: MarkTask, tolS: number): number {
   const m0 = mark.onsetS, m1 = mark.onsetS + mark.durationS;
-  const k0 = key.onsetS - tolS, k1 = key.offsetS + tolS;
+  const end = keyEnd(task, key);
+  const k0 = key.onsetS - tolS, k1 = end + tolS;
   if (m1 < k0 || m0 > k1) return 0;
-  if (mark.durationS > 0 && key.offsetS > key.onsetS) return Math.max(0.05, overlapIoU(m0, m1, key.onsetS, key.offsetS));
+  if (mark.durationS > 0 && end > key.onsetS) return Math.max(0.05, overlapIoU(m0, m1, key.onsetS, end));
   // point mark (or point key): score by distance to the key onset, 1 at the onset → 0.05 at the tolerance edge
   const d = Math.abs(m0 - key.onsetS);
-  const span = Math.max(tolS, key.offsetS - key.onsetS + tolS);
+  const span = Math.max(tolS, end - key.onsetS + tolS);
   return Math.max(0.05, 1 - d / span);
 }
 
@@ -330,7 +435,7 @@ export function scoreLearner(
   task: MarkTask, keyAll: KeyEvent[], marksAll: LearnerMark[],
   opts: { /** recording length; the fallback view span for legacy trend marks */ durationS?: number | null } = {},
 ): LearnerScore {
-  const key = keyAll.filter((k) => taskGradesKey(task, k));
+  const key = gradedKeys(task, keyAll);
   let marks = marksAll.filter((m) => task.learnerKinds.includes(m.kind));
   if (task.type === "trend_point") marks = marks.filter((m) => m.pane === "trend" && (!task.trendRow || m.trendRow === task.trendRow));
   const tolOf = (m: LearnerMark) => toleranceFor(task, m, opts.durationS);
@@ -345,7 +450,7 @@ export function scoreLearner(
     if (usedM.has(c.mi) || usedK.has(c.ki)) continue;
     usedM.add(c.mi); usedK.add(c.ki);
     const m = marks[c.mi], k = key[c.ki];
-    const keyDur = k.offsetS - k.onsetS;
+    const keyDur = keyEnd(task, k) - k.onsetS;
     matches.push({
       markId: m.id,
       keyIndex: keyAll.indexOf(k),
@@ -432,7 +537,8 @@ export interface ClassSummary {
 }
 
 export function summariseClass(task: MarkTask, keyAll: KeyEvent[], scores: LearnerScore[]): ClassSummary {
-  const key = keyAll.map((k, i) => ({ k, i })).filter(({ k }) => taskGradesKey(task, k));
+  const graded = new Set(gradedKeys(task, keyAll));
+  const key = keyAll.map((k, i) => ({ k, i })).filter(({ k }) => graded.has(k));
   const sens = scores.map((s) => s.sensitivity).filter((x): x is number => x !== null);
   const comps = scores.map((s) => s.composite).filter((x): x is number => x !== null);
   return {
