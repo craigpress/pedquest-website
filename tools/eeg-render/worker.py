@@ -6,6 +6,10 @@ import argparse
 import json
 import logging
 import os
+
+# Same single-thread BLAS contract as lab_worker and the test suite, so bank images match the pinned hashes.
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
 import tempfile
 import time
 from pathlib import Path
