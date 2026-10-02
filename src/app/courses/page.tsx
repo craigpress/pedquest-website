@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRole, useUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
+import SkeletonList from "@/components/SkeletonList";
 import {
   adminShellWide, btnGhost, btnPrimary, card, eyebrow, fieldLabel, h1, inp, meta, mini,
 } from "@/lib/admin-ui";
@@ -135,7 +136,12 @@ export default function CoursesPage() {
   }
 
   if (userLoading || roleLoading) {
-    return <div style={adminShellWide}><p style={{ color: "var(--text-muted)" }}>Loading…</p></div>;
+    return (
+      <div style={adminShellWide}>
+        <div className="skeleton" style={{ height: 34, width: 180, marginTop: 20 }} aria-hidden="true" />
+        <SkeletonList count={3} height={96} style={{ display: "grid", gap: 14, marginTop: 26 }} />
+      </div>
+    );
   }
   if (!signedIn) {
     return (
@@ -172,7 +178,7 @@ export default function CoursesPage() {
       <section style={{ marginTop: 26 }}>
         <h2 style={{ ...h1, fontSize: "1.2rem" }}>My courses</h2>
         {loading ? (
-          <p style={{ ...meta, marginTop: 10 }}>Loading…</p>
+          <SkeletonList count={2} height={96} className="co-grid" style={{ marginTop: 12 }} />
         ) : enrolled.length === 0 ? (
           <p style={{ ...meta, marginTop: 10 }}>
             You are not enrolled in a course yet — a teacher adds you by email, and the class appears here.
@@ -233,7 +239,7 @@ export default function CoursesPage() {
           )}
 
           {loading ? (
-            <p style={{ ...meta, marginTop: 10 }}>Loading…</p>
+            <SkeletonList count={2} height={96} className="co-grid" style={{ marginTop: 12 }} />
           ) : teaching.length === 0 ? (
             <p style={{ ...meta, marginTop: 10 }}>
               No courses yet — create one, enrol your learners by email, then assign published recordings from the EEG Library.

@@ -23,6 +23,9 @@ import {
   type LabArtifact,
 } from "@/lib/lab/types";
 import { displayTitle, labelize, type LibraryEntry, type LibraryFacets } from "@/lib/lab/library";
+import SkeletonList from "@/components/SkeletonList";
+
+const PAGE_SIZE = 20;
 
 type Filters = {
   kind: string; age: string; background: string; event: string; domain: string; source: string;
@@ -100,6 +103,14 @@ export default function LibraryPage() {
     return p.toString();
   }, [q, filters, review, isEditor]);
 
+  // "Show more" grows the list for the current query only; any new search,
+  // filter or review tab starts again from the first page.
+  const [extra, setExtra] = useState<{ key: string; n: number }>({ key: "", n: 0 });
+  const visibleCount = PAGE_SIZE + (extra.key === params ? extra.n : 0);
+  const hiddenCount = Math.max(0, entries.length - visibleCount);
+  const showMore = (n: number) =>
+    setExtra((x) => ({ key: params, n: (x.key === params ? x.n : 0) + n }));
+
   // Debounced fetch: the search runs server-side over the whole library, and
   // a keystroke every 250 ms is cheap against a few hundred metadata rows.
   useEffect(() => {
@@ -163,7 +174,12 @@ export default function LibraryPage() {
   }
 
   if (userLoading || roleLoading) {
-    return <div style={adminShellWide}><p style={{ color: "var(--text-muted)" }}>Loading…</p></div>;
+    return (
+      <div style={adminShellWide}>
+        <div className="skeleton" style={{ height: 34, width: 200, marginTop: 20 }} aria-hidden="true" />
+        <SkeletonList count={4} height={120} style={{ display: "grid", gap: 12, marginTop: 24 }} />
+      </div>
+    );
   }
   if (!signedIn) {
     return (
@@ -201,6 +217,13 @@ export default function LibraryPage() {
         .lib-review-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
         @media (max-width: 960px) { .lib-filters { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 560px) { .lib-filters { grid-template-columns: 1fr 1fr; } }
+        /* Touch: row actions, review tabs and facet selects are full-size tap targets */
+        @media (max-width: 900px), (pointer: coarse) {
+          .lib-row .lib-chips :is(a, button), .lib-review-chips button, .lib-dl button, .lib-act {
+            min-height: 40px !important; display: inline-flex !important; align-items: center;
+          }
+          .lib-filters select { min-height: 40px; }
+        }
       `}</style>
 
       <div style={{ marginBottom: 18 }}>
@@ -243,6 +266,7 @@ export default function LibraryPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, gap: 10, flexWrap: "wrap" }}>
           <span style={meta}>
             {loading ? "Searching…" : `${entries.length} of ${total} recording${total === 1 ? "" : "s"}`}
+            {!loading && hiddenCount > 0 && ` · first ${entries.length - hiddenCount} listed`}
           </span>
           {activeFilters > 0 && (
             <button type="button" style={mini} onClick={() => { setQ(""); setFilters(EMPTY_FILTERS); }}>Clear</button>
@@ -276,12 +300,15 @@ export default function LibraryPage() {
       )}
 
       <section style={{ ...card, padding: "4px 18px 18px", marginTop: isEditor ? 0 : 16 }}>
+        {loading && entries.length === 0 && (
+          <SkeletonList count={4} height={110} style={{ display: "grid", gap: 12, marginTop: 14 }} />
+        )}
         {!loading && entries.length === 0 && (
           <p style={{ ...meta, marginTop: 14 }}>
             {total === 0 ? "No finished recordings yet." : "Nothing matches. Loosen a filter or try another word."}
           </p>
         )}
-        {entries.map((e) => {
+        {entries.slice(0, visibleCount).map((e) => {
           const s = e.summary;
           const qn = e.question;
           const title = displayTitle(e);
@@ -438,6 +465,16 @@ export default function LibraryPage() {
             </div>
           );
         })}
+        {hiddenCount > 0 && (
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", alignItems: "center", borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+            <button type="button" className="lib-act" style={{ ...mini, borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }} onClick={() => showMore(PAGE_SIZE)}>
+              Show {Math.min(PAGE_SIZE, hiddenCount)} more
+            </button>
+            <button type="button" className="lib-act" style={mini} onClick={() => showMore(hiddenCount)}>
+              Show all {entries.length}
+            </button>
+          </div>
+        )}
       </section>
 
       <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>

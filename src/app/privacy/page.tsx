@@ -48,7 +48,7 @@ export default function PrivacyPage() {
             </p>
 
             <div className="pv-table-wrap">
-              <table className="pv-table">
+              <table className="pv-table pv-collect">
                 <thead>
                   <tr>
                     <th>Where</th>
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
             </p>
 
             <div className="pv-table-wrap">
-              <table className="pv-table">
+              <table className="pv-table pv-storage">
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -340,6 +340,27 @@ export default function PrivacyPage() {
         .pv-table tr:last-child td { border-bottom: 0; }
         .pv-table td:first-child { color: var(--ink); font-weight: 500; }
         .pv-table a { color: var(--accent); }
+
+        /* Phones: each row becomes a labelled card instead of a sideways scroll */
+        @media (max-width: 600px) {
+          .pv-table-wrap { overflow-x: visible; }
+          .pv-table { min-width: 0; }
+          .pv-table, .pv-table tbody, .pv-table tr, .pv-table td { display: block; }
+          .pv-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+          .pv-table tr { padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); }
+          .pv-table tr:last-child { border-bottom: 0; }
+          .pv-table td { padding: 0.15rem 0; border-bottom: 0; }
+          .pv-table td:first-child { font-weight: 600; margin-bottom: 0.2rem; }
+          .pv-table td:first-child a { display: inline-flex; align-items: center; min-height: 40px; }
+          .pv-table td:not(:first-child)::before {
+            display: block; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--muted); font-weight: 600; margin-top: 0.35rem;
+          }
+          .pv-collect td:nth-child(2)::before { content: "What"; }
+          .pv-collect td:nth-child(3)::before { content: "Why"; }
+          .pv-storage td:nth-child(2)::before { content: "Type"; }
+          .pv-storage td:nth-child(3)::before { content: "Purpose"; }
+        }
       `}</style>
     </RevealMain>
   );

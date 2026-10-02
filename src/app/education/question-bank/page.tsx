@@ -67,9 +67,10 @@ export default async function QuestionBankPage() {
         }
         .qb-hero-stats strong { color: var(--accent); font-size: 1.15rem; }
         .qb-hero-links {
-          display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 1.25rem;
+          display: flex; gap: 0 1.25rem; flex-wrap: wrap; margin-top: 0.75rem;
           font-family: var(--mono-font); font-size: 0.85rem;
         }
+        .qb-hero-links a { display: inline-flex; align-items: center; min-height: 44px; }
 
         .qb-eyebrow {
           font-family: var(--mono-font); font-size: 0.7rem; letter-spacing: .14em;
