@@ -16,6 +16,33 @@ const base = (spec: Record<string, unknown>) => ({
   },
 });
 
+test("clinical states build and validate independently of cerebral reactivity", () => {
+  const g = defaultGuidedScenario();
+  g.background.clinicalState = "comatose";
+  g.background.reactivity = "present";
+  g.events = [{ id: "clinical-transition", type: "state_change", atMin: 10, to: "drowsy" }];
+  assert.equal(requiredSpecVersion(g), 3);
+  const block = buildSpecFromGuided(g) as { spec: { background: Record<string, unknown>; events: Record<string, unknown>[] } };
+  assert.equal(block.spec.background.clinical_state, "comatose");
+  assert.equal(block.spec.background.reactivity, "present");
+  assert.equal(block.spec.events[0].to, "drowsy");
+  assert.deepEqual(validateLabSpec(block).errors, []);
+
+  for (const clinical_state of ["awake", "drowsy", "asleep", "sedated", "comatose"]) {
+    const background = { type: "continuous", dominant_hz: 8, amplitude_uv: 40, clinical_state, reactivity: "absent" };
+    assert.ok(validateLabSpec(base({ spec_version: 3, background })).ok);
+    assert.ok(validateLabSpec(base({ spec_version: 2, background })).errors.some(e => e.includes("needs spec_version 3")));
+  }
+  for (const to of ["drowsy", "sedated", "comatose"]) {
+    assert.ok(validateLabSpec(base({ spec_version: 3, events: [{ type: "state_change", at_min: 10, to }] })).ok);
+    assert.ok(validateLabSpec(base({ spec_version: 2, events: [{ type: "state_change", at_min: 10, to }] })).errors.some(e => e.includes("needs spec_version 3")));
+  }
+  assert.ok(!validateLabSpec(base({ spec_version: 3, background: { type: "continuous", clinical_state: "indeterminate" } })).ok);
+  const older = { ...defaultGuidedScenario(), specVersion: undefined };
+  const legacy = buildSpecFromGuided(older) as { spec: { background: Record<string, unknown> } };
+  assert.equal("clinical_state" in legacy.spec.background, false);
+});
+
 test("v3-only event types and montages need spec_version 3", () => {
   const gen = { type: "generalized_seizure", onset_min: 10, seizure_type: "typical_absence" };
   const v1 = validateLabSpec(base({ events: [gen] }));

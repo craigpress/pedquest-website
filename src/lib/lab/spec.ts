@@ -95,6 +95,9 @@ export const BACKGROUND_TYPES: { id: LabBackgroundType; label: string }[] = [
   { id: "hypsarrhythmia", label: "Hypsarrhythmia" },
 ];
 
+export const CLINICAL_STATES = ["awake", "drowsy", "asleep", "sedated", "comatose"] as const;
+export const STATE_CHANGE_TARGETS = ["sleep", "wake", "arousal", "rem", "drowsy", "sedated", "comatose"] as const;
+
 export const REGIONS: LabRegion[] = [
   "left_temporal", "right_temporal", "left_frontal", "right_frontal",
   "left_central", "right_central", "left_occipital", "right_occipital",
@@ -290,6 +293,7 @@ export function defaultGuidedScenario(): GuidedScenario {
       type: "continuous",
       ...backgroundDefaults("child", "continuous", 3),
       reactivity: "present",
+      clinicalState: "awake",
       burstS: 2,
       ibiS: 8,
     },
@@ -357,9 +361,11 @@ export function defaultEvent(type: GuidedEvent["type"], durationMin: number): Gu
 export function requiredSpecVersion(g: GuidedScenario): LabSpecVersion {
   const v3 =
     MONTAGES.some((m) => m.v3 && m.id === g.montage)
+    || (g.background.clinicalState !== undefined && g.background.clinicalState !== "awake")
     || g.channels === "standard_19_t1t2"
     || g.events.some((e) =>
       e.type === "rhythmic_pattern" || e.type === "generalized_seizure"
+      || (e.type === "state_change" && ["drowsy", "sedated", "comatose"].includes(e.to))
       || (e.type === "seizure" && !!e.onsetPattern)
       || (e.type === "sporadic_discharges" && e.sleepActivation !== 1)
       || ((e.type === "seizure" || e.type === "seizure_cluster") && V3_REGIONS.includes(e.onsetRegion)));
@@ -493,6 +499,9 @@ export function buildSpecFromGuided(g: GuidedScenario): Json {
     slow_fraction: g.background.slowFraction,
     reactivity: g.background.reactivity,
   };
+  if (effectiveSpecVersion(g) >= 3 && g.background.clinicalState !== undefined) {
+    background.clinical_state = g.background.clinicalState;
+  }
   // An unedited amplitude is left to the renderer, which fills the same default and, on a default child
   // background, scales its event defaults (sporadic discharges, variants) to it; an authored value would not.
   if ((g.background.edited ?? []).includes("amplitudeUv")
@@ -736,6 +745,12 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
     if (isObj(bg.asymmetry) && !["left", "right"].includes(String(bg.asymmetry.side))) {
       errors.push("background.asymmetry.side must be left or right.");
     }
+    if (bg.clinical_state !== undefined) {
+      if (version < 3) errors.push("background.clinical_state needs spec_version 3.");
+      if (!CLINICAL_STATES.includes(bg.clinical_state as typeof CLINICAL_STATES[number])) {
+        errors.push("background.clinical_state must be awake, drowsy, asleep, sedated or comatose.");
+      }
+    }
     if (version < 3) {
       for (const key of ["sleep_staging", "sleep_architecture", "coma_pattern"]) {
         if (bg[key] !== undefined) ignoredBelowV3(`background.${key}`);
@@ -865,8 +880,11 @@ export function validateLabSpec(block: unknown, opts: ValidateOptions = {}): Lab
       }
     }
 
-    if (type === "state_change" && raw.to !== undefined && !["sleep", "wake", "arousal", "rem"].includes(String(raw.to))) {
-      errors.push(`${where}.to must be sleep, wake, arousal or rem.`);
+    if (type === "state_change" && raw.to !== undefined && !STATE_CHANGE_TARGETS.includes(raw.to as typeof STATE_CHANGE_TARGETS[number])) {
+      errors.push(`${where}.to must be sleep, wake, arousal, rem, drowsy, sedated or comatose.`);
+    }
+    if (type === "state_change" && version < 3 && ["drowsy", "sedated", "comatose"].includes(String(raw.to))) {
+      errors.push(`${where}.to ${String(raw.to)} needs spec_version 3.`);
     }
   });
 

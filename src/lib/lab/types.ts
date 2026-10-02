@@ -404,7 +404,7 @@ export type GuidedEvent =
       id: string;
       type: "state_change";
       atMin: number;
-      to: "sleep" | "wake" | "arousal" | "rem";
+      to: "sleep" | "wake" | "arousal" | "rem" | "drowsy" | "sedated" | "comatose";
     }
   | {
       id: string;
@@ -468,6 +468,7 @@ export interface GuidedScenario {
     amplitudeUv: number;
     slowFraction: number;
     reactivity: "present" | "absent";
+    clinicalState?: "awake" | "drowsy" | "asleep" | "sedated" | "comatose";
     burstS: number;
     ibiS: number;
     /** Levels the author typed; the rest follow the age / type / edition defaults (spec.ts backgroundDefaults). */

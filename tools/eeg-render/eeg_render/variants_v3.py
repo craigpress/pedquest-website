@@ -115,6 +115,28 @@ def y_positions(electrodes: Sequence[str]) -> np.ndarray:
 
 
 # ------------------------------------------------------------ schedules --
+def intersect_intervals(intervals: Sequence[Tuple[float, float]],
+                        allowed: Sequence[Tuple[float, float]]) -> List[Tuple[float, float]]:
+    """Clip support without rescheduling a burst or resetting its phase/RNG."""
+    pieces = sorted((max(a, x), min(b, y)) for a, b in intervals for x, y in allowed
+                    if min(b, y) > max(a, x))
+    out = []
+    for a, b in pieces:
+        if out and a <= out[-1][1]:
+            out[-1] = (out[-1][0], max(out[-1][1], b))
+        else:
+            out.append((a, b))
+    return out
+
+
+def interval_mask(t: np.ndarray, intervals: Sequence[Tuple[float, float]]) -> np.ndarray:
+    """Half-open support evaluated at absolute times, independent of render windows."""
+    live = np.zeros(t.shape, dtype=bool)
+    for a, b in intervals:
+        live |= (t >= a) & (t < b)
+    return live
+
+
 def _ln(rng: np.random.Generator, median: float, sigma: float, lo: float, hi: float) -> float:
     return float(np.clip(median * np.exp(rng.normal(0.0, sigma)), lo, hi))
 

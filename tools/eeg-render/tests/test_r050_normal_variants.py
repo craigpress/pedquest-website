@@ -396,7 +396,7 @@ def test_rmtd_runs_are_notched_side_independent_with_no_flat_link():
 def test_far_bursts_7_to_10_hz_with_a_smooth_frontal_field():
     """White & Tharp: frontal 7-10 Hz; review V110-08: 6.5 Hz, continuous, and a sparse field (F7 = 0) that made
     Fp1-F7 large and F7-T3 flat."""
-    S = _syn(_spec(611008, events=[{"type": "state_change", "at_min": 3.0, "to": "arousal"},
+    S = _syn(_spec(611008, sleep_staging="static", events=[SLEEP(1.0), {"type": "state_change", "at_min": 3.0, "to": "arousal"},
                                    _variant("frontal_arousal_rhythm", 3.0, 10.0, context="arousal")], minutes=6))
     run, bursts = _bursts(S, "frontal_arousal_rhythm")
     assert all(7.0 <= b["hz"] <= 10.0 for b in bursts)
@@ -494,7 +494,7 @@ def test_authored_variants_are_window_independent(kind):
     elif kind == "fourteen_and_six":
         S = _drowsy(kind, 7, context="light_sleep")
     elif kind == "frontal_arousal_rhythm":
-        S = _syn(_spec(7, events=[{"type": "state_change", "at_min": 3.0, "to": "arousal"},
+        S = _syn(_spec(7, sleep_staging="static", events=[SLEEP(1.0), {"type": "state_change", "at_min": 3.0, "to": "arousal"},
                                   _variant(kind, 3.0, 10.0, context="arousal")], minutes=6))
     else:
         S = _awake(kind, 7, age="adult" if kind == "sreda" else "child")

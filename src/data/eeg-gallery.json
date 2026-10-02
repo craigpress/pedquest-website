@@ -1,6 +1,6 @@
 {
- "rendererVersion": "0.5.4",
- "generated": "2026-10-01T04:02:12.373457+00:00",
+ "rendererVersion": "0.5.5",
+ "generated": "2026-10-02T04:02:09.775466+00:00",
  "items": [
   {
    "id": "nrm-term-neonate-awake",
@@ -15,12 +15,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:607c5160779fd7ba622c22c0360a9b17cae2fab6f6ff4e12a1df48ce9e5286bb",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-term-neonate-awake.png",
-   "thumbPath": "0.5.2/nrm-term-neonate-awake.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:d53015dd079189a97717a075f3a03aa8c1e0125656a813abad3d574e0d5c8843",
+   "path": "0.5.5/nrm-term-neonate-awake-1d900f626e48.png",
+   "thumbPath": "0.5.5/nrm-term-neonate-awake-1d900f626e48.w800.webp"
   },
   {
    "id": "nrm-infant-awake",
@@ -35,12 +35,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:cd2bcdeae71e27ca4cfe0ef0ec672fc53da64757a7aaeb4003beda333aa0bf75",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-infant-awake.png",
-   "thumbPath": "0.5.2/nrm-infant-awake.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:a869d390b9a0c523e8a86b4489de82dd35e7a3e09daa35b0f29c95caeb093c78",
+   "path": "0.5.5/nrm-infant-awake-6009286caca2.png",
+   "thumbPath": "0.5.5/nrm-infant-awake-6009286caca2.w800.webp"
   },
   {
    "id": "nrm-toddler-awake",
@@ -55,12 +55,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:351b72bd3df473f25ca99734e9705a358891ff5218d12d1275dc2efaca39a226",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-toddler-awake.png",
-   "thumbPath": "0.5.2/nrm-toddler-awake.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:99cc16753d03e77153d011cee5b8085d92a06be6ed2dd4dc0337fbaff370a728",
+   "path": "0.5.5/nrm-toddler-awake-c27bdc6ab226.png",
+   "thumbPath": "0.5.5/nrm-toddler-awake-c27bdc6ab226.w800.webp"
   },
   {
    "id": "nrm-child-eyes-closed-pdr",
@@ -75,12 +75,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:0e777a8955ebb23383a1e6930f998d1f06b4b139c91ef550c542344016a4575a",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-child-eyes-closed-pdr.png",
-   "thumbPath": "0.5.2/nrm-child-eyes-closed-pdr.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:5c2f7f327beb93e35542790f6e4b0296d64a048dbf868b3094e1b8636b32bebb",
+   "path": "0.5.5/nrm-child-eyes-closed-pdr-6405c4590e3b.png",
+   "thumbPath": "0.5.5/nrm-child-eyes-closed-pdr-6405c4590e3b.w800.webp"
   },
   {
    "id": "nrm-adolescent-awake",
@@ -95,12 +95,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ac1a6ecf45af538e1919e84d20abaae0da0e99ad06ebfde02061c35812f0c29d",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-adolescent-awake.png",
-   "thumbPath": "0.5.2/nrm-adolescent-awake.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:b03f5439f1c5a6659b641fdcab2e619623ece1ac186e2480265db0d976f32e1a",
+   "path": "0.5.5/nrm-adolescent-awake-b5f42938b2a9.png",
+   "thumbPath": "0.5.5/nrm-adolescent-awake-b5f42938b2a9.w800.webp"
   },
   {
    "id": "nrm-adult-awake",
@@ -115,12 +115,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:dafe3ad0bf7c34f32fde7e0bb2a40b5e639966e642cf8bae37379e4f39d09bb6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-adult-awake.png",
-   "thumbPath": "0.5.2/nrm-adult-awake.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:23c5e45f1929c539df0440b19d94b95397da54370c750ce39f7fe5c757dbd4e0",
+   "path": "0.5.5/nrm-adult-awake-d1214c8cf690.png",
+   "thumbPath": "0.5.5/nrm-adult-awake-d1214c8cf690.w800.webp"
   },
   {
    "id": "nrm-eyes-open-reactivity",
@@ -135,12 +135,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:8bae7886c1c215d3a9c7ce902824d248ef4249d35f8d76d33092c51f13a4df12",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-eyes-open-reactivity.png",
-   "thumbPath": "0.5.2/nrm-eyes-open-reactivity.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:f6c9eeb0fd2eaddb399275d67bd15c3b56b29d52950ef94a72fbe723c12c5800",
+   "path": "0.5.5/nrm-eyes-open-reactivity-93fc45047d8a.png",
+   "thumbPath": "0.5.5/nrm-eyes-open-reactivity-93fc45047d8a.w800.webp"
   },
   {
    "id": "nrm-hyperventilation-buildup",
@@ -155,12 +155,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:523ea55940d4c2d263f9083cc07ab75a4b5f111df6946357a312681bbed20ab5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/nrm-hyperventilation-buildup.png",
-   "thumbPath": "0.5.2/nrm-hyperventilation-buildup.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3add45f0f1ad6a167e32b77840a3d69e701dfed877acd2d66ad5ed8ea2451842",
+   "path": "0.5.5/nrm-hyperventilation-buildup-8848f9be737b.png",
+   "thumbPath": "0.5.5/nrm-hyperventilation-buildup-8848f9be737b.w800.webp"
   },
   {
    "id": "nrm-photic-driving",
@@ -175,12 +175,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:45f80c4793e2865a8c2aeee01972255a6b948aa6c8f5f3db6708fe3070aa7fa4",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/nrm-photic-driving.png",
-   "thumbPath": "0.5.4/nrm-photic-driving.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1850c63124b74858f786bd1a1107c0f26df120a6ca3f6aec7efa6593a5f17e5f",
+   "path": "0.5.5/nrm-photic-driving-4a196e58e4e8.png",
+   "thumbPath": "0.5.5/nrm-photic-driving-4a196e58e4e8.w800.webp"
   },
   {
    "id": "slp-drowsiness",
@@ -195,12 +195,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:c7bad7fb1b44c8909a7e578f25c903c815af846052471c0a7d5699a50d2f8554",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-drowsiness.png",
-   "thumbPath": "0.5.2/slp-drowsiness.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6c64da24a35fd41a148ca182e66559d6572f34faa54eef766d3ff098eef05124",
+   "path": "0.5.5/slp-drowsiness-7269278d0cad.png",
+   "thumbPath": "0.5.5/slp-drowsiness-7269278d0cad.w800.webp"
   },
   {
    "id": "slp-n1-vertex-waves",
@@ -215,12 +215,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:6b8470877715a51b55631bd19133e35871128c0bc9c06dc4fd3409b700c76719",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-n1-vertex-waves.png",
-   "thumbPath": "0.5.2/slp-n1-vertex-waves.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:49bb938f980ee5bb93498520b5bba33f7f6857f77aadc0e26004f41cd35411f1",
+   "path": "0.5.5/slp-n1-vertex-waves-c8d1e9d4d538.png",
+   "thumbPath": "0.5.5/slp-n1-vertex-waves-c8d1e9d4d538.w800.webp"
   },
   {
    "id": "slp-n2-spindles",
@@ -235,12 +235,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:4e5c1a45268080e707508858546c6258d34ec42bb798356c6db80ef1fc1ce131",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/slp-n2-spindles.png",
-   "thumbPath": "0.5.4/slp-n2-spindles.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:86bb85cec3cda6e6ca1e8e0c9c8461d6787b5c2f98ae3993d4aacd30d83f2ec9",
+   "path": "0.5.5/slp-n2-spindles-67cdaf60cf85.png",
+   "thumbPath": "0.5.5/slp-n2-spindles-67cdaf60cf85.w800.webp"
   },
   {
    "id": "slp-n2-k-complexes",
@@ -255,12 +255,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:de9aca2adafb09eff1d09931e9add72cc7caa8344cf6dfc4dab34436c850c1b5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/slp-n2-k-complexes.png",
-   "thumbPath": "0.5.4/slp-n2-k-complexes.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:c57b648ab92e98b444f00bbfcbb645da8637428ad1cd6f4668f8afb9d4e139a3",
+   "path": "0.5.5/slp-n2-k-complexes-d8f6280fc047.png",
+   "thumbPath": "0.5.5/slp-n2-k-complexes-d8f6280fc047.w800.webp"
   },
   {
    "id": "slp-infant-spindles",
@@ -275,12 +275,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:c6ae24dc3d9eebec34571df29f11ef6455bc50c2174bd462d666858666ad3571",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-infant-spindles.png",
-   "thumbPath": "0.5.2/slp-infant-spindles.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ff707ace1d6f95837b8fc28b3bdda631ff5786477c5695764503d102d05b6bc5",
+   "path": "0.5.5/slp-infant-spindles-14b75a73f406.png",
+   "thumbPath": "0.5.5/slp-infant-spindles-14b75a73f406.w800.webp"
   },
   {
    "id": "slp-n3-slow-wave-sleep",
@@ -295,12 +295,12 @@
     "sensitivity_uv_mm": 15
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:92892a2d54d03cf47df583eab92d5be1500775146187d7326cfc6414366f5b00",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-n3-slow-wave-sleep.png",
-   "thumbPath": "0.5.2/slp-n3-slow-wave-sleep.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3b647f0a7a98768381c4762e22084b77127bc05c66875066e775bd28fe9087e5",
+   "path": "0.5.5/slp-n3-slow-wave-sleep-09ff374e850a.png",
+   "thumbPath": "0.5.5/slp-n3-slow-wave-sleep-09ff374e850a.w800.webp"
   },
   {
    "id": "slp-rem",
@@ -315,12 +315,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:b773dc50e949904f9b6b5a55888104b3a87b1e365f9963c17365c7c193cca730",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-rem.png",
-   "thumbPath": "0.5.2/slp-rem.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:8be2f43d9cf6673c9e372d5856908392a567b39eda1687d2323e87f3e9342599",
+   "path": "0.5.5/slp-rem-c71a6d6915c8.png",
+   "thumbPath": "0.5.5/slp-rem-c71a6d6915c8.w800.webp"
   },
   {
    "id": "slp-rem-sawtooth",
@@ -335,12 +335,12 @@
     "sensitivity_uv_mm": 5
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ae0fed551734ff7b7f698622f43091e164e2d30869695a9c3eb622612030486d",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slp-rem-sawtooth.png",
-   "thumbPath": "0.5.2/slp-rem-sawtooth.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6a33e91d7d988d9c70dc4baf3a9185c6201bb61168d69d61a1fc4783002430b6",
+   "path": "0.5.5/slp-rem-sawtooth-bfcf72d9ae14.png",
+   "thumbPath": "0.5.5/slp-rem-sawtooth-bfcf72d9ae14.w800.webp"
   },
   {
    "id": "slp-arousal",
@@ -355,12 +355,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:45572fdd41efe2aeced4de18dd4f91ac6ec925db9721be2ca9f7fdffe1e348e6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/slp-arousal.png",
-   "thumbPath": "0.5.4/slp-arousal.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:210fbca82b9458a2204fe5e71d052c3a36b69ea07732db7333ec6ab6c386bf11",
+   "path": "0.5.5/slp-arousal-dbe39210fa45.png",
+   "thumbPath": "0.5.5/slp-arousal-dbe39210fa45.w800.webp"
   },
   {
    "id": "var-mu",
@@ -375,12 +375,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:7539d35b8414467bf325614315b54ebe40dfcb9b884abe8ffe526d04d5edaaef",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/var-mu.png",
-   "thumbPath": "0.5.4/var-mu.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:fc3d14ea4b35e12633c3eab699d6fa218250794a84cd09f3fc22f604c603295e",
+   "path": "0.5.5/var-mu-ccaa91dc5289.png",
+   "thumbPath": "0.5.5/var-mu-ccaa91dc5289.w800.webp"
   },
   {
    "id": "var-lambda",
@@ -395,12 +395,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ee0189213a3080d6f674252f66e7cd63b64be89d1afc20c70acf7974a5416f5f",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-lambda.png",
-   "thumbPath": "0.5.2/var-lambda.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:52eeca77af3a87ad5dd72c00ecb21cd172af63af1b92e515b2d33ff0805b72b3",
+   "path": "0.5.5/var-lambda-87fc2612c815.png",
+   "thumbPath": "0.5.5/var-lambda-87fc2612c815.w800.webp"
   },
   {
    "id": "var-pswy",
@@ -415,12 +415,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:589eb1b1a6fdbbcece9c45a4ab329ec4d466ed8412db37c4e82eb31d03859c71",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-pswy.png",
-   "thumbPath": "0.5.2/var-pswy.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:d58a134ba8f52b777913c5a039cd026682cad84d06a0448ed484e331c9fb4e9d",
+   "path": "0.5.5/var-pswy-0b3f1563c055.png",
+   "thumbPath": "0.5.5/var-pswy-0b3f1563c055.w800.webp"
   },
   {
    "id": "var-hypnagogic-hypersynchrony",
@@ -435,12 +435,12 @@
     "sensitivity_uv_mm": 20
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:78e754880531d40ce32354ce410da8e14f541636bc33f42a2ab6bc21c46a5431",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/var-hypnagogic-hypersynchrony.png",
-   "thumbPath": "0.5.4/var-hypnagogic-hypersynchrony.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:04d0b4d36d7817bec23060d501eb5e375bce10e5e9ec2176e54faf16253d4b5f",
+   "path": "0.5.5/var-hypnagogic-hypersynchrony-6ea067cb76f4.png",
+   "thumbPath": "0.5.5/var-hypnagogic-hypersynchrony-6ea067cb76f4.w800.webp"
   },
   {
    "id": "var-posts",
@@ -455,12 +455,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:1d2163d7532e343fe3b3441b4d8549a3d4f758201d3fd437f1c30cc0c42d9ad5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/var-posts.png",
-   "thumbPath": "0.5.4/var-posts.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:c69833bbf0c136e30ac5e38073fb86894f2d47f87ded18a4f43c452b77bd3f31",
+   "path": "0.5.5/var-posts-677bfa40021a.png",
+   "thumbPath": "0.5.5/var-posts-677bfa40021a.w800.webp"
   },
   {
    "id": "var-wicket",
@@ -475,12 +475,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:ceb352f2b4ff82edebe9a7ea069774ca6e95cefa69719a5a0f13060da99bc26d",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/var-wicket.png",
-   "thumbPath": "0.5.4/var-wicket.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ec3b21ffdf5898ae47cc83d1474eba85029d9a3dafa52486eb821313f400ccaa",
+   "path": "0.5.5/var-wicket-fabf4b4045e4.png",
+   "thumbPath": "0.5.5/var-wicket-fabf4b4045e4.w800.webp"
   },
   {
    "id": "var-rmtd",
@@ -495,12 +495,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:6c5514eb893d0e35d3940ce83724cb5163c39f65a45114d6cea638d1fa683172",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-rmtd.png",
-   "thumbPath": "0.5.2/var-rmtd.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:b1e34d9c17948122233fddd0b9ce5ddbbb38300c44bb8b32c0138dd6224a8f32",
+   "path": "0.5.5/var-rmtd-da01bb45b433.png",
+   "thumbPath": "0.5.5/var-rmtd-da01bb45b433.w800.webp"
   },
   {
    "id": "var-14-and-6",
@@ -515,19 +515,19 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:471550dfcd2af13058a0eb58398a6a4776837c3b209ed8d94e68dd9ddb559789",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-14-and-6.png",
-   "thumbPath": "0.5.2/var-14-and-6.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:399c67a47cd8e1db81e1e3ac925eba72cddc1a79f1fafddf8a5e0e3d9ae57d5d",
+   "path": "0.5.5/var-14-and-6-56d43ed95243.png",
+   "thumbPath": "0.5.5/var-14-and-6-56d43ed95243.w800.webp"
   },
   {
    "id": "var-frontal-arousal-rhythm",
    "title": "Frontal arousal rhythm",
    "category": "variants",
    "subcategory": "Drowsiness and sleep variants",
-   "caption": "Child arousing from N2: a frontocentral K-complex near 2.2 s precedes arousal with frontotemporal muscle at 5 s. Independently waxing rhythmic 8 Hz trains follow in the frontal and frontocentral chains, with smaller posterior spread.",
+   "caption": "Child arousing from N2: a quieter mixed-frequency sleep background precedes arousal with frontotemporal muscle at 5 s. Independently waxing rhythmic 8 Hz trains follow in the frontal and frontocentral chains, with smaller posterior spread.",
    "tags": {
     "age": "child",
     "state": "awake",
@@ -535,12 +535,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:444e7f9fbb2600a9d74eeb9fad0071e6df9c527f4032db2d639b736bfff0545c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/var-frontal-arousal-rhythm.png",
-   "thumbPath": "0.5.4/var-frontal-arousal-rhythm.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:b9397e004e9a108148b4adfaa996680a1eaa1382de09dbb44120efad31295d7a",
+   "path": "0.5.5/var-frontal-arousal-rhythm-aefa43d8975c.png",
+   "thumbPath": "0.5.5/var-frontal-arousal-rhythm-aefa43d8975c.w800.webp"
   },
   {
    "id": "var-sreda",
@@ -555,12 +555,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:c681ea8f4eb0f83a28b148c53d7cebee46fd5af5f28689294020448c3c7b50b7",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/var-sreda.png",
-   "thumbPath": "0.5.2/var-sreda.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6319a8e290577a76d3703cdcadd87888d6efd59481d5950a4f4cd29a2f2f174c",
+   "path": "0.5.5/var-sreda-9d6efbc4df0b.png",
+   "thumbPath": "0.5.5/var-sreda-9d6efbc4df0b.w800.webp"
   },
   {
    "id": "art-eye-blink",
@@ -575,12 +575,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f676e41b2972b28fe4187addcc607eb1fb2f960c94c06ec059df98cbde597968",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-eye-blink.png",
-   "thumbPath": "0.5.2/art-eye-blink.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:af13c4f4ace4ea7aaad1adc20caebcf327a696a6d7506cea14e0fb4495aa14cd",
+   "path": "0.5.5/art-eye-blink-e6e12f81187c.png",
+   "thumbPath": "0.5.5/art-eye-blink-e6e12f81187c.w800.webp"
   },
   {
    "id": "art-lateral-eye",
@@ -595,12 +595,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:2ab3b92608e0a72df02a9ce3281e410a3f6f064c5d04b0dad7b5c4ff0930a54a",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-lateral-eye.png",
-   "thumbPath": "0.5.2/art-lateral-eye.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:2f5f27459bcec54a8049b6728f244f9fe0066d1cefea92d965153356c32f2414",
+   "path": "0.5.5/art-lateral-eye-85a9c12ff99e.png",
+   "thumbPath": "0.5.5/art-lateral-eye-85a9c12ff99e.w800.webp"
   },
   {
    "id": "art-slow-roving-eye",
@@ -615,12 +615,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:cb2088e3ac32a00ee2e3d40be5925812774f3a89a27c91b794da235623cc0a52",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-slow-roving-eye.png",
-   "thumbPath": "0.5.2/art-slow-roving-eye.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:b606151b94a384f61ad53ebe2e3b449bde7fa963876ae79261a6967e42d2ce60",
+   "path": "0.5.5/art-slow-roving-eye-7e8d6ec0f30b.png",
+   "thumbPath": "0.5.5/art-slow-roving-eye-7e8d6ec0f30b.w800.webp"
   },
   {
    "id": "art-rem-eye",
@@ -635,12 +635,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:17d5de82dab395a50f4297fd3d591d4cd1fedd8d905adbf1667f57f5451ff22d",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-rem-eye.png",
-   "thumbPath": "0.5.2/art-rem-eye.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:acd2820114ae0f893c0c76293b548949cc6e7b27208e2fb4367c3c70dde4b616",
+   "path": "0.5.5/art-rem-eye-47b520608e9a.png",
+   "thumbPath": "0.5.5/art-rem-eye-47b520608e9a.w800.webp"
   },
   {
    "id": "art-chewing",
@@ -655,12 +655,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d49c84c809790278aac97ed4288bb3ab39992d95b8b6d015c1b4272d84151231",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-chewing.png",
-   "thumbPath": "0.5.2/art-chewing.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:a13c2a724a206f15c41ebc2463caf46bdad7d5dcd384bfd83e6be0af5dbd0fa3",
+   "path": "0.5.5/art-chewing-5b1d9bcbee69.png",
+   "thumbPath": "0.5.5/art-chewing-5b1d9bcbee69.w800.webp"
   },
   {
    "id": "art-glossokinetic",
@@ -675,12 +675,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:723dde8bfe1e0a52b2bab1be355d17f8db1504915dfc4b0456990b44792c1a7c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-glossokinetic.png",
-   "thumbPath": "0.5.2/art-glossokinetic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:0c48ecf10e0d1fc0dab07c70d04ea805ea488b59f40f93b4a83680af57def1cd",
+   "path": "0.5.5/art-glossokinetic-e7fe32aab32c.png",
+   "thumbPath": "0.5.5/art-glossokinetic-e7fe32aab32c.w800.webp"
   },
   {
    "id": "art-electrode-pop",
@@ -695,12 +695,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:29ee18496bdbeb32ec6aebae17b9e336042d33be01a09e813e47d1c26f2ba9f6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-electrode-pop.png",
-   "thumbPath": "0.5.2/art-electrode-pop.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:12e846bd6a30f466d8a98dc71daf9a7cf9b1b95552cdb053eb8bb1c54d350c0f",
+   "path": "0.5.5/art-electrode-pop-f9b22e424850.png",
+   "thumbPath": "0.5.5/art-electrode-pop-f9b22e424850.w800.webp"
   },
   {
    "id": "art-sixty-hz",
@@ -715,12 +715,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:4809c5e6aec9d943e82629daba3b1f64bef67f44ba77e552378b2ae9a9886400",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-sixty-hz.png",
-   "thumbPath": "0.5.2/art-sixty-hz.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ae992def552ddeb9632c00c9808e3e66a5b3d1f9aca36fe5899ac51f91f5c3ea",
+   "path": "0.5.5/art-sixty-hz-8cc0cbccaeef.png",
+   "thumbPath": "0.5.5/art-sixty-hz-8cc0cbccaeef.w800.webp"
   },
   {
    "id": "art-ecg",
@@ -735,12 +735,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:794e793ab25937b941eb36596289bb9f076c8fb4676404bf63e175c7159c21c1",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-ecg.png",
-   "thumbPath": "0.5.2/art-ecg.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:770587dc00d451bd1be58209e1b5b1563cd18e334c8f0f8c136af9d8af45c1fe",
+   "path": "0.5.5/art-ecg-1dd5d1bf1c58.png",
+   "thumbPath": "0.5.5/art-ecg-1dd5d1bf1c58.w800.webp"
   },
   {
    "id": "art-pulse",
@@ -755,12 +755,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:bb1dd9f6e7f220b0e1223d828cb4b35cda65e8c111309129696f775678ced48a",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-pulse.png",
-   "thumbPath": "0.5.2/art-pulse.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3de0881c79db620590008f146c16367d91a009bda0e487b0ef5c9711e17c9ee6",
+   "path": "0.5.5/art-pulse-b84e31c00c8a.png",
+   "thumbPath": "0.5.5/art-pulse-b84e31c00c8a.w800.webp"
   },
   {
    "id": "art-sweat",
@@ -775,12 +775,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:99ec76daf47e4fef50951f37514a92bc01eb6e29a47300fb8f71867bd991ad5e",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-sweat.png",
-   "thumbPath": "0.5.2/art-sweat.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3c1eb9bfa24c3dae8283cccb70d3a06022ed15334aacb3f06bc737e91781d23f",
+   "path": "0.5.5/art-sweat-c5ef4cf6b390.png",
+   "thumbPath": "0.5.5/art-sweat-c5ef4cf6b390.w800.webp"
   },
   {
    "id": "art-movement",
@@ -795,12 +795,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:7934e1f14f2d59ca1c5b116fd4780fcde247865dcca95b6724567232ccf6b330",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-movement.png",
-   "thumbPath": "0.5.2/art-movement.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3470eb9a3d343549010ca1a19bb864352c4cfac9f9c4fabc5563985ba3b05e57",
+   "path": "0.5.5/art-movement-6ae8ce392b86.png",
+   "thumbPath": "0.5.5/art-movement-6ae8ce392b86.w800.webp"
   },
   {
    "id": "art-patting",
@@ -815,12 +815,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:367f84b6a0585243d0f35730df6b13543c83c27baa2dd1b591c21f692f199b53",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-patting.png",
-   "thumbPath": "0.5.2/art-patting.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:e6f434f3a2d26ed21f8a88226beee6c284222cb761a00a06c4d1a4060c912e19",
+   "path": "0.5.5/art-patting-cbd8c79ed45e.png",
+   "thumbPath": "0.5.5/art-patting-cbd8c79ed45e.w800.webp"
   },
   {
    "id": "art-chest-pt",
@@ -835,12 +835,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:de1f4c15a078d6c8082278d4d35d002408887d62e12c0bbfbfe9ea4f61916dd2",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-chest-pt.png",
-   "thumbPath": "0.5.2/art-chest-pt.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6abff45cdce6a89f2fa79c26578a3117a2dc88c8932c0d3e012b4476bc62a558",
+   "path": "0.5.5/art-chest-pt-fb674649212d.png",
+   "thumbPath": "0.5.5/art-chest-pt-fb674649212d.w800.webp"
   },
   {
    "id": "art-ventilator",
@@ -855,12 +855,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:fc8c98b85344015cb61a5419a9500d3a60c3f204b2b1f14ad0e8efba33566cba",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-ventilator.png",
-   "thumbPath": "0.5.2/art-ventilator.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3aa9ebd06bc7396fe20f3f9c536595e3d1636e7b2e380201d3d2288367446eda",
+   "path": "0.5.5/art-ventilator-93412dae063d.png",
+   "thumbPath": "0.5.5/art-ventilator-93412dae063d.w800.webp"
   },
   {
    "id": "art-ecmo-pump",
@@ -875,12 +875,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:a72047bcab73b9d29f62db34d8ee8d7ded21347a4cea4816010c4748999549b2",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/art-ecmo-pump.png",
-   "thumbPath": "0.5.2/art-ecmo-pump.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3a0dc8e5126a578f7d764a824178a9e1ef2d4e9ffa31495e85b312cd71e10c38",
+   "path": "0.5.5/art-ecmo-pump-43e790104194.png",
+   "thumbPath": "0.5.5/art-ecmo-pump-43e790104194.w800.webp"
   },
   {
    "id": "sed-propofol",
@@ -895,12 +895,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:3f730f0c3e071290f5e48e1f428b45bdced0a27fd31345a232f6148ef12e0a2b",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-propofol.png",
-   "thumbPath": "0.5.2/sed-propofol.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:441e268bec2c101b3081701f3068807a389ab2a2d538486e397909d28c09c18c",
+   "path": "0.5.5/sed-propofol-26edbfbb6b2c.png",
+   "thumbPath": "0.5.5/sed-propofol-26edbfbb6b2c.w800.webp"
   },
   {
    "id": "sed-midazolam",
@@ -915,12 +915,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:4b23575918eab4a76dd80f078c38cb33ea5a0dfa525d1a2cfcc5efe3a376374d",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-midazolam.png",
-   "thumbPath": "0.5.2/sed-midazolam.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6fd41c5c06f0c56a94dfd16e83912843513e59cb9032a65d0dd18d2c4c40c68f",
+   "path": "0.5.5/sed-midazolam-2ba41f27c067.png",
+   "thumbPath": "0.5.5/sed-midazolam-2ba41f27c067.w800.webp"
   },
   {
    "id": "sed-dexmedetomidine",
@@ -935,12 +935,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:2e91000a939d70fa8f755726e41a54fc379c3cfa381d0563e82f84964c4626b6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-dexmedetomidine.png",
-   "thumbPath": "0.5.2/sed-dexmedetomidine.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:cae265c16538762928dd7343595234d3658098fe472cb727ae331ff256448275",
+   "path": "0.5.5/sed-dexmedetomidine-74b4f1f83915.png",
+   "thumbPath": "0.5.5/sed-dexmedetomidine-74b4f1f83915.w800.webp"
   },
   {
    "id": "sed-ketamine",
@@ -955,12 +955,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:b8cf0c34210940f1030a01abeeb9d3b73a912115fd72414f33ae50fe24b41767",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-ketamine.png",
-   "thumbPath": "0.5.2/sed-ketamine.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1cc713bcb26820ed7fbaf62b843a0dd0564445f413193e233cfe34c7cd6e236a",
+   "path": "0.5.5/sed-ketamine-472a6e1f11c4.png",
+   "thumbPath": "0.5.5/sed-ketamine-472a6e1f11c4.w800.webp"
   },
   {
    "id": "sed-remifentanil",
@@ -975,12 +975,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ccb606c84a50576e5dc8f0154a0cebcb3804ba26ca6ca660b7455d62efae0418",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-remifentanil.png",
-   "thumbPath": "0.5.2/sed-remifentanil.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ff7066c68a5995db52077dad7682b9032bd1d3bf2e2986a051268462dfd766b7",
+   "path": "0.5.5/sed-remifentanil-36b401b10894.png",
+   "thumbPath": "0.5.5/sed-remifentanil-36b401b10894.w800.webp"
   },
   {
    "id": "sed-pentobarbital-beta",
@@ -995,12 +995,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:a9b20650f7918c3b2952d81ebe30d73aa42d2b40cf50fe1aab3c79d3db2c4aa9",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-pentobarbital-beta.png",
-   "thumbPath": "0.5.2/sed-pentobarbital-beta.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:36c3593de414dae3d3f3400e47dc3eeb0a20482e413727a85a1c155413bbbd08",
+   "path": "0.5.5/sed-pentobarbital-beta-e4bdee5fce58.png",
+   "thumbPath": "0.5.5/sed-pentobarbital-beta-e4bdee5fce58.w800.webp"
   },
   {
    "id": "sed-pentobarbital-bs",
@@ -1016,12 +1016,12 @@
     "acns": "Burst suppression"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:67381fd141a812009d6eaf8a5fe5551de96cfdb7913d9c86f163b83c173fd889",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-pentobarbital-bs.png",
-   "thumbPath": "0.5.2/sed-pentobarbital-bs.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:e09dc9dd5130e528bfa63f1839e3d2ad9f7d6fa14b91cd86d46fb8ea91e60077",
+   "path": "0.5.5/sed-pentobarbital-bs-14fa6354ee65.png",
+   "thumbPath": "0.5.5/sed-pentobarbital-bs-14fa6354ee65.w800.webp"
   },
   {
    "id": "sed-propofol-bs",
@@ -1037,12 +1037,12 @@
     "acns": "Burst suppression"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:55fd7d6dffa05177811fdfc053644b332f70d8ef652d1c49be669b4f4acda7d6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-propofol-bs.png",
-   "thumbPath": "0.5.2/sed-propofol-bs.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:7004acbbf6b4f847cf16e6c3feecf63981a7eb1e0d7f7ccbe9ba5365761d2289",
+   "path": "0.5.5/sed-propofol-bs-a8b1e376d26b.png",
+   "thumbPath": "0.5.5/sed-propofol-bs-a8b1e376d26b.w800.webp"
   },
   {
    "id": "sed-blockade-seizure",
@@ -1057,12 +1057,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:2126192b6e7c2f1e567ea46d4cae2cf94e4144d676ba9d5282312f5f59725ca0",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/sed-blockade-seizure.png",
-   "thumbPath": "0.5.2/sed-blockade-seizure.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:593eeff8ae94119c4394bf873579d4d461308ff0318eb4c7923004aa07945ff8",
+   "path": "0.5.5/sed-blockade-seizure-e3cf18c73db6.png",
+   "thumbPath": "0.5.5/sed-blockade-seizure-e3cf18c73db6.w800.webp"
   },
   {
    "id": "slw-focal-polymorphic",
@@ -1078,12 +1078,12 @@
     "acns": "Lateralized slowing"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.3",
-   "specHash": "sha256:8ed8ecd69d1079013f84b5f57cff138849d686f9849ec3426a410fb569b66aac",
    "width": 1600,
    "height": 900,
-   "path": "0.5.3/slw-focal-polymorphic.png",
-   "thumbPath": "0.5.3/slw-focal-polymorphic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3a8503a9a11c1ebec0e1fb97c2b866d40e15e608dcf65702e20e71927b64e29a",
+   "path": "0.5.5/slw-focal-polymorphic-ed7bd1e2b2bf.png",
+   "thumbPath": "0.5.5/slw-focal-polymorphic-ed7bd1e2b2bf.w800.webp"
   },
   {
    "id": "slw-generalized",
@@ -1099,12 +1099,12 @@
     "acns": "Generalized slowing"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:3e110767f58fff7a67f2474c34a291ff74803e3906b78362e87182bd47a5e6ce",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-generalized.png",
-   "thumbPath": "0.5.2/slw-generalized.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:5bec1df5c2a7bba0fc3497122567ff335d5ba8ca124be4812768bc4620e00114",
+   "path": "0.5.5/slw-generalized-261e0411c4f4.png",
+   "thumbPath": "0.5.5/slw-generalized-261e0411c4f4.w800.webp"
   },
   {
    "id": "slw-hemi-attenuation",
@@ -1120,12 +1120,12 @@
     "acns": "Asymmetry (amplitude)"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d1e940903c99b50248d4a857cefbc46ac0615458fc0c568f296c53f293381095",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-hemi-attenuation.png",
-   "thumbPath": "0.5.2/slw-hemi-attenuation.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:850d9e5f4f528f4453c3e7bc9b45ec9bd42eb7de5e2937400f2b6c70ca15e7f0",
+   "path": "0.5.5/slw-hemi-attenuation-f966e7730261.png",
+   "thumbPath": "0.5.5/slw-hemi-attenuation-f966e7730261.w800.webp"
   },
   {
    "id": "slw-attenuation-transient",
@@ -1140,12 +1140,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:b9df171821340515aebb45a4769709b9eca9f6d4d548bb4aa117b05d9194753b",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-attenuation-transient.png",
-   "thumbPath": "0.5.2/slw-attenuation-transient.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3172d2dbcce55522759625dd0e4b9cc4071207a422648d040392301722155ae3",
+   "path": "0.5.5/slw-attenuation-transient-9c8be7b02ab2.png",
+   "thumbPath": "0.5.5/slw-attenuation-transient-9c8be7b02ab2.w800.webp"
   },
   {
    "id": "slw-breach",
@@ -1161,12 +1161,12 @@
     "acns": "Breach effect"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:1bf9874a1f4e5779b30fe170133714b9b72c76882d4cd48da7bae84e51614a17",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-breach.png",
-   "thumbPath": "0.5.2/slw-breach.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:d7ded8f8efd46a2ff31b671b7b165b007bb54e21aa86555a6e7c64e57ba50296",
+   "path": "0.5.5/slw-breach-7363a1f5d17e.png",
+   "thumbPath": "0.5.5/slw-breach-7363a1f5d17e.w800.webp"
   },
   {
    "id": "slw-low-voltage",
@@ -1182,12 +1182,12 @@
     "acns": "Low voltage"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:787d69e892a6a6222ccb80c15cee965c215aec178f7e758f3e6126562270580d",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-low-voltage.png",
-   "thumbPath": "0.5.2/slw-low-voltage.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ac3b9325f84c93409d0b1754ba9697092c33d953bd90b6b8d37061b6b96ee3d0",
+   "path": "0.5.5/slw-low-voltage-131dc50d1877.png",
+   "thumbPath": "0.5.5/slw-low-voltage-131dc50d1877.w800.webp"
   },
   {
    "id": "slw-suppressed",
@@ -1203,12 +1203,12 @@
     "acns": "Suppression"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:7ae54b58f9e0c2f841cda5a193fa0195423b99fb9562de49a9970d28a6a967c3",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-suppressed.png",
-   "thumbPath": "0.5.2/slw-suppressed.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:acdec098e8f3b15ca2f2829a0ca594d4236eb2e2f541a1036aa916ae52edaf15",
+   "path": "0.5.5/slw-suppressed-27069cf1f8fd.png",
+   "thumbPath": "0.5.5/slw-suppressed-27069cf1f8fd.w800.webp"
   },
   {
    "id": "slw-burst-suppression",
@@ -1224,12 +1224,12 @@
     "acns": "Burst suppression"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:9cb161453ab511f70339bf7a5af36ca2f2c70baa8ba44d182ae5bad27bba86f9",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-burst-suppression.png",
-   "thumbPath": "0.5.2/slw-burst-suppression.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:eba70e82bc811b597bb4fe10d29d913561f846d56d70e01a441bc89a275476f9",
+   "path": "0.5.5/slw-burst-suppression-645435369cd6.png",
+   "thumbPath": "0.5.5/slw-burst-suppression-645435369cd6.w800.webp"
   },
   {
    "id": "slw-discontinuous",
@@ -1245,12 +1245,12 @@
     "acns": "Discontinuous"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:326d187291bd8458fc759cf8241173916e8ca3c8bd253628c3db5e492a4c85f2",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-discontinuous.png",
-   "thumbPath": "0.5.2/slw-discontinuous.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:2477ef797d9c6f8b3a60384daf195e5cf2ec1201a7e7a1275bbdb9f10c610e67",
+   "path": "0.5.5/slw-discontinuous-dcb8f185d6c6.png",
+   "thumbPath": "0.5.5/slw-discontinuous-dcb8f185d6c6.w800.webp"
   },
   {
    "id": "slw-cape",
@@ -1266,12 +1266,12 @@
     "acns": "CAPE"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:c77c2a72659201909b25af679ab05a9f79eda82c29aee61ecd236be6be806a2b",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-cape.png",
-   "thumbPath": "0.5.2/slw-cape.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:54b74361e49806c7e0dc258052593ce3e1c7d0f54459f76d53996ca17e37cc7d",
+   "path": "0.5.5/slw-cape-4dd4d426063a.png",
+   "thumbPath": "0.5.5/slw-cape-4dd4d426063a.w800.webp"
   },
   {
    "id": "slw-spindle-coma",
@@ -1281,39 +1281,39 @@
    "caption": "Frontocentral 12-14 Hz spindles, vertex waves and K-complexes near 13 s and 19 s in an unresponsive child. Unreactivity and absent sleep-wake cycling are clinical and longer-record context for this synthetic example.",
    "tags": {
     "age": "child",
-    "state": "unknown",
+    "state": "comatose",
     "montage": "longitudinal_bipolar",
     "sensitivity_uv_mm": 7,
     "acns": "Spindle coma"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:e24dd852032e88aceafe453bac57fc4d5215b8fc72da079706faeb7c255cd545",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-spindle-coma.png",
-   "thumbPath": "0.5.2/slw-spindle-coma.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:8afa7cdc4ad2322252f2eee2542ff6e3ff372d537f152744f83df276e8c7c9de",
+   "path": "0.5.5/slw-spindle-coma-3c37ba63221d.png",
+   "thumbPath": "0.5.5/slw-spindle-coma-3c37ba63221d.w800.webp"
   },
   {
    "id": "slw-alpha-coma",
    "title": "Alpha coma",
    "category": "slowing",
    "subcategory": "Coma and encephalopathy patterns",
-   "caption": "Diffuse, frontally predominant, monotonous alpha-frequency activity with no posterior dominant rhythm, no variability and no reactivity, in a comatose adolescent.",
+   "caption": "Diffuse, frontally predominant, monotonous alpha-frequency activity with no posterior dominant rhythm, low variability and no reactivity, in a comatose adolescent.",
    "tags": {
     "age": "adolescent",
-    "state": "unknown",
+    "state": "comatose",
     "montage": "longitudinal_bipolar",
     "sensitivity_uv_mm": 7,
     "acns": "Alpha coma"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:760010a4607e6e6cd734cfc33a0c0a941e65671e011cc5ba2d34f14df06c394f",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/slw-alpha-coma.png",
-   "thumbPath": "0.5.2/slw-alpha-coma.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:05faa1ce591e680fe17f6e14e67c9efabfa4d67289f0cea730aa96b7ecef1d93",
+   "path": "0.5.5/slw-alpha-coma-8d66dd214597.png",
+   "thumbPath": "0.5.5/slw-alpha-coma-8d66dd214597.w800.webp"
   },
   {
    "id": "slw-hypothermia",
@@ -1328,12 +1328,10 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "composite",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:9e051bfbeec68bfe49d99d30584a3b7c55e50bb87a3ce8be7f059a8b80af6a52",
    "width": 1600,
    "height": 1400,
-   "path": "0.5.4/slw-hypothermia.png",
-   "thumbPath": "0.5.4/slw-hypothermia.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ae9b7441420759a4265660b5c47d353894cc65e9e2c16ae525b3aed8953726cf",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -1367,7 +1365,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/slw-hypothermia-d5d78c6d535a.png",
+   "thumbPath": "0.5.5/slw-hypothermia-d5d78c6d535a.w800.webp"
   },
   {
    "id": "iid-left-temporal-spike-slow",
@@ -1383,12 +1383,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:86847368c7d788b94639359d33d440fcea80168f5ed0f57b557ca700015d3871",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-left-temporal-spike-slow.png",
-   "thumbPath": "0.5.2/iid-left-temporal-spike-slow.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:b178fe6f0f25498ce6eefefd51865607be3eb18ac53d9e8d3da0303edba9cf48",
+   "path": "0.5.5/iid-left-temporal-spike-slow-caee4cfc1638.png",
+   "thumbPath": "0.5.5/iid-left-temporal-spike-slow-caee4cfc1638.w800.webp"
   },
   {
    "id": "iid-right-temporal-spike-no-slow",
@@ -1404,12 +1404,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:9da29d7074140f445ce90b94d7530668bef14dd5b79fb9910ce7386e005fa8a9",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-right-temporal-spike-no-slow.png",
-   "thumbPath": "0.5.2/iid-right-temporal-spike-no-slow.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:898b4e05f3180016a7d8de6068ad37cd5c56ea5c545568075476641a185f87ac",
+   "path": "0.5.5/iid-right-temporal-spike-no-slow-54328bfabeb6.png",
+   "thumbPath": "0.5.5/iid-right-temporal-spike-no-slow-54328bfabeb6.w800.webp"
   },
   {
    "id": "iid-anterior-temporal-sharp-f8",
@@ -1425,12 +1425,12 @@
     "acns": "sporadic sharp waves, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:efb18c22c6557c64f00a39c88d1b3a6ae3b4a3278b07af338537ae0ea602a7e1",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-anterior-temporal-sharp-f8.png",
-   "thumbPath": "0.5.2/iid-anterior-temporal-sharp-f8.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:f5c13009a0f298b9f6de95cf894d7f2f26ba466e5a91905ba08c05a9fd54264f",
+   "path": "0.5.5/iid-anterior-temporal-sharp-f8-a13fb9638b1a.png",
+   "thumbPath": "0.5.5/iid-anterior-temporal-sharp-f8-a13fb9638b1a.w800.webp"
   },
   {
    "id": "iid-mesial-temporal-t2",
@@ -1446,12 +1446,12 @@
     "acns": "sporadic epileptiform discharges"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f8846e5561737109f6f8f47bcab737c0e2f7a38726d28cb266f0858b2c79b705",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-mesial-temporal-t2.png",
-   "thumbPath": "0.5.2/iid-mesial-temporal-t2.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1c1198bea3706f6b3479ef78d60c14c414801ab6d0d4ae479362d52ddb707ce5",
+   "path": "0.5.5/iid-mesial-temporal-t2-5a666914e630.png",
+   "thumbPath": "0.5.5/iid-mesial-temporal-t2-5a666914e630.w800.webp"
   },
   {
    "id": "iid-left-frontal-spike",
@@ -1467,12 +1467,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:6a6ffcf36254ce94f072e464a29acc3ee69b9ff992209dbdbf7e9201645fbff7",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-left-frontal-spike.png",
-   "thumbPath": "0.5.2/iid-left-frontal-spike.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:59cdceef3ca4ff8ae28c067683a0d551db333f08fb5e608ab0cb3c9e2511ccf8",
+   "path": "0.5.5/iid-left-frontal-spike-828415fce8c3.png",
+   "thumbPath": "0.5.5/iid-left-frontal-spike-828415fce8c3.w800.webp"
   },
   {
    "id": "iid-left-central-spike",
@@ -1488,12 +1488,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ffa0bb5df69b7112c7b7dff401c69bf6ce481f962aa189a7e21f4581196065f1",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-left-central-spike.png",
-   "thumbPath": "0.5.2/iid-left-central-spike.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:63802ed9005e79285e8693c0af437ae729fb9ca94c7984481bb00e01844b437e",
+   "path": "0.5.5/iid-left-central-spike-f79430d3bd8b.png",
+   "thumbPath": "0.5.5/iid-left-central-spike-f79430d3bd8b.w800.webp"
   },
   {
    "id": "iid-centrotemporal-selects-n2",
@@ -1509,12 +1509,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:69a6b4a6add2ac6d5b9e95b2b239b706d9596e91495f2c9ba58e04a4eb90976e",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-centrotemporal-selects-n2.png",
-   "thumbPath": "0.5.2/iid-centrotemporal-selects-n2.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:01ec99a29fc160930b75549601aaf59c3eaf558c3e81292de36671af88c51700",
+   "path": "0.5.5/iid-centrotemporal-selects-n2-9b30a997c87d.png",
+   "thumbPath": "0.5.5/iid-centrotemporal-selects-n2-9b30a997c87d.w800.webp"
   },
   {
    "id": "iid-left-occipital-spike",
@@ -1530,12 +1530,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:2b70a7c7f70d50c08cdb39263089ef6ce32150a2518c2476431caf9c14d5f629",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-left-occipital-spike.png",
-   "thumbPath": "0.5.2/iid-left-occipital-spike.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1b47ced8d27b66b634108a2ab226acc7f574ecd3a3a42779c785127b9ce464fa",
+   "path": "0.5.5/iid-left-occipital-spike-78f04da233a4.png",
+   "thumbPath": "0.5.5/iid-left-occipital-spike-78f04da233a4.w800.webp"
   },
   {
    "id": "iid-right-central-polyspike",
@@ -1551,12 +1551,12 @@
     "acns": "polyspikes"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:27800fc54bd04d6c94d65d42a658b21649996b3bf053bd3786acf44590479ce8",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-right-central-polyspike.png",
-   "thumbPath": "0.5.2/iid-right-central-polyspike.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3d9a8e8e5106009510c6c83ebaef96709ffa5b02da4954e8c1cadca94d38d41a",
+   "path": "0.5.5/iid-right-central-polyspike-f6d355be4317.png",
+   "thumbPath": "0.5.5/iid-right-central-polyspike-f6d355be4317.w800.webp"
   },
   {
    "id": "iid-multifocal-spikes",
@@ -1572,12 +1572,12 @@
     "acns": "multifocal sporadic epileptiform discharges"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d23aec525ce5edd2bc6fa569fb08531849a10a01cedc42dee7bfd756108d712e",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-multifocal-spikes.png",
-   "thumbPath": "0.5.2/iid-multifocal-spikes.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:0b916ec53752f96b89a5276c630c2534cd5f1631fa7d4057219f9f6fcb9cf8cf",
+   "path": "0.5.5/iid-multifocal-spikes-9a097a9eaecf.png",
+   "thumbPath": "0.5.5/iid-multifocal-spikes-9a097a9eaecf.w800.webp"
   },
   {
    "id": "iid-referential-t4",
@@ -1593,12 +1593,12 @@
     "acns": "sporadic epileptiform discharges"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d9c8e1756753a2d0893cb77ea9aece685e6691f100c73d6acb1453658cc78e89",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-referential-t4.png",
-   "thumbPath": "0.5.2/iid-referential-t4.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1c05821cd94fbb04c30fbca467fea7bd67ed598200a49c5dbe19e9ac4027c819",
+   "path": "0.5.5/iid-referential-t4-6ff1ef63d7ed.png",
+   "thumbPath": "0.5.5/iid-referential-t4-6ff1ef63d7ed.w800.webp"
   },
   {
    "id": "iid-birds-right-temporal",
@@ -1614,12 +1614,12 @@
     "acns": "BIRDs"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:de18a53d3c68d4956c92a1a646c8b11568aa3fc24213cc3480ff8663465aeb8a",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-birds-right-temporal.png",
-   "thumbPath": "0.5.2/iid-birds-right-temporal.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:0956f7837253352fc1dad8a23a3196ef806ad295441111ebe6c63d6aa7bd688d",
+   "path": "0.5.5/iid-birds-right-temporal-0c7e3b567cc4.png",
+   "thumbPath": "0.5.5/iid-birds-right-temporal-0c7e3b567cc4.w800.webp"
   },
   {
    "id": "iid-birds-evolving",
@@ -1635,12 +1635,12 @@
     "acns": "BIRDs, definite (evolving)"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:6292977128cce34d44510b35712269ff8c5ac1c2e8cd42dcb71eb8d3af1656f2",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/iid-birds-evolving.png",
-   "thumbPath": "0.5.2/iid-birds-evolving.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:d12a21e915c521075de9c24b519122a2a36b3dfdd4b0163bfe8eca47fc266ed1",
+   "path": "0.5.5/iid-birds-evolving-56a8f4fe37c1.png",
+   "thumbPath": "0.5.5/iid-birds-evolving-56a8f4fe37c1.w800.webp"
   },
   {
    "id": "szf-mesial-temporal-left",
@@ -1656,12 +1656,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d36747926c3a3e71ae91efdb00a6e2017c7ddcccef8d2713610fc900d7619535",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-mesial-temporal-left.png",
-   "thumbPath": "0.5.2/szf-mesial-temporal-left.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3bd0929c2f5ab1e59774c32480e42ec5ac8fc33df3a7b07d5b5598fcc95a93b4",
+   "path": "0.5.5/szf-mesial-temporal-left-8f6dcfc320aa.png",
+   "thumbPath": "0.5.5/szf-mesial-temporal-left-8f6dcfc320aa.w800.webp"
   },
   {
    "id": "szf-neocortical-temporal-right",
@@ -1677,12 +1677,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:fea31ad74318ee5e26ce3f1052ef83e1487b1324b7f1b113b5456751fdbc6249",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-neocortical-temporal-right.png",
-   "thumbPath": "0.5.2/szf-neocortical-temporal-right.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3b75256642d7a9be8797868152910e66d5d7fc8b6c915c1c31b9f97d9eb708a4",
+   "path": "0.5.5/szf-neocortical-temporal-right-35a333226855.png",
+   "thumbPath": "0.5.5/szf-neocortical-temporal-right-35a333226855.w800.webp"
   },
   {
    "id": "szf-temporal-evolution",
@@ -1698,12 +1698,12 @@
     "acns": "electrographic seizure, evolving"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:5ad4ee908ca25a97754220c3b60bb55e90538cd7cdd5d363d52beab266207cdf",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-temporal-evolution.png",
-   "thumbPath": "0.5.2/szf-temporal-evolution.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:e3aa9c432acd954f9d4a03d8283afa4055e9d069f553b0914ad88908bd9704b2",
+   "path": "0.5.5/szf-temporal-evolution-f5a7b92843a3.png",
+   "thumbPath": "0.5.5/szf-temporal-evolution-f5a7b92843a3.w800.webp"
   },
   {
    "id": "szf-frontal-left",
@@ -1719,12 +1719,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:bf0c88d9b3ecd5f44393539d6a9a71046723f33947021439b41e0f093f27d01c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/szf-frontal-left.png",
-   "thumbPath": "0.5.4/szf-frontal-left.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:afa192c14fd80388053caadee2954c76bed841a27e1fc1a11ae75e1b44a180d3",
+   "path": "0.5.5/szf-frontal-left-4f3026fa260f.png",
+   "thumbPath": "0.5.5/szf-frontal-left-4f3026fa260f.w800.webp"
   },
   {
    "id": "szf-central-left",
@@ -1740,12 +1740,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:45d8b5bc2a04f9bd98f5253641fae0a7e19ea71aa899594627d9d94a95519f6c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-central-left.png",
-   "thumbPath": "0.5.2/szf-central-left.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:4f02871c6ee8930e8755497e51f9bc654f751049a4ee19a6f1edb6456c69d2b5",
+   "path": "0.5.5/szf-central-left-83bec87b576a.png",
+   "thumbPath": "0.5.5/szf-central-left-83bec87b576a.w800.webp"
   },
   {
    "id": "szf-occipital-right",
@@ -1761,12 +1761,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:285593b129d6191f6335b4fda834bd7367baab7e29ce6d393cc28a8a79deef49",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-occipital-right.png",
-   "thumbPath": "0.5.2/szf-occipital-right.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:29146bdf148a713abd1ab257a1b8a56d4000741ed8e590a42dd2f70959c50669",
+   "path": "0.5.5/szf-occipital-right-72459e302c4b.png",
+   "thumbPath": "0.5.5/szf-occipital-right-72459e302c4b.w800.webp"
   },
   {
    "id": "szf-parietal-right",
@@ -1782,12 +1782,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:48e6f5891c641df8144f559bd946db9b3b1cc4fc05b4554fdc1672a29f47afb4",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-parietal-right.png",
-   "thumbPath": "0.5.2/szf-parietal-right.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:fa2e33636793352c89703240d088fd6e14d2db420967fd4499dfb378e2e8ef4c",
+   "path": "0.5.5/szf-parietal-right-ae02b7d6d66d.png",
+   "thumbPath": "0.5.5/szf-parietal-right-ae02b7d6d66d.w800.webp"
   },
   {
    "id": "szf-hemispheric-spread",
@@ -1803,12 +1803,12 @@
     "acns": "electrographic seizure, hemispheric spread"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:876024f1615086ea5b76b6ae605eb4878cea3dae7a1f210f8eb5e7ec3fb2dba9",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/szf-hemispheric-spread.png",
-   "thumbPath": "0.5.4/szf-hemispheric-spread.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:4efda1aff5335a743b2a67f72a21679097e1f6b40b22f1407eec6251625175ec",
+   "path": "0.5.5/szf-hemispheric-spread-e7da4687a95b.png",
+   "thumbPath": "0.5.5/szf-hemispheric-spread-e7da4687a95b.w800.webp"
   },
   {
    "id": "szf-postictal-attenuation",
@@ -1824,12 +1824,12 @@
     "acns": "electrographic seizure, postictal"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:575eeee6c9d3e451536fbbc6f021fbc78937af46bb1a07486a4f3a7c978a628a",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-postictal-attenuation.png",
-   "thumbPath": "0.5.2/szf-postictal-attenuation.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:4b62d87e069a4bfc3f9431474fc23e2238fb836f91956c02eb4d9b97a586db0a",
+   "path": "0.5.5/szf-postictal-attenuation-07d607f6cecf.png",
+   "thumbPath": "0.5.5/szf-postictal-attenuation-07d607f6cecf.w800.webp"
   },
   {
    "id": "szf-status-electrographic",
@@ -1845,12 +1845,12 @@
     "acns": "electrographic status epilepticus"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:db55a3cd396d546228d359020b34c7a65bd174ca2f6e8020a3b5822a80028cee",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-status-electrographic.png",
-   "thumbPath": "0.5.2/szf-status-electrographic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:39a73bc0a1b396ae6dac6ca12e39033bc742a90b2ec9f3d241307500cecd83b1",
+   "path": "0.5.5/szf-status-electrographic-a58b6f4f8bfd.png",
+   "thumbPath": "0.5.5/szf-status-electrographic-a58b6f4f8bfd.w800.webp"
   },
   {
    "id": "szf-seizure-cluster-trend",
@@ -1866,12 +1866,10 @@
     "acns": "seizure cluster"
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:125ddf233a5f387de0416ff676c03627e68ce7d25256c25e2a17ad8155bdd7ad",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.2/szf-seizure-cluster-trend.png",
-   "thumbPath": "0.5.2/szf-seizure-cluster-trend.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:75737eed7c8cd3db559e84f942fb492713dfceee46ccb0e7c2f3f859351c593b",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -1883,8 +1881,8 @@
     ],
     "power": {
      "range": [
-      -16.086,
-      20.234
+      -13.182,
+      22.463
      ],
      "colors": [
       "#02040b",
@@ -1906,7 +1904,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/szf-seizure-cluster-trend-e80e44d82b84.png",
+   "thumbPath": "0.5.5/szf-seizure-cluster-trend-e80e44d82b84.w800.webp"
   },
   {
    "id": "szf-hypsarrhythmia",
@@ -1921,12 +1921,12 @@
     "sensitivity_uv_mm": 20
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:62f18f640a3c44eee49338e0c08913f23ae062101a44802f905d56dd22035538",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-hypsarrhythmia.png",
-   "thumbPath": "0.5.2/szf-hypsarrhythmia.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:2d33b51d0be4fa1a0adef017d4a5d3d96eec909463356334f164cfb4ca5d908d",
+   "path": "0.5.5/szf-hypsarrhythmia-f59290372ed7.png",
+   "thumbPath": "0.5.5/szf-hypsarrhythmia-f59290372ed7.w800.webp"
   },
   {
    "id": "szf-spasm-cluster-hyps",
@@ -1942,12 +1942,12 @@
     "acns": "epileptic spasms"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:2f96f0fdd0a9798d729681f1add0aeb5bbb1469eca6e1129d65961eb075f0a0e",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-spasm-cluster-hyps.png",
-   "thumbPath": "0.5.2/szf-spasm-cluster-hyps.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6dfc8cf64f2325cc5b686c202bab197577206d12d197a91aaa3fdded239b2298",
+   "path": "0.5.5/szf-spasm-cluster-hyps-af5b2789b230.png",
+   "thumbPath": "0.5.5/szf-spasm-cluster-hyps-af5b2789b230.w800.webp"
   },
   {
    "id": "szf-tonic-seizure",
@@ -1963,12 +1963,12 @@
     "acns": "electrographic seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:8ed68b57dbaf658ddd893db24290cdb5532a8c7b646f6455fb72ae77bcfba1fc",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/szf-tonic-seizure.png",
-   "thumbPath": "0.5.2/szf-tonic-seizure.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:a7d89242c20b1f640fb341425477b0e2e4ab1a2f8ca0d68b15b791e7aa1340f5",
+   "path": "0.5.5/szf-tonic-seizure-d1685e104f09.png",
+   "thumbPath": "0.5.5/szf-tonic-seizure-d1685e104f09.w800.webp"
   },
   {
    "id": "neo-26w-trace-discontinu",
@@ -1983,12 +1983,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:9ef73a32ecb9ac9e0c730dd1901179e7f680fd45348f9c997b232c22fcb45ef8",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-26w-trace-discontinu.png",
-   "thumbPath": "0.5.2/neo-26w-trace-discontinu.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:dc6dff76f8f25aa109d7ef9328f4de898728424d08aeb70ab4c1b76be13323d1",
+   "path": "0.5.5/neo-26w-trace-discontinu-a4142cecf098.png",
+   "thumbPath": "0.5.5/neo-26w-trace-discontinu-a4142cecf098.w800.webp"
   },
   {
    "id": "neo-30w-discontinuous",
@@ -2003,12 +2003,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:cb13d8ba3f1d0e2294d5a7aca07fba5918dd32844344f7dab56c9ae32b79d3ab",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-30w-discontinuous.png",
-   "thumbPath": "0.5.2/neo-30w-discontinuous.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6210258e5bad8340d275c8523d06eaf55456475b97ca960c68ef125aaa9bc8d4",
+   "path": "0.5.5/neo-30w-discontinuous-13959b753caf.png",
+   "thumbPath": "0.5.5/neo-30w-discontinuous-13959b753caf.w800.webp"
   },
   {
    "id": "neo-34w-background",
@@ -2023,12 +2023,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:d8a13ab1babbe472de5b7a6c897402f490208bf339d31374e01efb73756fe126",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/neo-34w-background.png",
-   "thumbPath": "0.5.4/neo-34w-background.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:0a86b5ba501cac96f9dce4a72af7c5dcee216dfaee223a4a87e7170562849fda",
+   "path": "0.5.5/neo-34w-background-03de79c6ebac.png",
+   "thumbPath": "0.5.5/neo-34w-background-03de79c6ebac.w800.webp"
   },
   {
    "id": "neo-term-continuous",
@@ -2043,12 +2043,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f394b2eb09fe46da7e8f0ec36ebdaa66bbcf08d1ef5e1cd05a0731abb5816297",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-term-continuous.png",
-   "thumbPath": "0.5.2/neo-term-continuous.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:e5ee99649a891b3b5d6c927b8acc079465863e40f7f5ddc956e5992410cd8d3e",
+   "path": "0.5.5/neo-term-continuous-2555b437577a.png",
+   "thumbPath": "0.5.5/neo-term-continuous-2555b437577a.w800.webp"
   },
   {
    "id": "neo-trace-alternant",
@@ -2063,12 +2063,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:45745b4dd658ec44bff5968af15816cb1978d044f4613b86ece0a1bc47909a76",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-trace-alternant.png",
-   "thumbPath": "0.5.2/neo-trace-alternant.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:fd2b7a552e2edb2e28966b53ec41f744035ce5fae4c85d597b488146e6aad1e7",
+   "path": "0.5.5/neo-trace-alternant-8dd0c20d9930.png",
+   "thumbPath": "0.5.5/neo-trace-alternant-8dd0c20d9930.w800.webp"
   },
   {
    "id": "neo-excessive-discontinuity",
@@ -2083,12 +2083,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:e5584279f977800cb0966c43a90e6dcd117a72c83b2ab5ef1bb834d6943677e5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-excessive-discontinuity.png",
-   "thumbPath": "0.5.2/neo-excessive-discontinuity.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:07bbf403bb5b2500e447d90dff7dd57ecb1ab10d214a3ecd7de829c5928619db",
+   "path": "0.5.5/neo-excessive-discontinuity-5d9d768b1928.png",
+   "thumbPath": "0.5.5/neo-excessive-discontinuity-5d9d768b1928.w800.webp"
   },
   {
    "id": "neo-delta-brushes-32w",
@@ -2103,12 +2103,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f7ca263ebcb66486640de856964fb052755a3fda7e4062d5828e8970b7e27956",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-delta-brushes-32w.png",
-   "thumbPath": "0.5.2/neo-delta-brushes-32w.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6c7308bf1905e1a4a24d8891bf823495899e490aa090694c256747d06d376ab4",
+   "path": "0.5.5/neo-delta-brushes-32w-9274fc7b7905.png",
+   "thumbPath": "0.5.5/neo-delta-brushes-32w-9274fc7b7905.w800.webp"
   },
   {
    "id": "neo-encoches-frontales",
@@ -2123,19 +2123,19 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:4fa8fb1c234ea359dc48553dfdf61d37534aebf0588d1b83acfe3c81cfaa5376",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-encoches-frontales.png",
-   "thumbPath": "0.5.2/neo-encoches-frontales.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:5fee81bee51aa0d92a77194d46f2a1e2bdfa6e79a24a2dd07acb0b9568a4fb5d",
+   "path": "0.5.5/neo-encoches-frontales-3b59f5def22e.png",
+   "thumbPath": "0.5.5/neo-encoches-frontales-3b59f5def22e.w800.webp"
   },
   {
    "id": "neo-anterior-slow-dysrhythmia",
    "title": "Anterior slow dysrhythmia (38 weeks)",
    "category": "neonatal",
    "subcategory": "Graphoelements",
-   "caption": "Runs of 1.5-2 Hz, 50-100 uV frontal delta (anterior slow dysrhythmia), a normal transitional-sleep pattern near term.",
+   "caption": "Runs of 1.5-2 Hz, 50-100 uV frontal delta (anterior slow dysrhythmia), a normal pattern often seen during transitional sleep near term. Behavioral state is not established by this illustrative excerpt.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -2143,12 +2143,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:85be146d3f1da2cd12f64625532914b9efe383a1a142a613ee6083a420397357",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-anterior-slow-dysrhythmia.png",
-   "thumbPath": "0.5.2/neo-anterior-slow-dysrhythmia.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3f3d7a5c496bba14fa94fe3f97cc70604695183b7babfb7ce8df83e16ab3d501",
+   "path": "0.5.5/neo-anterior-slow-dysrhythmia-32eaece38f17.png",
+   "thumbPath": "0.5.5/neo-anterior-slow-dysrhythmia-32eaece38f17.w800.webp"
   },
   {
    "id": "neo-temporal-theta-29w",
@@ -2163,12 +2163,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:5cda59978bbba76fe26fc8f0c7e197a4c29ec0d02a135670a25f614bb7ce67c7",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-temporal-theta-29w.png",
-   "thumbPath": "0.5.2/neo-temporal-theta-29w.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1d5dfe06fc6f9f88f626aff2a73ff4dc44823e57c45c958409655b451310b290",
+   "path": "0.5.5/neo-temporal-theta-29w-bc2bab523e5a.png",
+   "thumbPath": "0.5.5/neo-temporal-theta-29w-bc2bab523e5a.w800.webp"
   },
   {
    "id": "neo-stop-24w",
@@ -2183,12 +2183,12 @@
     "sensitivity_uv_mm": 10
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:4eda0c92e03cd783db8184e3e41b291063da071eb074cbd90f83794aefc6574c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-stop-24w.png",
-   "thumbPath": "0.5.2/neo-stop-24w.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:e8838be0f169a099c451129c52902468b1f29626d884eef9061bd94ba1cf42fb",
+   "path": "0.5.5/neo-stop-24w-5aae4df514f3.png",
+   "thumbPath": "0.5.5/neo-stop-24w-5aae4df514f3.w800.webp"
   },
   {
    "id": "neo-seizure-focal-clonic",
@@ -2204,12 +2204,12 @@
     "acns": "neonatal electrographic-clinical seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:e15f9edabfe28366f14bed2f7968124e84811ac2ecd23de00ef283ff2cdae23b",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-seizure-focal-clonic.png",
-   "thumbPath": "0.5.2/neo-seizure-focal-clonic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ee3ca90c79bca45b2e76c6eca7f1ffea0072feba22f07905571b456743e03b4b",
+   "path": "0.5.5/neo-seizure-focal-clonic-408379d2c905.png",
+   "thumbPath": "0.5.5/neo-seizure-focal-clonic-408379d2c905.w800.webp"
   },
   {
    "id": "neo-seizure-rhythmic-temporal",
@@ -2225,12 +2225,12 @@
     "acns": "neonatal electrographic-only seizure"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f5f1efa5a0850b158622f5fad58cfe9514994421e77f7b894528ef5e28f6661e",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-seizure-rhythmic-temporal.png",
-   "thumbPath": "0.5.2/neo-seizure-rhythmic-temporal.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:67490def4879fd99c7c056ee58c05e4ee1d84961b4c5904acf1d4f24cd805eb1",
+   "path": "0.5.5/neo-seizure-rhythmic-temporal-d9814e1e062e.png",
+   "thumbPath": "0.5.5/neo-seizure-rhythmic-temporal-d9814e1e062e.w800.webp"
   },
   {
    "id": "neo-brd",
@@ -2246,12 +2246,12 @@
     "acns": "BRDs"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:298d03215b2024b2c634e6d3040908d20e5c19a85590d9dc9c0e73893df2b193",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-brd.png",
-   "thumbPath": "0.5.2/neo-brd.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:2b73d7f27365243e31e89988d3ebc65f5325768ece4f7d84a86d3dd4e99e6d0c",
+   "path": "0.5.5/neo-brd-ba4e28e08d7b.png",
+   "thumbPath": "0.5.5/neo-brd-ba4e28e08d7b.w800.webp"
   },
   {
    "id": "neo-burst-suppression",
@@ -2267,19 +2267,19 @@
     "acns": "burst suppression"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:03381b5498b0116a2d4ab10ffe9fe3d4e2eb2d4b8fa747949d528fb9785d2da4",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/neo-burst-suppression-0fc8772318.png",
-   "thumbPath": "0.5.4/neo-burst-suppression-0fc8772318.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:36ba469128d8a48024ddfb0435b09854f1f3a4cac41cb441b20ec68599a6d15e",
+   "path": "0.5.5/neo-burst-suppression-0fc877231815.png",
+   "thumbPath": "0.5.5/neo-burst-suppression-0fc877231815.w800.webp"
   },
   {
    "id": "neo-hypothermia-aeeg",
    "title": "aEEG during therapeutic hypothermia",
    "category": "neonatal",
    "subcategory": "Hypothermia",
-   "caption": "Six hours of aEEG in an authored term-neonate HIE/cooling scenario: a discontinuous normal-voltage pattern, with an upper margin mostly 15–30 uV and intermittent higher peaks, a lower margin around 2 uV, and absent sleep-wake cycling.",
+   "caption": "Six hours of aEEG in an authored term-neonate HIE/cooling scenario: a discontinuous normal-voltage pattern, with an upper margin mostly 15–30 uV and intermittent higher peaks, a lower margin below 5 uV, and absent sleep-wake cycling.",
    "tags": {
     "age": "neonate",
     "state": "unknown",
@@ -2288,18 +2288,18 @@
     "acns": null
    },
    "kind": "aeeg",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f55d2b97aab1041ac8a8cbd1e522a84093c355984c0f12bdc8a46599e9e45277",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/neo-hypothermia-aeeg.png",
-   "thumbPath": "0.5.2/neo-hypothermia-aeeg.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:2673821715e18d3bed165998be40467d50bafc96575a4cea5310edb53e80db2b",
    "scaleLegend": {
     "lines": [
      "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
      "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
     ]
-   }
+   },
+   "path": "0.5.5/neo-hypothermia-aeeg-4ae3b95de7fc.png",
+   "thumbPath": "0.5.5/neo-hypothermia-aeeg-4ae3b95de7fc.w800.webp"
   },
   {
    "id": "acn-lpds-left-temporal",
@@ -2315,12 +2315,12 @@
     "acns": "LPDs, 1 Hz, sharp"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d30a6ebdd2084a998f5752858d2dbdfa53c28eea4e028c88efaec384e70577eb",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lpds-left-temporal.png",
-   "thumbPath": "0.5.2/acn-lpds-left-temporal.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:84d0dc5284f245467326c44551eee5b3a02ea3b68340ddeb9c864874464ab852",
+   "path": "0.5.5/acn-lpds-left-temporal-1f945906d274.png",
+   "thumbPath": "0.5.5/acn-lpds-left-temporal-1f945906d274.w800.webp"
   },
   {
    "id": "acn-lpds-plus-f",
@@ -2336,12 +2336,12 @@
     "acns": "LPDs+F, 1 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f1118c80619399e0dfba897076419615c6a682a75c5700aa0861d967f8e744f8",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lpds-plus-f.png",
-   "thumbPath": "0.5.2/acn-lpds-plus-f.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:5039a11b7a5ceadb999b76211cbb01c7e1b1d652e18bcfb518f7237568248d03",
+   "path": "0.5.5/acn-lpds-plus-f-15e48325b2d2.png",
+   "thumbPath": "0.5.5/acn-lpds-plus-f-15e48325b2d2.w800.webp"
   },
   {
    "id": "acn-lpds-plus-r",
@@ -2357,12 +2357,12 @@
     "acns": "LPDs+R, 0.8 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:bafe61e549934aeeaf6609aaa2d4a99cb96245d6aef6e6a013ee22a79d691bb1",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lpds-plus-r.png",
-   "thumbPath": "0.5.2/acn-lpds-plus-r.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:7085e28a30676a50a729b9b26ca2613ee51390fec5d0c987173f9216aa479eb6",
+   "path": "0.5.5/acn-lpds-plus-r-8eceb7f74fb3.png",
+   "thumbPath": "0.5.5/acn-lpds-plus-r-8eceb7f74fb3.w800.webp"
   },
   {
    "id": "acn-lpds-dipole-referential",
@@ -2378,12 +2378,12 @@
     "acns": "LPDs, dipole polarity"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:b7e3f3827558fc0b93198ed54f5c6d153eb9f58e9b7bd7d570505493c7334fb2",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lpds-dipole-referential.png",
-   "thumbPath": "0.5.2/acn-lpds-dipole-referential.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:0eda0ce83b308721c1366d9637c9f7b3cfa2f09a4f82bbb067a8d988798ef442",
+   "path": "0.5.5/acn-lpds-dipole-referential-2d2ea9ffe8eb.png",
+   "thumbPath": "0.5.5/acn-lpds-dipole-referential-2d2ea9ffe8eb.w800.webp"
   },
   {
    "id": "acn-bipds",
@@ -2399,12 +2399,12 @@
     "acns": "BIPDs, 1 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:1aaef4a578b49e1e76115ebd499082bfad01b33d86b4b342173bda3aa8ba2f4c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-bipds.png",
-   "thumbPath": "0.5.2/acn-bipds.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:d9a2bd5dbad56fb51ef43d7dce8bf287efaba3febbed66b32fed13ab5649a1f9",
+   "path": "0.5.5/acn-bipds-3018933f76d0.png",
+   "thumbPath": "0.5.5/acn-bipds-3018933f76d0.w800.webp"
   },
   {
    "id": "acn-gpds-2hz",
@@ -2420,12 +2420,12 @@
     "acns": "GPDs, 2 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:266be30cd1ada7e66d7a13981d842fb4c784d349d043ea8d05d347492d5cb268",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-gpds-2hz.png",
-   "thumbPath": "0.5.2/acn-gpds-2hz.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:74af64e58408d31511f662743383d18bb62efdb3698a4b0691c3c818f3482562",
+   "path": "0.5.5/acn-gpds-2hz-fb72c3bd2dba.png",
+   "thumbPath": "0.5.5/acn-gpds-2hz-fb72c3bd2dba.w800.webp"
   },
   {
    "id": "acn-gpds-plus-f",
@@ -2441,12 +2441,12 @@
     "acns": "GPDs+F, 1 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:46ea5dde0b91fd52b6b8cf97c0f0cb01a48b0f66f7ee3f3f69464aaf14958fb5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-gpds-plus-f.png",
-   "thumbPath": "0.5.2/acn-gpds-plus-f.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:f2e15e49ba6fb65a8e1b566f267842ad17a973274293b371347ce2f66a166927",
+   "path": "0.5.5/acn-gpds-plus-f-9aa7a05133ed.png",
+   "thumbPath": "0.5.5/acn-gpds-plus-f-9aa7a05133ed.w800.webp"
   },
   {
    "id": "acn-triphasic-gpds",
@@ -2462,12 +2462,12 @@
     "acns": "GPDs with triphasic morphology, A-P lag, 1.8 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:c0105c708a5b9e19cf991673becbd7a1ad31ae82f041dcc92507930d495da914",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-triphasic-gpds.png",
-   "thumbPath": "0.5.2/acn-triphasic-gpds.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:346ef70a8605e6b44963b099265d3ff463ee529d3e26479843d8533f8cdb54ad",
+   "path": "0.5.5/acn-triphasic-gpds-03d7230e9d0f.png",
+   "thumbPath": "0.5.5/acn-triphasic-gpds-03d7230e9d0f.w800.webp"
   },
   {
    "id": "acn-lpds-spiky",
@@ -2483,12 +2483,12 @@
     "acns": "LPDs, spiky, 1 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:980a8cdba5c55ab55f94d8c533221541694e91154047bdc4640b2a79337564a9",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lpds-spiky.png",
-   "thumbPath": "0.5.2/acn-lpds-spiky.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3c76b51d7833cb1740d3ea8f62294daaf525ddd81e549333af24f62ed7cc8c6b",
+   "path": "0.5.5/acn-lpds-spiky-753c858f0d9a.png",
+   "thumbPath": "0.5.5/acn-lpds-spiky-753c858f0d9a.w800.webp"
   },
   {
    "id": "acn-lpds-blunt",
@@ -2504,12 +2504,12 @@
     "acns": "LPDs, blunt, 1 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:93e87966f82015e446dff72f76f2c4112922192e3b41917439cf04e3f496c006",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lpds-blunt.png",
-   "thumbPath": "0.5.2/acn-lpds-blunt.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:12b3bc43c918e848a1d204ddfa585916fe4c84ec8fd93afc9c4c10f8ca45fc6a",
+   "path": "0.5.5/acn-lpds-blunt-321ad5a90f70.png",
+   "thumbPath": "0.5.5/acn-lpds-blunt-321ad5a90f70.w800.webp"
   },
   {
    "id": "acn-lrda-left-temporal",
@@ -2525,12 +2525,12 @@
     "acns": "LRDA, 1.5 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:d80d4a7bbcd3723a740e895e4f4bf5c288128785f7721a7a74aa4edf9418cb23",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lrda-left-temporal.png",
-   "thumbPath": "0.5.2/acn-lrda-left-temporal.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ba7b715d997eebf63aef877f84ea22ce6694a903f990b94aa41b39126bc1cb51",
+   "path": "0.5.5/acn-lrda-left-temporal-bb6dcfed8787.png",
+   "thumbPath": "0.5.5/acn-lrda-left-temporal-bb6dcfed8787.w800.webp"
   },
   {
    "id": "acn-lrda-plus-s",
@@ -2546,12 +2546,12 @@
     "acns": "LRDA+S, 1.5 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:5c92af652648ea57cf5a294dc80cdf1c3866dce3404f53224abd1c510c0e50c8",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lrda-plus-s.png",
-   "thumbPath": "0.5.2/acn-lrda-plus-s.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:9018da5b5160c7c68f165107520fa55d17d019cf9a1d4f23ba4543b4cff21fbd",
+   "path": "0.5.5/acn-lrda-plus-s-ee8e813cf82f.png",
+   "thumbPath": "0.5.5/acn-lrda-plus-s-ee8e813cf82f.w800.webp"
   },
   {
    "id": "acn-lrda-plus-f",
@@ -2567,12 +2567,12 @@
     "acns": "LRDA+F, 1.5 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:96c560124afd10c16e6874dbd1d80d189289d053faf5d748f16dae1f195e3ddf",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lrda-plus-f.png",
-   "thumbPath": "0.5.2/acn-lrda-plus-f.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:cff11ded066211f079ca6767e5bff781d92f978ba715d5e61c6d09f54ce8cfd5",
+   "path": "0.5.5/acn-lrda-plus-f-6ffdd28cd40a.png",
+   "thumbPath": "0.5.5/acn-lrda-plus-f-6ffdd28cd40a.w800.webp"
   },
   {
    "id": "acn-lrda-fluctuating",
@@ -2588,12 +2588,12 @@
     "acns": "LRDA, fluctuating"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:313b076a30a9a6f15e286ddd0d348d747223efadc2e59571488c3c29e9b84988",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/acn-lrda-fluctuating.png",
-   "thumbPath": "0.5.4/acn-lrda-fluctuating.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:f4245defe322f802ce8a005cd6c6f523a10e398eddea71dd6bb49b25868adcaf",
+   "path": "0.5.5/acn-lrda-fluctuating-b92ff06228df.png",
+   "thumbPath": "0.5.5/acn-lrda-fluctuating-b92ff06228df.w800.webp"
   },
   {
    "id": "acn-grda-frontal",
@@ -2609,12 +2609,12 @@
     "acns": "GRDA, 2 Hz, frontally predominant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:f46420e5b63fe851f274141767b288369f5cee0258ebc1b88d1453d701f0ed31",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-grda-frontal.png",
-   "thumbPath": "0.5.2/acn-grda-frontal.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:89aa3d2e3276276b5910624623406d0c4c1eed2836cf4a4332c80fd191348668",
+   "path": "0.5.5/acn-grda-frontal-362123793c2b.png",
+   "thumbPath": "0.5.5/acn-grda-frontal-362123793c2b.w800.webp"
   },
   {
    "id": "acn-grda-occipital",
@@ -2630,12 +2630,12 @@
     "acns": "GRDA, 3 Hz, occipitally predominant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:ae57b04af6e19c25fd5fecb1d66e07d49cb471c530251f6a571c950705f18b01",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-grda-occipital.png",
-   "thumbPath": "0.5.2/acn-grda-occipital.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:22c3372e979cf8fc037a08dbd9ba6498241602cca7f8075a1f9a433fa1bd9153",
+   "path": "0.5.5/acn-grda-occipital-0223e753ff99.png",
+   "thumbPath": "0.5.5/acn-grda-occipital-0223e753ff99.w800.webp"
   },
   {
    "id": "acn-edb",
@@ -2651,12 +2651,12 @@
     "acns": "EDB (GRDA+F)"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:4a3308dd6c0698ad35482c23c2698c35df279bdefdfc989b34d395ae79dc2db9",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-edb.png",
-   "thumbPath": "0.5.2/acn-edb.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:cd4e41672607c9c233cdd8da32908a772a9b44cfa789c81b813f1923ae0f4c6b",
+   "path": "0.5.5/acn-edb-d47eeefa8817.png",
+   "thumbPath": "0.5.5/acn-edb-d47eeefa8817.w800.webp"
   },
   {
    "id": "acn-birds",
@@ -2672,12 +2672,12 @@
     "acns": "BIRDs"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:17a7f0c4791d6a2da431c64d4044ace23bd8ef39b78b7d5a32ce975237fcb550",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-birds.png",
-   "thumbPath": "0.5.2/acn-birds.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:8c929a59d38b0e6fd88765067c4a5df149900c46ca7c25741ef9afcfb820b785",
+   "path": "0.5.5/acn-birds-162aa6d78951.png",
+   "thumbPath": "0.5.5/acn-birds-162aa6d78951.w800.webp"
   },
   {
    "id": "acn-sirpids",
@@ -2693,12 +2693,12 @@
     "acns": "SI-GPDs (SIRPIDs), 1.5 Hz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:46b99359bb9c6ecdf1c102d0009bb60f8fc09d60a30d45e2875965498fd78608",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-sirpids.png",
-   "thumbPath": "0.5.2/acn-sirpids.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:2d618d31458897ac70f4d5a5e5c43a76c4e7fd70993ef2e78a2e2ecc66d6aae1",
+   "path": "0.5.5/acn-sirpids-e206c253341e.png",
+   "thumbPath": "0.5.5/acn-sirpids-e206c253341e.w800.webp"
   },
   {
    "id": "acn-lpds-evolving-esz",
@@ -2714,12 +2714,12 @@
     "acns": "LPDs, evolving -> ESz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:0d6e79ebc15b3b25fb18f00d8c361640fd9e9b5f723ee90ad10d2240eb0681ec",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-lpds-evolving-esz.png",
-   "thumbPath": "0.5.2/acn-lpds-evolving-esz.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:63bb871f18526a6e824ecff2785a10cb1050d996b8b4acf6afea622c69d8060f",
+   "path": "0.5.5/acn-lpds-evolving-esz-184be70575db.png",
+   "thumbPath": "0.5.5/acn-lpds-evolving-esz-184be70575db.w800.webp"
   },
   {
    "id": "acn-gpds-3hz-esz",
@@ -2735,12 +2735,12 @@
     "acns": "GPDs, 3 Hz -> ESz"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:1c5755d3e325636e9b9f397f4e9e2d3d1a95ec49966f47c913e0c800ece6d07b",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/acn-gpds-3hz-esz.png",
-   "thumbPath": "0.5.2/acn-gpds-3hz-esz.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:db580f3b561684a4c57d58e1a2f2a69095e19871758c202e99b2cffd7697ea4a",
+   "path": "0.5.5/acn-gpds-3hz-esz-c971d616def4.png",
+   "thumbPath": "0.5.5/acn-gpds-3hz-esz-c971d616def4.w800.webp"
   },
   {
    "id": "trd-aeeg-term-swc",
@@ -2755,18 +2755,18 @@
     "sensitivity_uv_mm": null
    },
    "kind": "aeeg",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:7f0b0e49a0cf59e5d5db67f2ae69fb3ba495bfdb6934f8831d6b32a674831ccb",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/trd-aeeg-term-swc.png",
-   "thumbPath": "0.5.2/trd-aeeg-term-swc.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:20523223ea1ad93b5dbafbd9a1c825230e9d36e61c25eace2447bdef16e6efc1",
    "scaleLegend": {
     "lines": [
      "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
      "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
     ]
-   }
+   },
+   "path": "0.5.5/trd-aeeg-term-swc-83dcd3bd45bd.png",
+   "thumbPath": "0.5.5/trd-aeeg-term-swc-83dcd3bd45bd.w800.webp"
   },
   {
    "id": "trd-aeeg-dnv",
@@ -2781,19 +2781,19 @@
     "sensitivity_uv_mm": null
    },
    "kind": "aeeg",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:1f6d906dd1a69d94d3d095776130dd0cdff050e9b924f55b24329553cc1f4632",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/trd-aeeg-dnv.png",
-   "thumbPath": "0.5.2/trd-aeeg-dnv.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:27980c3a4e0117ec8d30c72bdf5f08a37e9280af0dc69ea2f62eca14f1770892",
    "scaleLegend": {
     "lines": [
      "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
      "Raw excerpt calibration bar: 50 µV vertical; its horizontal ruler is seconds.",
      "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
     ]
-   }
+   },
+   "path": "0.5.5/trd-aeeg-dnv-01080d0f7f9b.png",
+   "thumbPath": "0.5.5/trd-aeeg-dnv-01080d0f7f9b.w800.webp"
   },
   {
    "id": "trd-aeeg-burst-suppression",
@@ -2808,19 +2808,19 @@
     "sensitivity_uv_mm": null
    },
    "kind": "aeeg",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:50a077e6e953a12834b01f3b7f74dd624e384c0bc7a5ea0a54e063ef70ea839b",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/trd-aeeg-burst-suppression.png",
-   "thumbPath": "0.5.2/trd-aeeg-burst-suppression.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:40098df64372f3c56a9ff4c35929dfdfdd6c90393089cd5f79e46695ccc5a5b4",
    "scaleLegend": {
     "lines": [
      "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
      "Raw excerpt calibration bar: 50 µV vertical; its horizontal ruler is seconds.",
      "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
     ]
-   }
+   },
+   "path": "0.5.5/trd-aeeg-burst-suppression-e91110239566.png",
+   "thumbPath": "0.5.5/trd-aeeg-burst-suppression-e91110239566.w800.webp"
   },
   {
    "id": "trd-aeeg-seizures",
@@ -2835,19 +2835,19 @@
     "sensitivity_uv_mm": null
    },
    "kind": "aeeg",
-   "rendererVersion": "0.5.2",
-   "specHash": "sha256:c9a582f762e159e81706167546aad054d8e6d6e4952d1ff167d83e089b1f99cc",
    "width": 1600,
    "height": 900,
-   "path": "0.5.2/trd-aeeg-seizures.png",
-   "thumbPath": "0.5.2/trd-aeeg-seizures.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:a166ec719d759011c8b53d6270c83250a28803f8f1c3b06a06a32cb8b90d1fe1",
    "scaleLegend": {
     "lines": [
      "aEEG amplitude: µV; linear to 10 µV, logarithmic above 10 µV.",
      "Raw excerpt calibration bar: 50 µV vertical; its horizontal ruler is seconds.",
      "Trend time follows the labeled horizontal axis; raw EEG excerpts use seconds."
     ]
-   }
+   },
+   "path": "0.5.5/trd-aeeg-seizures-24a46baef93a.png",
+   "thumbPath": "0.5.5/trd-aeeg-seizures-24a46baef93a.w800.webp"
   },
   {
    "id": "trd-csa-seizures",
@@ -2862,12 +2862,10 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:692595cf9b9952a7cafc9a25a07b67f920c71dbc36e842353176bdf1185477c1",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.4/trd-csa-seizures.png",
-   "thumbPath": "0.5.4/trd-csa-seizures.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1ef9962674ea8af18019048bd8da7a5cef016c7a2d6834fddb839ca3d6f3ddd6",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -2900,7 +2898,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-csa-seizures-6e138fa4fef3.png",
+   "thumbPath": "0.5.5/trd-csa-seizures-6e138fa4fef3.w800.webp"
   },
   {
    "id": "trd-seizure-probability",
@@ -2915,12 +2915,10 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:8108f3ad5ad6a1a09f11a6b5899434c720627bd0be4466aab794ad384873c281",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.4/trd-seizure-probability.png",
-   "thumbPath": "0.5.4/trd-seizure-probability.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:be5b5393d8ea200aa3ab02f2f0666bed90cd451870a96b4de24dfba21349cb59",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -2955,7 +2953,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-seizure-probability-b82badce6adb.png",
+   "thumbPath": "0.5.5/trd-seizure-probability-b82badce6adb.w800.webp"
   },
   {
    "id": "trd-lpds-vs-seizure",
@@ -2971,12 +2971,10 @@
     "acns": "LPDs, 1 Hz"
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:a3f4ccf46ef73b08b9d957fd5bde936fdcf55ddc020f9126d9f4661927088ed4",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.4/trd-lpds-vs-seizure.png",
-   "thumbPath": "0.5.4/trd-lpds-vs-seizure.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:616aa52bba6db8e4ee1f04d37b4466ce603230bcc4a5191fd736e3a89100da4a",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -3011,7 +3009,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-lpds-vs-seizure-c014da1a33bc.png",
+   "thumbPath": "0.5.5/trd-lpds-vs-seizure-c014da1a33bc.w800.webp"
   },
   {
    "id": "trd-ese-trends",
@@ -3027,12 +3027,10 @@
     "acns": "ESE"
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:16c8aa3361c6cfb655878e20cf9189dfe57ec26749db3229b1464d572957b259",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.4/trd-ese-trends.png",
-   "thumbPath": "0.5.4/trd-ese-trends.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3379b647e0610dbcf8c775827bd14fb229d7a8bf2c4b79fb5811b5bd759bd4df",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -3067,7 +3065,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-ese-trends-81fae51e07af.png",
+   "thumbPath": "0.5.5/trd-ese-trends-81fae51e07af.w800.webp"
   },
   {
    "id": "trd-asymmetry-index",
@@ -3082,12 +3082,10 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:4a889031c2ce3da57157f96b52a0e9d4a50727ada3051fa2e44f3c4acc34d7a6",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.4/trd-asymmetry-index.png",
-   "thumbPath": "0.5.4/trd-asymmetry-index.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:71d268a9ce513d0aa5087c9d638ef57e1db7e7010c49ecb422909a13032578c2",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -3120,7 +3118,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-asymmetry-index-b5b161365ef1.png",
+   "thumbPath": "0.5.5/trd-asymmetry-index-b5b161365ef1.w800.webp"
   },
   {
    "id": "trd-suppression-ratio",
@@ -3135,12 +3135,10 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:861ea8c1d22208a6e659468feeb7ace825a2c3fe34b74efe0cadf5f8a2dff18b",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.4/trd-suppression-ratio.png",
-   "thumbPath": "0.5.4/trd-suppression-ratio.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:7ba9399db9072f4ceb27eac52236447e246d3d1f549288a8b0614ccb7127bcc5",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -3174,7 +3172,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-suppression-ratio-2abeb9a3a0a4.png",
+   "thumbPath": "0.5.5/trd-suppression-ratio-2abeb9a3a0a4.w800.webp"
   },
   {
    "id": "trd-sedation-power",
@@ -3189,12 +3189,10 @@
     "sensitivity_uv_mm": null
    },
    "kind": "qeeg_panel",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:517aa660b484cdb208967a8faa77f26c1161b754dfdfe6427a12cc9848bce6a9",
    "width": 1600,
    "height": 1000,
-   "path": "0.5.4/trd-sedation-power.png",
-   "thumbPath": "0.5.4/trd-sedation-power.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:fe0cac1e1ea5fce53769889ca5e7e5acd1997c8033a783a2a796d00d4031a521",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -3227,7 +3225,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-sedation-power-a71ce29f2b72.png",
+   "thumbPath": "0.5.5/trd-sedation-power-a71ce29f2b72.w800.webp"
   },
   {
    "id": "trd-composite-seizure",
@@ -3242,12 +3242,10 @@
     "sensitivity_uv_mm": 15
    },
    "kind": "composite",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:c497b5806c98473ee9a898cbae2af580f1a98e2e31b391a1c8fec6909b89f713",
    "width": 1600,
    "height": 1400,
-   "path": "0.5.4/trd-composite-seizure.png",
-   "thumbPath": "0.5.4/trd-composite-seizure.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1f877299689b6283e68a5d92f0992149e99a94245aad27726aa7ab9d24610470",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -3283,7 +3281,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-composite-seizure-e23c4a9b7b6a.png",
+   "thumbPath": "0.5.5/trd-composite-seizure-e23c4a9b7b6a.w800.webp"
   },
   {
    "id": "trd-composite-burst-suppression",
@@ -3298,12 +3298,10 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "composite",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:875e7cd99f152e24371d63496efa12750c586e141b668dbab4cf5051e0fa02fd",
    "width": 1600,
    "height": 1400,
-   "path": "0.5.4/trd-composite-burst-suppression.png",
-   "thumbPath": "0.5.4/trd-composite-burst-suppression.w800.webp",
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:fbbf6255ea83943220b576014827548e4e7a0fd7725453889feb3f7d30a68657",
    "scaleLegend": {
     "lines": [
      "FFT power: dB, using this image’s range and palette.",
@@ -3338,7 +3336,9 @@
       "#fff1bd"
      ]
     }
-   }
+   },
+   "path": "0.5.5/trd-composite-burst-suppression-d5b65b0e5ef3.png",
+   "thumbPath": "0.5.5/trd-composite-burst-suppression-d5b65b0e5ef3.w800.webp"
   },
   {
    "id": "gen-typical-absence",
@@ -3353,12 +3353,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:d2f1c755224e15dd973184dd8f3318238251e035d2fee237a5da84449034716f",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-typical-absence.png",
-   "thumbPath": "0.5.1/gen-typical-absence.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:7d443f3f98fa557ea11c9182d75c8e73c6045e6f26ebd657ed26c3135f884c7d",
+   "path": "0.5.5/gen-typical-absence-76a30baf13f5.png",
+   "thumbPath": "0.5.5/gen-typical-absence-76a30baf13f5.w800.webp"
   },
   {
    "id": "gen-atypical-absence",
@@ -3373,12 +3373,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:a755634c991f0a8088477b7b298e3cb338532d701e152e4ea35bd2b0d4456e75",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/gen-atypical-absence.png",
-   "thumbPath": "0.5.4/gen-atypical-absence.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3a4fd7cfa17a625ceac0c75d24137a890381c237744edd904fc9e905ecdb159c",
+   "path": "0.5.5/gen-atypical-absence-691581b42c2a.png",
+   "thumbPath": "0.5.5/gen-atypical-absence-691581b42c2a.w800.webp"
   },
   {
    "id": "gen-myoclonic",
@@ -3393,12 +3393,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:50b6d1d52f46aaade2dd381e3cc623420ec26e9de79f5a5ca55d8ab6ef3b172c",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-myoclonic.png",
-   "thumbPath": "0.5.1/gen-myoclonic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:de095abfa2f44366626898c86f4c3b9e1e4d5dccb20af5c1f70a006a084bb6d1",
+   "path": "0.5.5/gen-myoclonic-22e62fe0cc51.png",
+   "thumbPath": "0.5.5/gen-myoclonic-22e62fe0cc51.w800.webp"
   },
   {
    "id": "gen-myoclonic-atonic",
@@ -3413,12 +3413,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:f2fd53993d15e71099dd8666d49671d1c7e9e7af3c528094c8f548332c226f49",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-myoclonic-atonic.png",
-   "thumbPath": "0.5.1/gen-myoclonic-atonic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:f80400e3ce6a33b1dd96b419e43802e0baca5f0361d8ff817ff4931590bb3173",
+   "path": "0.5.5/gen-myoclonic-atonic-0b6f5e8b4ddf.png",
+   "thumbPath": "0.5.5/gen-myoclonic-atonic-0b6f5e8b4ddf.w800.webp"
   },
   {
    "id": "gen-myoclonic-tonic",
@@ -3433,12 +3433,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:56963f1d852c6239bf6b2b78b8ab26df6518f5191e15bde6f154e6306512749a",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-myoclonic-tonic.png",
-   "thumbPath": "0.5.1/gen-myoclonic-tonic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6a2d945e65b59cdcc2cc8f69f5490b61665a49661a82a29ab433be8224f0ce36",
+   "path": "0.5.5/gen-myoclonic-tonic-ccd673007ce0.png",
+   "thumbPath": "0.5.5/gen-myoclonic-tonic-ccd673007ce0.w800.webp"
   },
   {
    "id": "gen-tonic",
@@ -3453,12 +3453,12 @@
     "state": "unknown"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:2bda01f2d8281f8fa7a8994c8b2965819958611483c9fb81c268d817c367b579",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/gen-tonic.png",
-   "thumbPath": "0.5.4/gen-tonic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:1e0748216ae2f618fde3e61cf1ac49e3e0d8a1a3e2978c9073843dc0751b9f00",
+   "path": "0.5.5/gen-tonic-1b72edfde34f.png",
+   "thumbPath": "0.5.5/gen-tonic-1b72edfde34f.w800.webp"
   },
   {
    "id": "gen-atonic",
@@ -3473,12 +3473,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:f30565b4664ee559bc43afe0f4f6b33f077dd55ebd6ee8fd7b602f5cb04b3ba6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-atonic.png",
-   "thumbPath": "0.5.1/gen-atonic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:54b13a15ef05369cb17170cdf75505bd6cb058b3ed11a84cb7b6aee23921f222",
+   "path": "0.5.5/gen-atonic-c57775c46975.png",
+   "thumbPath": "0.5.5/gen-atonic-c57775c46975.w800.webp"
   },
   {
    "id": "gen-gtc-onset",
@@ -3493,12 +3493,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:1e0ff5227ae4f1193c75f4a5bf5ed509c5d637537fd71b28b14c78ade17a68b0",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-gtc-onset.png",
-   "thumbPath": "0.5.1/gen-gtc-onset.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:44c4c9ddaa3b2a633374f479672d57faf545013301d4162f9b8141596c1cde46",
+   "path": "0.5.5/gen-gtc-onset-5ed64aa6c501.png",
+   "thumbPath": "0.5.5/gen-gtc-onset-5ed64aa6c501.w800.webp"
   },
   {
    "id": "gen-gtc-clonic",
@@ -3513,12 +3513,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:09cbc980e2e256f561490c2348642ecec11dce53b6c9e7ad43c7e72abee4eb68",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-gtc-clonic.png",
-   "thumbPath": "0.5.1/gen-gtc-clonic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:17c8303ee169d64fd062fb6294fb7008d8084e1f7038852d2e5d2824eeca9ed6",
+   "path": "0.5.5/gen-gtc-clonic-42c96ed670b5.png",
+   "thumbPath": "0.5.5/gen-gtc-clonic-42c96ed670b5.w800.webp"
   },
   {
    "id": "gen-gtc-end",
@@ -3533,12 +3533,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:60ecfaaba6ae47e15dd5f4678b13c431e056f52fe180d60a49ef630af499c898",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-gtc-end.png",
-   "thumbPath": "0.5.1/gen-gtc-end.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:210e8114536c589fdf34ff0759e1ab62df7175f982b3111eb3ca10dfadb6034d",
+   "path": "0.5.5/gen-gtc-end-b8fb4d75b864.png",
+   "thumbPath": "0.5.5/gen-gtc-end-b8fb4d75b864.w800.webp"
   },
   {
    "id": "gen-eyelid-myoclonia",
@@ -3553,12 +3553,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:ae4d20df75211c468056786c4a10ace5ed041393a31dbb7d1c4702fdaaec3b34",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-eyelid-myoclonia.png",
-   "thumbPath": "0.5.1/gen-eyelid-myoclonia.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:0cc4ec754205cce87ca2b80ac7aae804b0187e65f956c62a3a07c2993ceb6e61",
+   "path": "0.5.5/gen-eyelid-myoclonia-a25ba4040773.png",
+   "thumbPath": "0.5.5/gen-eyelid-myoclonia-a25ba4040773.w800.webp"
   },
   {
    "id": "gen-photoparoxysmal",
@@ -3573,12 +3573,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:4f5cc7169956d5d8ead45b73f12a4ffc6ea3724d8e1759404f76ad3af43159a3",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-photoparoxysmal.png",
-   "thumbPath": "0.5.1/gen-photoparoxysmal.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:07d8c6108d34df9118e2561f33c5886fc0048ac96b2a5785efef3b95de4cb0c6",
+   "path": "0.5.5/gen-photoparoxysmal-2019607f40c7.png",
+   "thumbPath": "0.5.5/gen-photoparoxysmal-2019607f40c7.w800.webp"
   },
   {
    "id": "gen-photoparoxysmal-outlasting",
@@ -3593,12 +3593,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:104ba81d43debe551ff6a3e34ad1a0d474a331038a9042b9366d1542ec146627",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-photoparoxysmal-outlasting.png",
-   "thumbPath": "0.5.1/gen-photoparoxysmal-outlasting.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:ea0ca84ca619428ad1b724159e8c9a7e97079a5fbc17fd38cc796be65ae655c9",
+   "path": "0.5.5/gen-photoparoxysmal-outlasting-ceaffa65baaa.png",
+   "thumbPath": "0.5.5/gen-photoparoxysmal-outlasting-ceaffa65baaa.w800.webp"
   },
   {
    "id": "gen-interictal-gsw",
@@ -3613,12 +3613,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:24087561ede3e5d513f9cd0461477c47b8234508e0e28805905a9213dbae0f1a",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-interictal-gsw.png",
-   "thumbPath": "0.5.1/gen-interictal-gsw.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:a3a6fee4dbcc87c2564d0499f8761f70c790b4a5bd21b92feaea846dfb4d04ed",
+   "path": "0.5.5/gen-interictal-gsw-f562678a9338.png",
+   "thumbPath": "0.5.5/gen-interictal-gsw-f562678a9338.w800.webp"
   },
   {
    "id": "gen-interictal-psw-jme",
@@ -3633,12 +3633,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:b099a61bce888637f8063c6c185963f83273e1f772cccf9e6dd2fa64fec635ca",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-interictal-psw-jme.png",
-   "thumbPath": "0.5.1/gen-interictal-psw-jme.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:9ddd386c286ce85003f85b9d75accb3a80d84bb63bb3d80d9e271546faeb5145",
+   "path": "0.5.5/gen-interictal-psw-jme-3003ab92de48.png",
+   "thumbPath": "0.5.5/gen-interictal-psw-jme-3003ab92de48.w800.webp"
   },
   {
    "id": "gen-polyspike-sporadic",
@@ -3653,12 +3653,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:cee26eb76479f64d062a0eeafbfaf9e4b8c8e0f5e3c64603a57bdbed04e771f6",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-polyspike-sporadic.png",
-   "thumbPath": "0.5.1/gen-polyspike-sporadic.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:bc9bf468ea87a3eb2e057c1c666278c48688289194f7c5986619d2fda7cfeeec",
+   "path": "0.5.5/gen-polyspike-sporadic-c1b6340f8564.png",
+   "thumbPath": "0.5.5/gen-polyspike-sporadic-c1b6340f8564.w800.webp"
   },
   {
    "id": "gen-lgs-slow-spike-wave",
@@ -3673,12 +3673,12 @@
     "state": "awake"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:6eb952c38b4e6d570215b3150d0d0cac41eb41c7ac077cd4d576d06e5ddd78e5",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/gen-lgs-slow-spike-wave.png",
-   "thumbPath": "0.5.4/gen-lgs-slow-spike-wave.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:fd775f041ec191b0128d1bb26cb7ee2c879c9e19a9f39eabd5825786970f6636",
+   "path": "0.5.5/gen-lgs-slow-spike-wave-5f874fd15c77.png",
+   "thumbPath": "0.5.5/gen-lgs-slow-spike-wave-5f874fd15c77.w800.webp"
   },
   {
    "id": "gen-gpfa-n2",
@@ -3693,12 +3693,12 @@
     "state": "N2"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:d5331961bc63e012e9bde018fae7fefe3c6d3c953e89369e9867c08bffc1785b",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-gpfa-n2.png",
-   "thumbPath": "0.5.1/gen-gpfa-n2.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:6d7b6eb3f3fe1c50ce4ef1900f9d548d32629f7daa196e62f56edc8b8b25e414",
+   "path": "0.5.5/gen-gpfa-n2-94a89e9e7f95.png",
+   "thumbPath": "0.5.5/gen-gpfa-n2-94a89e9e7f95.w800.webp"
   },
   {
    "id": "gen-gpfa-n3",
@@ -3713,12 +3713,12 @@
     "state": "N3"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:c4aa3de5ff9032c36907e3f4fc0adca410010a01b284e1ed4f740773b9dad697",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-gpfa-n3.png",
-   "thumbPath": "0.5.1/gen-gpfa-n3.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:3e7b0aadd091f68a040704cc5488ef1548ec941efb56e85044138fd0c527b72f",
+   "path": "0.5.5/gen-gpfa-n3-d5c4e2665234.png",
+   "thumbPath": "0.5.5/gen-gpfa-n3-d5c4e2665234.w800.webp"
   },
   {
    "id": "gen-eses",
@@ -3733,12 +3733,12 @@
     "state": "N2"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.1",
-   "specHash": "sha256:77b49daaac3f944ac84dd3919be65185cf555f2a2d01151c63c3d09fffa42308",
    "width": 1600,
    "height": 900,
-   "path": "0.5.1/gen-eses.png",
-   "thumbPath": "0.5.1/gen-eses.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:b32f040d5b5e948ffdbc648671cc828f27842f2bcb68f62bfdbe9968796bf049",
+   "path": "0.5.5/gen-eses-f07350d8f2ed.png",
+   "thumbPath": "0.5.5/gen-eses-f07350d8f2ed.w800.webp"
   },
   {
    "id": "iid-selects-bilateral-bipolar",
@@ -3754,12 +3754,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:930a84b90417c75d4b5a3a0c6ee979d340223269ab50e769c90591adb59a52ce",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/iid-selects-bilateral-bipolar.png",
-   "thumbPath": "0.5.4/iid-selects-bilateral-bipolar.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:37da2c8a6aa5702ebc480dc4af1d0965c912a761cbd5dc8814407ee8feac939a",
+   "path": "0.5.5/iid-selects-bilateral-bipolar-aee4353ed20f.png",
+   "thumbPath": "0.5.5/iid-selects-bilateral-bipolar-aee4353ed20f.w800.webp"
   },
   {
    "id": "iid-selects-bilateral-referential",
@@ -3775,12 +3775,12 @@
     "acns": "sporadic epileptiform discharges, abundant"
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:4ce349f3151f295f65f8b6daa763c1ded51c522f6e323fc38d2fff9480db60c8",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/iid-selects-bilateral-referential.png",
-   "thumbPath": "0.5.4/iid-selects-bilateral-referential.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:8c5f4e34301cc55dc51ed92054cd50ee50fee7316907dda73007f7c0ec9117f6",
+   "path": "0.5.5/iid-selects-bilateral-referential-4c7dccfbf794.png",
+   "thumbPath": "0.5.5/iid-selects-bilateral-referential-4c7dccfbf794.w800.webp"
   },
   {
    "id": "var-ciganek",
@@ -3795,12 +3795,12 @@
     "sensitivity_uv_mm": 7
    },
    "kind": "eeg_page",
-   "rendererVersion": "0.5.4",
-   "specHash": "sha256:e0a0a69a670811296b863a04cb4c89d87beee54031318b8865e62f463a4fcc69",
    "width": 1600,
    "height": 900,
-   "path": "0.5.4/var-ciganek.png",
-   "thumbPath": "0.5.4/var-ciganek.w800.webp"
+   "rendererVersion": "0.5.5",
+   "specHash": "sha256:d9d57a49c816ce1eff367b95db3263ec899dde65a677cbe4141076d72098e396",
+   "path": "0.5.5/var-ciganek-969f34f78c6f.png",
+   "thumbPath": "0.5.5/var-ciganek-969f34f78c6f.w800.webp"
   }
  ]
 }

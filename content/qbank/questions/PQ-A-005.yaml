@@ -133,6 +133,7 @@ image:
       channels: standard_19
       duration_min: 240
       background:
+        clinical_state: drowsy
         type: continuous
         dominant_hz: 7.5
         amplitude_uv: 90

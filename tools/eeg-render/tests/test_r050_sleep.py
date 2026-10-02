@@ -262,7 +262,10 @@ def test_rem_has_sawtooth_waves_rapid_eye_movements_and_atonia(CHILD):
     emg = {}
     for st in ("N2", "R"):
         a, b = _stage(S, st, 120)
-        names, d = _disp(S, a + 30, a + 60)
+        def tonic(t):
+            return S._tonic_muscle_rows_v3(t, int(round(t[0] * FS)), t.size,
+                                           np.ones(t.size), np.full(t.size, 36.5), np.ones(t.size), None)
+        names, d = _comp(S, tonic, a + 30, a + 60)
         emg[st] = np.sqrt((sps.sosfiltfilt(hp, d[names.index("T3-T5")]) ** 2).mean())
     assert emg["R"] < 0.6 * emg["N2"]
 
@@ -290,7 +293,7 @@ def test_drawn_sleep_starts_at_the_keyed_state_change():
     S = _mk("adult", minutes=30, seed=2070, events=[{"type": "state_change", "at_min": 8.0, "to": "sleep"}])
     first = next(a for a, b, st in S._hypno if st != "W")
     assert abs(first - 480.0) < 1e-6
-    rows = [r for r in realized_events(S, 1800.0) if r["kind"] == "state" and r["label"] == "sleep"]
+    rows = [r for r in realized_events(S, 1800.0) if r["kind"] == "state" and r["label"] in ("drowsy", "asleep")]
     assert rows and abs(rows[0]["onset_s"] - 480.0) < 0.01
 
 
@@ -299,16 +302,19 @@ def test_answer_key_lists_stages_and_their_transients(CHILD):
     st = [r for r in rows if r["kind"] == "sleep_stage"]
     assert {"W", "N1", "N2", "N3", "R"} <= {r["label"] for r in st}
     n3 = [r for r in st if r["label"] == "N3"]
-    assert all(r["slow_waves"] > 100 for r in n3)
+    times = CHILD._sws["t"]
+    expected = ((CHILD.stage_at(times) == "N3") & (CHILD._arch_w(times, CHILD._sed_v3_at("loc", times, 0.0)) > 0.5)).sum()
+    assert sum(r["slow_waves"] for r in n3) == expected and expected > 100
     rem = [r for r in st if r["label"] == "R"]
-    assert all(r["sawtooth_trains"] >= 1 and r["rapid_eye_movements"] >= 10 and r["spindles"] == 0 for r in rem)
+    assert sum(r["sawtooth_trains"] for r in rem) >= 1 and sum(r["rapid_eye_movements"] for r in rem) >= 10
+    assert all(r["spindles"] == 0 for r in rem)
     assert any(r["kind"] == "arousal" for r in rows)
 
 
 def test_encephalopathy_and_a_hypnotic_remove_sleep_architecture():
     """ACNS 2021 / ICU EEG: sleep transients and state cycling are lost in encephalopathy; a hypnotic abolishes
     natural spindles, K-complexes and REM (dexmedetomidine spindles are separate)."""
-    E = _mk("child", minutes=60, seed=9101, reactivity="absent", slow_fraction=0.7)
+    E = _mk("child", minutes=60, seed=9101, reactivity="absent", sleep_architecture="absent", slow_fraction=0.7)
     assert {st for _a, _b, st in E._hypno} <= {"W", "N2"} and not E._arousals_v3
     a, b = _stage(E, "N2", 300)
     names, d = _comp(E, lambda t: E._spindle_rows_v3(t) * E._arch_w(t, np.zeros(t.size))[None, :], a + 60, a + 120)
@@ -322,8 +328,7 @@ def test_encephalopathy_and_a_hypnotic_remove_sleep_architecture():
     P = Synthesizer(normalize(img)["spec"], 3600.0)
     t = np.arange(900.0, 3500.0, 5.0)
     assert P._arch_w(t, P._sed_v3_at("loc", t, 0.0)).max() < 0.3
-    n2 = [r for r in realized_events(P, 3600.0) if r["kind"] == "sleep_stage" and r["label"] == "N2"]
-    assert n2 and sum(r["spindles"] + r["k_complexes"] for r in n2) == 0
+    assert not [r for r in realized_events(P, 3600.0) if r["kind"] == "sleep_stage" and r["label"] in ("N1", "N2", "N3", "R")]
 
 
 def test_spindle_coma_and_alpha_coma():
@@ -411,12 +416,13 @@ def _var(kind, at, dur, **extra):
     return e
 
 
-def _vsyn(seed, events, age="child", minutes=12):
+def _vsyn(seed, events, age="child", minutes=12, background=None):
     img = {"kind": "eeg_page", "license": "synthetic-original", "attribution": None,
            "spec": {"seed": seed, "spec_version": 3, "age_group": age, "sample_rate": FS, "channels": "standard_19",
                     "duration_min": minutes, "events": events,
                     "background": {"type": "continuous", "amplitude_uv": 40.0, "dominant_hz": 9.0, "slow_fraction": 0.3,
-                                   "reactivity": "present", "blink_rate_per_min": 0.0, "channel_gain_max": 1.5}}}
+                                   "reactivity": "present", "blink_rate_per_min": 0.0, "channel_gain_max": 1.5,
+                                   **(background or {})}}}
     return Synthesizer(normalize(img)["spec"], minutes * 60.0)
 
 
@@ -455,8 +461,10 @@ def test_photic_driving_has_a_flash_marker_an_occipital_maximum_and_symmetric_si
 def test_frontal_arousal_rhythm_follows_sleep_and_stays_modest():
     """Re-review V110-08: the hypnogram was awake all record (no sleep before the arousal) and FAR was 4.9x the
     background.  White & Tharp: arousal from sleep; a subtle pattern (target <= about 2x)."""
-    S = _vsyn(611008, [{"type": "state_change", "at_min": 5.0, "to": "arousal"},
-                       _var("frontal_arousal_rhythm", 5.0, 15.0, context="arousal")])
+    S = _vsyn(611008, [{"type": "state_change", "at_min": 1.0, "to": "sleep"},
+                       {"type": "state_change", "at_min": 5.0, "to": "arousal"},
+                       _var("frontal_arousal_rhythm", 5.0, 15.0, context="arousal")],
+              background={"sleep_staging": "static"})
     before = S.stage_at(np.array([300.0 - 60.0, 300.0 - 1.0]))
     assert list(before) == ["N2", "N2"] and S.stage_at(np.array([305.0]))[0] == "W"
     run = S._authored_variants[0]

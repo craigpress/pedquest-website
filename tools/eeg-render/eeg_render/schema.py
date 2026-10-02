@@ -340,7 +340,7 @@ _EVENT = {
         "stimulus_frequency_hz": {"type": "number", "minimum": 1, "maximum": 30},
         "decay_s": {"type": "number", "minimum": 0.01, "maximum": 5},
         # state change
-        "to": {"enum": ["sleep", "wake", "arousal", "rem"]},
+        "to": {"enum": ["sleep", "wake", "arousal", "rem", "drowsy", "sedated", "comatose"]},
     },
     "additionalProperties": False,
 }
@@ -363,6 +363,7 @@ _BACKGROUND = {
         "amplitude_gain_at_h": {"type": "array", "items": {"type": "array", "items": _num, "minItems": 2, "maxItems": 2}},
         "ibi_floor_at_h": {"type": "array", "items": {"type": "array", "items": _num, "minItems": 2, "maxItems": 2}},
         "reactivity": {"enum": ["present", "absent", "unknown", "unclear"]},
+        "clinical_state": {"enum": ["awake", "drowsy", "asleep", "sedated", "comatose"]},
         # EEG Atlas P5 (0.3.11), opt-in: spontaneous blinks per minute (0 = none;
         # absent = the 15/min awake default).  A suppressed or low-voltage
         # record never engages the burst-envelope blink gate, so an

@@ -11,7 +11,7 @@ import {
 } from "./guide-content";
 import {
   ACNS_PATTERNS, ACNS_PLUS, ACNS_PREVALENCE, AGE_BACKGROUND_DEFAULTS, AGE_BANDS, backgroundDefaults, defaultGuidedScenario,
-  withBackgroundDefaults, ARTIFACT_KINDS, BACKGROUND_TYPES, CHANNEL_SETS,
+  withBackgroundDefaults, ARTIFACT_KINDS, BACKGROUND_TYPES, CHANNEL_SETS, CLINICAL_STATES,
   DISCHARGE_FOCI, DISCHARGE_MORPHOLOGIES, DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, EVENT_TYPE_LABELS,
   GENERALIZED_SEIZURE_TYPES, MONTAGES, ONSET_PATTERNS, PROVOCATIONS, REGIONS, SAMPLE_RATES, SEDATION_AGENTS,
   SPEC_VERSIONS, SPREADS, STIMULI,
@@ -25,7 +25,7 @@ type Exhaustive<U, L extends readonly U[]> = [Exclude<U, L[number]>] extends [ne
 function exhaustive<U>() {
   return <const L extends readonly U[]>(list: Exhaustive<U, L>): readonly string[] => list as readonly string[];
 }
-const STATE_TO = exhaustive<Ev<"state_change">["to"]>()(["sleep", "wake", "arousal", "rem"]);
+const STATE_TO = exhaustive<Ev<"state_change">["to"]>()(["sleep", "wake", "arousal", "rem", "drowsy", "sedated", "comatose"]);
 const REACTIVITY = exhaustive<GuidedScenario["background"]["reactivity"]>()(["present", "absent"]);
 const SEDATION_DIRECTION = exhaustive<Ev<"sedation_change">["direction"]>()(["increase", "decrease"]);
 const ATTENUATION_SIDE = exhaustive<Ev<"attenuation_transient">["side"]>()(["both", "left", "right"]);
@@ -44,6 +44,7 @@ const LAB_OPTION_SETS: Record<string, readonly string[]> = {
   LAB_FORMATS: ids(LAB_FORMATS),
   PERSYST: [...LAB_MMX_PRESETS, ...LAB_PERSYST_PANELS],
   BACKGROUND_TYPES: ids(BACKGROUND_TYPES),
+  CLINICAL_STATES,
   REACTIVITY,
   REGIONS,
   SPREADS,
