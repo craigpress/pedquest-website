@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/admin-auth";
 import { mapCase, caseImagePublishBlock, type Region } from "@/lib/cases";
+import { getResponseCounts } from "@/lib/cases-server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -17,12 +18,11 @@ export async function GET(request: NextRequest) {
 
   const ids = (cases ?? []).map((c: any) => c.id);
   const optionsByCase: Record<string, any[]> = {};
-  const countByCase: Record<string, number> = {};
+  let countByCase: Record<string, number> = {};
   if (ids.length) {
     const { data: opts } = await supabase.from("eeg_case_options").select("*").in("case_id", ids).order("sort_order");
     for (const o of opts ?? []) (optionsByCase[o.case_id] ||= []).push(o);
-    const { data: resp } = await supabase.from("eeg_responses").select("case_id").in("case_id", ids);
-    for (const r of resp ?? []) countByCase[r.case_id] = (countByCase[r.case_id] || 0) + 1;
+    countByCase = await getResponseCounts(supabase, ids);
   }
   const result = (cases ?? []).map((c: any) => ({
     ...mapCase(c, optionsByCase[c.id] ?? []),
