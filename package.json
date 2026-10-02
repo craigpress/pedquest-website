@@ -9,6 +9,7 @@
     "trends:sidecar:build": "esbuild tools/trend-sidecar/src/index.ts --bundle --platform=node --format=esm --target=node20 --alias:@=./src --outfile=tools/trend-sidecar/dist/trend-sidecar.mjs",
     "start": "next start",
     "lint": "eslint .",
+    "test": "tsx --experimental-test-module-mocks --test \"src/**/*.test.ts\" \"scripts/*.test.ts\" \"tools/trend-sidecar/src/*.test.ts\"",
     "backup": "tsx scripts/export-supabase.ts",
     "prebuild": "tsx scripts/generate-members.ts && tsx scripts/generate-publications.ts && tsx scripts/generate-image-hashes.ts",
     "members:generate": "tsx scripts/generate-members.ts",

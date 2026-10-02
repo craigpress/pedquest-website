@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
   if (!pmid && !doi) {
     return NextResponse.json({ error: "Provide either pmid or doi parameter" }, { status: 400 });
   }
+  // The PMID is interpolated into the E-utilities query string unencoded.
+  if (pmid && !/^\d{1,9}$/.test(pmid)) {
+    return NextResponse.json({ error: "pmid must be numeric" }, { status: 400 });
+  }
 
   try {
     let resolvedPmid = pmid;

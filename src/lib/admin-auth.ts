@@ -77,11 +77,6 @@ export async function requireAdmin(request: NextRequest): Promise<AuthCheck> {
   return requireRole(request, "admin");
 }
 
-/** Same as requireRole(request, 'editor'), spelled out for readability. */
-export async function requireEditor(request: NextRequest): Promise<AuthCheck> {
-  return requireRole(request, "editor");
-}
-
 /**
  * Resolve the caller without failing the request — for endpoints that behave
  * differently for signed-in members (e.g. the question-bank browser).

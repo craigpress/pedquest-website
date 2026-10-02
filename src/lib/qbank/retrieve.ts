@@ -85,11 +85,6 @@ export function buildQueries(domain: string, topic: string): string[] {
   return queries;
 }
 
-/** The narrowest query, kept for callers that just want to show the search. */
-export function buildQuery(domain: string, topic: string): string {
-  return buildQueries(domain, topic)[0];
-}
-
 function xmlText(xml: string, tag: string): string {
   const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
   return m ? m[1].replace(/<[^>]*>/g, "").trim() : "";

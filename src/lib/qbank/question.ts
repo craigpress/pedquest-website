@@ -255,11 +255,6 @@ export function shuffleOptions<T>(id: string, options: T[]): T[] {
   return out;
 }
 
-/** A, B, C … for the option at a display position. */
-export function optionLetter(index: number): string {
-  return String.fromCharCode(65 + index);
-}
-
 /** The answer region for a point_to_feature item, taken from the sidecar the
  *  renderer produced. The writer never hand-draws it (STYLE_GUIDE §6). */
 export function regionFromSidecar(sidecar: unknown): unknown | null {

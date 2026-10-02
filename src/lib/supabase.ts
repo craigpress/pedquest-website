@@ -15,10 +15,10 @@ export function getSupabase(): SupabaseClient | null {
   return _supabase;
 }
 
-// Legacy export for backward compatibility — may be null during build
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : (null as unknown as SupabaseClient);
+// Legacy export for backward compatibility — may be null during build. The
+// same instance as getSupabase(): a second browser client would run its own
+// auth listener and token-refresh timer against the same stored session.
+export const supabase = getSupabase() as SupabaseClient;
 
 // Server-side Supabase client (uses service role key, bypasses RLS).
 // Memoised per runtime: one request used to build four of these (requireRole,
@@ -35,9 +35,4 @@ export function createServerClient(): SupabaseClient | null {
     });
   }
   return _server;
-}
-
-// Check if Supabase is configured
-export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseAnonKey);
 }

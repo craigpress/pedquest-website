@@ -1,6 +1,7 @@
 // One-off: apply the deterministic option shuffle (src/lib/qbank/question.ts)
 // to items already in the database, so the correct answer stops sitting at
 // position A. Seeded by qbank_id, so this is idempotent.
+/* eslint-disable @typescript-eslint/no-explicit-any -- untyped Supabase rows in a one-off script */
 import { loadEnvLocal, supabaseCredentials } from "./_env";
 import { createClient } from "@supabase/supabase-js";
 import { shuffleOptions } from "../src/lib/qbank/question";

@@ -18,7 +18,7 @@
  * Bank recordings are the teaching library, so `expires_at` is null (no
  * 30-day retention prune), unlike ad-hoc lab jobs.
  */
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, basename } from "node:path";
 import { load } from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
